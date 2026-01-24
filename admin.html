@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>FUSE Admin | Waitlist</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/favicon.svg">
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -41,6 +43,37 @@
                     <div class="label">Last updated</div>
                     <div class="value" id="lastUpdated">--</div>
                 </div>
+                <div>
+                    <div class="label">Showing</div>
+                    <div class="value" id="showingCount">0</div>
+                </div>
+                <div>
+                    <div class="label">Filter</div>
+                    <div class="value" id="filterValue">All</div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <label class="toolbar-label" for="emailFilter">Filter by email</label>
+                    <input id="emailFilter" type="email" placeholder="flex@gainmail.com">
+                    <button class="btn ghost" id="applyFilterBtn" type="button" disabled>Search</button>
+                    <button class="btn ghost" id="clearFilterBtn" type="button" disabled>Clear</button>
+                </div>
+                <div class="toolbar-group">
+                    <label class="toolbar-label" for="interestFilter">Interest keyword</label>
+                    <input id="interestFilter" type="text" placeholder="powerlifting">
+                    <label class="toolbar-label" for="fromDate">From</label>
+                    <input id="fromDate" type="date">
+                    <label class="toolbar-label" for="toDate">To</label>
+                    <input id="toDate" type="date">
+                    <button class="btn ghost" id="applyLocalFiltersBtn" type="button" disabled>Apply</button>
+                    <button class="btn ghost" id="clearLocalFiltersBtn" type="button" disabled>Reset</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="btn ghost" id="copyEmailsBtn" type="button" disabled>Copy emails</button>
+                    <button class="btn ghost" id="exportCsvBtn" type="button" disabled>Export CSV</button>
+                </div>
             </div>
 
             <div class="table-wrapper">
@@ -50,6 +83,8 @@
                             <th>Full name</th>
                             <th>Email</th>
                             <th>Main interest</th>
+                            <th>Consent</th>
+                            <th>Consent date</th>
                             <th>Signup date</th>
                         </tr>
                     </thead>

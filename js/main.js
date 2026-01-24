@@ -564,10 +564,13 @@
             setFormError('');
 
             const formData = new FormData(waitlistForm);
+            const consentValue = formData.get('consentToContact');
             const data = {
                 fullName: String(formData.get('fullName') || '').trim(),
                 email: String(formData.get('email') || '').trim().toLowerCase(),
                 mainInterest: String(formData.get('mainInterest') || '').trim(),
+                policyVersion: String(formData.get('policyVersion') || '').trim(),
+                consentToContact: consentValue === 'on' || consentValue === 'true' || consentValue === true,
             };
 
             if (!data.fullName) {
@@ -582,6 +585,11 @@
 
             if (!data.mainInterest) {
                 setFormError('Please share your main interest.');
+                return;
+            }
+
+            if (!data.consentToContact) {
+                setFormError('Please confirm you agree to be contacted.');
                 return;
             }
 

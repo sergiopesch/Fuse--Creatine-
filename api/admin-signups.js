@@ -60,6 +60,9 @@ async function fetchSignup(blob) {
     fullName: data.fullName || "",
     email: data.email || "",
     mainInterest: data.mainInterest || "",
+    consentToContact: Boolean(data.consentToContact),
+    consentTimestamp: data.consentTimestamp || "",
+    policyVersion: data.policyVersion || "",
     signupDate: data.signupDate || blob.uploadedAt.toISOString(),
     storedAt: blob.uploadedAt.toISOString(),
   };
