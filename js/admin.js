@@ -14,9 +14,16 @@
     const signupCount = document.getElementById('signupCount');
     const lastUpdated = document.getElementById('lastUpdated');
     const emptyState = document.getElementById('emptyState');
+    const filterValue = document.getElementById('filterValue');
+    const emailFilter = document.getElementById('emailFilter');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const copyEmailsBtn = document.getElementById('copyEmailsBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
 
     const TOKEN_KEY = 'fuse_admin_token';
     const PAGE_LIMIT = 50;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const state = {
         token: '',
@@ -24,6 +31,8 @@
         hasMore: false,
         loading: false,
         total: 0,
+        rows: [],
+        filterEmail: '',
     };
 
     const setStatus = (element, message, type) => {
@@ -34,17 +43,22 @@
 
     const setEmptyState = (visible) => {
         if (!emptyState) return;
+        if (visible) {
+            emptyState.textContent = state.filterEmail ? 'No signups for this filter.' : 'No signups yet.';
+        }
         emptyState.classList.toggle('hidden', !visible);
     };
 
     const updateSummary = () => {
         if (signupCount) signupCount.textContent = String(state.total);
         if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString('en-GB');
+        if (filterValue) filterValue.textContent = state.filterEmail || 'All';
     };
 
     const resetTable = () => {
         if (signupRows) signupRows.innerHTML = '';
         state.total = 0;
+        state.rows = [];
         setEmptyState(false);
     };
 
@@ -94,6 +108,20 @@
     const toggleControls = (enabled) => {
         if (refreshBtn) refreshBtn.disabled = !enabled;
         if (signOutBtn) signOutBtn.disabled = !enabled;
+        if (emailFilter) emailFilter.disabled = !enabled;
+    };
+
+    const updateUtilityButtons = () => {
+        const hasRows = state.rows.length > 0;
+        if (copyEmailsBtn) copyEmailsBtn.disabled = !hasRows;
+        if (exportCsvBtn) exportCsvBtn.disabled = !hasRows;
+    };
+
+    const updateFilterControls = () => {
+        const hasInput = Boolean(emailFilter && emailFilter.value.trim());
+        const isFiltered = Boolean(state.filterEmail);
+        if (applyFilterBtn) applyFilterBtn.disabled = !hasInput || state.loading;
+        if (clearFilterBtn) clearFilterBtn.disabled = !isFiltered || state.loading;
     };
 
     const showLogin = (message) => {
@@ -101,6 +129,7 @@
         if (dataCard) dataCard.classList.add('hidden');
         if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
         toggleControls(false);
+        updateUtilityButtons();
         setStatus(loginStatus, message || '', '');
     };
 
@@ -108,6 +137,7 @@
         if (loginCard) loginCard.classList.add('hidden');
         if (dataCard) dataCard.classList.remove('hidden');
         toggleControls(true);
+        updateFilterControls();
     };
 
     const setToken = (token) => {
@@ -144,6 +174,9 @@
             if (state.cursor) {
                 url.searchParams.set('cursor', state.cursor);
             }
+            if (state.filterEmail) {
+                url.searchParams.set('email', state.filterEmail);
+            }
 
             const response = await fetch(url.toString(), {
                 headers: {
@@ -167,6 +200,7 @@
 
             renderRows(signups);
             state.total += signups.length;
+            state.rows = state.rows.concat(signups);
             state.cursor = payload.cursor || null;
             state.hasMore = Boolean(payload.hasMore);
             updateSummary();
@@ -179,6 +213,8 @@
             state.loading = false;
             if (refreshBtn) refreshBtn.disabled = false;
             updatePagination();
+            updateUtilityButtons();
+            updateFilterControls();
         }
     };
 
@@ -199,9 +235,97 @@
     const handleSignOut = () => {
         clearToken();
         if (tokenInput) tokenInput.value = '';
+        if (emailFilter) emailFilter.value = '';
+        state.filterEmail = '';
         resetTable();
         setStatus(dataStatus, '');
         showLogin('Signed out.');
+    };
+
+    const applyFilter = () => {
+        if (!emailFilter) return;
+        const value = emailFilter.value.trim().toLowerCase();
+        if (value && !emailRegex.test(value)) {
+            setStatus(dataStatus, 'Enter a valid email address to filter.');
+            return;
+        }
+        state.filterEmail = value;
+        updateSummary();
+        fetchSignups({ reset: true });
+        updateFilterControls();
+    };
+
+    const clearFilter = () => {
+        if (emailFilter) emailFilter.value = '';
+        state.filterEmail = '';
+        updateSummary();
+        fetchSignups({ reset: true });
+        updateFilterControls();
+    };
+
+    const copyEmails = async () => {
+        const emails = Array.from(new Set(state.rows.map((row) => row.email).filter(Boolean)));
+        if (!emails.length) return;
+        const text = emails.join('\n');
+
+        try {
+            await navigator.clipboard.writeText(text);
+            setStatus(dataStatus, 'Emails copied to clipboard.', 'good');
+        } catch (error) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            setStatus(dataStatus, 'Emails copied to clipboard.', 'good');
+        }
+    };
+
+    const escapeCsv = (value) => {
+        const safe = String(value ?? '');
+        if (/[",\n]/.test(safe)) {
+            return `"${safe.replace(/"/g, '""')}"`;
+        }
+        return safe;
+    };
+
+    const exportCsv = () => {
+        if (!state.rows.length) return;
+        const headers = [
+            'Full Name',
+            'Email',
+            'Main Interest',
+            'Consent',
+            'Consent Timestamp',
+            'Policy Version',
+            'Signup Date',
+            'Stored At',
+        ];
+        const rows = state.rows.map((row) => [
+            row.fullName,
+            row.email,
+            row.mainInterest,
+            row.consentToContact ? 'Yes' : 'No',
+            row.consentTimestamp,
+            row.policyVersion,
+            row.signupDate,
+            row.storedAt,
+        ]);
+        const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const stamp = new Date().toISOString().slice(0, 10);
+        link.href = url;
+        link.download = `fuse-signups-${stamp}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        setStatus(dataStatus, 'CSV exported.', 'good');
     };
 
     if (loginForm) {
@@ -218,6 +342,32 @@
 
     if (signOutBtn) {
         signOutBtn.addEventListener('click', handleSignOut);
+    }
+
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', applyFilter);
+    }
+
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', clearFilter);
+    }
+
+    if (emailFilter) {
+        emailFilter.addEventListener('input', updateFilterControls);
+        emailFilter.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyFilter();
+            }
+        });
+    }
+
+    if (copyEmailsBtn) {
+        copyEmailsBtn.addEventListener('click', copyEmails);
+    }
+
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportCsv);
     }
 
     const storedToken = sessionStorage.getItem(TOKEN_KEY);
