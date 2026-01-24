@@ -1,0 +1,25 @@
+{
+  "name": "fuse",
+  "version": "1.0.0",
+  "description": "Britain's first coffee-optimized creatine with Instant Fusion Technology.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergiopesch/Fuse--Creatine-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sergiopesch/Fuse--Creatine-/issues"
+  },
+  "homepage": "https://github.com/sergiopesch/Fuse--Creatine-#readme",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.975.0",
+    "@aws-sdk/lib-dynamodb": "^3.975.0"
+  }
+}

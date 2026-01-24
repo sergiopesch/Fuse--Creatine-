@@ -87,6 +87,9 @@
                     <p class="hero-subtitle" id="heroMessage">
                         The first performance creatine optimized for your morning coffee. No grit. No taste. Pure power.
                     </p>
+                    <p class="hero-footnote" id="heroFootnote">
+                        Evidence: International Society of Sports Nutrition (ISSN) position stands + peer‑reviewed trials.
+                    </p>
                 </div>
                 <div class="hero-cta-group">
                     <button class="btn-primary magnetic" onclick="openWaitlist()">Join The Waitlist</button>
@@ -94,17 +97,7 @@
                 </div>
             </div>
             <div class="hero-visual-wrapper fade-in-right" aria-hidden="true">
-                <div class="product-packaging floating">
-                    <div class="packaging-body">
-                        <div class="packaging-logo">FUSE<span>.</span></div>
-                        <div class="packaging-subtitle">Performance Fusion</div>
-                        <div class="packaging-details">
-                            <div class="packaging-spec">Formula <span>MT-01</span></div>
-                            <div class="packaging-spec">Dose <span>5000MG</span></div>
-                            <div class="packaging-spec">Origin <span>Britain</span></div>
-                        </div>
-                    </div>
-                </div>
+                <div class="product-3d-container hero-3d" id="hero3D"></div>
             </div>
         </div>
         <div class="scroll-hint" aria-hidden="true">
@@ -142,8 +135,9 @@
                 <div class="science-eyebrow">THE SCIENCE</div>
                 <h2 class="science-hero-title">INSTANT FUSION TECHNOLOGY</h2>
                 <p class="science-intro">
-                    Built on the most studied form of creatine monohydrate, FUSE uses precision micro-encapsulation to stay stable in heat,
-                    then releases instantly for uniform dispersion. The result: proven creatine performance, without coffee compromise.
+                    Built on the most studied form of creatine monohydrate,<sup class="footnote-ref"><a href="#science-ref-1">1</a></sup>
+                    FUSE uses precision micro-encapsulation to stay stable in heat, then releases instantly for uniform dispersion.
+                    The result: proven creatine performance, without coffee compromise.<sup class="footnote-ref"><a href="#science-ref-2">2</a></sup>
                 </p>
             </div>
 
@@ -160,10 +154,6 @@
                         <li>Ultra-fine particle size stays suspended, no sediment.</li>
                         <li>Neutral carrier matrix keeps coffee flavour intact.</li>
                     </ul>
-                    <div class="science-citations">
-                        <span>Evidence-backed: creatine monohydrate efficacy & safety</span>
-                        <span>Optimised for hot liquid delivery</span>
-                    </div>
                 </div>
                 <div class="science-visual fade-in-right">
                     <div class="fusion-visual science-render" data-visual="fusion" aria-hidden="true">
@@ -267,6 +257,18 @@
                     </div>
                 </div>
             </div>
+
+            <div class="science-footnotes fade-in" aria-label="Science references">
+                <div class="science-footnotes-title">FUSE SCIENCE REFERENCES</div>
+                <ol class="science-footnotes-list">
+                    <li id="science-ref-1">
+                        International Society of Sports Nutrition position stands and peer-reviewed studies on creatine monohydrate efficacy.
+                    </li>
+                    <li id="science-ref-2">
+                        Meta-analyses and controlled trials showing performance benefits and safety at standard daily intakes.
+                    </li>
+                </ol>
+            </div>
         </div>
     </section>
 
@@ -274,30 +276,42 @@
     <section class="comparison" id="comparison">
         <div class="container">
             <h2 class="comparison-title fade-in">COMPARE</h2>
-            <p class="comparison-subtitle fade-in">The difference is felt in seconds.</p>
+            <p class="comparison-subtitle fade-in">Coffee compatibility, backed by creatine science.</p>
 
             <div class="comparison-grid">
                 <article class="compare-card fade-in-left" data-tilt>
-                    <div class="compare-kicker">Regular Creatine</div>
-                    <h3 class="compare-heading">Clumps. Sinks. Compromises.</h3>
+                    <div class="compare-kicker">Typical Creatine Formats</div>
+                    <h3 class="compare-heading">Built for water, not coffee.</h3>
                     <ul class="compare-list">
-                        <li>Needs stirring</li>
-                        <li>Residue in the cup</li>
-                        <li>Degrades in heat</li>
-                        <li>Can alter taste</li>
+                        <li>Creatine monohydrate is effective but low solubility can leave residue without stirring.</li>
+                        <li>In solution, creatine degrades faster as pH drops and temperature rises, so timing matters.</li>
+                        <li>Novel creatine forms are not shown to outperform monohydrate for efficacy or safety.</li>
                     </ul>
                 </article>
 
                 <article class="compare-card is-fuse fade-in-right" data-tilt>
                     <div class="compare-kicker">FUSE</div>
-                    <h3 class="compare-heading">Disappears. Delivers. Performs.</h3>
+                    <h3 class="compare-heading">Built for coffee, with creatine integrity in mind.</h3>
                     <ul class="compare-list">
-                        <li>Self-dispersing</li>
-                        <li>Zero grit</li>
-                        <li>Heat-protected</li>
-                        <li>Taste-neutral</li>
+                        <li>Uses creatine monohydrate, the most studied form for efficacy and safety.</li>
+                        <li>Optimized for hot coffee where creatine solubility increases with temperature.</li>
+                        <li>Designed for immediate drinking to preserve creatine integrity in solution.</li>
+                        <li>Coffee + creatine loading showed no performance differences vs creatine alone in a controlled trial.</li>
                     </ul>
                 </article>
+            </div>
+            <div class="comparison-footnotes fade-in" aria-label="Comparison references">
+                <div class="comparison-footnotes-title">COMPARISON REFERENCES</div>
+                <ol class="comparison-footnotes-list">
+                    <li>
+                        <a href="https://doi.org/10.3390/nu14051035" target="_blank" rel="noopener">Kreider et al., Nutrients 2022</a>
+                        on creatine monohydrate evidence, solubility, and stability.
+                    </li>
+                    <li>
+                        <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4808512/" target="_blank" rel="noopener">Trexler et al., J Strength Cond Res 2016</a>
+                        on creatine loading with coffee/caffeine.
+                    </li>
+                </ol>
             </div>
         </div>
     </section>
@@ -307,28 +321,19 @@
         <div class="container">
             <div class="product-showcase fade-in">
                 <div class="product-visual">
-                    <div class="product-packaging floating">
-                        <div class="packaging-body">
-                            <div class="packaging-logo">FUSE<span>.</span></div>
-                            <div class="packaging-subtitle">Performance Fusion</div>
-                            <div class="packaging-details">
-                                <div class="packaging-spec">Formula <span>MT-01</span></div>
-                                <div class="packaging-spec">Dose <span>5000MG</span></div>
-                                <div class="packaging-spec">Origin <span>Britain</span></div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="product-3d-container showcase-3d" id="product3D"></div>
                 </div>
                 <div class="showcase-content">
                     <div class="hero-british-badge">
                         <span class="text">Pre-Order Now</span>
                     </div>
                     <h2>THE MORNING <br><span class="red">REVOLUTION.</span></h2>
-                    <p class="hero-subtitle">Meticulously engineered to integrate with your coffee’s molecular structure.</p>
+                    <p class="hero-subtitle">Meticulously engineered to integrate with your coffee's molecular structure.</p>
                     <ul class="showcase-features">
-                        <li>Ultra-fine pharmaceutical grade</li>
-                        <li>Zero clumping technology</li>
-                        <li>Heat-stable bioavailability</li>
+                        <li>Ultra-fine pharmaceutical grade creatine monohydrate</li>
+                        <li>Zero clumping micro-encapsulation technology</li>
+                        <li>Heat-stable bioavailability for hot beverages</li>
+                        <li>60 servings per container</li>
                     </ul>
                     <button class="btn-primary magnetic" onclick="openWaitlist()">Join The Waitlist</button>
                 </div>
@@ -343,7 +348,7 @@
                 <div class="cta-copy fade-in-left">
                     <h2 class="cta-title">FUSE YOUR WAY.</h2>
                     <p class="cta-subtitle">
-                        Pick your dose. Feel the difference. Built for the ritual—engineered for performance.
+                        Configure your creatine amount. Feel the difference. Built for the ritual—engineered for performance.
                     </p>
                     <div class="cta-actions">
                         <button class="btn-primary magnetic" onclick="openWaitlist()">Get Early Access</button>
@@ -354,7 +359,7 @@
                 <div class="cta-interactive fade-in-right">
                     <div class="dose-card" data-tilt>
                         <div class="dose-top">
-                            <div class="dose-label">Dose configurator</div>
+                            <div class="dose-label">FUSE configurator</div>
                             <div class="dose-pill" aria-live="polite">
                                 <span class="dose-pill-value" id="doseValue">5</span><span class="dose-pill-unit">g</span>
                             </div>
@@ -370,7 +375,7 @@
 
                         <div class="dose-controls">
                             <label class="dose-range-label" for="doseRange">
-                                Choose your dose <span class="dose-range-hint">(5g–20g)</span>
+                                Set your creatine amount <span class="dose-range-hint">(5g–20g)</span>
                             </label>
                             <input
                                 type="range"
@@ -382,9 +387,9 @@
                                 aria-describedby="doseDesc"
                             />
                             <div class="dose-desc" id="doseDesc">
-                                <span class="dose-mode" id="doseMode">Daily</span>
+                                <span class="dose-mode" id="doseMode">Muscle &amp; Strength</span>
                                 <span class="dose-sep">—</span>
-                                <span class="dose-copy" id="doseCopy">Simple, consistent, no fuss.</span>
+                                <span class="dose-copy" id="doseCopy">Daily baseline supports strength, power, and lean mass.</span>
                             </div>
                         </div>
 
@@ -416,11 +421,11 @@
             <form class="waitlist-form" id="waitlistForm">
                 <div class="form-group">
                     <label>First Name</label>
-                    <input type="text" required placeholder="John">
+                    <input type="text" name="firstName" required placeholder="John">
                 </div>
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="email" required placeholder="john@example.com">
+                    <input type="email" name="email" required placeholder="john@example.com">
                 </div>
                 <button type="submit" class="btn-primary form-submit" id="submitBtn">Join Now</button>
             </form>

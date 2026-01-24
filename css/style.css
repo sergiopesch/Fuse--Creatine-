@@ -266,13 +266,9 @@ body::before {
 
 .hero-visual-wrapper {
     perspective: 2000px;
-    filter: drop-shadow(0 40px 80px rgba(0,0,0,0.6));
-}
-
-.hero-visual-wrapper .product-packaging {
-    width: 280px;
-    height: 420px;
-    transform: rotateY(-15deg) rotateX(5deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .hero-orbs {
@@ -824,19 +820,71 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     flex-shrink: 0;
 }
 
-.science-citations {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.55);
+/* Science footnotes */
+.footnote-ref {
+    font-size: 0.7em;
+    vertical-align: super;
+    margin-left: 0.15rem;
 }
 
-.science-citations span {
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
+.footnote-ref a {
+    color: var(--fuse-red);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.footnote-ref a:hover {
+    color: var(--fuse-red-light);
+}
+
+.science-footnotes {
+    margin-top: 3.5rem;
+    padding: 1.75rem 2rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+}
+
+.science-footnotes-title {
+    font-size: 0.75rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 1rem;
+}
+
+.science-footnotes-list {
+    list-style: none;
+    display: grid;
+    gap: 0.65rem;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.7);
+    counter-reset: science-footnote;
+}
+
+.science-footnotes-list li {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.science-footnotes-list li::before {
+    counter-increment: science-footnote;
+    content: counter(science-footnote);
+    position: absolute;
+    left: 0;
+    top: 0.1rem;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    background: rgba(255, 59, 48, 0.15);
+    color: var(--fuse-red);
+    font-weight: 800;
+    font-size: 0.75rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 59, 48, 0.35);
 }
 
 /* Science visuals */
@@ -1091,6 +1139,66 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     perspective: 900px;
+}
+
+/* Comparison footnotes */
+.comparison-footnotes {
+    margin-top: 2rem;
+    padding: 1.5rem 2rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.comparison-footnotes-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 0.85rem;
+}
+
+.comparison-footnotes-list {
+    list-style: none;
+    display: grid;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.72);
+    counter-reset: comparison-footnote;
+}
+
+.comparison-footnotes-list li {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.comparison-footnotes-list li::before {
+    counter-increment: comparison-footnote;
+    content: counter(comparison-footnote);
+    position: absolute;
+    left: 0;
+    top: 0.1rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    background: rgba(255, 59, 48, 0.16);
+    color: var(--fuse-red);
+    font-weight: 800;
+    font-size: 0.72rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 59, 48, 0.35);
+}
+
+.comparison-footnotes-list a {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+}
+
+.comparison-footnotes-list a:hover {
+    color: var(--fuse-red-light);
 }
 .compare-card {
     position: relative;
@@ -1364,21 +1472,31 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
 }
 
 /* --- 3D Product Styling --- */
+/* --- 3D Product Container --- */
 .product-3d-container {
     width: 100%;
     height: 100%;
     min-height: 480px;
     position: relative;
     cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .product-3d-container:active {
     cursor: grabbing;
 }
 
+.product-3d-container canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+}
+
 .hero-3d {
-    width: 380px;
-    height: 520px;
+    width: 340px;
+    height: 450px;
 }
 
 .science-3d {
@@ -1389,13 +1507,14 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
 
 .showcase-3d {
     width: 100%;
-    height: 600px;
+    max-width: 380px;
+    height: 480px;
 }
 
 @media (max-width: 1024px) {
     .hero-3d {
-        width: 300px;
-        height: 400px;
+        width: 280px;
+        height: 360px;
     }
 }
 
@@ -1412,6 +1531,24 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     gap: 4rem;
     align-items: center;
     padding: 2rem 0;
+}
+
+.product-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+}
+
+.showcase-content-centered {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.showcase-content-centered .showcase-features {
+    display: inline-block;
+    text-align: left;
 }
 
 .showcase-content h2 {
@@ -1449,6 +1586,13 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
         grid-template-columns: 1fr;
         text-align: center;
         gap: 3rem;
+    }
+    .product-visual {
+        min-height: 400px;
+    }
+    .showcase-3d {
+        max-width: 320px;
+        height: 420px;
     }
     .showcase-features li {
         justify-content: center;

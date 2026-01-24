@@ -13,6 +13,18 @@
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
 
+    // Perceptual motion timings (200–700ms feel most responsive)
+    const motion = {
+        micro: 0.18,
+        quick: 0.35,
+        base: 0.6,
+        slow: 1.1,
+        easeOut: 'power3.out',
+        easeInOut: 'power2.inOut',
+    };
+
+    gsap.defaults({ ease: motion.easeOut, duration: motion.base });
+
     // Smooth scroll (Lenis) – disabled for reduced motion
     let lenis = null;
     if (!prefersReducedMotion && window.Lenis) {
@@ -136,6 +148,11 @@
             ease: 'none',
         });
 
+        // Ambient orbital drift (low-frequency to reduce motion sickness)
+        gsap.to('.orb-1', { x: -20, y: 30, duration: 16, ease: 'sine.inOut', repeat: -1, yoyo: true });
+        gsap.to('.orb-2', { x: 25, y: -25, duration: 18, ease: 'sine.inOut', repeat: -1, yoyo: true });
+        gsap.to('.orb-3', { x: 18, y: 20, duration: 14, ease: 'sine.inOut', repeat: -1, yoyo: true });
+
         gsap.fromTo(
             '.scroll-hint-line',
             { scaleY: 0.55 },
@@ -159,7 +176,7 @@
                 autoAlpha: 1,
                 x: 0,
                 y: 0,
-                duration: prefersReducedMotion ? 0 : 1.05,
+                duration: prefersReducedMotion ? 0 : 0.9,
                 ease: 'power3.out',
                 scrollTrigger: {
                     trigger: el,
@@ -220,10 +237,10 @@
                     .fromTo(
                         [heroMessageEl, heroFootnoteEl],
                         { autoAlpha: 0, y: 10 },
-                        { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }
+                        { autoAlpha: 1, y: 0, duration: 0.55, ease: 'power3.out' }
                     )
-                    .to({}, { duration: 3.4 }) // hold (longer)
-                    .to([heroMessageEl, heroFootnoteEl], { autoAlpha: 0, y: -8, duration: 0.45, ease: 'power2.in' });
+                    .to({}, { duration: 3.2 }) // hold (longer)
+                    .to([heroMessageEl, heroFootnoteEl], { autoAlpha: 0, y: -8, duration: 0.4, ease: 'power2.in' });
             });
 
             // Pause the cycle once user scrolls past the hero
@@ -337,13 +354,13 @@
     // Magnetic buttons (tactile feel)
     function enableMagnetic(el) {
         const strength = 18;
-        const reset = () => gsap.to(el, { x: 0, y: 0, duration: 0.35, ease: 'power3.out' });
+        const reset = () => gsap.to(el, { x: 0, y: 0, duration: 0.35, ease: motion.easeOut });
 
         el.addEventListener('mousemove', (e) => {
             const r = el.getBoundingClientRect();
             const relX = (e.clientX - r.left) / r.width - 0.5;
             const relY = (e.clientY - r.top) / r.height - 0.5;
-            gsap.to(el, { x: relX * strength, y: relY * strength, duration: 0.25, ease: 'power3.out' });
+            gsap.to(el, { x: relX * strength, y: relY * strength, duration: 0.25, ease: motion.easeOut });
         });
         el.addEventListener('mouseleave', reset);
         el.addEventListener('blur', reset);
@@ -356,7 +373,7 @@
     if (!prefersReducedMotion && !isCoarsePointer) {
         document.querySelectorAll('[data-tilt]').forEach((card) => {
             const maxTilt = 7;
-            const reset = () => gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.5, ease: 'power3.out' });
+            const reset = () => gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.5, ease: motion.easeOut });
 
             card.addEventListener('mousemove', (e) => {
                 const r = card.getBoundingClientRect();
@@ -368,24 +385,47 @@
 
                 card.style.setProperty('--mx', `${px * 100}%`);
                 card.style.setProperty('--my', `${py * 100}%`);
-                gsap.to(card, { rotationX: rotX, rotationY: rotY, transformPerspective: 900, duration: 0.25, ease: 'power3.out' });
+                gsap.to(card, { rotationX: rotX, rotationY: rotY, transformPerspective: 900, duration: 0.25, ease: motion.easeOut });
             });
             card.addEventListener('mouseleave', reset);
             card.addEventListener('blur', reset);
         });
     }
 
-    // Bottom CTA dose configurator
+
+    // Bottom CTA configurator
     const doseRange = document.getElementById('doseRange');
     const doseValue = document.getElementById('doseValue');
     const doseMode = document.getElementById('doseMode');
     const doseCopy = document.getElementById('doseCopy');
 
     function getDoseProfile(g) {
-        if (g <= 6) return { mode: 'Daily', copy: 'Simple, consistent, no fuss.', intensity: 0.8 };
-        if (g <= 12) return { mode: 'Training', copy: 'Performance support for hard sessions.', intensity: 1.05 };
-        if (g <= 17) return { mode: 'High Performance', copy: 'Dial it up when you need it most.', intensity: 1.25 };
-        return { mode: 'Loading', copy: 'Max protocol. Maximum intent.', intensity: 1.45 };
+        if (g <= 7) {
+            return {
+                mode: 'Muscle & Strength',
+                copy: 'Research-backed daily baseline supports strength, power, and lean mass.',
+                intensity: 0.8,
+            };
+        }
+        if (g <= 11) {
+            return {
+                mode: 'Recovery & Volume',
+                copy: 'Mid-range amounts are linked to better repeat-sprint output and faster recovery.',
+                intensity: 1.05,
+            };
+        }
+        if (g <= 16) {
+            return {
+                mode: 'Cognitive & Focus',
+                copy: 'Higher saturation is associated with working-memory support and mental fatigue resistance.',
+                intensity: 1.25,
+            };
+        }
+        return {
+            mode: 'Saturation Boost',
+            copy: 'Short-term higher intake accelerates creatine stores for rapid performance build-up.',
+            intensity: 1.45,
+        };
     }
 
     function setDoseUI(g, animate = true) {
@@ -480,24 +520,50 @@
 
     if (mobileToggle) mobileToggle.addEventListener('click', window.toggleMobileMenu);
 
-    // Waitlist submission (demo)
+    // Waitlist submission
     if (waitlistForm && submitBtn && successMessage) {
-        waitlistForm.addEventListener('submit', (e) => {
+        waitlistForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             submitBtn.disabled = true;
             submitBtn.innerText = 'JOINING...';
 
-            setTimeout(() => {
-                gsap.to(waitlistForm, {
-                    opacity: 0,
-                    duration: 0.25,
-                    onComplete: () => {
-                        waitlistForm.style.display = 'none';
-                        successMessage.classList.add('active');
-                        gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+            const formData = new FormData(waitlistForm);
+            const data = {
+                firstName: formData.get('firstName'),
+                email: formData.get('email')
+            };
+
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
                     },
+                    body: JSON.stringify(data)
                 });
-            }, 900);
+
+                if (response.ok) {
+                    gsap.to(waitlistForm, {
+                        opacity: 0,
+                        duration: 0.25,
+                        onComplete: () => {
+                            waitlistForm.style.display = 'none';
+                            successMessage.classList.add('active');
+                            gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+                        },
+                    });
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Something went wrong. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Join Now';
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                alert('Connection error. Please try again later.');
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Join Now';
+            }
         });
     }
 
