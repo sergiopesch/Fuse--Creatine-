@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="fuseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff3b30"/>
+      <stop offset="100%" style="stop-color:#ff6961"/>
+    </linearGradient>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#000000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="32" height="32" rx="6" fill="url(#bgGradient)"/>
+
+  <!-- Red accent bar at top (matching packaging design) -->
+  <rect x="0" y="0" width="32" height="3" rx="6" ry="6" fill="url(#fuseGradient)"/>
+  <rect x="0" y="0" width="32" height="1.5" fill="url(#fuseGradient)"/>
+
+  <!-- Stylized "F" for FUSE -->
+  <path d="M8 8h14v3.5H12v3.5h8v3.5h-8v8H8V8z" fill="#ffffff"/>
+
+  <!-- Fusion dot (representing the energy/activation) -->
+  <circle cx="24" cy="22" r="3" fill="url(#fuseGradient)">
+    <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Subtle ring around fusion dot -->
+  <circle cx="24" cy="22" r="5" fill="none" stroke="url(#fuseGradient)" stroke-width="0.5" opacity="0.4"/>
+</svg>
