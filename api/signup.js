@@ -5,6 +5,7 @@ const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_INTEREST_LENGTH = 1000;
 const MAX_POLICY_VERSION_LENGTH = 32;
+const MAX_HONEYPOT_LENGTH = 120;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parseBody(req) {
@@ -49,9 +50,31 @@ function hashEmail(email) {
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const contentType = req.headers["content-type"] || "";
+  if (contentType && !contentType.includes("application/json")) {
+    return res.status(415).json({ error: "Unsupported content type" });
+  }
+
+  const origin = req.headers.origin;
+  const host = req.headers.host;
+  if (origin && host) {
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    } catch (error) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
   }
 
   const body = parseBody(req);
@@ -64,6 +87,11 @@ module.exports = async (req, res) => {
   const mainInterest = normalizeString(body.mainInterest);
   const policyVersion = normalizeString(body.policyVersion);
   const consentToContact = parseBoolean(body.consentToContact);
+  const honeypot = normalizeString(body.company || "").slice(0, MAX_HONEYPOT_LENGTH);
+
+  if (honeypot) {
+    return res.status(400).json({ error: "Unable to process request" });
+  }
 
   if (!fullName) {
     return res.status(400).json({ error: "Full name is required" });
@@ -104,7 +132,7 @@ module.exports = async (req, res) => {
     const filename = `signups/${safeId}_${Date.now()}.json`;
 
     await put(filename, JSON.stringify(signupData), {
-      access: "private",
+      access: "public",
       addRandomSuffix: true,
       contentType: "application/json",
     });
