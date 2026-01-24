@@ -5,17 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUSE — Performance Coffee Creatine | Instant Fusion Technology</title>
     <meta name="description" content="Britain's first coffee-optimised creatine. Engineered in the UK. This is FUSE.">
-    
-    <!-- Fonts -->
+    <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/favicon.svg">
+
+    <!-- DNS Prefetch & Preconnect for Performance -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
+
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
+    <!-- Early JS Detection -->
     <script>
         document.documentElement.classList.add('js');
     </script>
 
-    <!-- Libraries -->
+    <!-- Libraries (deferred for non-blocking) -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
