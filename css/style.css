@@ -127,6 +127,12 @@ body::before {
     justify-content: space-between;
     align-items: center;
     transition: all 0.6s var(--ease-out-expo);
+    /* Always readable over hero visuals */
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    isolation: isolate;
 }
 
 .nav.scrolled {
@@ -159,15 +165,17 @@ body::before {
 }
 
 .nav-links a {
-    color: var(--light-gray);
+    color: rgba(255, 255, 255, 0.82);
     text-decoration: none;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     transition: color 0.3s ease;
+    text-shadow: 0 1px 18px rgba(0, 0, 0, 0.45);
 }
 
 .nav-links a:hover {
-    color: var(--white);
+    color: rgba(255, 255, 255, 1);
 }
 
 .nav-cta {
@@ -196,6 +204,41 @@ body::before {
     text-align: center;
     position: relative;
     background: radial-gradient(circle at center, #111111 0%, #000000 100%);
+    overflow: hidden;
+}
+
+.hero-main {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: center;
+    gap: 4rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 5%;
+    text-align: left;
+}
+
+@media (max-width: 1024px) {
+    .hero-main {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+    }
+    .hero-visual-wrapper {
+        display: none;
+    }
+}
+
+.hero-visual-wrapper {
+    perspective: 2000px;
+    filter: drop-shadow(0 40px 80px rgba(0,0,0,0.6));
+}
+
+.hero-visual-wrapper .product-packaging {
+    width: 280px;
+    height: 420px;
+    transform: rotateY(-15deg) rotateX(5deg);
 }
 
 .hero-orbs {
@@ -281,6 +324,20 @@ body::before {
     max-width: 800px;
 }
 
+.hero-messaging {
+    display: grid;
+    gap: 0.65rem;
+    align-items: center;
+    justify-items: center;
+}
+
+.hero-footnote {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.58);
+    letter-spacing: 0.01em;
+    max-width: 70ch;
+}
+
 .hero-cta-group {
     display: flex;
     gap: 1.5rem;
@@ -351,6 +408,197 @@ body::before {
 /* Sections */
 section {
     padding: 10rem 5%;
+}
+
+/* Bottom CTA */
+.bottom-cta {
+    padding: 9rem 5%;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(255, 59, 48, 0.18), transparent 55%),
+        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.06), transparent 55%),
+        linear-gradient(180deg, rgba(0, 0, 0, 1), rgba(8, 8, 8, 1));
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cta-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+.cta-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4.5rem, 8vw, 8rem);
+    line-height: 0.9;
+    margin-bottom: 1rem;
+    letter-spacing: 0.02em;
+}
+
+.cta-subtitle {
+    color: var(--text-gray);
+    font-size: 1.2rem;
+    max-width: 44ch;
+    line-height: 1.55;
+    margin-bottom: 2.25rem;
+}
+
+.cta-actions {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.dose-card {
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 50px 120px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+}
+
+.dose-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.5rem 0;
+}
+
+.dose-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.dose-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.1rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.dose-pill-value {
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+}
+.dose-pill-unit {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+}
+
+.dose-stage {
+    position: relative;
+    height: 200px;
+    margin: 1.25rem 1.25rem 1rem;
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255, 59, 48, 0.16), transparent 55%),
+        radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.08), transparent 55%),
+        rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.dose-orbit {
+    position: absolute;
+    inset: 50%;
+    width: 180px;
+    height: 180px;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+.dose-core {
+    position: absolute;
+    inset: 50%;
+    width: 56px;
+    height: 56px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 59, 48, 1), rgba(255, 59, 48, 0.18));
+    box-shadow: 0 18px 60px rgba(255, 59, 48, 0.35);
+}
+
+.dose-ticks span {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.16);
+    opacity: 0.35;
+}
+.dose-ticks span:nth-child(1) { top: 18%; left: 20%; }
+.dose-ticks span:nth-child(2) { top: 26%; left: 75%; }
+.dose-ticks span:nth-child(3) { top: 62%; left: 78%; }
+.dose-ticks span:nth-child(4) { top: 78%; left: 44%; }
+.dose-ticks span:nth-child(5) { top: 52%; left: 18%; }
+
+.dose-controls {
+    padding: 0 1.5rem 1.25rem;
+}
+.dose-range-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.9rem;
+    font-weight: 650;
+    color: rgba(255, 255, 255, 0.86);
+    margin-bottom: 0.65rem;
+}
+.dose-range-hint {
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 600;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--fuse-red);
+}
+
+.dose-desc {
+    margin-top: 0.85rem;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.95rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.dose-mode {
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+.dose-sep { opacity: 0.65; }
+.dose-copy { color: rgba(255, 255, 255, 0.68); }
+
+.dose-footer {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.16);
+}
+.dose-mini {
+    display: grid;
+    gap: 0.15rem;
+}
+.dose-mini-k {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 700;
+}
+.dose-mini-v {
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.92);
 }
 
 /* Reveal baseline (required for scroll animations) */
@@ -732,4 +980,157 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     .science-step { grid-template-columns: 1fr; gap: 4rem; }
     .science-step.reverse { direction: ltr; }
     .comparison-grid { grid-template-columns: 1fr; }
+    .cta-grid { grid-template-columns: 1fr; }
+}
+
+/* --- Added Branded Elements & Product Packaging --- */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* High-end Product Packaging Visual (CSS Render) */
+.product-packaging {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    margin: 0 auto;
+    perspective: 1000px;
+}
+
+.packaging-body {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a0a 0%, #000 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 40px 100px -20px rgba(0,0,0,0.9),
+        inset 0 0 40px rgba(255, 255, 255, 0.02);
+    display: flex;
+    flex-direction: column;
+    padding: 3rem 2rem;
+    overflow: hidden;
+}
+
+/* Nespresso-style Red Accent Lip */
+.packaging-body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: var(--fuse-red);
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.3);
+}
+
+.packaging-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    line-height: 0.8;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+
+.packaging-logo span {
+    color: var(--fuse-red);
+}
+
+.packaging-subtitle {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.4em;
+    color: var(--light-gray);
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+}
+
+.packaging-details {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+.packaging-spec {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+}
+
+.packaging-spec span {
+    color: var(--white);
+    font-weight: 700;
+}
+
+/* Interactive Hover Effect */
+.product-packaging:hover .packaging-body {
+    transform: rotateY(-5deg) rotateX(2deg);
+    transition: transform 0.6s var(--ease-out-expo);
+    border-color: rgba(255, 59, 48, 0.2);
+}
+
+/* Floating Animation */
+.product-packaging.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Product Showcase Layout */
+.product-showcase {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+    padding: 6rem 0;
+}
+
+.showcase-content h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    line-height: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.showcase-features {
+    list-style: none;
+    margin: 2rem 0;
+}
+
+.showcase-features li {
+    font-size: 1.1rem;
+    color: var(--text-gray);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.showcase-features li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--fuse-red);
+    border-radius: 50%;
+}
+
+@media (max-width: 968px) {
+    .product-showcase {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .showcase-features li {
+        justify-content: center;
+    }
 }

@@ -71,10 +71,17 @@
         ScrollTrigger.create({
             start: 'top -100',
             onUpdate: (self) => {
+                // Keep nav fully readable at the very top (no hiding/fading)
+                if (self.scroll() < 24) {
+                    gsap.to(navbar, { yPercent: 0, autoAlpha: 1, duration: 0.2, ease: 'power2.out' });
+                    navbar.classList.remove('scrolled');
+                    return;
+                }
+
                 if (self.direction === 1) {
-                    gsap.to(navbar, { yPercent: -100, duration: 0.4, ease: 'power2.inOut' });
+                    gsap.to(navbar, { yPercent: -100, autoAlpha: 1, duration: 0.4, ease: 'power2.inOut' });
                 } else {
-                    gsap.to(navbar, { yPercent: 0, duration: 0.4, ease: 'power2.out' });
+                    gsap.to(navbar, { yPercent: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out' });
                 }
 
                 if (self.scroll() > 100) navbar.classList.add('scrolled');
@@ -88,16 +95,16 @@
     heroTl
         .from('.hero-british-badge', { y: 18, autoAlpha: 0 }, 0.35)
         .from('.hero-title span', { yPercent: 120, autoAlpha: 0, stagger: 0.16 }, 0.45)
-        .from('.hero-subtitle', { y: 22, autoAlpha: 0 }, 0.9)
+        .from('.hero-messaging', { y: 18, autoAlpha: 0 }, 0.9)
         .from('.hero-cta-group', { y: 16, autoAlpha: 0 }, 1.05)
+        .from('.hero-visual-wrapper', { x: 40, autoAlpha: 0, duration: 1.5 }, 0.8)
         .from('.nav', { y: -40, autoAlpha: 0 }, 0.2);
 
     // Hero scroll-linked depth + orbs
     if (!prefersReducedMotion) {
         gsap.to('.hero-content', {
             scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true },
-            y: 180,
-            opacity: 0.45,
+            y: 120,
             ease: 'none',
         });
         gsap.to('.orb-1', {
@@ -138,6 +145,7 @@
             el,
             fromVars,
             {
+                immediateRender: false,
                 autoAlpha: 1,
                 x: 0,
                 y: 0,
@@ -152,6 +160,74 @@
             }
         );
     });
+
+    // Hero: 4 evidence-based core messages (longer hold time)
+    const heroMessageEl = document.getElementById('heroMessage');
+    const heroFootnoteEl = document.getElementById('heroFootnote');
+
+    const heroMessages = [
+        {
+            message:
+                'Creatine monohydrate is one of the most researched performance supplements—trusted for strength and high‑intensity output.',
+            footnote:
+                'Evidence: International Society of Sports Nutrition (ISSN) position stands + peer‑reviewed trials.',
+        },
+        {
+            message:
+                'Consistent daily dosing supports muscle creatine saturation over time—no “special” timing required.',
+            footnote:
+                'Evidence: supplementation protocols in controlled studies show saturation with steady intake.',
+        },
+        {
+            message:
+                'Creatine supports repeated sprint and power performance—especially when training demands short, intense efforts.',
+            footnote:
+                'Evidence: meta-analyses show benefits for high‑intensity, short-duration exercise capacity.',
+        },
+        {
+            message:
+                'Creatine is widely studied for safety and tolerability in healthy adults at common daily intakes.',
+            footnote:
+                'Evidence: long-term research and position stands report good safety profiles for typical use.',
+        },
+    ];
+
+    function setHeroMessage(i) {
+        const item = heroMessages[i % heroMessages.length];
+        if (heroMessageEl) heroMessageEl.textContent = item.message;
+        if (heroFootnoteEl) heroFootnoteEl.textContent = item.footnote;
+    }
+
+    if (heroMessageEl && heroFootnoteEl) {
+        setHeroMessage(0);
+
+        if (!prefersReducedMotion) {
+            const heroCycleTl = gsap.timeline({ repeat: -1 });
+
+            heroMessages.forEach((_, i) => {
+                heroCycleTl
+                    .call(() => setHeroMessage(i))
+                    .fromTo(
+                        [heroMessageEl, heroFootnoteEl],
+                        { autoAlpha: 0, y: 10 },
+                        { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }
+                    )
+                    .to({}, { duration: 3.4 }) // hold (longer)
+                    .to([heroMessageEl, heroFootnoteEl], { autoAlpha: 0, y: -8, duration: 0.45, ease: 'power2.in' });
+            });
+
+            // Pause the cycle once user scrolls past the hero
+            ScrollTrigger.create({
+                trigger: '.hero',
+                start: 'top top',
+                end: 'bottom top',
+                onEnter: () => heroCycleTl.play(),
+                onEnterBack: () => heroCycleTl.play(),
+                onLeave: () => heroCycleTl.pause(),
+                onLeaveBack: () => heroCycleTl.pause(),
+            });
+        }
+    }
 
     // Stat counters – preserve suffix span markup
     document.querySelectorAll('.stat-number').forEach((stat) => {
@@ -246,6 +322,61 @@
             card.addEventListener('mouseleave', reset);
             card.addEventListener('blur', reset);
         });
+
+        // Add Product Packaging Interaction
+        document.querySelectorAll('.product-packaging').forEach((pkg) => {
+            const body = pkg.querySelector('.packaging-body');
+            const maxTilt = 12;
+            const reset = () => gsap.to(body, { rotationX: 0, rotationY: 0, duration: 0.8, ease: 'power3.out' });
+
+            pkg.addEventListener('mousemove', (e) => {
+                const r = pkg.getBoundingClientRect();
+                const px = (e.clientX - r.left) / r.width;
+                const py = (e.clientY - r.top) / r.height;
+
+                const rotY = (px - 0.5) * (maxTilt * 2);
+                const rotX = -(py - 0.5) * (maxTilt * 2);
+
+                gsap.to(body, { rotationX: rotX, rotationY: rotY, transformPerspective: 1000, duration: 0.3, ease: 'power2.out' });
+            });
+            pkg.addEventListener('mouseleave', reset);
+        });
+    }
+
+    // Bottom CTA dose configurator
+    const doseRange = document.getElementById('doseRange');
+    const doseValue = document.getElementById('doseValue');
+    const doseMode = document.getElementById('doseMode');
+    const doseCopy = document.getElementById('doseCopy');
+
+    function getDoseProfile(g) {
+        if (g <= 6) return { mode: 'Daily', copy: 'Simple, consistent, no fuss.', intensity: 0.8 };
+        if (g <= 12) return { mode: 'Training', copy: 'Performance support for hard sessions.', intensity: 1.05 };
+        if (g <= 17) return { mode: 'High Performance', copy: 'Dial it up when you need it most.', intensity: 1.25 };
+        return { mode: 'Loading', copy: 'Max protocol. Maximum intent.', intensity: 1.45 };
+    }
+
+    function setDoseUI(g, animate = true) {
+        if (doseValue) doseValue.textContent = String(g);
+        const p = getDoseProfile(g);
+        if (doseMode) doseMode.textContent = p.mode;
+        if (doseCopy) doseCopy.textContent = p.copy;
+
+        if (!animate || prefersReducedMotion) return;
+        gsap.fromTo(
+            '#doseValue',
+            { scale: 1, filter: 'brightness(1)' },
+            { scale: 1.18, filter: 'brightness(1.25)', duration: 0.16, ease: 'power2.out', yoyo: true, repeat: 1 }
+        );
+        gsap.to('.dose-core', { scale: p.intensity, duration: 0.35, ease: 'power3.out' });
+        gsap.to('.dose-orbit', { rotation: g * 9, duration: 0.6, ease: 'power2.out' });
+        gsap.to('.dose-ticks span', { opacity: Math.min(0.7, 0.25 + (g - 5) / 30), duration: 0.3, ease: 'power2.out' });
+    }
+
+    if (doseRange) {
+        // initial
+        setDoseUI(parseInt(doseRange.value, 10), false);
+        doseRange.addEventListener('input', () => setDoseUI(parseInt(doseRange.value, 10)));
     }
 
     // Waitlist modal

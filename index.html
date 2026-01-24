@@ -57,18 +57,37 @@
             <div class="orb orb-2"></div>
             <div class="orb orb-3"></div>
         </div>
-        <div class="hero-content">
-            <div class="hero-british-badge" data-reveal="up">
-                <span class="text">🇬🇧 Engineered in Britain</span>
+        <div class="hero-main">
+            <div class="hero-content">
+                <div class="hero-british-badge">
+                    <span class="text">🇬🇧 Engineered in Britain</span>
+                </div>
+                <h1 class="hero-title">
+                    <span>POUR.</span>
+                    <span class="red">FUSE.</span>
+                </h1>
+                <div class="hero-messaging" aria-live="polite">
+                    <p class="hero-subtitle" id="heroMessage">
+                        The first performance creatine optimized for your morning coffee. No grit. No taste. Pure power.
+                    </p>
+                </div>
+                <div class="hero-cta-group">
+                    <button class="btn-primary magnetic" onclick="openWaitlist()">Join The Waitlist</button>
+                    <button class="btn-secondary magnetic" onclick="FUSE.scrollTo('#science')">See Science</button>
+                </div>
             </div>
-            <h1 class="hero-title">
-                <span>POUR.</span>
-                <span class="red">FUSE.</span>
-            </h1>
-            <p class="hero-subtitle" data-reveal="up">The first performance creatine optimized for your morning coffee. No grit. No taste. Pure power.</p>
-            <div class="hero-cta-group" data-reveal="up">
-                <button class="btn-primary magnetic" onclick="openWaitlist()">Join The Waitlist</button>
-                <button class="btn-secondary magnetic" onclick="FUSE.scrollTo('#science')">See Science</button>
+            <div class="hero-visual-wrapper fade-in-right" aria-hidden="true">
+                <div class="product-packaging floating">
+                    <div class="packaging-body">
+                        <div class="packaging-logo">FUSE<span>.</span></div>
+                        <div class="packaging-subtitle">Performance Fusion</div>
+                        <div class="packaging-details">
+                            <div class="packaging-spec">Formula <span>MT-01</span></div>
+                            <div class="packaging-spec">Dose <span>5000MG</span></div>
+                            <div class="packaging-spec">Origin <span>Britain</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="scroll-hint" aria-hidden="true">
@@ -113,6 +132,11 @@
                 </div>
                 <div class="science-visual fade-in-right">
                     <div class="fusion-visual" data-visual="activation" aria-hidden="true">
+                        <div class="product-packaging floating" style="transform: scale(0.6) translateY(20px);">
+                            <div class="packaging-body">
+                                <div class="packaging-logo">FUSE<span>.</span></div>
+                            </div>
+                        </div>
                         <div class="fusion-core"></div>
                         <div class="fusion-ring ring-1"></div>
                         <div class="fusion-ring ring-2"></div>
@@ -177,10 +201,107 @@
 
     <!-- Product Section -->
     <section class="product" id="product">
-        <div class="hero-content fade-in">
-            <h2 class="science-hero-title">DOSE YOUR WAY.</h2>
-            <p class="hero-subtitle">Precision performance, delivered through your daily ritual.</p>
-            <button class="btn-primary magnetic" onclick="openWaitlist()">Reserve Yours</button>
+        <div class="container">
+            <div class="product-showcase fade-in">
+                <div class="product-visual">
+                    <div class="product-packaging floating">
+                        <div class="packaging-body">
+                            <div class="packaging-logo">FUSE<span>.</span></div>
+                            <div class="packaging-subtitle">Performance Fusion</div>
+                            <div class="packaging-details">
+                                <div class="packaging-spec">Formula <span>MT-01</span></div>
+                                <div class="packaging-spec">Dose <span>5000MG</span></div>
+                                <div class="packaging-spec">Origin <span>Britain</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="showcase-content">
+                    <div class="hero-british-badge">
+                        <span class="text">Pre-Order Now</span>
+                    </div>
+                    <h2>THE MORNING <br><span class="red">REVOLUTION.</span></h2>
+                    <p class="hero-subtitle">Meticulously engineered to integrate with your coffee’s molecular structure.</p>
+                    <ul class="showcase-features">
+                        <li>Ultra-fine pharmaceutical grade</li>
+                        <li>Zero clumping technology</li>
+                        <li>Heat-stable bioavailability</li>
+                    </ul>
+                    <button class="btn-primary magnetic" onclick="openWaitlist()">Join The Waitlist</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="bottom-cta" id="cta">
+        <div class="container">
+            <div class="cta-grid">
+                <div class="cta-copy fade-in-left">
+                    <h2 class="cta-title">FUSE YOUR WAY.</h2>
+                    <p class="cta-subtitle">
+                        Pick your dose. Feel the difference. Built for the ritual—engineered for performance.
+                    </p>
+                    <div class="cta-actions">
+                        <button class="btn-primary magnetic" onclick="openWaitlist()">Get Early Access</button>
+                        <button class="btn-secondary magnetic" onclick="FUSE.scrollTo('#science')">See How It Works</button>
+                    </div>
+                </div>
+
+                <div class="cta-interactive fade-in-right">
+                    <div class="dose-card" data-tilt>
+                        <div class="dose-top">
+                            <div class="dose-label">Dose configurator</div>
+                            <div class="dose-pill" aria-live="polite">
+                                <span class="dose-pill-value" id="doseValue">5</span><span class="dose-pill-unit">g</span>
+                            </div>
+                        </div>
+
+                        <div class="dose-stage" aria-hidden="true">
+                            <div class="dose-orbit"></div>
+                            <div class="dose-core"></div>
+                            <div class="dose-ticks">
+                                <span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                        </div>
+
+                        <div class="dose-controls">
+                            <label class="dose-range-label" for="doseRange">
+                                Choose your dose <span class="dose-range-hint">(5g–20g)</span>
+                            </label>
+                            <input
+                                type="range"
+                                id="doseRange"
+                                min="5"
+                                max="20"
+                                value="5"
+                                step="1"
+                                aria-describedby="doseDesc"
+                            />
+                            <div class="dose-desc" id="doseDesc">
+                                <span class="dose-mode" id="doseMode">Daily</span>
+                                <span class="dose-sep">—</span>
+                                <span class="dose-copy" id="doseCopy">Simple, consistent, no fuss.</span>
+                            </div>
+                        </div>
+
+                        <div class="dose-footer">
+                            <div class="dose-mini">
+                                <span class="dose-mini-k">Dissolves</span>
+                                <span class="dose-mini-v">&lt;3s</span>
+                            </div>
+                            <div class="dose-mini">
+                                <span class="dose-mini-k">Taste</span>
+                                <span class="dose-mini-v">Neutral</span>
+                            </div>
+                            <div class="dose-mini">
+                                <span class="dose-mini-k">Stirring</span>
+                                <span class="dose-mini-v">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
