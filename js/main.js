@@ -119,7 +119,7 @@
         .from('.hero-title span', { yPercent: 120, autoAlpha: 0, stagger: 0.16 }, 0.45)
         .from('.hero-messaging', { y: 18, autoAlpha: 0 }, 0.9)
         .from('.hero-cta-group', { y: 16, autoAlpha: 0 }, 1.05)
-        .from('.hero-visual-wrapper', { x: 40, autoAlpha: 0, duration: 1.5 }, 0.8)
+        .fromTo('.hero-visual-wrapper', { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 1.5 }, 0.8)
         .from('.nav', { y: -40, autoAlpha: 0 }, 0.2);
 
     // Hero scroll-linked depth + orbs

@@ -678,7 +678,8 @@ html.js .product-3d-fallback {
 html.js .fade-in,
 html.js .fade-in-left,
 html.js .fade-in-right,
-html.js [data-reveal] {
+html.js [data-reveal],
+html.js .hero-visual-wrapper {
     opacity: 0;
     transform: translate3d(0, 24px, 0);
     will-change: transform, opacity;
