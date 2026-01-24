@@ -83,7 +83,8 @@ fuse-creatine/
 
 The waitlist form posts to `/api/signup`, which stores signups in Vercel Blob storage
 with private access. Users must consent to be contacted and agree to the Terms and Privacy
-Policy. Admins can view signups at `/admin.html` by providing the admin token.
+Policy. Admins can view signups at `/admin` (or `/admin.html`) by providing the admin token.
+Legal pages are available at `/privacy` and `/terms`.
 
 Required environment variables:
 
