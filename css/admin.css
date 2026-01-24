@@ -164,7 +164,7 @@ input:focus {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 640px;
+    min-width: 980px;
 }
 
 th,

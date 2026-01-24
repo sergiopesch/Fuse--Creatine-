@@ -42,6 +42,8 @@ const run = async () => {
         fullName: 'Flex McGains',
         email,
         mainInterest: 'Running a real integration test to confirm storage and admin retrieval.',
+        policyVersion: 'v1.0',
+        consentToContact: true,
     };
 
     console.log(`Submitting signup to ${BASE_URL}/api/signup`);

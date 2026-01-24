@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_INTEREST_LENGTH = 1000;
+const MAX_POLICY_VERSION_LENGTH = 32;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parseBody(req) {
@@ -22,6 +23,15 @@ function parseBody(req) {
 function normalizeString(value) {
   if (typeof value !== "string") return "";
   return value.trim();
+}
+
+function parseBoolean(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    return ["true", "1", "yes", "on"].includes(value.toLowerCase());
+  }
+  return false;
 }
 
 function normalizeEmail(value) {
@@ -52,6 +62,8 @@ module.exports = async (req, res) => {
   const fullName = normalizeString(body.fullName);
   const email = normalizeEmail(body.email);
   const mainInterest = normalizeString(body.mainInterest);
+  const policyVersion = normalizeString(body.policyVersion);
+  const consentToContact = parseBoolean(body.consentToContact);
 
   if (!fullName) {
     return res.status(400).json({ error: "Full name is required" });
@@ -69,10 +81,21 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Main interest is too long" });
   }
 
+  if (!consentToContact) {
+    return res.status(400).json({ error: "Consent is required" });
+  }
+
+  if (policyVersion.length > MAX_POLICY_VERSION_LENGTH) {
+    return res.status(400).json({ error: "Policy version is invalid" });
+  }
+
   const signupData = {
     email,
     fullName: fullName.slice(0, MAX_NAME_LENGTH),
     mainInterest: mainInterest.slice(0, MAX_INTEREST_LENGTH),
+    consentToContact,
+    policyVersion: policyVersion ? policyVersion.slice(0, MAX_POLICY_VERSION_LENGTH) : "unknown",
+    consentTimestamp: new Date().toISOString(),
     signupDate: new Date().toISOString(),
   };
 

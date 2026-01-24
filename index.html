@@ -437,6 +437,19 @@
                         rows="4"
                     ></textarea>
                 </div>
+                <input type="hidden" name="policyVersion" value="v1.0">
+                <div class="form-group form-consent">
+                    <label class="consent-label">
+                        <input type="checkbox" name="consentToContact" required>
+                        <span>
+                            I agree to the
+                            <a href="terms.html" target="_blank" rel="noopener">Terms</a>
+                            and
+                            <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+                            and consent to being contacted about FUSE updates.
+                        </span>
+                    </label>
+                </div>
                 <div class="form-error" id="formError" role="alert" aria-live="polite"></div>
                 <button type="submit" class="btn-primary form-submit" id="submitBtn">Join Now</button>
             </form>

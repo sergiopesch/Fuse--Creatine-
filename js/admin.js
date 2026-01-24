@@ -72,6 +72,16 @@
             interestCell.textContent = row.mainInterest || 'N/A';
             tr.appendChild(interestCell);
 
+            const consentCell = document.createElement('td');
+            const consentLabel = row.consentToContact ? 'Yes' : 'No';
+            const consentVersion = row.policyVersion ? ` (${row.policyVersion})` : '';
+            consentCell.textContent = `${consentLabel}${consentVersion}`;
+            tr.appendChild(consentCell);
+
+            const consentDateCell = document.createElement('td');
+            consentDateCell.textContent = formatDate(row.consentTimestamp);
+            tr.appendChild(consentDateCell);
+
             const dateCell = document.createElement('td');
             dateCell.textContent = formatDate(row.signupDate || row.storedAt);
             tr.appendChild(dateCell);

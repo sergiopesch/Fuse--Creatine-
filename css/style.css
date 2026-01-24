@@ -1315,7 +1315,8 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     font-weight: 600;
 }
 
-.form-group input {
+.form-group input[type="text"],
+.form-group input[type="email"] {
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1337,7 +1338,8 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     resize: vertical;
 }
 
-.form-group input:focus {
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus {
     outline: none;
     border-color: var(--fuse-red);
 }
@@ -1345,6 +1347,33 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
 .form-group textarea:focus {
     outline: none;
     border-color: var(--fuse-red);
+}
+
+.form-consent {
+    margin-top: 0.75rem;
+}
+
+.consent-label {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    font-size: 0.95rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--light-gray);
+    font-weight: 500;
+}
+
+.consent-label input {
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--fuse-red);
+}
+
+.consent-label a {
+    color: var(--white);
+    text-decoration: underline;
 }
 
 .form-submit {
