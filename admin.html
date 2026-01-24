@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>FUSE Admin | Waitlist</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <main class="admin">
+        <header class="admin-header">
+            <div>
+                <span class="admin-eyebrow">Admin Console</span>
+                <h1 class="admin-title">Waitlist Signups</h1>
+            </div>
+            <div class="admin-actions">
+                <button class="btn ghost" id="refreshBtn" type="button" disabled>Refresh</button>
+                <button class="btn ghost" id="signOutBtn" type="button" disabled>Sign out</button>
+            </div>
+        </header>
+
+        <section class="card" id="loginCard">
+            <h2>Admin Access</h2>
+            <p class="muted">Enter the admin token to view signups.</p>
+            <form id="adminLogin" class="form">
+                <label for="adminToken">Admin token</label>
+                <input id="adminToken" name="adminToken" type="password" autocomplete="current-password" required>
+                <button class="btn primary" type="submit">Access</button>
+            </form>
+            <p class="status" id="loginStatus" role="alert" aria-live="polite"></p>
+        </section>
+
+        <section class="card hidden" id="dataCard">
+            <div class="summary">
+                <div>
+                    <div class="label">Total loaded</div>
+                    <div class="value" id="signupCount">0</div>
+                </div>
+                <div>
+                    <div class="label">Last updated</div>
+                    <div class="value" id="lastUpdated">--</div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Full name</th>
+                            <th>Email</th>
+                            <th>Signup date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signupRows"></tbody>
+                </table>
+                <div class="empty-state hidden" id="emptyState">No signups yet.</div>
+            </div>
+
+            <div class="table-actions">
+                <button class="btn ghost hidden" id="loadMoreBtn" type="button">Load more</button>
+            </div>
+
+            <p class="status" id="dataStatus" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <script defer src="js/admin.js"></script>
+</body>
+</html>

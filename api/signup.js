@@ -1,46 +1,87 @@
 const { put } = require("@vercel/blob");
+const crypto = require("crypto");
+
+const MAX_NAME_LENGTH = 120;
+const MAX_EMAIL_LENGTH = 254;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function parseBody(req) {
+  if (!req || typeof req.body === "undefined") return {};
+  if (typeof req.body === "string") {
+    try {
+      return JSON.parse(req.body);
+    } catch (error) {
+      return null;
+    }
+  }
+  if (typeof req.body === "object" && req.body) return req.body;
+  return {};
+}
+
+function normalizeString(value) {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
+
+function normalizeEmail(value) {
+  return normalizeString(value).toLowerCase();
+}
+
+function isValidEmail(email) {
+  return email.length > 0 && email.length <= MAX_EMAIL_LENGTH && EMAIL_REGEX.test(email);
+}
+
+function hashEmail(email) {
+  return crypto.createHash("sha256").update(email).digest("hex").slice(0, 16);
+}
 
 module.exports = async (req, res) => {
-  // Only allow POST requests
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Type", "application/json");
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const body = parseBody(req);
+  if (body === null) {
+    return res.status(400).json({ error: "Invalid JSON payload" });
+  }
+
+  const fullName = normalizeString(body.fullName);
+  const email = normalizeEmail(body.email);
+
+  if (!fullName) {
+    return res.status(400).json({ error: "Full name is required" });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: "Valid email is required" });
+  }
+
+  const signupData = {
+    email,
+    fullName: fullName.slice(0, MAX_NAME_LENGTH),
+    signupDate: new Date().toISOString(),
+  };
+
   try {
-    const { fullName, email } = req.body;
+    const safeId = hashEmail(email);
+    const filename = `signups/${safeId}_${Date.now()}.json`;
 
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-
-    const signupData = {
-      email: email.toLowerCase(),
-      fullName: fullName || "",
-      signupDate: new Date().toISOString(),
-    };
-
-    // Create a unique filename for this signup
-    const filename = `signups/${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}.json`;
-
-    // Store in Vercel Blob
-    // This will create a new file for every user in the 'signups' folder
-    const blob = await put(filename, JSON.stringify(signupData, null, 2), {
-      access: "public",
-      addRandomSuffix: true, // Adds extra safety for unique filenames
+    await put(filename, JSON.stringify(signupData), {
+      access: "private",
+      addRandomSuffix: true,
+      contentType: "application/json",
     });
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "Successfully joined the waitlist",
-      url: blob.url 
     });
   } catch (error) {
     console.error("Vercel Blob Error:", error);
-    
-    // Fallback: If Blob fails, we still return 200 so the frontend can show the thank you message
-    // (since we also saved it to localStorage as a backup)
-    return res.status(200).json({ 
-      message: "Stored locally", 
-      warning: "Cloud storage sync pending" 
+    return res.status(500).json({
+      error: "Unable to store signup at this time. Please try again.",
     });
   }
 };

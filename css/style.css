@@ -1334,6 +1334,17 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     width: 100%;
 }
 
+.form-error {
+    display: none;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #ff9a9a;
+}
+
+.form-error.active {
+    display: block;
+}
+
 .success-message {
     display: none;
     text-align: center;

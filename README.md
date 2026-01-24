@@ -42,10 +42,16 @@ FUSE is a premium marketing website for an innovative performance supplement - a
 
 ```
 fuse-creatine/
+├── admin.html          # Admin signups view
+├── api/
+│   ├── admin-signups.js # Protected admin API
+│   └── signup.js        # Waitlist signup API
 ├── index.html          # Single-page application
 ├── css/
+│   ├── admin.css       # Admin UI styles
 │   └── style.css       # All styling (CSS custom properties, responsive)
 ├── js/
+│   ├── admin.js        # Admin UI logic
 │   └── main.js         # Animation & interaction logic
 ├── assets/
 │   └── favicon.svg     # Brand favicon
@@ -69,6 +75,16 @@ fuse-creatine/
    ```
 
 3. Navigate to `http://localhost:8000`
+
+## Waitlist Storage and Admin Access
+
+The waitlist form posts to `/api/signup`, which stores signups in Vercel Blob storage
+with private access. Admins can view signups at `/admin.html` by providing the admin token.
+
+Required environment variables:
+
+- `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token
+- `ADMIN_TOKEN`: shared secret used to authorize `/api/admin-signups`
 
 ## Sections
 
