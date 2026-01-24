@@ -3,41 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUSE — British Performance Coffee Creatine | Instant Fusion Technology</title>
-    <meta name="description" content="Britain's first coffee-optimised creatine with Instant Fusion Technology. Engineered in the UK. Customise your dose from 5-20g. Zero stirring required. This is FUSE.">
-    <meta name="keywords" content="creatine, coffee creatine, performance, fitness, British, UK made, instant fusion">
-    <meta name="author" content="FUSE Performance Nutrition">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="FUSE — British Performance Coffee Creatine">
-    <meta property="og:description" content="Britain's first coffee-optimised creatine. Pour it in. Watch it disappear.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://fusenutrition.co.uk">
+    <title>FUSE — Performance Coffee Creatine | Instant Fusion Technology</title>
+    <meta name="description" content="Britain's first coffee-optimised creatine. Engineered in the UK. This is FUSE.">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <script>
+        document.documentElement.classList.add('js');
+    </script>
+
+    <!-- Libraries -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Pre-Launch Banner -->
-    <div class="prelaunch-banner" data-testid="prelaunch-banner">
-        <span class="uk-flag">🇬🇧</span> Pre-Launch — Join the Waitlist for Early Access
-    </div>
+    <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"></div>
 
     <!-- Navigation -->
-    <nav class="nav" id="navbar" data-testid="navbar">
-        <a href="#" class="logo" data-testid="logo">FUSE <span class="logo-uk">UK</span></a>
-        <div class="nav-links" data-testid="nav-links">
+    <nav class="nav" id="navbar">
+        <a href="#" class="logo">FUSE<span class="logo-uk">UK</span></a>
+        <div class="nav-links">
             <a href="#science">The Science</a>
             <a href="#comparison">Compare</a>
             <a href="#product">Product</a>
-            <button class="nav-cta" data-testid="nav-waitlist-btn" onclick="openWaitlist()">Join Waitlist</button>
         </div>
-        <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" data-testid="mobile-toggle">
+        <button class="nav-cta magnetic" onclick="openWaitlist()">Get Access</button>
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-controls="mobileMenu" aria-expanded="false">
             <span></span>
             <span></span>
             <span></span>
@@ -45,253 +44,99 @@
     </nav>
 
     <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu" data-testid="mobile-menu">
-        <a href="#science" onclick="closeMobileMenu()">The Science</a>
-        <a href="#comparison" onclick="closeMobileMenu()">Compare</a>
-        <a href="#product" onclick="closeMobileMenu()">Product</a>
-        <button class="mobile-menu-cta" data-testid="mobile-waitlist-btn" onclick="closeMobileMenu(); openWaitlist();">Join Waitlist</button>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#science" onclick="toggleMobileMenu()">Science</a>
+        <a href="#comparison" onclick="toggleMobileMenu()">Compare</a>
+        <a href="#product" onclick="toggleMobileMenu()">Product</a>
     </div>
 
     <!-- Hero Section -->
-    <section class="hero" id="hero" data-testid="hero-section">
-        <div class="hero-bg"></div>
-        <div class="hero-orb"></div>
-        <div class="hero-orb-secondary"></div>
+    <section class="hero" id="hero">
+        <div class="hero-orbs" aria-hidden="true">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+        </div>
         <div class="hero-content">
-            <div class="hero-british-badge">
-                <span class="flag">🇬🇧</span>
-                <span class="text">Engineered in Britain</span>
+            <div class="hero-british-badge" data-reveal="up">
+                <span class="text">🇬🇧 Engineered in Britain</span>
             </div>
-            <span class="hero-label">Performance Coffee Creatine</span>
-            <h1 class="hero-title" data-testid="hero-title">
-                POUR.
-                <span class="hero-title-line2">FUSE.</span>
+            <h1 class="hero-title">
+                <span>POUR.</span>
+                <span class="red">FUSE.</span>
             </h1>
-            <p class="hero-subtitle">Pour it in. Watch it disappear. Zero stirring required.</p>
-            <div class="hero-cta-group">
-                <button class="btn-primary" data-testid="hero-waitlist-btn" onclick="openWaitlist()">Join The Waitlist</button>
-                <button class="btn-secondary" data-testid="hero-science-btn" onclick="scrollToSection('science')">See The Science</button>
-            </div>
-            <div class="fusion-badge">
-                <span class="fusion-badge-icon">⚡</span>
-                <span class="fusion-badge-text">Instant Fusion Technology</span>
+            <p class="hero-subtitle" data-reveal="up">The first performance creatine optimized for your morning coffee. No grit. No taste. Pure power.</p>
+            <div class="hero-cta-group" data-reveal="up">
+                <button class="btn-primary magnetic" onclick="openWaitlist()">Join The Waitlist</button>
+                <button class="btn-secondary magnetic" onclick="FUSE.scrollTo('#science')">See Science</button>
             </div>
         </div>
-        <div class="scroll-indicator">
-            <div class="scroll-line"></div>
-        </div>
-    </section>
-
-    <!-- British Credentials Bar -->
-    <section class="british-bar" data-testid="british-bar">
-        <div class="british-bar-content">
-            <div class="british-item">
-                <span class="icon">🇬🇧</span>
-                <span class="text">Made in Britain</span>
-            </div>
-            <div class="british-item">
-                <span class="icon">🔬</span>
-                <span class="text">UK Lab Tested</span>
-            </div>
-            <div class="british-item">
-                <span class="icon">✓</span>
-                <span class="text">Informed Sport Certified</span>
-            </div>
-            <div class="british-item">
-                <span class="icon">🏭</span>
-                <span class="text">GMP Facility</span>
-            </div>
+        <div class="scroll-hint" aria-hidden="true">
+            <span class="scroll-hint-text">Scroll</span>
+            <span class="scroll-hint-line"></span>
         </div>
     </section>
 
     <!-- Stats Bar -->
-    <section class="stats-bar" data-testid="stats-bar">
+    <section class="stats-bar">
         <div class="stats-container">
-            <div class="stat-item fade-in" data-testid="stat-dose">
-                <div class="stat-number">5-20<span>G</span></div>
-                <div class="stat-label">Your Dose</div>
+            <div class="stat-item fade-in">
+                <div class="stat-number">20<span>G</span></div>
+                <div class="stat-label">Max Dose</div>
             </div>
-            <div class="stat-item fade-in" data-testid="stat-stirring">
+            <div class="stat-item fade-in">
                 <div class="stat-number">0</div>
                 <div class="stat-label">Stirring</div>
             </div>
-            <div class="stat-item fade-in" data-testid="stat-dissolve">
+            <div class="stat-item fade-in">
                 <div class="stat-number">3<span>S</span></div>
-                <div class="stat-label">To Dissolve</div>
+                <div class="stat-label">Dissolve Time</div>
             </div>
-            <div class="stat-item fade-in" data-testid="stat-taste">
+            <div class="stat-item fade-in">
                 <div class="stat-number">100<span>%</span></div>
                 <div class="stat-label">Coffee Taste</div>
             </div>
         </div>
     </section>
 
-    <!-- Science Section - How It Works -->
-    <section class="science-hero" id="science" data-testid="science-section">
-        <div class="science-hero-header fade-in">
-            <span class="science-hero-label">The Science of Instant Fusion</span>
-            <h2 class="science-hero-title">HOW <span class="accent">FUSE</span> WORKS</h2>
-            <p class="science-hero-subtitle">
-                Three phases of breakthrough British technology deliver creatine directly into your coffee—no stirring, no grit, no taste change. Customise your dose from 5g to 20g.
-            </p>
-        </div>
-        
-        <div class="science-steps">
-            <!-- Phase 1: Contact -->
-            <div class="science-step" data-testid="science-phase-1">
+    <!-- Science Section -->
+    <section class="science" id="science">
+        <div class="container">
+            <h2 class="science-hero-title fade-in">HOW IT WORKS</h2>
+            
+            <div class="science-step">
                 <div class="science-step-content fade-in-left">
-                    <div class="step-phase">
-                        <span class="step-phase-text">Phase 01 — Contact</span>
-                    </div>
                     <h3 class="science-step-title">INSTANT ACTIVATION</h3>
                     <p class="science-step-description">
-                        The moment FUSE touches hot coffee, our proprietary micro-encapsulation system activates. Unlike regular creatine that clumps and sinks, FUSE particles are engineered in our UK facility to disperse immediately on contact with liquid above 60°C.
+                        The moment FUSE touches hot liquid, our micro-encapsulation system activates, dispersing particles evenly without clumping.
                     </p>
-                    <ul class="science-facts">
-                        <li>
-                            <span class="icon">⚡</span>
-                            <span><strong>Self-dispersing particles</strong> — No stirring required</span>
-                        </li>
-                        <li>
-                            <span class="icon">🎯</span>
-                            <span><strong>Heat-activated release</strong> — Works with any hot coffee</span>
-                        </li>
-                        <li>
-                            <span class="icon">💧</span>
-                            <span><strong>Hydrophilic coating</strong> — Attracts water, prevents clumping</span>
-                        </li>
-                    </ul>
-                    <div class="science-stat-box">
-                        <span class="science-stat-number">&lt;3s</span>
-                        <span class="science-stat-label">to complete dispersion</span>
-                    </div>
                 </div>
                 <div class="science-visual fade-in-right">
-                    <div class="pour-animation">
-                        <div class="science-packet">
-                            <div class="science-packet-logo">FUSE</div>
-                            <div class="science-packet-sub">Creatine</div>
-                            <div class="science-packet-uk">🇬🇧</div>
-                        </div>
-                        <div class="pour-particles">
-                            <div class="pour-particle"></div>
-                            <div class="pour-particle"></div>
-                            <div class="pour-particle"></div>
-                            <div class="pour-particle"></div>
-                            <div class="pour-particle"></div>
-                            <div class="pour-particle"></div>
-                        </div>
-                        <div class="pour-ripples">
-                            <div class="pour-ripple"></div>
-                            <div class="pour-ripple"></div>
-                            <div class="pour-ripple"></div>
-                        </div>
-                        <div class="pour-coffee-container">
-                            <div class="pour-cup" id="pourCup">
-                                <div class="pour-coffee-liquid"></div>
-                            </div>
-                            <div class="pour-cup-handle"></div>
-                        </div>
-                        <div class="pour-label">
-                            <div class="pour-label-main">INSTANT CONTACT</div>
-                            <div class="pour-label-sub">Self-dispersing activation</div>
+                    <div class="fusion-visual" data-visual="activation" aria-hidden="true">
+                        <div class="fusion-core"></div>
+                        <div class="fusion-ring ring-1"></div>
+                        <div class="fusion-ring ring-2"></div>
+                        <div class="fusion-particles">
+                            <span></span><span></span><span></span><span></span><span></span><span></span>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Phase 2: Protection -->
-            <div class="science-step reverse" data-testid="science-phase-2">
+
+            <div class="science-step reverse">
                 <div class="science-step-content fade-in-right">
-                    <div class="step-phase">
-                        <span class="step-phase-text">Phase 02 — Protection</span>
-                    </div>
-                    <h3 class="science-step-title">TRIPLE SHIELD SYSTEM</h3>
+                    <h3 class="science-step-title">TRIPLE SHIELD</h3>
                     <p class="science-step-description">
-                        While dispersing, each creatine molecule remains protected by our Triple Shield System—developed in partnership with British food scientists. Three layers of defence prevent degradation from heat (85°C+) and coffee's natural acidity (pH 4.5-5.5).
+                        Three layers of thermal protection ensure your creatine stays 100% bioavailable, even in boiling coffee.
                     </p>
-                    <ul class="science-facts">
-                        <li>
-                            <span class="icon">🛡️</span>
-                            <span><strong>Liposomal encapsulation</strong> — Phospholipid barrier blocks heat</span>
-                        </li>
-                        <li>
-                            <span class="icon">⚗️</span>
-                            <span><strong>pH buffer system</strong> — Neutralises coffee acidity instantly</span>
-                        </li>
-                        <li>
-                            <span class="icon">🔬</span>
-                            <span><strong>Trehalose matrix</strong> — Advanced thermal stabilisation</span>
-                        </li>
-                    </ul>
-                    <div class="science-stat-box">
-                        <span class="science-stat-number">&lt;2%</span>
-                        <span class="science-stat-label">degradation at 85°C</span>
-                    </div>
                 </div>
                 <div class="science-visual fade-in-left">
-                    <div class="molecule-animation">
-                        <div class="molecule-container">
-                            <!-- SVG and nodes from original HTML -->
-                            <div class="creatine-core"><div class="molecule-label">YOUR<br>DOSE</div></div>
-                            <div class="shield-ring">
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                            </div>
-                            <div class="shield-ring">
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                            </div>
-                            <div class="shield-ring">
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                                <div class="shield-node"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Phase 3: Fusion -->
-            <div class="science-step" data-testid="science-phase-3">
-                <div class="science-step-content fade-in-left">
-                    <div class="step-phase">
-                        <span class="step-phase-text">Phase 03 — Fusion</span>
-                    </div>
-                    <h3 class="science-step-title">COMPLETE INTEGRATION</h3>
-                    <p class="science-step-description">
-                        Within seconds, your chosen dose of Creapure® creatine is evenly distributed throughout your coffee—completely invisible, completely tasteless, completely protected. Your coffee is now a performance drink.
-                    </p>
-                    <ul class="science-facts">
-                        <li>
-                            <span class="icon">☕</span>
-                            <span><strong>Zero taste alteration</strong> — Coffee tastes exactly the same</span>
-                        </li>
-                        <li>
-                            <span class="icon">✨</span>
-                            <span><strong>No residue</strong> — Nothing at the bottom of your cup</span>
-                        </li>
-                        <li>
-                            <span class="icon">💪</span>
-                            <span><strong>Full bioavailability</strong> — Every gram delivered</span>
-                        </li>
-                    </ul>
-                    <div class="science-stat-box">
-                        <span class="science-stat-number">100%</span>
-                        <span class="science-stat-label">dissolution guaranteed</span>
-                    </div>
-                </div>
-                <div class="science-visual fade-in-right">
-                    <div class="integration-animation">
-                        <div class="pulse-center"></div>
-                        <div class="pulse-ring"></div>
-                        <div class="pulse-ring"></div>
-                        <div class="pulse-ring"></div>
+                    <div class="fusion-visual" data-visual="shield" aria-hidden="true">
+                        <div class="fusion-core core-shield"></div>
+                        <div class="fusion-ring ring-1"></div>
+                        <div class="fusion-ring ring-2"></div>
+                        <div class="fusion-ring ring-3"></div>
+                        <div class="fusion-grid"></div>
                     </div>
                 </div>
             </div>
@@ -299,116 +144,70 @@
     </section>
 
     <!-- Comparison Section -->
-    <section class="comparison-section" id="comparison" data-testid="comparison-section">
-        <div class="comparison-grid">
-            <div class="comparison-card regular fade-in" data-testid="comparison-regular">
-                <h4 class="comparison-card-title">Regular Creatine</h4>
-                <ul class="comparison-list">
-                    <li><span class="icon">✕</span> Requires 30+ seconds of stirring</li>
-                    <li><span class="icon">✕</span> Still leaves gritty residue</li>
-                    <li><span class="icon">✕</span> 15-30% degrades in hot liquids</li>
-                    <li><span class="icon">✕</span> Alters taste of your drink</li>
-                </ul>
-            </div>
-            
-            <div class="comparison-card fuse fade-in" data-testid="comparison-fuse">
-                <h4 class="comparison-card-title">FUSE</h4>
-                <ul class="comparison-list">
-                    <li><span class="icon">✓</span> Self-dispersing — zero stirring</li>
-                    <li><span class="icon">✓</span> 100% dissolution, no residue</li>
-                    <li><span class="icon">✓</span> Less than 2% degradation</li>
-                    <li><span class="icon">✓</span> Completely taste-neutral</li>
-                </ul>
+    <section class="comparison" id="comparison">
+        <div class="container">
+            <h2 class="comparison-title fade-in">COMPARE</h2>
+            <p class="comparison-subtitle fade-in">The difference is felt in seconds.</p>
+
+            <div class="comparison-grid">
+                <article class="compare-card fade-in-left" data-tilt>
+                    <div class="compare-kicker">Regular Creatine</div>
+                    <h3 class="compare-heading">Clumps. Sinks. Compromises.</h3>
+                    <ul class="compare-list">
+                        <li>Needs stirring</li>
+                        <li>Residue in the cup</li>
+                        <li>Degrades in heat</li>
+                        <li>Can alter taste</li>
+                    </ul>
+                </article>
+
+                <article class="compare-card is-fuse fade-in-right" data-tilt>
+                    <div class="compare-kicker">FUSE</div>
+                    <h3 class="compare-heading">Disappears. Delivers. Performs.</h3>
+                    <ul class="compare-list">
+                        <li>Self-dispersing</li>
+                        <li>Zero grit</li>
+                        <li>Heat-protected</li>
+                        <li>Taste-neutral</li>
+                    </ul>
+                </article>
             </div>
         </div>
     </section>
 
     <!-- Product Section -->
-    <section class="product-section" id="product" data-testid="product-section">
-        <div class="product-grid">
-            <div class="product-visual fade-in">
-                <div class="product-box" data-testid="product-box">
-                    <div class="product-box-logo">FUSE</div>
-                    <p class="product-box-tag">Coming Soon</p>
-                </div>
-            </div>
-            <div class="product-info fade-in">
-                <span class="product-info-label">The Product</span>
-                <h2 class="product-title">DOSE IT YOUR WAY.</h2>
-                <p class="product-description">
-                    Whether you take 5g daily or load with 20g, FUSE's Instant Fusion Technology dissolves any dose instantly. Stack multiple packs for your preferred serving—it all disappears in seconds.
-                </p>
-                <div class="product-features" data-testid="product-features">
-                    <div class="feature-item">
-                        <span class="feature-title">5-20G</span>
-                        <span class="feature-desc">Flexible Dosing</span>
-                    </div>
-                    <div class="feature-item">
-                        <span class="feature-title">100%</span>
-                        <span class="feature-desc">Taste Neutral</span>
-                    </div>
-                </div>
-                <button class="btn-primary" data-testid="product-waitlist-btn" onclick="openWaitlist()">JOIN THE WAITLIST</button>
-            </div>
+    <section class="product" id="product">
+        <div class="hero-content fade-in">
+            <h2 class="science-hero-title">DOSE YOUR WAY.</h2>
+            <p class="hero-subtitle">Precision performance, delivered through your daily ritual.</p>
+            <button class="btn-primary magnetic" onclick="openWaitlist()">Reserve Yours</button>
         </div>
     </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section" data-testid="cta-section">
-        <h2 class="cta-title">POUR. <span>FUSE.</span> PERFORM.</h2>
-        <button class="btn-primary" data-testid="cta-waitlist-btn" onclick="openWaitlist()">JOIN THE WAITLIST</button>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer" data-testid="footer">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <a href="#" class="logo">FUSE <span class="logo-uk">UK</span></a>
-                <p class="footer-text">Britain's first coffee-optimised creatine with Instant Fusion Technology. Pour it in. Watch it disappear.</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-group">
-                    <h4 class="footer-group-title">PRODUCT</h4>
-                    <ul class="footer-group-links">
-                        <li><a href="#science">The Science</a></li>
-                        <li><a href="#comparison">Compare</a></li>
-                        <li><a href="#product">Product</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2026 FUSE Performance Nutrition Ltd. Registered in England & Wales.</p>
-            <p>Made in Britain 🇬🇧</p>
-        </div>
-    </footer>
 
     <!-- Waitlist Modal -->
-    <div class="modal-overlay" id="waitlistModal" role="dialog" aria-modal="true" data-testid="waitlist-modal">
+    <div class="modal-overlay" id="waitlistModal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeWaitlist()" aria-label="Close modal" data-testid="modal-close">✕</button>
-            <h3 class="modal-title">JOIN THE WAITLIST</h3>
-            <p class="modal-subtitle">Be the first to know when we launch in the UK.</p>
-            <form class="waitlist-form" id="waitlistForm" data-testid="waitlist-form" novalidate>
+            <button class="modal-close" onclick="closeWaitlist()">✕</button>
+            <h3 class="modal-title">THE WAITLIST</h3>
+            <form class="waitlist-form" id="waitlistForm">
                 <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" required data-testid="input-firstname">
+                    <label>First Name</label>
+                    <input type="text" required placeholder="John">
                 </div>
                 <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" required data-testid="input-email">
+                    <label>Email Address</label>
+                    <input type="email" required placeholder="john@example.com">
                 </div>
-                <button type="submit" class="btn-primary form-submit" id="submitBtn" data-testid="submit-btn">JOIN THE WAITLIST</button>
+                <button type="submit" class="btn-primary form-submit" id="submitBtn">Join Now</button>
             </form>
-            <div class="success-message" id="successMessage" data-testid="success-message">
-                <div class="success-icon">✓</div>
-                <h3 class="success-title">YOU'RE ON THE LIST!</h3>
-                <p>We'll notify you the moment we launch.</p>
+            <div class="success-message" id="successMessage">
+                <h3 class="modal-title">YOU'RE IN.</h3>
+                <p>We'll be in touch the moment we launch.</p>
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="js/main.js"></script>
+    <script defer src="js/main.js"></script>
 </body>
 </html>
