@@ -222,17 +222,18 @@ body::before {
 
 /* Hero */
 .hero {
-    height: 100vh;
+    min-height: 100vh;
+    height: auto;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     text-align: center;
     position: relative;
     background: radial-gradient(circle at center, #111111 0%, #000000 100%);
     overflow: hidden;
     /* Prevent fixed nav from overlapping top hero content */
-    padding: calc(var(--nav-height) + 2.25rem) 0 5rem;
+    padding: calc(var(--nav-height) + 4rem) 0 6rem;
 }
 
 .hero-main {
@@ -245,6 +246,8 @@ body::before {
     margin: 0 auto;
     padding: 0 5%;
     text-align: left;
+    position: relative;
+    z-index: 2;
 }
 
 @media (max-width: 1024px) {
@@ -260,7 +263,7 @@ body::before {
 
 @media (max-width: 768px) {
     .hero {
-        padding: calc(var(--nav-height) + 1.5rem) 0 4rem;
+        padding: calc(var(--nav-height) + 2.5rem) 0 5rem;
     }
 }
 
@@ -323,19 +326,20 @@ body::before {
 }
 
 .hero-british-badge .text {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--light-gray);
-    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .hero-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(6rem, 20vw, 16rem);
-    line-height: 0.8;
+    font-size: clamp(5rem, 16vw, 13rem);
+    line-height: 0.82;
     color: var(--white);
     overflow: hidden;
+    margin-bottom: 0.5rem;
 }
 
 .hero-title span {
@@ -350,27 +354,29 @@ body::before {
     font-size: clamp(1.2rem, 3vw, 2rem);
     color: var(--text-gray);
     font-weight: 500;
-    margin: 2rem 0 3.5rem;
+    margin: 1.5rem 0 2rem;
     max-width: 800px;
 }
 
 .hero-messaging {
     display: grid;
-    gap: 0.65rem;
+    gap: 1.5rem;
     align-items: center;
     justify-items: center;
 }
 
 .hero-footnote {
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.58);
+    color: rgba(255, 255, 255, 0.45);
     letter-spacing: 0.01em;
     max-width: 70ch;
+    margin-bottom: 2.5rem;
 }
 
 .hero-cta-group {
     display: flex;
     gap: 1.5rem;
+    margin-top: 1rem;
 }
 
 .scroll-hint {
@@ -662,6 +668,11 @@ input[type="range"] {
 [data-reveal] {
     opacity: 1;
     transform: none;
+}
+
+html.js .product-3d-fallback {
+    opacity: 0;
+    pointer-events: none;
 }
 
 html.js .fade-in,
@@ -1402,12 +1413,21 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
         padding: 5rem 5%;
     }
 
-    .hero-title { font-size: clamp(4.5rem, 18vw, 8rem); }
+    .hero-title { font-size: clamp(3.5rem, 15vw, 6.5rem); }
+
+    .hero-subtitle {
+        margin: 1rem 0 1.5rem;
+    }
+
+    .hero-footnote {
+        margin-bottom: 2rem;
+    }
 
     .hero-cta-group {
         flex-direction: column;
         gap: 1rem;
         width: 100%;
+        margin-top: 0.5rem;
     }
 
     .hero-cta-group .btn-primary,
