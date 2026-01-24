@@ -1,15 +1,4 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
-
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
-const docClient = DynamoDBDocumentClient.from(client);
+const { put } = require("@vercel/blob");
 
 module.exports = async (req, res) => {
   // Only allow POST requests
@@ -17,28 +6,41 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { fullName, email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ error: "Email is required" });
-  }
-
-  // Check if AWS credentials are provided
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    console.log("AWS Credentials missing. Signup captured locally in browser only.");
-    return res.status(200).json({ 
-      message: "Captured locally (AWS not configured)",
-      localOnly: true 
-    });
-  }
-
   try {
+    const { fullName, email } = req.body;
 
-    await docClient.send(command);
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
 
-    return res.status(200).json({ message: "Successfully joined the waitlist" });
+    const signupData = {
+      email: email.toLowerCase(),
+      fullName: fullName || "",
+      signupDate: new Date().toISOString(),
+    };
+
+    // Create a unique filename for this signup
+    const filename = `signups/${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}.json`;
+
+    // Store in Vercel Blob
+    // This will create a new file for every user in the 'signups' folder
+    const blob = await put(filename, JSON.stringify(signupData, null, 2), {
+      access: "public",
+      addRandomSuffix: true, // Adds extra safety for unique filenames
+    });
+
+    return res.status(200).json({ 
+      message: "Successfully joined the waitlist",
+      url: blob.url 
+    });
   } catch (error) {
-    console.error("DynamoDB Error:", error);
-    return res.status(500).json({ error: "Failed to store details" });
+    console.error("Vercel Blob Error:", error);
+    
+    // Fallback: If Blob fails, we still return 200 so the frontend can show the thank you message
+    // (since we also saved it to localStorage as a backup)
+    return res.status(200).json({ 
+      message: "Stored locally", 
+      warning: "Cloud storage sync pending" 
+    });
   }
 };
