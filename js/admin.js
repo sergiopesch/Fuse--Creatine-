@@ -13,11 +13,17 @@
     const signOutBtn = document.getElementById('signOutBtn');
     const signupCount = document.getElementById('signupCount');
     const lastUpdated = document.getElementById('lastUpdated');
+    const showingCount = document.getElementById('showingCount');
     const emptyState = document.getElementById('emptyState');
     const filterValue = document.getElementById('filterValue');
     const emailFilter = document.getElementById('emailFilter');
     const applyFilterBtn = document.getElementById('applyFilterBtn');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const interestFilter = document.getElementById('interestFilter');
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
+    const applyLocalFiltersBtn = document.getElementById('applyLocalFiltersBtn');
+    const clearLocalFiltersBtn = document.getElementById('clearLocalFiltersBtn');
     const copyEmailsBtn = document.getElementById('copyEmailsBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
 
@@ -32,7 +38,11 @@
         loading: false,
         total: 0,
         rows: [],
+        filteredRows: [],
         filterEmail: '',
+        filterKeyword: '',
+        filterFrom: '',
+        filterTo: '',
     };
 
     const setStatus = (element, message, type) => {
@@ -41,24 +51,58 @@
         element.classList.toggle('good', type === 'good');
     };
 
+    const parseDateInput = (value, endOfDay = false) => {
+        if (!value) return null;
+        const date = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return null;
+        if (endOfDay) {
+            date.setHours(23, 59, 59, 999);
+        }
+        return date;
+    };
+
+    const hasActiveFilters = () => {
+        return Boolean(state.filterEmail || state.filterKeyword || state.filterFrom || state.filterTo);
+    };
+
+    const getFilterSummary = () => {
+        const parts = [];
+        if (state.filterEmail) {
+            parts.push(`Email: ${state.filterEmail}`);
+        }
+        if (state.filterKeyword) {
+            parts.push(`Interest: "${state.filterKeyword}"`);
+        }
+        if (state.filterFrom || state.filterTo) {
+            const from = state.filterFrom || 'Any';
+            const to = state.filterTo || 'Any';
+            parts.push(`Date: ${from}→${to}`);
+        }
+        return parts.length ? parts.join(' • ') : 'All';
+    };
+
     const setEmptyState = (visible) => {
         if (!emptyState) return;
         if (visible) {
-            emptyState.textContent = state.filterEmail ? 'No signups for this filter.' : 'No signups yet.';
+            emptyState.textContent = hasActiveFilters()
+                ? 'No signups match these filters.'
+                : 'No signups yet.';
         }
         emptyState.classList.toggle('hidden', !visible);
     };
 
     const updateSummary = () => {
         if (signupCount) signupCount.textContent = String(state.total);
+        if (showingCount) showingCount.textContent = String(state.filteredRows.length);
         if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString('en-GB');
-        if (filterValue) filterValue.textContent = state.filterEmail || 'All';
+        if (filterValue) filterValue.textContent = getFilterSummary();
     };
 
     const resetTable = () => {
         if (signupRows) signupRows.innerHTML = '';
         state.total = 0;
         state.rows = [];
+        state.filteredRows = [];
         setEmptyState(false);
     };
 
@@ -69,7 +113,9 @@
     };
 
     const renderRows = (rows) => {
-        if (!signupRows || !rows.length) return;
+        if (!signupRows) return;
+        signupRows.innerHTML = '';
+        if (!rows.length) return;
         const fragment = document.createDocumentFragment();
         rows.forEach((row) => {
             const tr = document.createElement('tr');
@@ -109,10 +155,13 @@
         if (refreshBtn) refreshBtn.disabled = !enabled;
         if (signOutBtn) signOutBtn.disabled = !enabled;
         if (emailFilter) emailFilter.disabled = !enabled;
+        if (interestFilter) interestFilter.disabled = !enabled;
+        if (fromDateInput) fromDateInput.disabled = !enabled;
+        if (toDateInput) toDateInput.disabled = !enabled;
     };
 
     const updateUtilityButtons = () => {
-        const hasRows = state.rows.length > 0;
+        const hasRows = state.filteredRows.length > 0;
         if (copyEmailsBtn) copyEmailsBtn.disabled = !hasRows;
         if (exportCsvBtn) exportCsvBtn.disabled = !hasRows;
     };
@@ -122,6 +171,14 @@
         const isFiltered = Boolean(state.filterEmail);
         if (applyFilterBtn) applyFilterBtn.disabled = !hasInput || state.loading;
         if (clearFilterBtn) clearFilterBtn.disabled = !isFiltered || state.loading;
+        const hasLocalInput = Boolean(
+            (interestFilter && interestFilter.value.trim()) ||
+            (fromDateInput && fromDateInput.value) ||
+            (toDateInput && toDateInput.value)
+        );
+        const isLocalFiltered = Boolean(state.filterKeyword || state.filterFrom || state.filterTo);
+        if (applyLocalFiltersBtn) applyLocalFiltersBtn.disabled = !hasLocalInput || state.loading;
+        if (clearLocalFiltersBtn) clearLocalFiltersBtn.disabled = !isLocalFiltered || state.loading;
     };
 
     const showLogin = (message) => {
@@ -154,6 +211,36 @@
         if (!loadMoreBtn) return;
         loadMoreBtn.classList.toggle('hidden', !state.hasMore);
         loadMoreBtn.disabled = state.loading || !state.hasMore;
+    };
+
+    const recomputeRows = () => {
+        const keyword = state.filterKeyword;
+        const fromDate = parseDateInput(state.filterFrom);
+        const toDate = parseDateInput(state.filterTo, true);
+
+        const filtered = state.rows.filter((row) => {
+            if (keyword) {
+                const haystack = String(row.mainInterest || '').toLowerCase();
+                if (!haystack.includes(keyword)) return false;
+            }
+
+            if (fromDate || toDate) {
+                const dateValue = row.signupDate || row.storedAt;
+                const parsed = dateValue ? new Date(dateValue) : null;
+                if (!parsed || Number.isNaN(parsed.getTime())) return false;
+                if (fromDate && parsed < fromDate) return false;
+                if (toDate && parsed > toDate) return false;
+            }
+
+            return true;
+        });
+
+        state.filteredRows = filtered;
+        state.total = state.rows.length;
+        renderRows(filtered);
+        updateSummary();
+        updateUtilityButtons();
+        setEmptyState(filtered.length === 0);
     };
 
     const fetchSignups = async ({ reset } = {}) => {
@@ -198,15 +285,12 @@
             const payload = await response.json();
             const signups = Array.isArray(payload.signups) ? payload.signups : [];
 
-            renderRows(signups);
-            state.total += signups.length;
             state.rows = state.rows.concat(signups);
             state.cursor = payload.cursor || null;
             state.hasMore = Boolean(payload.hasMore);
-            updateSummary();
             updatePagination();
-            setEmptyState(state.total === 0);
             setStatus(dataStatus, signups.length ? 'Loaded.' : 'No new signups.', 'good');
+            recomputeRows();
         } catch (error) {
             setStatus(dataStatus, error && error.message ? error.message : 'Unable to load signups.');
         } finally {
@@ -236,7 +320,13 @@
         clearToken();
         if (tokenInput) tokenInput.value = '';
         if (emailFilter) emailFilter.value = '';
+        if (interestFilter) interestFilter.value = '';
+        if (fromDateInput) fromDateInput.value = '';
+        if (toDateInput) toDateInput.value = '';
         state.filterEmail = '';
+        state.filterKeyword = '';
+        state.filterFrom = '';
+        state.filterTo = '';
         resetTable();
         setStatus(dataStatus, '');
         showLogin('Signed out.');
@@ -263,8 +353,41 @@
         updateFilterControls();
     };
 
+    const applyLocalFilters = () => {
+        const keyword = interestFilter ? interestFilter.value.trim().toLowerCase() : '';
+        const fromValue = fromDateInput ? fromDateInput.value : '';
+        const toValue = toDateInput ? toDateInput.value : '';
+        const fromDate = parseDateInput(fromValue);
+        const toDate = parseDateInput(toValue, true);
+
+        if (fromDate && toDate && fromDate > toDate) {
+            setStatus(dataStatus, 'Date range is invalid.');
+            return;
+        }
+
+        state.filterKeyword = keyword;
+        state.filterFrom = fromValue;
+        state.filterTo = toValue;
+
+        updateSummary();
+        recomputeRows();
+        updateFilterControls();
+    };
+
+    const clearLocalFilters = () => {
+        if (interestFilter) interestFilter.value = '';
+        if (fromDateInput) fromDateInput.value = '';
+        if (toDateInput) toDateInput.value = '';
+        state.filterKeyword = '';
+        state.filterFrom = '';
+        state.filterTo = '';
+        updateSummary();
+        recomputeRows();
+        updateFilterControls();
+    };
+
     const copyEmails = async () => {
-        const emails = Array.from(new Set(state.rows.map((row) => row.email).filter(Boolean)));
+        const emails = Array.from(new Set(state.filteredRows.map((row) => row.email).filter(Boolean)));
         if (!emails.length) return;
         const text = emails.join('\n');
 
@@ -293,7 +416,7 @@
     };
 
     const exportCsv = () => {
-        if (!state.rows.length) return;
+        if (!state.filteredRows.length) return;
         const headers = [
             'Full Name',
             'Email',
@@ -304,7 +427,7 @@
             'Signup Date',
             'Stored At',
         ];
-        const rows = state.rows.map((row) => [
+        const rows = state.filteredRows.map((row) => [
             row.fullName,
             row.email,
             row.mainInterest,
@@ -360,6 +483,32 @@
                 applyFilter();
             }
         });
+    }
+
+    if (applyLocalFiltersBtn) {
+        applyLocalFiltersBtn.addEventListener('click', applyLocalFilters);
+    }
+
+    if (clearLocalFiltersBtn) {
+        clearLocalFiltersBtn.addEventListener('click', clearLocalFilters);
+    }
+
+    if (interestFilter) {
+        interestFilter.addEventListener('input', updateFilterControls);
+        interestFilter.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyLocalFilters();
+            }
+        });
+    }
+
+    if (fromDateInput) {
+        fromDateInput.addEventListener('change', updateFilterControls);
+    }
+
+    if (toDateInput) {
+        toDateInput.addEventListener('change', updateFilterControls);
     }
 
     if (copyEmailsBtn) {

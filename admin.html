@@ -44,6 +44,10 @@
                     <div class="value" id="lastUpdated">--</div>
                 </div>
                 <div>
+                    <div class="label">Showing</div>
+                    <div class="value" id="showingCount">0</div>
+                </div>
+                <div>
                     <div class="label">Filter</div>
                     <div class="value" id="filterValue">All</div>
                 </div>
@@ -55,6 +59,16 @@
                     <input id="emailFilter" type="email" placeholder="flex@gainmail.com">
                     <button class="btn ghost" id="applyFilterBtn" type="button" disabled>Search</button>
                     <button class="btn ghost" id="clearFilterBtn" type="button" disabled>Clear</button>
+                </div>
+                <div class="toolbar-group">
+                    <label class="toolbar-label" for="interestFilter">Interest keyword</label>
+                    <input id="interestFilter" type="text" placeholder="powerlifting">
+                    <label class="toolbar-label" for="fromDate">From</label>
+                    <input id="fromDate" type="date">
+                    <label class="toolbar-label" for="toDate">To</label>
+                    <input id="toDate" type="date">
+                    <button class="btn ghost" id="applyLocalFiltersBtn" type="button" disabled>Apply</button>
+                    <button class="btn ghost" id="clearLocalFiltersBtn" type="button" disabled>Reset</button>
                 </div>
                 <div class="toolbar-group">
                     <button class="btn ghost" id="copyEmailsBtn" type="button" disabled>Copy emails</button>
