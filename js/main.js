@@ -322,25 +322,6 @@
             card.addEventListener('mouseleave', reset);
             card.addEventListener('blur', reset);
         });
-
-        // Add Product Packaging Interaction
-        document.querySelectorAll('.product-packaging').forEach((pkg) => {
-            const body = pkg.querySelector('.packaging-body');
-            const maxTilt = 12;
-            const reset = () => gsap.to(body, { rotationX: 0, rotationY: 0, duration: 0.8, ease: 'power3.out' });
-
-            pkg.addEventListener('mousemove', (e) => {
-                const r = pkg.getBoundingClientRect();
-                const px = (e.clientX - r.left) / r.width;
-                const py = (e.clientY - r.top) / r.height;
-
-                const rotY = (px - 0.5) * (maxTilt * 2);
-                const rotX = -(py - 0.5) * (maxTilt * 2);
-
-                gsap.to(body, { rotationX: rotX, rotationY: rotY, transformPerspective: 1000, duration: 0.3, ease: 'power2.out' });
-            });
-            pkg.addEventListener('mouseleave', reset);
-        });
     }
 
     // Bottom CTA dose configurator
