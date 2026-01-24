@@ -173,6 +173,8 @@ td {
     text-align: left;
     border-bottom: 1px solid #1f1f1f;
     font-size: 0.95rem;
+    vertical-align: top;
+    word-break: break-word;
 }
 
 th {
@@ -181,6 +183,11 @@ th {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--muted);
+}
+
+td:nth-child(3) {
+    max-width: 360px;
+    white-space: pre-wrap;
 }
 
 tr:last-child td {

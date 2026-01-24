@@ -86,6 +86,20 @@ Required environment variables:
 - `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token
 - `ADMIN_TOKEN`: shared secret used to authorize `/api/admin-signups`
 
+## Integration Test (Production-Ready)
+
+Run a real end-to-end test against your deployed environment. This will submit a real signup
+and then confirm it appears in the admin listing.
+
+```bash
+BASE_URL="https://your-deployment-url" \
+ADMIN_TOKEN="your-admin-token" \
+npm test
+```
+
+The test script retries the admin lookup with exponential backoff to account for
+storage consistency delays.
+
 ## Sections
 
 | Section | Description |

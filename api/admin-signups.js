@@ -3,6 +3,8 @@ const crypto = require("crypto");
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+const MAX_EMAIL_LENGTH = 254;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getHeaderValue(value) {
   if (Array.isArray(value)) return value[0] || "";
@@ -18,6 +20,23 @@ function getAuthToken(req) {
 
   const altHeader = getHeaderValue(req.headers["x-admin-token"]);
   return altHeader.trim();
+}
+
+function normalizeString(value) {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
+
+function normalizeEmail(value) {
+  return normalizeString(value).toLowerCase();
+}
+
+function isValidEmail(email) {
+  return email.length > 0 && email.length <= MAX_EMAIL_LENGTH && EMAIL_REGEX.test(email);
+}
+
+function hashEmail(email) {
+  return crypto.createHash("sha256").update(email).digest("hex").slice(0, 16);
 }
 
 function tokensMatch(provided, expected) {
@@ -69,10 +88,15 @@ module.exports = async (req, res) => {
     ? Math.min(Math.max(limitParam, 1), MAX_LIMIT)
     : DEFAULT_LIMIT;
   const cursor = req.query && req.query.cursor ? String(req.query.cursor) : undefined;
+  const emailFilter = req.query && req.query.email ? normalizeEmail(req.query.email) : "";
+
+  if (emailFilter && !isValidEmail(emailFilter)) {
+    return res.status(400).json({ error: "Valid email filter is required" });
+  }
 
   try {
     const { blobs, cursor: nextCursor, hasMore } = await list({
-      prefix: "signups/",
+      prefix: emailFilter ? `signups/${hashEmail(emailFilter)}_` : "signups/",
       limit,
       cursor,
     });
