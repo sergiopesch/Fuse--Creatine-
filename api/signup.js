@@ -7,6 +7,57 @@ const MAX_INTEREST_LENGTH = 1000;
 const MAX_POLICY_VERSION_LENGTH = 32;
 const MAX_HONEYPOT_LENGTH = 120;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_IP_MAX = 8;
+const RATE_LIMIT_EMAIL_MAX = 4;
+const RATE_LIMIT_MAX_ENTRIES = 5000;
+
+const rateLimitStore = new Map();
+
+function getHeaderValue(value) {
+  if (Array.isArray(value)) return value[0] || "";
+  if (typeof value === "string") return value;
+  return "";
+}
+
+function getClientIp(req) {
+  const forwarded = getHeaderValue(req.headers["x-forwarded-for"]);
+  if (forwarded) return forwarded.split(",")[0].trim();
+  const realIp = getHeaderValue(req.headers["x-real-ip"]);
+  if (realIp) return realIp.trim();
+  const remote = req.socket?.remoteAddress || req.connection?.remoteAddress;
+  return remote || "unknown";
+}
+
+function pruneRateLimitStore(now) {
+  if (rateLimitStore.size <= RATE_LIMIT_MAX_ENTRIES) return;
+  for (const [key, entry] of rateLimitStore.entries()) {
+    if (!entry || !entry.lastSeen || now - entry.lastSeen > RATE_LIMIT_WINDOW_MS) {
+      rateLimitStore.delete(key);
+    }
+    if (rateLimitStore.size <= RATE_LIMIT_MAX_ENTRIES) break;
+  }
+}
+
+function checkRateLimit(key, limit, windowMs) {
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
+  const timestamps = entry ? entry.timestamps : [];
+  const cutoff = now - windowMs;
+  const recent = timestamps.filter((ts) => ts > cutoff);
+
+  if (recent.length >= limit) {
+    rateLimitStore.set(key, { timestamps: recent, lastSeen: now });
+    pruneRateLimitStore(now);
+    const retryAfterMs = recent[0] + windowMs - now;
+    return { limited: true, retryAfterMs };
+  }
+
+  recent.push(now);
+  rateLimitStore.set(key, { timestamps: recent, lastSeen: now });
+  pruneRateLimitStore(now);
+  return { limited: false, retryAfterMs: 0 };
+}
 
 function parseBody(req) {
   if (!req || typeof req.body === "undefined") return {};
@@ -77,6 +128,13 @@ module.exports = async (req, res) => {
     }
   }
 
+  const clientIp = getClientIp(req);
+  const ipLimit = checkRateLimit(`ip:${clientIp}`, RATE_LIMIT_IP_MAX, RATE_LIMIT_WINDOW_MS);
+  if (ipLimit.limited) {
+    res.setHeader("Retry-After", Math.ceil(ipLimit.retryAfterMs / 1000));
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
+
   const body = parseBody(req);
   if (body === null) {
     return res.status(400).json({ error: "Invalid JSON payload" });
@@ -99,6 +157,12 @@ module.exports = async (req, res) => {
 
   if (!isValidEmail(email)) {
     return res.status(400).json({ error: "Valid email is required" });
+  }
+
+  const emailLimit = checkRateLimit(`email:${email}`, RATE_LIMIT_EMAIL_MAX, RATE_LIMIT_WINDOW_MS);
+  if (emailLimit.limited) {
+    res.setHeader("Retry-After", Math.ceil(emailLimit.retryAfterMs / 1000));
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
   }
 
   if (!mainInterest) {
