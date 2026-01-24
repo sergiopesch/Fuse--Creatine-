@@ -104,7 +104,7 @@ module.exports = async (req, res) => {
     const filename = `signups/${safeId}_${Date.now()}.json`;
 
     await put(filename, JSON.stringify(signupData), {
-      access: "private",
+      access: "public",
       addRandomSuffix: true,
       contentType: "application/json",
     });
