@@ -456,6 +456,7 @@
     const waitlistForm = document.getElementById('waitlistForm');
     const successMessage = document.getElementById('successMessage');
     const submitBtn = document.getElementById('submitBtn');
+    const formError = document.getElementById('formError');
 
     window.openWaitlist = function () {
         if (!modalOverlay) return;
@@ -522,66 +523,92 @@
 
     // Waitlist submission
     if (waitlistForm && submitBtn && successMessage) {
+        const submitLabel = submitBtn.innerText;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        const setSubmitState = (isLoading) => {
+            submitBtn.disabled = isLoading;
+            submitBtn.innerText = isLoading ? 'JOINING...' : submitLabel;
+        };
+
+        const setFormError = (message) => {
+            if (!formError) return;
+            if (!message) {
+                formError.textContent = '';
+                formError.classList.remove('active');
+                return;
+            }
+            formError.textContent = message;
+            formError.classList.add('active');
+        };
+
+        const showSuccess = () => {
+            gsap.to(waitlistForm, {
+                opacity: 0,
+                duration: 0.25,
+                onComplete: () => {
+                    waitlistForm.style.display = 'none';
+                    successMessage.classList.add('active');
+                    gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+
+                    // Auto-refresh after 3 seconds
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                },
+            });
+        };
+
         waitlistForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'JOINING...';
+            setFormError('');
 
             const formData = new FormData(waitlistForm);
             const data = {
-                fullName: formData.get('fullName'),
-                email: formData.get('email')
+                fullName: String(formData.get('fullName') || '').trim(),
+                email: String(formData.get('email') || '').trim().toLowerCase(),
+                mainInterest: String(formData.get('mainInterest') || '').trim(),
             };
 
-            try {
-                // Local fallback: Store in localStorage
-                const signups = JSON.parse(localStorage.getItem('fuse_signups') || '[]');
-                signups.push({ ...data, signupDate: new Date().toISOString() });
-                localStorage.setItem('fuse_signups', JSON.stringify(signups));
+            if (!data.fullName) {
+                setFormError('Please enter your full name.');
+                return;
+            }
 
+            if (!emailRegex.test(data.email)) {
+                setFormError('Please enter a valid email address.');
+                return;
+            }
+
+            if (!data.mainInterest) {
+                setFormError('Please share your main interest.');
+                return;
+            }
+
+            setSubmitState(true);
+
+            try {
                 const response = await fetch('/api/signup', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
                 });
 
-                // We proceed with success if either the API succeeds OR we've at least saved it locally
-                // This ensures the UI works even without the AWS backend configured yet
-                if (response.ok || !response.ok) { 
-                    gsap.to(waitlistForm, {
-                        opacity: 0,
-                        duration: 0.25,
-                        onComplete: () => {
-                            waitlistForm.style.display = 'none';
-                            successMessage.classList.add('active');
-                            gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
-                            
-                            // Auto-refresh after 3 seconds
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 3000);
-                        },
-                    });
+                if (!response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    const message = payload && payload.error
+                        ? payload.error
+                        : 'Unable to save your details. Please try again.';
+                    throw new Error(message);
                 }
+
+                showSuccess();
             } catch (error) {
-                // Even if the fetch fails (e.g. API not running), we've already saved to localStorage
-                console.warn('API submission failed, but data was saved locally:', error);
-                
-                gsap.to(waitlistForm, {
-                    opacity: 0,
-                    duration: 0.25,
-                    onComplete: () => {
-                        waitlistForm.style.display = 'none';
-                        successMessage.classList.add('active');
-                        gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
-                        
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 3000);
-                    },
-                });
+                console.warn('Signup failed:', error);
+                setFormError(error && error.message ? error.message : 'Unable to save your details. Please try again.');
+                setSubmitState(false);
             }
         });
     }

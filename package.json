@@ -4,7 +4,8 @@
   "description": "Britain's first coffee-optimized creatine with Instant Fusion Technology.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/test-signup-integration.js",
+    "test:integration": "node scripts/test-signup-integration.js"
   },
   "repository": {
     "type": "git",
