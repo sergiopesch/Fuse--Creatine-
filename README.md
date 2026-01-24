@@ -91,6 +91,7 @@ Required environment variables:
 
 - `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token
 - `ADMIN_TOKEN`: shared secret used to authorize `/api/admin-signups`
+- `ENCRYPTION_KEY`: A 32+ character string used to encrypt PII in storage. (Required for security)
 
 ## Integration Test (Production-Ready)
 
