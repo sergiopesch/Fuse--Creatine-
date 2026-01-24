@@ -34,6 +34,15 @@
     const scrollProgress = document.getElementById('scrollProgress');
     const cursor = document.getElementById('cursor');
 
+    // Keep CSS var in sync with actual nav height (prevents hero overlap)
+    let maxNavHeight = 0;
+    function updateNavHeightVar() {
+        if (!navbar) return;
+        // Use the largest observed height (non-scrolled state is usually tallest)
+        maxNavHeight = Math.max(maxNavHeight, navbar.offsetHeight || 0);
+        if (maxNavHeight) document.documentElement.style.setProperty('--nav-height', `${maxNavHeight}px`);
+    }
+
     // Scroll progress
     if (scrollProgress && !prefersReducedMotion) {
         gsap.to(scrollProgress, {
@@ -68,6 +77,7 @@
 
     // Navigation – direction-aware hide/show
     if (navbar) {
+        updateNavHeightVar();
         ScrollTrigger.create({
             start: 'top -100',
             onUpdate: (self) => {
@@ -253,18 +263,36 @@
 
     // Science visuals – engineered motion
     if (!prefersReducedMotion) {
-        // Continuous rings
+        // Continuous rings (fusion + activation)
+        gsap.to('[data-visual="fusion"] .ring-1', { rotation: 360, duration: 14, ease: 'none', repeat: -1 });
+        gsap.to('[data-visual="fusion"] .ring-2', { rotation: -360, duration: 20, ease: 'none', repeat: -1 });
+        gsap.to('[data-visual="fusion"] .ring-3', { rotation: 360, duration: 28, ease: 'none', repeat: -1 });
+
         gsap.to('[data-visual="activation"] .ring-1', { rotation: 360, duration: 10, ease: 'none', repeat: -1 });
         gsap.to('[data-visual="activation"] .ring-2', { rotation: -360, duration: 16, ease: 'none', repeat: -1 });
-        gsap.to('[data-visual="shield"] .ring-1', { rotation: 360, duration: 12, ease: 'none', repeat: -1 });
-        gsap.to('[data-visual="shield"] .ring-2', { rotation: -360, duration: 18, ease: 'none', repeat: -1 });
-        gsap.to('[data-visual="shield"] .ring-3', { rotation: 360, duration: 26, ease: 'none', repeat: -1 });
 
-        // Activation particles breathe
-        gsap.to('[data-visual="activation"] .fusion-particles span', {
+        // Fusion nodes pulse
+        gsap.to('[data-visual="fusion"] .fusion-nodes span', {
+            autoAlpha: 1,
+            scale: 1.35,
+            duration: 0.75,
+            ease: 'power2.inOut',
+            stagger: { each: 0.12, from: 'random', repeat: -1, yoyo: true },
+        });
+
+        // Activation waves + sparks
+        gsap.to('[data-visual="activation"] .activation-wave', {
+            scale: 1.12,
+            autoAlpha: 0.1,
+            duration: 1.6,
+            ease: 'power2.inOut',
+            stagger: { each: 0.25, repeat: -1, yoyo: true },
+        });
+
+        gsap.to('[data-visual="activation"] .activation-sparks span', {
             autoAlpha: 1,
             scale: 1.25,
-            duration: 0.65,
+            duration: 0.6,
             ease: 'power2.inOut',
             stagger: { each: 0.08, from: 'random', repeat: -1, yoyo: true },
         });
@@ -282,6 +310,29 @@
             });
         });
     }
+
+    // Science comparison bars
+    document.querySelectorAll('.science-compare-bar').forEach((bar) => {
+        const fill = bar.querySelector('.science-compare-fill');
+        const progress = parseFloat(bar.dataset.progress || '0');
+        if (!fill) return;
+
+        if (prefersReducedMotion) {
+            fill.style.transform = `scaleX(${progress})`;
+            return;
+        }
+
+        gsap.fromTo(
+            fill,
+            { scaleX: 0 },
+            {
+                scaleX: progress,
+                duration: 1.2,
+                ease: 'power3.out',
+                scrollTrigger: { trigger: bar, start: 'top 80%' },
+            }
+        );
+    });
 
     // Magnetic buttons (tactile feel)
     function enableMagnetic(el) {
@@ -464,7 +515,11 @@
 
     // Ensure layouts are measured correctly
     setTimeout(() => ScrollTrigger.refresh(), 50);
-    window.addEventListener('resize', () => ScrollTrigger.refresh());
+    window.addEventListener('resize', () => {
+        updateNavHeightVar();
+        ScrollTrigger.refresh();
+    });
+    window.addEventListener('load', updateNavHeightVar);
 
     console.log('FUSE Motion System Initialised.');
 })();
