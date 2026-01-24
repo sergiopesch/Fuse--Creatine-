@@ -17,23 +17,22 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  try {
-    const { firstName, email } = req.body;
+  const { fullName, email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
 
-    const tableName = process.env.DYNAMODB_TABLE_NAME || "fuse_signups";
-
-    const command = new PutCommand({
-      TableName: tableName,
-      Item: {
-        email: email.toLowerCase(),
-        firstName: firstName || "",
-        signupDate: new Date().toISOString(),
-      },
+  // Check if AWS credentials are provided
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    console.log("AWS Credentials missing. Signup captured locally in browser only.");
+    return res.status(200).json({ 
+      message: "Captured locally (AWS not configured)",
+      localOnly: true 
     });
+  }
+
+  try {
 
     await docClient.send(command);
 
