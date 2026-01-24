@@ -40,6 +40,7 @@ async function fetchSignup(blob) {
     id: blob.pathname,
     fullName: data.fullName || "",
     email: data.email || "",
+    mainInterest: data.mainInterest || "",
     signupDate: data.signupDate || blob.uploadedAt.toISOString(),
     storedAt: blob.uploadedAt.toISOString(),
   };

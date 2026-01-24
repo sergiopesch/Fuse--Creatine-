@@ -68,6 +68,10 @@
             emailCell.textContent = row.email || 'N/A';
             tr.appendChild(emailCell);
 
+            const interestCell = document.createElement('td');
+            interestCell.textContent = row.mainInterest || 'N/A';
+            tr.appendChild(interestCell);
+
             const dateCell = document.createElement('td');
             dateCell.textContent = formatDate(row.signupDate || row.storedAt);
             tr.appendChild(dateCell);

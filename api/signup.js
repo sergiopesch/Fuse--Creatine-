@@ -3,6 +3,7 @@ const crypto = require("crypto");
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
+const MAX_INTEREST_LENGTH = 1000;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function parseBody(req) {
@@ -50,6 +51,7 @@ module.exports = async (req, res) => {
 
   const fullName = normalizeString(body.fullName);
   const email = normalizeEmail(body.email);
+  const mainInterest = normalizeString(body.mainInterest);
 
   if (!fullName) {
     return res.status(400).json({ error: "Full name is required" });
@@ -59,9 +61,18 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Valid email is required" });
   }
 
+  if (!mainInterest) {
+    return res.status(400).json({ error: "Main interest is required" });
+  }
+
+  if (mainInterest.length > MAX_INTEREST_LENGTH) {
+    return res.status(400).json({ error: "Main interest is too long" });
+  }
+
   const signupData = {
     email,
     fullName: fullName.slice(0, MAX_NAME_LENGTH),
+    mainInterest: mainInterest.slice(0, MAX_INTEREST_LENGTH),
     signupDate: new Date().toISOString(),
   };
 

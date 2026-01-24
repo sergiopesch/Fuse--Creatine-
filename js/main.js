@@ -567,6 +567,7 @@
             const data = {
                 fullName: String(formData.get('fullName') || '').trim(),
                 email: String(formData.get('email') || '').trim().toLowerCase(),
+                mainInterest: String(formData.get('mainInterest') || '').trim(),
             };
 
             if (!data.fullName) {
@@ -576,6 +577,11 @@
 
             if (!emailRegex.test(data.email)) {
                 setFormError('Please enter a valid email address.');
+                return;
+            }
+
+            if (!data.mainInterest) {
+                setFormError('Please share your main interest.');
                 return;
             }
 
