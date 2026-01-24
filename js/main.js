@@ -571,6 +571,7 @@
                 mainInterest: String(formData.get('mainInterest') || '').trim(),
                 policyVersion: String(formData.get('policyVersion') || '').trim(),
                 consentToContact: consentValue === 'on' || consentValue === 'true' || consentValue === true,
+                company: String(formData.get('company') || '').trim(),
             };
 
             if (!data.fullName) {

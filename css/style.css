@@ -1353,6 +1353,15 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     margin-top: 0.75rem;
 }
 
+.honeypot {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 .consent-label {
     display: flex;
     gap: 0.8rem;
