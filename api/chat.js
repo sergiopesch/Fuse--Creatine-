@@ -84,9 +84,16 @@ export default async function handler(req, res) {
     }
 
     // Check for API key
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
-        console.error('ANTHROPIC_API_KEY not configured');
+        const keyExists = 'ANTHROPIC_API_KEY' in process.env;
+        const keyValue = process.env.ANTHROPIC_API_KEY;
+        console.error('ANTHROPIC_API_KEY issue:', {
+            exists: keyExists,
+            isEmpty: keyValue === '',
+            isWhitespace: keyValue?.trim() === '',
+            length: keyValue?.length || 0
+        });
         return res.status(500).json({
             error: 'Chat service not configured. Please contact support.'
         });
@@ -135,11 +142,22 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error('Anthropic API error:', response.status, errorData);
+            console.error('Anthropic API error:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorData,
+                keyPrefix: apiKey?.substring(0, 10) + '...'
+            });
 
             if (response.status === 401) {
                 return res.status(500).json({
                     error: 'Chat service authentication failed. Please contact support.'
+                });
+            }
+
+            if (response.status === 400) {
+                return res.status(500).json({
+                    error: 'Chat service request error. Please try again.'
                 });
             }
 
