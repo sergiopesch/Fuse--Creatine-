@@ -1,11 +1,19 @@
 (() => {
     'use strict';
 
+    // DOM Elements - Login
     const loginCard = document.getElementById('loginCard');
-    const dataCard = document.getElementById('dataCard');
     const loginForm = document.getElementById('adminLogin');
     const tokenInput = document.getElementById('adminToken');
     const loginStatus = document.getElementById('loginStatus');
+
+    // DOM Elements - Navigation
+    const tabNav = document.getElementById('tabNav');
+    const tabs = document.querySelectorAll('.tab');
+    const analyticsCard = document.getElementById('analyticsCard');
+    const dataCard = document.getElementById('dataCard');
+
+    // DOM Elements - Data Table
     const dataStatus = document.getElementById('dataStatus');
     const signupRows = document.getElementById('signupRows');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -27,9 +35,49 @@
     const copyEmailsBtn = document.getElementById('copyEmailsBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
 
+    // DOM Elements - Analytics
+    const metricTotal = document.getElementById('metricTotal');
+    const metricTotalTrend = document.getElementById('metricTotalTrend');
+    const metricToday = document.getElementById('metricToday');
+    const metricTodayTrend = document.getElementById('metricTodayTrend');
+    const metricWeek = document.getElementById('metricWeek');
+    const metricWeekTrend = document.getElementById('metricWeekTrend');
+    const metricConsent = document.getElementById('metricConsent');
+    const metricConsentTrend = document.getElementById('metricConsentTrend');
+    const statDailyAvg = document.getElementById('statDailyAvg');
+    const statPeakDay = document.getElementById('statPeakDay');
+    const statPeakCount = document.getElementById('statPeakCount');
+    const statMonth = document.getElementById('statMonth');
+    const statMonthGrowth = document.getElementById('statMonthGrowth');
+    const statFirstDate = document.getElementById('statFirstDate');
+    const statDaysActive = document.getElementById('statDaysActive');
+    const interestLegend = document.getElementById('interestLegend');
+    const hourlyHeatmap = document.getElementById('hourlyHeatmap');
+    const chartRangeBtns = document.querySelectorAll('.chart-range-btn');
+
     const TOKEN_KEY = 'fuse_admin_token';
     const PAGE_LIMIT = 50;
+    const MAX_LIMIT = 200;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Chart instances
+    let trendChart = null;
+    let interestChart = null;
+    let currentChartRange = 7;
+
+    // Chart colors
+    const chartColors = {
+        primary: '#ff3b30',
+        primaryLight: 'rgba(255, 59, 48, 0.2)',
+        blue: '#60a5fa',
+        purple: '#a78bfa',
+        green: '#4ade80',
+        yellow: '#fbbf24',
+        pink: '#f472b6',
+        cyan: '#22d3d8',
+        orange: '#fb923c',
+        gray: '#6b7280',
+    };
 
     const state = {
         token: '',
@@ -38,13 +86,16 @@
         loading: false,
         total: 0,
         rows: [],
+        allRows: [],
         filteredRows: [],
         filterEmail: '',
         filterKeyword: '',
         filterFrom: '',
         filterTo: '',
+        activeTab: 'analytics',
     };
 
+    // Utility Functions
     const setStatus = (element, message, type) => {
         if (!element) return;
         element.textContent = message || '';
@@ -91,6 +142,496 @@
         emptyState.classList.toggle('hidden', !visible);
     };
 
+    const formatDate = (value) => {
+        const date = value ? new Date(value) : null;
+        if (!date || Number.isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleString('en-GB');
+    };
+
+    const formatShortDate = (date) => {
+        return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    };
+
+    const getDateKey = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    const getDaysDiff = (date1, date2) => {
+        const oneDay = 24 * 60 * 60 * 1000;
+        return Math.round(Math.abs((date1 - date2) / oneDay));
+    };
+
+    const animateValue = (element, start, end, duration = 500) => {
+        if (!element) return;
+        const startTime = performance.now();
+        const update = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(start + (end - start) * easeOut);
+            element.textContent = current.toLocaleString();
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        };
+        requestAnimationFrame(update);
+    };
+
+    // Tab Navigation
+    const switchTab = (tabName) => {
+        state.activeTab = tabName;
+        tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        if (analyticsCard) analyticsCard.classList.toggle('hidden', tabName !== 'analytics');
+        if (dataCard) dataCard.classList.toggle('hidden', tabName !== 'signups');
+    };
+
+    // Analytics Functions
+    const computeAnalytics = () => {
+        const rows = state.allRows;
+        if (!rows.length) return null;
+
+        const now = new Date();
+        const today = getDateKey(now);
+        const todayStart = new Date(today);
+
+        // Get start of week (Monday)
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+        weekStart.setHours(0, 0, 0, 0);
+
+        // Get start of month
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        // Get last week and last month for comparisons
+        const lastWeekStart = new Date(weekStart);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        const lastWeekEnd = new Date(weekStart);
+
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        // Yesterday for comparison
+        const yesterday = new Date(todayStart);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = getDateKey(yesterday);
+
+        // Process signups
+        const dailyCounts = {};
+        const hourlyCounts = Array(24).fill(0);
+        const interestCounts = {};
+        let todayCount = 0;
+        let yesterdayCount = 0;
+        let weekCount = 0;
+        let lastWeekCount = 0;
+        let monthCount = 0;
+        let lastMonthCount = 0;
+        let consentCount = 0;
+        let firstSignup = null;
+        let peakDay = null;
+        let peakCount = 0;
+
+        rows.forEach(row => {
+            const dateValue = row.signupDate || row.storedAt;
+            if (!dateValue) return;
+
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) return;
+
+            const dateKey = getDateKey(date);
+            const hour = date.getHours();
+
+            // Daily counts
+            dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+
+            // Hourly counts
+            hourlyCounts[hour]++;
+
+            // Today
+            if (dateKey === today) {
+                todayCount++;
+            }
+
+            // Yesterday
+            if (dateKey === yesterdayKey) {
+                yesterdayCount++;
+            }
+
+            // This week
+            if (date >= weekStart) {
+                weekCount++;
+            }
+
+            // Last week
+            if (date >= lastWeekStart && date < lastWeekEnd) {
+                lastWeekCount++;
+            }
+
+            // This month
+            if (date >= monthStart) {
+                monthCount++;
+            }
+
+            // Last month
+            if (date >= lastMonthStart && date <= lastMonthEnd) {
+                lastMonthCount++;
+            }
+
+            // Consent
+            if (row.consentToContact) {
+                consentCount++;
+            }
+
+            // First signup
+            if (!firstSignup || date < firstSignup) {
+                firstSignup = date;
+            }
+
+            // Interest categories
+            const interest = String(row.mainInterest || 'Other').toLowerCase().trim();
+            const category = categorizeInterest(interest);
+            interestCounts[category] = (interestCounts[category] || 0) + 1;
+        });
+
+        // Find peak day
+        Object.entries(dailyCounts).forEach(([day, count]) => {
+            if (count > peakCount) {
+                peakCount = count;
+                peakDay = day;
+            }
+        });
+
+        // Calculate daily average
+        const dayKeys = Object.keys(dailyCounts);
+        const daysActive = dayKeys.length || 1;
+        const dailyAvg = (rows.length / daysActive).toFixed(1);
+
+        return {
+            total: rows.length,
+            todayCount,
+            yesterdayCount,
+            weekCount,
+            lastWeekCount,
+            monthCount,
+            lastMonthCount,
+            consentRate: rows.length ? Math.round((consentCount / rows.length) * 100) : 0,
+            dailyAvg,
+            peakDay,
+            peakCount,
+            firstSignup,
+            daysActive,
+            dailyCounts,
+            hourlyCounts,
+            interestCounts,
+        };
+    };
+
+    const categorizeInterest = (interest) => {
+        const categories = {
+            'Strength Training': ['strength', 'powerlifting', 'weightlifting', 'lifting', 'squat', 'deadlift', 'bench', 'barbell'],
+            'Bodybuilding': ['bodybuilding', 'muscle', 'hypertrophy', 'physique', 'aesthetic'],
+            'CrossFit': ['crossfit', 'wod', 'functional'],
+            'Cardio': ['cardio', 'running', 'cycling', 'hiit', 'endurance', 'marathon'],
+            'Nutrition': ['nutrition', 'diet', 'meal', 'calories', 'macro', 'protein', 'supplement'],
+            'Weight Loss': ['weight loss', 'fat loss', 'cutting', 'lean'],
+            'General Fitness': ['fitness', 'health', 'wellness', 'exercise', 'workout', 'training'],
+        };
+
+        for (const [category, keywords] of Object.entries(categories)) {
+            if (keywords.some(kw => interest.includes(kw))) {
+                return category;
+            }
+        }
+        return 'Other';
+    };
+
+    const updateAnalyticsDashboard = () => {
+        const analytics = computeAnalytics();
+        if (!analytics) {
+            // No data - show empty state
+            if (metricTotal) metricTotal.textContent = '0';
+            if (metricToday) metricToday.textContent = '0';
+            if (metricWeek) metricWeek.textContent = '0';
+            if (metricConsent) metricConsent.textContent = '0%';
+            return;
+        }
+
+        // Update main metrics with animation
+        const oldTotal = parseInt(metricTotal?.textContent.replace(/,/g, '') || '0', 10);
+        animateValue(metricTotal, oldTotal, analytics.total);
+
+        if (metricToday) metricToday.textContent = analytics.todayCount.toLocaleString();
+        if (metricWeek) metricWeek.textContent = analytics.weekCount.toLocaleString();
+        if (metricConsent) metricConsent.textContent = `${analytics.consentRate}%`;
+
+        // Update trends
+        updateTrend(metricTotalTrend, analytics.weekCount, analytics.lastWeekCount, 'this week');
+        updateTrend(metricTodayTrend, analytics.todayCount, analytics.yesterdayCount, 'vs yesterday');
+        updateTrend(metricWeekTrend, analytics.weekCount, analytics.lastWeekCount, 'vs last week');
+
+        if (metricConsentTrend) {
+            metricConsentTrend.textContent = analytics.consentRate >= 80 ? 'Excellent' :
+                                             analytics.consentRate >= 60 ? 'Good' : 'Needs attention';
+            metricConsentTrend.classList.toggle('positive', analytics.consentRate >= 60);
+        }
+
+        // Update secondary stats
+        if (statDailyAvg) statDailyAvg.textContent = analytics.dailyAvg;
+        if (statPeakDay && analytics.peakDay) {
+            const peakDate = new Date(analytics.peakDay);
+            statPeakDay.textContent = formatShortDate(peakDate);
+        }
+        if (statPeakCount) statPeakCount.textContent = `${analytics.peakCount} signups`;
+
+        if (statMonth) statMonth.textContent = analytics.monthCount.toLocaleString();
+        if (statMonthGrowth) {
+            const growth = analytics.lastMonthCount > 0
+                ? Math.round(((analytics.monthCount - analytics.lastMonthCount) / analytics.lastMonthCount) * 100)
+                : (analytics.monthCount > 0 ? 100 : 0);
+            statMonthGrowth.textContent = `${growth >= 0 ? '+' : ''}${growth}% vs last month`;
+            statMonthGrowth.classList.toggle('positive', growth >= 0);
+            statMonthGrowth.classList.toggle('negative', growth < 0);
+        }
+
+        if (statFirstDate && analytics.firstSignup) {
+            statFirstDate.textContent = formatShortDate(analytics.firstSignup);
+        }
+        if (statDaysActive) {
+            statDaysActive.textContent = `${analytics.daysActive} days active`;
+        }
+
+        // Update charts
+        updateTrendChart(analytics);
+        updateInterestChart(analytics);
+        updateHeatmap(analytics.hourlyCounts);
+    };
+
+    const updateTrend = (element, current, previous, label) => {
+        if (!element) return;
+        if (previous === 0 && current === 0) {
+            element.textContent = '--';
+            element.classList.remove('positive', 'negative');
+            return;
+        }
+
+        const diff = current - previous;
+        const percent = previous > 0 ? Math.round((diff / previous) * 100) : (current > 0 ? 100 : 0);
+        const arrow = diff >= 0 ? '↑' : '↓';
+
+        element.textContent = `${arrow} ${Math.abs(percent)}% ${label}`;
+        element.classList.toggle('positive', diff >= 0);
+        element.classList.toggle('negative', diff < 0);
+    };
+
+    // Chart Functions
+    const initCharts = () => {
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded');
+            return;
+        }
+
+        // Configure Chart.js defaults
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.borderColor = '#242424';
+        Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+        initTrendChart();
+        initInterestChart();
+    };
+
+    const initTrendChart = () => {
+        const canvas = document.getElementById('trendChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Signups',
+                    data: [],
+                    borderColor: chartColors.primary,
+                    backgroundColor: chartColors.primaryLight,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: chartColors.primary,
+                    pointBorderColor: chartColors.primary,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: '#1a1a1a',
+                        titleColor: '#f5f5f5',
+                        bodyColor: '#a0a0a0',
+                        borderColor: '#242424',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            title: (items) => items[0]?.label || '',
+                            label: (item) => `${item.raw} signup${item.raw !== 1 ? 's' : ''}`,
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#1f1f1f',
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0,
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    const initInterestChart = () => {
+        const canvas = document.getElementById('interestChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        interestChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        chartColors.primary,
+                        chartColors.blue,
+                        chartColors.purple,
+                        chartColors.green,
+                        chartColors.yellow,
+                        chartColors.pink,
+                        chartColors.cyan,
+                        chartColors.orange,
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: '#1a1a1a',
+                        titleColor: '#f5f5f5',
+                        bodyColor: '#a0a0a0',
+                        borderColor: '#242424',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: (item) => {
+                                const total = item.dataset.data.reduce((a, b) => a + b, 0);
+                                const percent = Math.round((item.raw / total) * 100);
+                                return `${item.label}: ${item.raw} (${percent}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    const updateTrendChart = (analytics) => {
+        if (!trendChart || !analytics) return;
+
+        const { dailyCounts } = analytics;
+        const days = currentChartRange === 'all' ? Object.keys(dailyCounts).length : currentChartRange;
+
+        // Generate date labels for the range
+        const labels = [];
+        const data = [];
+        const now = new Date();
+
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            const dateKey = getDateKey(date);
+            labels.push(formatShortDate(date));
+            data.push(dailyCounts[dateKey] || 0);
+        }
+
+        trendChart.data.labels = labels;
+        trendChart.data.datasets[0].data = data;
+        trendChart.update('none');
+    };
+
+    const updateInterestChart = (analytics) => {
+        if (!interestChart || !analytics) return;
+
+        const { interestCounts } = analytics;
+
+        // Sort by count and take top 8
+        const sorted = Object.entries(interestCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8);
+
+        const labels = sorted.map(([cat]) => cat);
+        const data = sorted.map(([, count]) => count);
+
+        interestChart.data.labels = labels;
+        interestChart.data.datasets[0].data = data;
+        interestChart.update('none');
+
+        // Update legend
+        if (interestLegend) {
+            const colors = interestChart.data.datasets[0].backgroundColor;
+            interestLegend.innerHTML = sorted.map(([cat, count], i) => `
+                <div class="legend-item">
+                    <span class="legend-color" style="background: ${colors[i]}"></span>
+                    <span>${cat}</span>
+                    <span class="legend-value">${count}</span>
+                </div>
+            `).join('');
+        }
+    };
+
+    const updateHeatmap = (hourlyCounts) => {
+        if (!hourlyHeatmap) return;
+
+        const maxCount = Math.max(...hourlyCounts, 1);
+
+        hourlyHeatmap.innerHTML = hourlyCounts.map((count, hour) => {
+            const level = count === 0 ? 0 : Math.min(5, Math.ceil((count / maxCount) * 5));
+            const hourLabel = hour === 0 ? '12am' : hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
+            return `<div class="heatmap-cell" data-level="${level}" data-tooltip="${hourLabel}: ${count} signup${count !== 1 ? 's' : ''}"></div>`;
+        }).join('');
+    };
+
+    // Data Table Functions
     const updateSummary = () => {
         if (signupCount) signupCount.textContent = String(state.total);
         if (showingCount) showingCount.textContent = String(state.filteredRows.length);
@@ -104,12 +645,6 @@
         state.rows = [];
         state.filteredRows = [];
         setEmptyState(false);
-    };
-
-    const formatDate = (value) => {
-        const date = value ? new Date(value) : null;
-        if (!date || Number.isNaN(date.getTime())) return 'N/A';
-        return date.toLocaleString('en-GB');
     };
 
     const renderRows = (rows) => {
@@ -183,6 +718,8 @@
 
     const showLogin = (message) => {
         if (loginCard) loginCard.classList.remove('hidden');
+        if (tabNav) tabNav.classList.add('hidden');
+        if (analyticsCard) analyticsCard.classList.add('hidden');
         if (dataCard) dataCard.classList.add('hidden');
         if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
         toggleControls(false);
@@ -192,7 +729,17 @@
 
     const showData = () => {
         if (loginCard) loginCard.classList.add('hidden');
-        if (dataCard) dataCard.classList.remove('hidden');
+        if (tabNav) tabNav.classList.remove('hidden');
+
+        // Show the active tab
+        if (state.activeTab === 'analytics') {
+            if (analyticsCard) analyticsCard.classList.remove('hidden');
+            if (dataCard) dataCard.classList.add('hidden');
+        } else {
+            if (analyticsCard) analyticsCard.classList.add('hidden');
+            if (dataCard) dataCard.classList.remove('hidden');
+        }
+
         toggleControls(true);
         updateFilterControls();
     };
@@ -243,6 +790,42 @@
         setEmptyState(filtered.length === 0);
     };
 
+    const fetchAllSignups = async () => {
+        // Fetch all signups for analytics
+        let allSignups = [];
+        let cursor = null;
+        let hasMore = true;
+
+        while (hasMore) {
+            try {
+                const url = new URL('/api/admin-signups', window.location.origin);
+                url.searchParams.set('limit', String(MAX_LIMIT));
+                if (cursor) {
+                    url.searchParams.set('cursor', cursor);
+                }
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        Authorization: `Bearer ${state.token}`,
+                    },
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) break;
+
+                const payload = await response.json();
+                const signups = Array.isArray(payload.signups) ? payload.signups : [];
+                allSignups = allSignups.concat(signups);
+                cursor = payload.cursor || null;
+                hasMore = Boolean(payload.hasMore);
+            } catch {
+                break;
+            }
+        }
+
+        state.allRows = allSignups;
+    };
+
     const fetchSignups = async ({ reset } = {}) => {
         if (state.loading) return;
         state.loading = true;
@@ -291,6 +874,13 @@
             updatePagination();
             setStatus(dataStatus, signups.length ? 'Loaded.' : 'No new signups.', 'good');
             recomputeRows();
+
+            // If this is initial load, fetch all signups for analytics
+            if (reset) {
+                await fetchAllSignups();
+                initCharts();
+                updateAnalyticsDashboard();
+            }
         } catch (error) {
             setStatus(dataStatus, error && error.message ? error.message : 'Unable to load signups.');
         } finally {
@@ -327,8 +917,20 @@
         state.filterKeyword = '';
         state.filterFrom = '';
         state.filterTo = '';
+        state.allRows = [];
         resetTable();
         setStatus(dataStatus, '');
+
+        // Destroy charts
+        if (trendChart) {
+            trendChart.destroy();
+            trendChart = null;
+        }
+        if (interestChart) {
+            interestChart.destroy();
+            interestChart = null;
+        }
+
         showLogin('Signed out.');
     };
 
@@ -394,7 +996,7 @@
         try {
             await navigator.clipboard.writeText(text);
             setStatus(dataStatus, 'Emails copied to clipboard.', 'good');
-        } catch (error) {
+        } catch {
             const textarea = document.createElement('textarea');
             textarea.value = text;
             textarea.style.position = 'fixed';
@@ -451,6 +1053,7 @@
         setStatus(dataStatus, 'CSV exported.', 'good');
     };
 
+    // Event Listeners
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
@@ -460,7 +1063,9 @@
     }
 
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => fetchSignups({ reset: true }));
+        refreshBtn.addEventListener('click', async () => {
+            await fetchSignups({ reset: true });
+        });
     }
 
     if (signOutBtn) {
@@ -519,6 +1124,27 @@
         exportCsvBtn.addEventListener('click', exportCsv);
     }
 
+    // Tab navigation
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            switchTab(tab.dataset.tab);
+        });
+    });
+
+    // Chart range controls
+    chartRangeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            chartRangeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentChartRange = btn.dataset.range === 'all' ? 'all' : parseInt(btn.dataset.range, 10);
+            const analytics = computeAnalytics();
+            if (analytics) {
+                updateTrendChart(analytics);
+            }
+        });
+    });
+
+    // Initialize
     const storedToken = sessionStorage.getItem(TOKEN_KEY);
     if (storedToken) {
         setToken(storedToken);
