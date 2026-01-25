@@ -1,0 +1,52 @@
+# robots.txt for FUSE Coffee Creatine
+# https://fusecreatine.com
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://fusecreatine.com/sitemap.xml
+
+# Disallow admin and API routes
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/
+
+# Disallow assets that don't need indexing
+Disallow: /js/
+Disallow: /css/
+
+# Allow important assets for rich snippets
+Allow: /assets/*.jpg
+Allow: /assets/*.png
+Allow: /assets/*.svg
+Allow: /assets/og-image.jpg
+
+# Crawl-delay for politeness (optional, respected by some bots)
+Crawl-delay: 1
+
+# Specific bot rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Googlebot-Image
+Allow: /assets/
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
