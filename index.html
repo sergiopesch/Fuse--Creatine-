@@ -466,8 +466,72 @@
         </div>
     </div>
 
+    <!-- FUSE Agent Chat Widget -->
+    <div class="fuse-chat" id="fuseChat" role="region" aria-label="FUSE Agent Chat">
+        <!-- Chat Toggle Button -->
+        <button
+            class="chat-toggle"
+            id="chatToggle"
+            aria-label="Open chat with FUSE Agent"
+            aria-expanded="false"
+            aria-controls="chatWindow"
+        >
+            <svg class="chat-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <svg class="chat-icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chatWindow" aria-hidden="true">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar">
+                        <span>F</span>
+                    </div>
+                    <div class="chat-header-text">
+                        <span class="chat-header-title">FUSE Agent</span>
+                        <span class="chat-header-status">Online</span>
+                    </div>
+                </div>
+                <button class="chat-close" id="chatClose" aria-label="Close chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
+
+            <!-- Chat Input -->
+            <form class="chat-input-form" id="chatForm">
+                <textarea
+                    class="chat-input"
+                    id="chatInput"
+                    placeholder="Ask about FUSE..."
+                    rows="1"
+                    aria-label="Type your message"
+                    maxlength="1000"
+                ></textarea>
+                <button type="submit" class="chat-send" aria-label="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script defer src="js/three-scene.js"></script>
     <script defer src="js/main.js"></script>
+    <script defer src="js/chat.js"></script>
 </body>
 </html>
