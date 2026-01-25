@@ -247,16 +247,13 @@ module.exports = async (req, res) => {
         });
     }
 
-    // Check for API key
+    // Check for API key (server-configured only)
     const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
-        const keyExists = 'ANTHROPIC_API_KEY' in process.env;
-        const rawValue = process.env.ANTHROPIC_API_KEY;
-        console.error('[Chat API] ANTHROPIC_API_KEY configuration issue:', {
-            exists: keyExists,
-            isEmpty: rawValue === '',
-            isWhitespaceOnly: rawValue?.trim() === '' && rawValue?.length > 0,
-            rawLength: rawValue?.length || 0
+        console.error('[Chat API] ANTHROPIC_API_KEY not configured:', {
+            exists: 'ANTHROPIC_API_KEY' in process.env,
+            isEmpty: process.env.ANTHROPIC_API_KEY === '',
+            hint: 'Set ANTHROPIC_API_KEY in Vercel Environment Variables'
         });
         return res.status(503).json({
             error: 'Chat service is temporarily unavailable. Please try again later.',
@@ -268,8 +265,8 @@ module.exports = async (req, res) => {
     if (!apiKey.startsWith('sk-ant-')) {
         console.error('[Chat API] Invalid API key format. Expected sk-ant-* prefix.');
         return res.status(503).json({
-            error: 'Chat service configuration error. Please contact support.',
-            code: 'CONFIG_ERROR'
+            error: 'Chat service is temporarily unavailable. Please try again later.',
+            code: 'SERVICE_UNAVAILABLE'
         });
     }
 
@@ -317,8 +314,8 @@ module.exports = async (req, res) => {
                 'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1024,
+                model: 'claude-3-5-haiku-latest',
+                max_tokens: 512,
                 system: FUSE_KNOWLEDGE,
                 messages: formattedMessages
             })
@@ -345,7 +342,7 @@ module.exports = async (req, res) => {
             switch (response.status) {
                 case 401:
                     return res.status(503).json({
-                        error: 'Chat service authentication failed. Please contact support.',
+                        error: 'Chat service is temporarily unavailable. Please try again later.',
                         code: 'AUTH_FAILED'
                     });
                 case 400:
