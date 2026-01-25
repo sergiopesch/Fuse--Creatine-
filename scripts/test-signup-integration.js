@@ -33,13 +33,13 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = TIMEOUT_MS) => {
 const makeUniqueEmail = () => {
     const stamp = Date.now().toString(36);
     const rand = crypto.randomBytes(2).toString('hex');
-    return `flex.${stamp}.${rand}@gainmail.com`;
+    return `test.${stamp}.${rand}@testmail.co.uk`;
 };
 
 const run = async () => {
     const email = makeUniqueEmail();
     const payload = {
-        fullName: 'Flex McGains',
+        fullName: 'Test User',
         email,
         mainInterest: 'Running a real integration test to confirm storage and admin retrieval.',
         policyVersion: 'v1.0',
