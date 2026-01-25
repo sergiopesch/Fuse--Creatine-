@@ -1,5 +1,6 @@
 const { list } = require("@vercel/blob");
 const crypto = require("crypto");
+const { decrypt } = require("./_lib/crypto");
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -54,7 +55,46 @@ async function fetchSignup(blob) {
     throw new Error(`Failed to load blob ${blob.pathname}`);
   }
 
-  const data = await response.json();
+  let data = await response.json();
+  
+  // Handle encrypted data
+  if (data.payload && data.version === 1) {
+    const encryptionKey = process.env.ENCRYPTION_KEY;
+    if (encryptionKey) {
+      try {
+        const decrypted = decrypt(data.payload, encryptionKey);
+        data = JSON.parse(decrypted);
+      } catch (e) {
+        console.error(`Failed to decrypt blob ${blob.pathname}:`, e);
+        // Return a placeholder or error object so we know something went wrong but don't crash
+        return {
+           id: blob.pathname,
+           fullName: "Error: Decryption Failed",
+           email: "Error",
+           mainInterest: "Error",
+           consentToContact: false,
+           consentTimestamp: "",
+           policyVersion: "",
+           signupDate: blob.uploadedAt.toISOString(),
+           storedAt: blob.uploadedAt.toISOString(),
+        };
+      }
+    } else {
+       console.error("Missing ENCRYPTION_KEY for encrypted blob");
+       return {
+           id: blob.pathname,
+           fullName: "Error: Missing Key",
+           email: "Error",
+           mainInterest: "Error",
+           consentToContact: false,
+           consentTimestamp: "",
+           policyVersion: "",
+           signupDate: blob.uploadedAt.toISOString(),
+           storedAt: blob.uploadedAt.toISOString(),
+        };
+    }
+  }
+
   return {
     id: blob.pathname,
     fullName: data.fullName || "",
@@ -71,6 +111,10 @@ async function fetchSignup(blob) {
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
 
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });

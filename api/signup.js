@@ -1,5 +1,6 @@
 const { put } = require("@vercel/blob");
 const crypto = require("crypto");
+const { encrypt } = require("./_lib/crypto");
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
@@ -195,7 +196,28 @@ module.exports = async (req, res) => {
     const safeId = hashEmail(email);
     const filename = `signups/${safeId}_${Date.now()}.json`;
 
-    await put(filename, JSON.stringify(signupData), {
+    let dataToStore = signupData;
+    const encryptionKey = process.env.ENCRYPTION_KEY;
+    
+    if (encryptionKey) {
+      try {
+        const encrypted = encrypt(JSON.stringify(signupData), encryptionKey);
+        dataToStore = {
+          payload: encrypted,
+          version: 1,
+          // Store non-PII metadata for easier debugging/listing if needed, but keep PII encrypted
+          // Actually, let's keep it simple and just store the payload wrapper
+          storedAt: new Date().toISOString()
+        };
+      } catch (encError) {
+        console.error("Encryption failed:", encError);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    } else {
+        console.warn("ENCRYPTION_KEY not set. Storing unencrypted data.");
+    }
+
+    await put(filename, JSON.stringify(dataToStore), {
       access: "public",
       addRandomSuffix: true,
       contentType: "application/json",
