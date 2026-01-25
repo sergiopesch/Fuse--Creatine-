@@ -19,8 +19,6 @@
     let isLoading = false;
     let conversationHistory = [];
     let retryCount = 0;
-    let byokMode = false;
-    let userApiKey = localStorage.getItem('fuse_chat_api_key') || '';
 
     // DOM Elements (populated on init)
     let chatWidget, chatToggle, chatWindow, chatMessages, chatInput, chatForm, chatClose;
@@ -46,11 +44,7 @@
         'RATE_LIMITED': "You're sending messages a bit quickly. Please wait a moment and try again.",
         'API_RATE_LIMITED': "I'm receiving a lot of questions right now. Please try again in a moment.",
         'SERVICE_UNAVAILABLE': "I'm temporarily unavailable. Please try again shortly.",
-        'API_KEY_REQUIRED': "Please enter your Anthropic API key to start chatting.",
-        'API_KEY_MISSING': "The chat service is not configured. Please check the server configuration.",
-        'API_KEY_INVALID': "Invalid API key format. Please check your key starts with 'sk-ant-'.",
-        'AUTH_FAILED': "Your API key appears to be invalid or expired. Please check it and try again.",
-        'CONFIG_ERROR': "I'm having technical difficulties. Please try again later.",
+        'AUTH_FAILED': "I'm having technical difficulties. Please try again later.",
         'NETWORK_ERROR': "I couldn't connect. Please check your internet and try again.",
         'VALIDATION_ERROR': "There was an issue with your message. Please try rephrasing it.",
         'INVALID_MESSAGE': "I couldn't understand that message. Could you try again?",
@@ -58,127 +52,27 @@
     };
 
     /**
-     * Check API health and detect BYOK mode
+     * Check API health status
      */
     async function checkApiHealth() {
         try {
             const response = await fetch('/api/health');
             const data = await response.json();
 
-            // Check if we're in BYOK mode
-            if (data.byok?.enabled || data.mode === 'byok') {
-                byokMode = true;
-                console.log('[FUSE Chat] Running in BYOK mode - users provide their own API key');
-                if (userApiKey) {
-                    console.log('[FUSE Chat] User API key found in storage');
-                }
-                return { byokMode: true, hasStoredKey: !!userApiKey };
-            }
-
             if (data.status === 'degraded' || !data.apiKey?.validFormat) {
-                console.warn('[FUSE Chat] API configuration issue detected:');
+                console.warn('[FUSE Chat] API configuration issue detected');
                 if (data.issues) {
                     data.issues.forEach(issue => console.warn('  -', issue));
                 }
             } else {
-                console.log('[FUSE Chat] API health check passed - server key configured');
+                console.log('[FUSE Chat] API health check passed');
             }
 
-            return { byokMode: false, serverConfigured: data.apiKey?.validFormat };
+            return data;
         } catch (error) {
             console.warn('[FUSE Chat] Could not check API health:', error.message);
-            return { byokMode: false, error: error.message };
+            return { error: error.message };
         }
-    }
-
-    /**
-     * Show API key input UI
-     */
-    function showApiKeyInput(message = 'Enter your Anthropic API key to start chatting:') {
-        removeApiKeyInput();
-
-        const container = document.createElement('div');
-        container.className = 'chat-api-key-form';
-        container.id = 'chatApiKeyForm';
-        container.innerHTML = `
-            <p class="chat-api-key-message">${message}</p>
-            <div class="chat-api-key-input-row">
-                <input
-                    type="password"
-                    id="chatApiKeyInput"
-                    class="chat-api-key-input"
-                    placeholder="sk-ant-api03-..."
-                    value="${userApiKey}"
-                    autocomplete="off"
-                />
-                <button type="button" id="chatApiKeySave" class="chat-api-key-btn">Save</button>
-            </div>
-            <p class="chat-api-key-hint">
-                Get your key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>
-            </p>
-        `;
-
-        chatMessages.appendChild(container);
-        scrollToBottom();
-
-        // Add event listeners
-        const input = document.getElementById('chatApiKeyInput');
-        const saveBtn = document.getElementById('chatApiKeySave');
-
-        saveBtn.addEventListener('click', () => saveApiKey(input.value));
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveApiKey(input.value);
-            }
-        });
-
-        input.focus();
-    }
-
-    /**
-     * Remove API key input UI
-     */
-    function removeApiKeyInput() {
-        const existing = document.getElementById('chatApiKeyForm');
-        if (existing) {
-            existing.remove();
-        }
-    }
-
-    /**
-     * Save API key
-     */
-    function saveApiKey(key) {
-        const trimmedKey = key?.trim() || '';
-
-        if (!trimmedKey) {
-            addMessage('Please enter an API key.', 'assistant', true);
-            return;
-        }
-
-        if (!trimmedKey.startsWith('sk-ant-')) {
-            addMessage('Invalid key format. Your API key should start with "sk-ant-".', 'assistant', true);
-            return;
-        }
-
-        userApiKey = trimmedKey;
-        localStorage.setItem('fuse_chat_api_key', trimmedKey);
-
-        removeApiKeyInput();
-        addMessage('API key saved! You can now start chatting.', 'assistant');
-        addQuickActions();
-
-        console.log('[FUSE Chat] API key saved successfully');
-    }
-
-    /**
-     * Clear stored API key
-     */
-    function clearApiKey() {
-        userApiKey = '';
-        localStorage.removeItem('fuse_chat_api_key');
-        console.log('[FUSE Chat] API key cleared');
     }
 
     /**
@@ -272,23 +166,12 @@
         if (conversationHistory.length === 0) {
             const greeting = greetings[Math.floor(Math.random() * greetings.length)];
             addMessage(greeting, 'assistant');
-
-            // In BYOK mode without a stored key, show API key input
-            if (byokMode && !userApiKey) {
-                showApiKeyInput();
-            } else {
-                addQuickActions();
-            }
+            addQuickActions();
         }
 
         // Focus input
         setTimeout(() => {
-            if (byokMode && !userApiKey) {
-                const keyInput = document.getElementById('chatApiKeyInput');
-                if (keyInput) keyInput.focus();
-            } else {
-                chatInput.focus();
-            }
+            chatInput.focus();
         }, CONFIG.typingIndicatorDelay);
     }
 
@@ -349,23 +232,15 @@
         }
 
         try {
-            // Build request body - include API key if in BYOK mode
-            const requestBody = {
-                messages: [{ role: 'user', content: message }],
-                conversationHistory: conversationHistory.slice(-10)
-            };
-
-            // Add user API key if available (BYOK mode)
-            if (userApiKey) {
-                requestBody.apiKey = userApiKey;
-            }
-
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    messages: [{ role: 'user', content: message }],
+                    conversationHistory: conversationHistory.slice(-10)
+                })
             });
 
             const data = await response.json();
@@ -380,32 +255,8 @@
                 const errorCode = data.code || 'default';
                 const errorMsg = errorMessages[errorCode] || errorMessages['default'];
 
-                // Log configuration hints for developers
-                if (data.hint) {
-                    console.warn('[FUSE Chat] Configuration issue:', data.error);
-                    console.warn('[FUSE Chat] Hint:', data.hint);
-                }
-
-                // Check if API key is required - show input form
-                if (data.requiresKey || errorCode === 'API_KEY_REQUIRED') {
-                    byokMode = true;
-                    addMessage(errorMsg, 'assistant', true);
-                    showApiKeyInput('Please enter your API key:');
-                    isLoading = false;
-                    return;
-                }
-
-                // Handle auth failures for user keys - might need a new key
-                if (errorCode === 'AUTH_FAILED' && userApiKey) {
-                    addMessage(errorMsg, 'assistant', true);
-                    showApiKeyInput('Your API key may be invalid. Please check it:');
-                    isLoading = false;
-                    return;
-                }
-
-                // Check if we should retry (don't retry config errors)
-                const isConfigError = errorCode === 'API_KEY_MISSING' || errorCode === 'API_KEY_INVALID' || errorCode === 'API_KEY_REQUIRED';
-                if (!isConfigError && shouldRetry(response.status, errorCode) && retryCount < CONFIG.maxRetries) {
+                // Check if we should retry
+                if (shouldRetry(response.status, errorCode) && retryCount < CONFIG.maxRetries) {
                     retryCount++;
                     showTypingIndicator();
                     setTimeout(() => {
@@ -578,18 +429,7 @@
                 chatMessages.innerHTML = '';
             }
         },
-        checkHealth: checkApiHealth,
-        // BYOK API key management
-        setApiKey: saveApiKey,
-        clearApiKey: () => {
-            clearApiKey();
-            if (chatMessages) {
-                chatMessages.innerHTML = '';
-                conversationHistory = [];
-            }
-        },
-        hasApiKey: () => !!userApiKey,
-        isByokMode: () => byokMode
+        checkHealth: checkApiHealth
     };
 
 })();

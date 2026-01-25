@@ -58,38 +58,20 @@ module.exports = async (req, res) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const trimmedKey = apiKey?.trim();
 
-    // Determine if server key is valid
-    const serverKeyValid = trimmedKey?.startsWith('sk-ant-') || false;
-    const byokMode = !serverKeyValid;
-
     const diagnostics = {
         status: 'ok',
         timestamp: new Date().toISOString(),
         environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
         service: {
             name: 'FUSE Chat Agent',
-            version: '1.1.0'
-        },
-        mode: byokMode ? 'byok' : 'server',
-        byok: {
-            enabled: byokMode,
-            reason: byokMode
-                ? (!trimmedKey ? 'No server API key configured' : 'Server API key has invalid format')
-                : null,
-            hint: byokMode
-                ? 'Users must provide their own Anthropic API key to use the chat'
-                : null
+            version: '1.0.0',
+            model: 'claude-3-5-haiku-latest'
         },
         apiKey: {
             exists: 'ANTHROPIC_API_KEY' in process.env,
             hasValue: !!apiKey,
             hasTrimmedValue: !!trimmedKey,
-            length: apiKey?.length || 0,
-            trimmedLength: trimmedKey?.length || 0,
-            isEmpty: apiKey === '',
-            isWhitespaceOnly: apiKey?.trim() === '' && apiKey?.length > 0,
-            prefix: trimmedKey ? trimmedKey.substring(0, 7) + '...' : null,
-            validFormat: serverKeyValid
+            validFormat: trimmedKey?.startsWith('sk-ant-') || false
         },
         blobStorage: {
             configured: 'BLOB_READ_WRITE_TOKEN' in process.env
@@ -103,8 +85,13 @@ module.exports = async (req, res) => {
         }
     };
 
-    // Status is OK even in BYOK mode - users can provide their own keys
-    // Only mark as degraded if server key exists but is invalid
+    // Determine overall health status
+    if (!diagnostics.apiKey.exists || !diagnostics.apiKey.hasTrimmedValue) {
+        diagnostics.status = 'degraded';
+        diagnostics.issues = diagnostics.issues || [];
+        diagnostics.issues.push('ANTHROPIC_API_KEY is not configured - set it in Vercel Environment Variables');
+    }
+
     if (diagnostics.apiKey.hasTrimmedValue && !diagnostics.apiKey.validFormat) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];

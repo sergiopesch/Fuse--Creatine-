@@ -96,27 +96,26 @@ The site includes an AI-powered chat widget called the "FUSE Agent" - a friendly
 
 ### Features
 
-- **Conversational AI**: Powered by Claude claude-sonnet-4-20250514 with a custom system prompt that embodies the FUSE brand personality
+- **Conversational AI**: Powered by Claude 3.5 Haiku - fast, cost-effective, and high-quality responses
 - **British Personality**: Smart, polite, evidence-based responses with subtle British charm
 - **Product Knowledge**: Deep understanding of FUSE's technology, dosing guidelines, and scientific backing
 - **Quick Actions**: Pre-defined questions for common queries (What is FUSE?, Dosing guide, etc.)
 - **Rate Limiting**: 20 requests per minute per IP to prevent abuse
 - **Error Handling**: Intelligent retry logic with user-friendly error messages
 - **Accessibility**: Full ARIA support, keyboard navigation, and screen reader compatibility
-- **Health Checks**: Automatic API configuration validation with developer-friendly diagnostics
 
 ### Setting Up the Chat Agent
 
-The FUSE Agent supports two modes of operation:
+The FUSE Agent requires an Anthropic API key to function.
 
-1. **Server Mode**: A single API key is configured on the server (traditional approach)
-2. **BYOK Mode** (Bring Your Own Key): Users provide their own API keys
+#### Step 1: Get an Anthropic API Key
 
-#### Option A: Server Mode (Recommended for Production)
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Sign in or create an account
+3. Navigate to API Keys section
+4. Create a new API key (it will start with `sk-ant-`)
 
-Configure a server-side API key that all users will share:
-
-**For Vercel Deployment:**
+#### Step 2: Configure Vercel
 
 1. Go to your Vercel project dashboard
 2. Navigate to **Settings** > **Environment Variables**
@@ -124,62 +123,27 @@ Configure a server-side API key that all users will share:
    - **Name**: `ANTHROPIC_API_KEY`
    - **Value**: Your API key (e.g., `sk-ant-api03-...`)
 4. Click **Save**
-5. Redeploy your project for changes to take effect
+5. **Redeploy** your project for changes to take effect
 
-**For Local Development:**
-
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Edit `.env` and add your API key:
-   ```
-   ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
-   ```
-
-#### Option B: BYOK Mode (Bring Your Own Key)
-
-If no server API key is configured, the chat will automatically enter BYOK mode. In this mode:
-
-- Users are prompted to enter their own Anthropic API key
-- The key is stored in the browser's localStorage
-- Each user pays for their own API usage
-- Keys are sent securely with each request (never logged server-side)
-
-This is useful for:
-- Demo/development environments without a shared key
-- Letting power users use their own API quota
-- Testing without incurring API costs
-
-**How it works:**
-
-1. Deploy without setting `ANTHROPIC_API_KEY`
-2. When users open the chat, they'll see an API key input form
-3. Users enter their key from [console.anthropic.com](https://console.anthropic.com/)
-4. The key is saved locally and used for all subsequent requests
-
-#### Verify Configuration
+#### Step 3: Verify Configuration
 
 1. Visit `/api/health` in your browser
-2. Check the `mode` field: `"server"` or `"byok"`
-3. If in server mode, verify `apiKey.validFormat` is `true`
+2. Check that `apiKey.validFormat` is `true`
+3. Check that `status` is `ok`
 
 ### Troubleshooting
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| "Please enter your API key" | BYOK mode - no key provided | Enter your Anthropic API key in the chat widget |
-| "Invalid API key format" | Key doesn't start with `sk-ant-` | Verify you copied the complete key from Anthropic Console |
-| "Your API key is invalid" | Key rejected by Anthropic API | Check your key is active at console.anthropic.com |
-| 503 Service Unavailable | Server key missing/invalid | Configure server key or use BYOK mode |
-| "I'm temporarily unavailable" | Server-side configuration issue | Check browser console for detailed hints |
+| "I'm temporarily unavailable" | API key not configured | Set `ANTHROPIC_API_KEY` in Vercel Environment Variables |
+| 503 Service Unavailable | API key missing or invalid | Check `/api/health` for diagnostics |
+| "Service is busy" | Rate limited by Anthropic | Wait a moment and try again |
 
 **Debugging Tips:**
 
-- Open browser DevTools console - the chat widget logs configuration issues automatically
-- Call `FUSEChat.checkHealth()` in the console to run a manual health check
+- Open browser DevTools console - the chat widget logs configuration issues
+- Call `FUSEChat.checkHealth()` in the console to run a health check
 - Visit `/api/health` directly to see the full configuration status
-- In BYOK mode, use `FUSEChat.clearApiKey()` to reset and re-enter your key
 
 ### API Endpoints
 
@@ -206,40 +170,13 @@ FUSEChat.clearHistory()
 
 // Check API health (for debugging)
 FUSEChat.checkHealth()
-
-// BYOK Mode - API Key Management
-FUSEChat.setApiKey('sk-ant-api03-...')  // Set user's API key
-FUSEChat.clearApiKey()                   // Clear stored API key
-FUSEChat.hasApiKey()                     // Check if key is stored
-FUSEChat.isByokMode()                    // Check if running in BYOK mode
-```
-
-### Health Check
-
-Visit `/api/health` to verify the chat service configuration. The endpoint returns diagnostic information including:
-
-- API key presence and format validation
-- Environment configuration status
-- Runtime information
-
-Example response:
-```json
-{
-  "status": "ok",
-  "apiKey": {
-    "exists": true,
-    "validFormat": true,
-    "prefix": "sk-ant-..."
-  },
-  "issues": []
-}
 ```
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Optional | Anthropic API key for Claude chat agent. Must start with `sk-ant-`. If not set, chat runs in BYOK mode where users provide their own keys. Get it from [console.anthropic.com](https://console.anthropic.com/) |
+| `ANTHROPIC_API_KEY` | Yes (for chat) | Anthropic API key for Claude chat agent. Must start with `sk-ant-`. Get it from [console.anthropic.com](https://console.anthropic.com/) |
 | `BLOB_READ_WRITE_TOKEN` | Yes (for signups) | Vercel Blob read/write token for storing waitlist signups |
 | `ADMIN_TOKEN` | Yes (for admin) | Shared secret used to authorize `/api/admin-signups` |
 | `ENCRYPTION_KEY` | Yes (for security) | A 32+ character string used to encrypt PII in storage |
