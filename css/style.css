@@ -119,6 +119,21 @@ body::before {
     .cursor { display: none; }
 }
 
+/* Hide native cursor on desktop when custom cursor is active */
+@media (hover: hover) and (pointer: fine) {
+    .js body {
+        cursor: none;
+    }
+
+    .js a,
+    .js button,
+    .js [role="button"],
+    .js input[type="submit"],
+    .js input[type="button"] {
+        cursor: none;
+    }
+}
+
 /* Navigation */
 .nav {
     position: fixed;
