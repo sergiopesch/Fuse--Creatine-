@@ -247,37 +247,42 @@ module.exports = async (req, res) => {
         });
     }
 
-    // Check for API key
-    const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
-    if (!apiKey) {
-        const keyExists = 'ANTHROPIC_API_KEY' in process.env;
-        const rawValue = process.env.ANTHROPIC_API_KEY;
-        console.error('[Chat API] ANTHROPIC_API_KEY configuration issue:', {
-            exists: keyExists,
-            isEmpty: rawValue === '',
-            isWhitespaceOnly: rawValue?.trim() === '' && rawValue?.length > 0,
-            rawLength: rawValue?.length || 0,
-            hint: 'Set ANTHROPIC_API_KEY in Vercel Environment Variables or .env file'
-        });
-        return res.status(503).json({
-            error: 'Chat service is not configured. The ANTHROPIC_API_KEY environment variable is missing.',
-            code: 'API_KEY_MISSING',
-            hint: 'Please set the ANTHROPIC_API_KEY environment variable in your Vercel project settings or .env file.'
-        });
-    }
-
-    // Validate API key format
-    if (!apiKey.startsWith('sk-ant-')) {
-        console.error('[Chat API] Invalid API key format. Expected sk-ant-* prefix, got:', apiKey.substring(0, 7) + '...');
-        return res.status(503).json({
-            error: 'Chat service configuration error. The API key format is invalid.',
-            code: 'API_KEY_INVALID',
-            hint: 'ANTHROPIC_API_KEY must start with "sk-ant-". Get a valid key from https://console.anthropic.com/'
-        });
-    }
-
     try {
-        const { messages, conversationHistory = [] } = req.body || {};
+        const { messages, conversationHistory = [], apiKey: clientApiKey } = req.body || {};
+
+        // BYOK (Bring Your Own Key) - prefer client-provided key, fall back to server key
+        const serverApiKey = process.env.ANTHROPIC_API_KEY?.trim();
+        const userApiKey = clientApiKey?.trim();
+        const apiKey = userApiKey || serverApiKey;
+        const isUserKey = !!userApiKey;
+
+        // Check for API key (either user-provided or server-configured)
+        if (!apiKey) {
+            console.error('[Chat API] No API key available:', {
+                serverKeyExists: 'ANTHROPIC_API_KEY' in process.env,
+                serverKeyEmpty: serverApiKey === '',
+                clientKeyProvided: !!clientApiKey,
+                hint: 'Either set ANTHROPIC_API_KEY environment variable or provide apiKey in request body'
+            });
+            return res.status(503).json({
+                error: 'No API key configured. Please provide your Anthropic API key to use the chat.',
+                code: 'API_KEY_REQUIRED',
+                requiresKey: true,
+                hint: 'Get your API key from https://console.anthropic.com/ and enter it in the chat settings.'
+            });
+        }
+
+        // Validate API key format
+        if (!apiKey.startsWith('sk-ant-')) {
+            const source = isUserKey ? 'User-provided' : 'Server';
+            console.error(`[Chat API] ${source} API key has invalid format. Expected sk-ant-* prefix.`);
+            return res.status(400).json({
+                error: 'Invalid API key format. The key must start with "sk-ant-".',
+                code: 'API_KEY_INVALID',
+                requiresKey: isUserKey,
+                hint: 'Get a valid API key from https://console.anthropic.com/'
+            });
+        }
 
         // Validate messages array
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -347,9 +352,12 @@ module.exports = async (req, res) => {
             // Map status codes to user-friendly errors
             switch (response.status) {
                 case 401:
-                    return res.status(503).json({
-                        error: 'Chat service authentication failed. Please contact support.',
-                        code: 'AUTH_FAILED'
+                    return res.status(401).json({
+                        error: isUserKey
+                            ? 'Your API key is invalid or expired. Please check your key and try again.'
+                            : 'Chat service authentication failed. Please contact support.',
+                        code: 'AUTH_FAILED',
+                        requiresKey: isUserKey
                     });
                 case 400:
                     return res.status(400).json({
@@ -358,7 +366,9 @@ module.exports = async (req, res) => {
                     });
                 case 429:
                     return res.status(429).json({
-                        error: 'Service is busy. Please try again in a moment.',
+                        error: isUserKey
+                            ? 'Your API key has hit its rate limit. Please wait a moment and try again.'
+                            : 'Service is busy. Please try again in a moment.',
                         code: 'API_RATE_LIMITED'
                     });
                 case 500:
