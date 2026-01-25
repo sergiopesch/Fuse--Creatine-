@@ -256,20 +256,23 @@ module.exports = async (req, res) => {
             exists: keyExists,
             isEmpty: rawValue === '',
             isWhitespaceOnly: rawValue?.trim() === '' && rawValue?.length > 0,
-            rawLength: rawValue?.length || 0
+            rawLength: rawValue?.length || 0,
+            hint: 'Set ANTHROPIC_API_KEY in Vercel Environment Variables or .env file'
         });
         return res.status(503).json({
-            error: 'Chat service is temporarily unavailable. Please try again later.',
-            code: 'SERVICE_UNAVAILABLE'
+            error: 'Chat service is not configured. The ANTHROPIC_API_KEY environment variable is missing.',
+            code: 'API_KEY_MISSING',
+            hint: 'Please set the ANTHROPIC_API_KEY environment variable in your Vercel project settings or .env file.'
         });
     }
 
     // Validate API key format
     if (!apiKey.startsWith('sk-ant-')) {
-        console.error('[Chat API] Invalid API key format. Expected sk-ant-* prefix.');
+        console.error('[Chat API] Invalid API key format. Expected sk-ant-* prefix, got:', apiKey.substring(0, 7) + '...');
         return res.status(503).json({
-            error: 'Chat service configuration error. Please contact support.',
-            code: 'CONFIG_ERROR'
+            error: 'Chat service configuration error. The API key format is invalid.',
+            code: 'API_KEY_INVALID',
+            hint: 'ANTHROPIC_API_KEY must start with "sk-ant-". Get a valid key from https://console.anthropic.com/'
         });
     }
 

@@ -44,6 +44,8 @@
         'RATE_LIMITED': "You're sending messages a bit quickly. Please wait a moment and try again.",
         'API_RATE_LIMITED': "I'm receiving a lot of questions right now. Please try again in a moment.",
         'SERVICE_UNAVAILABLE': "I'm temporarily unavailable. Please try again shortly.",
+        'API_KEY_MISSING': "The chat service is not configured. Please check the server configuration.",
+        'API_KEY_INVALID': "The chat service has a configuration issue. Please check the API key format.",
         'AUTH_FAILED': "I'm having technical difficulties. Please try again later.",
         'CONFIG_ERROR': "I'm having technical difficulties. Please try again later.",
         'NETWORK_ERROR': "I couldn't connect. Please check your internet and try again.",
@@ -51,6 +53,35 @@
         'INVALID_MESSAGE': "I couldn't understand that message. Could you try again?",
         'default': "I'm having a bit of trouble right now. Please try again in a moment."
     };
+
+    /**
+     * Check API health and warn about configuration issues
+     */
+    async function checkApiHealth() {
+        try {
+            const response = await fetch('/api/health');
+            const data = await response.json();
+
+            if (data.status === 'degraded' || !data.apiKey?.validFormat) {
+                console.warn('[FUSE Chat] API configuration issue detected:');
+                if (data.issues) {
+                    data.issues.forEach(issue => console.warn('  -', issue));
+                }
+                if (!data.apiKey?.exists) {
+                    console.warn('  - ANTHROPIC_API_KEY environment variable is not set');
+                    console.warn('  - Set it in Vercel Project Settings > Environment Variables');
+                    console.warn('  - Or create a .env file locally with: ANTHROPIC_API_KEY=sk-ant-...');
+                } else if (!data.apiKey?.validFormat) {
+                    console.warn('  - ANTHROPIC_API_KEY format is invalid (should start with sk-ant-)');
+                    console.warn('  - Get a valid API key from: https://console.anthropic.com/');
+                }
+            } else {
+                console.log('[FUSE Chat] API health check passed');
+            }
+        } catch (error) {
+            console.warn('[FUSE Chat] Could not check API health:', error.message);
+        }
+    }
 
     /**
      * Initialize the chat widget
@@ -102,6 +133,9 @@
                 chatForm.dispatchEvent(new Event('submit'));
             }
         });
+
+        // Check API health on initialization (for developer debugging)
+        checkApiHealth();
 
         console.log('FUSE Chat: Initialized');
     }
@@ -229,8 +263,15 @@
                 const errorCode = data.code || 'default';
                 const errorMessage = errorMessages[errorCode] || errorMessages['default'];
 
-                // Check if we should retry
-                if (shouldRetry(response.status, errorCode) && retryCount < CONFIG.maxRetries) {
+                // Log configuration hints for developers
+                if (data.hint) {
+                    console.warn('[FUSE Chat] Configuration issue:', data.error);
+                    console.warn('[FUSE Chat] Hint:', data.hint);
+                }
+
+                // Check if we should retry (don't retry config errors)
+                const isConfigError = errorCode === 'API_KEY_MISSING' || errorCode === 'API_KEY_INVALID';
+                if (!isConfigError && shouldRetry(response.status, errorCode) && retryCount < CONFIG.maxRetries) {
                     retryCount++;
                     showTypingIndicator();
                     setTimeout(() => {
@@ -402,7 +443,8 @@
             if (chatMessages) {
                 chatMessages.innerHTML = '';
             }
-        }
+        },
+        checkHealth: checkApiHealth
     };
 
 })();
