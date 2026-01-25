@@ -44,7 +44,6 @@
     // Elements
     const navbar = document.getElementById('navbar');
     const scrollProgress = document.getElementById('scrollProgress');
-    const cursor = document.getElementById('cursor');
 
     // Keep CSS var in sync with actual nav height (prevents hero overlap)
     let maxNavHeight = 0;
@@ -64,27 +63,6 @@
         });
     } else if (scrollProgress) {
         scrollProgress.style.display = 'none';
-    }
-
-    // Cursor presence (desktop only)
-    if (cursor && !prefersReducedMotion && !isCoarsePointer) {
-        const setX = gsap.quickTo(cursor, 'x', { duration: 0.22, ease: 'power3.out' });
-        const setY = gsap.quickTo(cursor, 'y', { duration: 0.22, ease: 'power3.out' });
-
-        window.addEventListener(
-            'mousemove',
-            (e) => {
-                cursor.style.opacity = '1';
-                setX(e.clientX);
-                setY(e.clientY);
-            },
-            { passive: true }
-        );
-
-        document.querySelectorAll('a, button, .compare-card').forEach((el) => {
-            el.addEventListener('mouseenter', () => gsap.to(cursor, { scale: 1.8, duration: 0.2, ease: 'power2.out' }));
-            el.addEventListener('mouseleave', () => gsap.to(cursor, { scale: 1, duration: 0.2, ease: 'power2.out' }));
-        });
     }
 
     // Navigation – direction-aware hide/show
