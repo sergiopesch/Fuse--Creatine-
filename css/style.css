@@ -99,41 +99,6 @@ body::before {
     pointer-events: none;
 }
 
-/* Cursor (subtle, premium) */
-.cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.7);
-    mix-blend-mode: difference;
-    pointer-events: none;
-    z-index: 2500;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-}
-
-@media (hover: none), (pointer: coarse) {
-    .cursor { display: none; }
-}
-
-/* Hide native cursor on desktop when custom cursor is active */
-@media (hover: hover) and (pointer: fine) {
-    .js body {
-        cursor: none;
-    }
-
-    .js a,
-    .js button,
-    .js [role="button"],
-    .js input[type="submit"],
-    .js input[type="button"] {
-        cursor: none;
-    }
-}
-
 /* Navigation */
 .nav {
     position: fixed;
@@ -1824,8 +1789,7 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
 
 /* Optimize paint for fixed elements */
 .nav,
-.scroll-progress,
-.cursor {
+.scroll-progress {
     contain: layout style;
 }
 
@@ -1844,7 +1808,6 @@ body {
 /* Print styles - hide non-essential elements */
 @media print {
     .nav,
-    .cursor,
     .scroll-progress,
     .scroll-hint,
     .hero-orbs,
