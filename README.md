@@ -47,6 +47,8 @@ fuse-creatine/
 ├── terms.html          # Terms and conditions
 ├── api/
 │   ├── admin-signups.js # Protected admin API
+│   ├── chat.js          # FUSE Agent chat API (Anthropic Claude)
+│   ├── health.js        # Health check endpoint
 │   └── signup.js        # Waitlist signup API
 ├── index.html          # Single-page application
 ├── css/
@@ -55,6 +57,7 @@ fuse-creatine/
 │   └── style.css       # All styling (CSS custom properties, responsive)
 ├── js/
 │   ├── admin.js        # Admin UI logic
+│   ├── chat.js         # FUSE Agent chat widget
 │   └── main.js         # Animation & interaction logic
 ├── assets/
 │   └── favicon.svg     # Brand favicon
@@ -87,11 +90,54 @@ Privacy Policy. Admins can view signups at `/admin` (or `/admin.html`) by provid
 Legal pages are available at `/privacy` and `/terms`.
 Rate limiting is enforced on the signup API to mitigate abuse.
 
+## FUSE Agent Chat
+
+The site includes an AI-powered chat widget called the "FUSE Agent" - a friendly, British customer service assistant powered by Claude (Anthropic). The chat widget appears as a floating button in the bottom-right corner of the page.
+
+### Features
+
+- **Conversational AI**: Powered by Claude claude-sonnet-4-20250514 with a custom system prompt that embodies the FUSE brand personality
+- **British Personality**: Smart, polite, evidence-based responses with subtle British charm
+- **Product Knowledge**: Deep understanding of FUSE's technology, dosing guidelines, and scientific backing
+- **Quick Actions**: Pre-defined questions for common queries (What is FUSE?, Dosing guide, etc.)
+- **Rate Limiting**: 20 requests per minute per IP to prevent abuse
+- **Error Handling**: Intelligent retry logic with user-friendly error messages
+- **Accessibility**: Full ARIA support, keyboard navigation, and screen reader compatibility
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/chat` | POST | Send messages to the FUSE Agent |
+| `/api/health` | GET | Check API configuration and health status |
+
+### Chat Widget API
+
+The chat widget exposes a global `FUSEChat` object:
+
+```javascript
+// Open/close the chat window
+FUSEChat.open()
+FUSEChat.close()
+FUSEChat.toggle()
+
+// Check if chat is open
+FUSEChat.isOpen()
+
+// Clear conversation history
+FUSEChat.clearHistory()
+```
+
+### Health Check
+
+Visit `/api/health` to verify the chat service configuration. The endpoint returns diagnostic information including API key validation status.
+
 Required environment variables:
 
 - `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token
 - `ADMIN_TOKEN`: shared secret used to authorize `/api/admin-signups`
 - `ENCRYPTION_KEY`: A 32+ character string used to encrypt PII in storage. (Required for security)
+- `ANTHROPIC_API_KEY`: Anthropic API key for Claude chat agent (must start with `sk-ant-`)
 
 ## Integration Test (Production-Ready)
 

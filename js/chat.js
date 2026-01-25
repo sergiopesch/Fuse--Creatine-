@@ -6,10 +6,19 @@
 (function() {
     'use strict';
 
+    // Configuration
+    const CONFIG = {
+        maxMessageLength: 2000,
+        maxRetries: 2,
+        retryDelay: 1000,
+        typingIndicatorDelay: 300
+    };
+
     // Chat state
     let isOpen = false;
     let isLoading = false;
     let conversationHistory = [];
+    let retryCount = 0;
 
     // DOM Elements (populated on init)
     let chatWidget, chatToggle, chatWindow, chatMessages, chatInput, chatForm, chatClose;
@@ -29,6 +38,19 @@
         { label: "Dosing guide", message: "How much creatine should I take?" },
         { label: "Is it safe?", message: "Is creatine safe to take?" }
     ];
+
+    // Error messages based on error codes
+    const errorMessages = {
+        'RATE_LIMITED': "You're sending messages a bit quickly. Please wait a moment and try again.",
+        'API_RATE_LIMITED': "I'm receiving a lot of questions right now. Please try again in a moment.",
+        'SERVICE_UNAVAILABLE': "I'm temporarily unavailable. Please try again shortly.",
+        'AUTH_FAILED': "I'm having technical difficulties. Please try again later.",
+        'CONFIG_ERROR': "I'm having technical difficulties. Please try again later.",
+        'NETWORK_ERROR': "I couldn't connect. Please check your internet and try again.",
+        'VALIDATION_ERROR': "There was an issue with your message. Please try rephrasing it.",
+        'INVALID_MESSAGE': "I couldn't understand that message. Could you try again?",
+        'default': "I'm having a bit of trouble right now. Please try again in a moment."
+    };
 
     /**
      * Initialize the chat widget
@@ -70,6 +92,9 @@
         // Auto-resize textarea
         chatInput.addEventListener('input', autoResizeInput);
 
+        // Character count validation
+        chatInput.addEventListener('input', validateInput);
+
         // Handle enter key (submit on Enter, new line on Shift+Enter)
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -79,6 +104,16 @@
         });
 
         console.log('FUSE Chat: Initialized');
+    }
+
+    /**
+     * Validate input length
+     */
+    function validateInput() {
+        const length = chatInput.value.length;
+        if (length > CONFIG.maxMessageLength) {
+            chatInput.value = chatInput.value.substring(0, CONFIG.maxMessageLength);
+        }
     }
 
     /**
@@ -111,7 +146,7 @@
         // Focus input
         setTimeout(() => {
             chatInput.focus();
-        }, 300);
+        }, CONFIG.typingIndicatorDelay);
     }
 
     /**
@@ -133,6 +168,16 @@
         const message = chatInput.value.trim();
         if (!message || isLoading) return;
 
+        // Validate message length
+        if (message.length > CONFIG.maxMessageLength) {
+            addMessage(
+                `Message is too long. Please keep it under ${CONFIG.maxMessageLength} characters.`,
+                'assistant',
+                true
+            );
+            return;
+        }
+
         // Clear input
         chatInput.value = '';
         autoResizeInput();
@@ -143,16 +188,22 @@
         // Add user message
         addMessage(message, 'user');
 
+        // Reset retry count
+        retryCount = 0;
+
         // Send to API
         await sendMessage(message);
     }
 
     /**
-     * Send message to API
+     * Send message to API with retry logic
      */
-    async function sendMessage(message) {
+    async function sendMessage(message, isRetry = false) {
         isLoading = true;
-        showTypingIndicator();
+
+        if (!isRetry) {
+            showTypingIndicator();
+        }
 
         try {
             const response = await fetch('/api/chat', {
@@ -172,16 +223,38 @@
 
             if (response.ok && data.message) {
                 addMessage(data.message, 'assistant');
+                retryCount = 0;
             } else {
-                addMessage(
-                    data.error || "I'm having a bit of trouble right now. Please try again in a moment.",
-                    'assistant',
-                    true
-                );
+                // Handle specific error codes
+                const errorCode = data.code || 'default';
+                const errorMessage = errorMessages[errorCode] || errorMessages['default'];
+
+                // Check if we should retry
+                if (shouldRetry(response.status, errorCode) && retryCount < CONFIG.maxRetries) {
+                    retryCount++;
+                    showTypingIndicator();
+                    setTimeout(() => {
+                        sendMessage(message, true);
+                    }, CONFIG.retryDelay * retryCount);
+                    return;
+                }
+
+                addMessage(errorMessage, 'assistant', true);
             }
         } catch (error) {
             console.error('Chat error:', error);
             hideTypingIndicator();
+
+            // Retry on network errors
+            if (retryCount < CONFIG.maxRetries) {
+                retryCount++;
+                showTypingIndicator();
+                setTimeout(() => {
+                    sendMessage(message, true);
+                }, CONFIG.retryDelay * retryCount);
+                return;
+            }
+
             addMessage(
                 "Sorry, I couldn't connect. Please check your internet and try again.",
                 'assistant',
@@ -190,6 +263,19 @@
         }
 
         isLoading = false;
+    }
+
+    /**
+     * Determine if request should be retried
+     */
+    function shouldRetry(status, errorCode) {
+        // Don't retry client errors or rate limits
+        if (status === 400 || status === 429) return false;
+        if (errorCode === 'VALIDATION_ERROR' || errorCode === 'INVALID_MESSAGE') return false;
+        if (errorCode === 'RATE_LIMITED' || errorCode === 'API_RATE_LIMITED') return false;
+
+        // Retry server errors and network issues
+        return status >= 500 || status === 503;
     }
 
     /**
@@ -206,8 +292,10 @@
         messageEl.appendChild(contentEl);
         chatMessages.appendChild(messageEl);
 
-        // Store in history
-        conversationHistory.push({ role, content });
+        // Store in history (don't store error messages or greeting)
+        if (!isError && role !== 'assistant' || (role === 'assistant' && conversationHistory.length > 0)) {
+            conversationHistory.push({ role, content });
+        }
 
         // Scroll to bottom
         scrollToBottom();
@@ -225,7 +313,9 @@
             const btn = document.createElement('button');
             btn.className = 'chat-quick-btn';
             btn.textContent = action.label;
+            btn.type = 'button';
             btn.addEventListener('click', () => {
+                if (isLoading) return;
                 removeQuickActions();
                 chatInput.value = action.message;
                 chatForm.dispatchEvent(new Event('submit'));
@@ -251,9 +341,13 @@
      * Show typing indicator
      */
     function showTypingIndicator() {
+        // Remove existing indicator first
+        hideTypingIndicator();
+
         const indicator = document.createElement('div');
         indicator.className = 'chat-typing';
         indicator.id = 'chatTyping';
+        indicator.setAttribute('aria-label', 'FUSE Agent is typing');
         indicator.innerHTML = `
             <span></span>
             <span></span>
@@ -277,7 +371,9 @@
      * Scroll chat to bottom
      */
     function scrollToBottom() {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
     }
 
     /**
@@ -299,7 +395,14 @@
     window.FUSEChat = {
         open: openChat,
         close: closeChat,
-        toggle: toggleChat
+        toggle: toggleChat,
+        isOpen: () => isOpen,
+        clearHistory: () => {
+            conversationHistory = [];
+            if (chatMessages) {
+                chatMessages.innerHTML = '';
+            }
+        }
     };
 
 })();
