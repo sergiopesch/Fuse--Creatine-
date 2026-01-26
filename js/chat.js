@@ -26,7 +26,8 @@
         emailCaptured: false,
         messageCount: 0,
         conversationHistory: [],
-        retryCount: 0
+        retryCount: 0,
+        sessionTerminated: false // Security: track if session was terminated
     };
 
     // DOM Elements
@@ -317,6 +318,12 @@
      * Send message to API
      */
     async function sendMessage(message, isRetry = false) {
+        // Security: Don't allow messages if session was terminated
+        if (state.sessionTerminated) {
+            addMessage("This chat session has ended. Please refresh the page to start a new conversation.", 'assistant', true);
+            return;
+        }
+
         state.isLoading = true;
 
         if (!isRetry) {
@@ -341,8 +348,13 @@
                 state.retryCount = 0;
                 state.messageCount++;
 
-                // Check if we should prompt for email
-                checkEmailCaptureOpportunity();
+                // Security: Handle session termination signal from server
+                if (data.sessionTerminated) {
+                    handleSessionTermination();
+                } else {
+                    // Check if we should prompt for email
+                    checkEmailCaptureOpportunity();
+                }
             } else {
                 handleError(response.status, data.code, message);
             }
@@ -387,6 +399,36 @@
         }
 
         addMessage("Can't connect right now. Please check your internet and try again.", 'assistant', true);
+    }
+
+    /**
+     * Handle session termination (security measure)
+     * Called when the server detects suspicious activity
+     */
+    function handleSessionTermination() {
+        state.sessionTerminated = true;
+
+        // Disable the input
+        if (elements.chatInput) {
+            elements.chatInput.disabled = true;
+            elements.chatInput.placeholder = 'Session ended - refresh to start new chat';
+        }
+
+        // Disable the submit button
+        const submitBtn = elements.chatForm?.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+
+        // Add visual indication
+        if (elements.chatWindow) {
+            elements.chatWindow.classList.add('chat-session-terminated');
+        }
+
+        // Clear conversation history (security measure)
+        state.conversationHistory = [];
+
+        console.log('[FUSE Chat] Session terminated by server');
     }
 
     /**
@@ -701,6 +743,21 @@
             state.messageCount = 0;
             state.hasShownEmailCapture = false;
             state.showWelcome = true;
+            state.sessionTerminated = false;
+
+            // Re-enable input if it was disabled
+            if (elements.chatInput) {
+                elements.chatInput.disabled = false;
+                elements.chatInput.placeholder = 'Ask about FUSE...';
+            }
+            const submitBtn = elements.chatForm?.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+            }
+            if (elements.chatWindow) {
+                elements.chatWindow.classList.remove('chat-session-terminated');
+            }
+
             if (elements.chatMessages) {
                 elements.chatMessages.innerHTML = '';
             }
