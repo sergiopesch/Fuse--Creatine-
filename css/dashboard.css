@@ -1001,3 +1001,293 @@
         transition: none;
     }
 }
+
+/* ============================================
+   BIOMETRIC AUTHENTICATION GATE
+   ============================================ */
+
+.biometric-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--dash-bg);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.biometric-gate.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.biometric-gate-content {
+    text-align: center;
+    padding: 48px;
+    max-width: 420px;
+}
+
+.biometric-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+    border-radius: 32px;
+    position: relative;
+}
+
+.biometric-icon::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 34px;
+    background: linear-gradient(135deg, var(--team-dev), var(--team-design));
+    opacity: 0.3;
+    z-index: -1;
+}
+
+.biometric-icon svg {
+    width: 56px;
+    height: 56px;
+    color: #fff;
+}
+
+.biometric-icon.scanning {
+    animation: biometric-pulse 1.5s infinite;
+}
+
+@keyframes biometric-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 40px 10px rgba(59, 130, 246, 0.2);
+    }
+}
+
+.biometric-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 0.05em;
+    color: #fff;
+    margin: 0 0 12px;
+}
+
+.biometric-subtitle {
+    font-size: 15px;
+    color: #888;
+    margin: 0 0 32px;
+    line-height: 1.5;
+}
+
+.biometric-type {
+    color: var(--team-dev);
+    font-weight: 500;
+}
+
+.biometric-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-biometric {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, var(--team-dev), var(--team-design));
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-biometric:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(59, 130, 246, 0.5);
+}
+
+.btn-biometric:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-biometric:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-biometric svg {
+    width: 22px;
+    height: 22px;
+}
+
+.btn-biometric.btn-secondary-bio {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--dash-border);
+    box-shadow: none;
+}
+
+.btn-biometric.btn-secondary-bio:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.biometric-status {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #888;
+    display: none;
+}
+
+.biometric-status.visible {
+    display: block;
+}
+
+.biometric-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: var(--status-error);
+}
+
+.biometric-status.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: var(--status-active);
+}
+
+.biometric-footer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: #666;
+}
+
+.biometric-footer a {
+    color: var(--team-dev);
+    text-decoration: none;
+}
+
+.biometric-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Loading state */
+.biometric-loading {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.biometric-loading span {
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: biometric-loading 1.4s infinite;
+}
+
+.biometric-loading span:nth-child(2) { animation-delay: 0.2s; }
+.biometric-loading span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes biometric-loading {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Not supported state */
+.biometric-not-supported {
+    display: none;
+}
+
+.biometric-gate.not-supported .biometric-not-supported {
+    display: block;
+}
+
+.biometric-gate.not-supported .biometric-supported {
+    display: none;
+}
+
+.biometric-alt-actions {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--dash-border);
+}
+
+.biometric-alt-actions p {
+    font-size: 13px;
+    color: #666;
+    margin: 0 0 12px;
+}
+
+/* Verified indicator */
+.biometric-verified-badge {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--status-active);
+    margin-left: auto;
+}
+
+.biometric-verified-badge svg {
+    width: 14px;
+    height: 14px;
+}
+
+.dashboard-page.biometric-verified .biometric-verified-badge {
+    display: flex;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .biometric-gate-content {
+        padding: 32px 24px;
+    }
+
+    .biometric-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+    }
+
+    .biometric-icon svg {
+        width: 44px;
+        height: 44px;
+    }
+
+    .biometric-title {
+        font-size: 28px;
+    }
+
+    .btn-biometric {
+        padding: 14px 24px;
+        font-size: 14px;
+    }
+}
