@@ -235,6 +235,64 @@ const AgentTeams = {
                 efficiency: 93
             }
         ]
+    },
+    sales: {
+        id: 'sales',
+        name: 'Sales Team',
+        badge: 'SLS',
+        color: '#ec4899',
+        agents: [
+            {
+                id: 'sales-director',
+                name: 'Sales Director',
+                role: 'Revenue Strategy & Team Leadership',
+                status: 'working',
+                skills: ['Sales Strategy', 'Revenue Operations', 'Team Leadership', 'Pipeline Management'],
+                tasksCompleted: 67,
+                currentTask: 'Optimizing sales pipeline metrics',
+                efficiency: 96
+            },
+            {
+                id: 'account-executive',
+                name: 'Account Executive',
+                role: 'Enterprise Sales & Closing',
+                status: 'working',
+                skills: ['Enterprise Sales', 'Contract Negotiation', 'Relationship Building', 'Closing Techniques'],
+                tasksCompleted: 89,
+                currentTask: 'Preparing enterprise demo presentations',
+                efficiency: 94
+            },
+            {
+                id: 'sdr',
+                name: 'SDR Lead',
+                role: 'Outbound Prospecting & Lead Qualification',
+                status: 'working',
+                skills: ['Prospecting', 'Lead Qualification', 'Cold Outreach', 'CRM Management'],
+                tasksCompleted: 156,
+                currentTask: 'Running outbound campaign sequences',
+                efficiency: 91
+            },
+            {
+                id: 'solutions-consultant',
+                name: 'Solutions Consultant',
+                role: 'Technical Sales & Demos',
+                status: 'idle',
+                skills: ['Technical Demos', 'Solution Architecture', 'Requirements Analysis', 'POC Management'],
+                tasksCompleted: 42,
+                currentTask: null,
+                efficiency: 97
+            },
+            {
+                id: 'customer-success',
+                name: 'Customer Success Manager',
+                role: 'Retention & Expansion',
+                status: 'working',
+                skills: ['Customer Retention', 'Upselling', 'Onboarding', 'Health Scoring'],
+                tasksCompleted: 78,
+                currentTask: 'Conducting quarterly business reviews',
+                efficiency: 93
+            }
+        ]
     }
 };
 
@@ -250,7 +308,16 @@ const state = {
     communications: [],
     tasks: [],
     priorities: [],
-    projects: []
+    projects: [],
+    apiKeyConfig: {
+        anthropic: { configured: false, model: 'claude-3-5-haiku-latest' },
+        openai: { configured: false, model: 'gpt-4-turbo' },
+        gemini: { configured: false, model: 'gemini-pro' }
+    },
+    healthMetrics: {
+        lastCheck: null,
+        systemStatus: 'operational'
+    }
 };
 
 // Initialize decisions queue
@@ -566,12 +633,16 @@ function renderCommsLog(filter = 'all') {
 }
 
 function updateStats() {
-    // Count working agents
+    // Count all agents and working agents
+    let totalAgents = 0;
     let activeCount = 0;
     let tasksCount = 0;
+    let totalEfficiency = 0;
 
     Object.values(AgentTeams).forEach(team => {
         team.agents.forEach(agent => {
+            totalAgents++;
+            totalEfficiency += agent.efficiency || 0;
             if (agent.status === 'working') {
                 activeCount++;
                 tasksCount++;
@@ -579,10 +650,16 @@ function updateStats() {
         });
     });
 
-    if (elements.activeAgents) elements.activeAgents.textContent = '18';
+    const avgEfficiency = totalAgents > 0 ? Math.round(totalEfficiency / totalAgents) : 0;
+
+    if (elements.activeAgents) elements.activeAgents.textContent = totalAgents.toString();
     if (elements.tasksInProgress) elements.tasksInProgress.textContent = tasksCount;
     if (elements.pendingDecisions) elements.pendingDecisions.textContent = state.decisions.length;
     if (elements.completedToday) elements.completedToday.textContent = '24';
+
+    // Update health metrics
+    state.healthMetrics.lastCheck = new Date().toISOString();
+    state.healthMetrics.systemStatus = activeCount > 0 ? 'operational' : 'idle';
 }
 
 // ============================================
@@ -981,6 +1058,15 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCommsLog();
     updateStats();
 
+    // Initialize API config panel
+    initApiConfigPanel();
+
+    // Initialize lazy loading for performance
+    lazyLoadTeamCards();
+
+    // Initialize agent status monitoring
+    updateAgentVisibilityDashboard();
+
     // Team navigation
     document.querySelectorAll('.team-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => filterTeams(btn.dataset.team));
@@ -994,7 +1080,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tab.classList.add('active');
             const tabId = tab.dataset.tab + 'Tab';
-            document.getElementById(tabId)?.classList.add('active');
+            const tabContent = document.getElementById(tabId);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
         });
     });
 
@@ -1153,6 +1242,204 @@ document.addEventListener('dragover', (e) => {
     }
 });
 
+// ============================================
+// API CONFIGURATION FUNCTIONS
+// ============================================
+
+function saveApiConfig(provider) {
+    const keyInput = document.getElementById(`${provider}Key`);
+    const modelSelect = document.getElementById(`${provider}Model`);
+
+    if (!keyInput || !modelSelect) return;
+
+    const apiKey = keyInput.value.trim();
+    const model = modelSelect.value;
+
+    if (!apiKey) {
+        showToast('error', 'Validation Error', 'Please enter an API key');
+        return;
+    }
+
+    // Validate key format
+    const keyPatterns = {
+        anthropic: /^sk-ant-/,
+        openai: /^sk-/,
+        gemini: /^AI/
+    };
+
+    if (!keyPatterns[provider].test(apiKey)) {
+        showToast('error', 'Invalid Format', `API key doesn't match expected format for ${provider}`);
+        return;
+    }
+
+    // Update local state (in production, this would call the API)
+    state.apiKeyConfig[provider] = {
+        configured: true,
+        model: model
+    };
+
+    // Update status display
+    const statusEl = document.getElementById(`${provider}Status`);
+    if (statusEl) {
+        statusEl.textContent = 'Configured';
+        statusEl.classList.add('configured');
+    }
+
+    // Clear the key input for security
+    keyInput.value = '';
+
+    // Add activity
+    state.activities.unshift({
+        id: `act-${Date.now()}`,
+        agent: 'Commander',
+        team: 'system',
+        message: `Updated ${provider} API configuration to ${model}`,
+        tag: 'Config',
+        timestamp: new Date()
+    });
+    renderActivityFeed();
+
+    showToast('success', 'Configuration Saved', `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured successfully`);
+}
+
+function runHealthCheck() {
+    showToast('info', 'Health Check', 'Running system health check...');
+
+    const startTime = performance.now();
+
+    // Simulate API latency check
+    setTimeout(() => {
+        const latency = Math.round(performance.now() - startTime);
+
+        // Update health metrics
+        state.healthMetrics.lastCheck = new Date().toISOString();
+        state.healthMetrics.systemStatus = 'operational';
+
+        // Update UI
+        const apiLatencyEl = document.getElementById('apiLatency');
+        const lastCheckEl = document.getElementById('lastHealthCheck');
+        const systemStatusEl = document.getElementById('systemStatus');
+
+        if (apiLatencyEl) apiLatencyEl.textContent = `${latency} ms`;
+        if (lastCheckEl) lastCheckEl.textContent = 'Just now';
+        if (systemStatusEl) {
+            systemStatusEl.textContent = 'Operational';
+            systemStatusEl.className = 'health-value status-good';
+        }
+
+        // Add to activity feed
+        state.activities.unshift({
+            id: `act-${Date.now()}`,
+            agent: 'System',
+            team: 'system',
+            message: `Health check completed - All systems operational (${latency}ms latency)`,
+            tag: 'Health',
+            timestamp: new Date()
+        });
+        renderActivityFeed();
+
+        showToast('success', 'Health Check Complete', `System operational - ${latency}ms latency`);
+    }, 500);
+}
+
+function initApiConfigPanel() {
+    // Add click handlers for config card toggles
+    document.querySelectorAll('.api-config-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const toggle = header.querySelector('.api-config-toggle');
+            const body = header.nextElementSibling;
+
+            if (toggle && body) {
+                const isExpanded = toggle.dataset.expanded === 'true';
+                toggle.dataset.expanded = isExpanded ? 'false' : 'true';
+                body.style.display = isExpanded ? 'none' : 'block';
+            }
+        });
+    });
+
+    // Initialize API status from state
+    Object.entries(state.apiKeyConfig).forEach(([provider, config]) => {
+        const statusEl = document.getElementById(`${provider}Status`);
+        if (statusEl && config.configured) {
+            statusEl.textContent = 'Configured';
+            statusEl.classList.add('configured');
+        }
+    });
+}
+
+// ============================================
+// PERFORMANCE OPTIMIZATION: LAZY LOADING
+// ============================================
+
+function lazyLoadTeamCards() {
+    const options = {
+        root: null,
+        rootMargin: '50px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, options);
+
+    document.querySelectorAll('.team-card').forEach(card => {
+        observer.observe(card);
+    });
+}
+
+// ============================================
+// REAL-TIME AGENT STATUS MONITORING
+// ============================================
+
+function getAgentStatusSummary() {
+    const summary = {
+        total: 0,
+        working: 0,
+        idle: 0,
+        teams: {}
+    };
+
+    Object.entries(AgentTeams).forEach(([teamId, team]) => {
+        const teamSummary = {
+            name: team.name,
+            working: 0,
+            idle: 0,
+            total: team.agents.length
+        };
+
+        team.agents.forEach(agent => {
+            summary.total++;
+            if (agent.status === 'working') {
+                summary.working++;
+                teamSummary.working++;
+            } else {
+                summary.idle++;
+                teamSummary.idle++;
+            }
+        });
+
+        teamSummary.utilization = Math.round((teamSummary.working / teamSummary.total) * 100);
+        summary.teams[teamId] = teamSummary;
+    });
+
+    return summary;
+}
+
+function updateAgentVisibilityDashboard() {
+    const summary = getAgentStatusSummary();
+
+    // This data can be used to render an agent visibility dashboard
+    // or expose via window for admin console integration
+    window.AgentStatusSummary = summary;
+
+    return summary;
+}
+
 // Export for potential external use
 window.AgentCommander = {
     state,
@@ -1160,5 +1447,9 @@ window.AgentCommander = {
     showToast,
     syncAll,
     filterTeams,
-    setOrchestrationMode
+    setOrchestrationMode,
+    saveApiConfig,
+    runHealthCheck,
+    getAgentStatusSummary,
+    updateAgentVisibilityDashboard
 };

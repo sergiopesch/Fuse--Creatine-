@@ -10,6 +10,7 @@
     --agent-legal: #f59e0b;
     --agent-marketing: #ef4444;
     --agent-gtm: #10b981;
+    --agent-sales: #ec4899;
 
     --status-online: #22c55e;
     --status-working: #3b82f6;
@@ -248,6 +249,8 @@
 .marketing-icon svg { color: var(--agent-marketing) !important; }
 .gtm-icon { background: rgba(16, 185, 129, 0.2) !important; }
 .gtm-icon svg { color: var(--agent-gtm) !important; }
+.sales-icon { background: rgba(236, 72, 153, 0.2) !important; }
+.sales-icon svg { color: var(--agent-sales) !important; }
 
 .team-name {
     flex: 1;
@@ -541,6 +544,7 @@
 .team-badge.legal { background: rgba(245, 158, 11, 0.2); color: var(--agent-legal); }
 .team-badge.marketing { background: rgba(239, 68, 68, 0.2); color: var(--agent-marketing); }
 .team-badge.gtm { background: rgba(16, 185, 129, 0.2); color: var(--agent-gtm); }
+.team-badge.sales { background: rgba(236, 72, 153, 0.2); color: var(--agent-sales); }
 
 .team-title {
     font-size: 16px;
@@ -644,6 +648,8 @@
 .marketing-avatar svg { color: var(--agent-marketing); }
 .gtm-avatar { background: rgba(16, 185, 129, 0.2); }
 .gtm-avatar svg { color: var(--agent-gtm); }
+.sales-avatar { background: rgba(236, 72, 153, 0.2); }
+.sales-avatar svg { color: var(--agent-sales); }
 
 .agent-info {
     flex: 1;
@@ -1765,4 +1771,313 @@
 @keyframes skeleton-loading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   API Configuration Panel Styles
+   ============================================ */
+
+.config-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.config-description {
+    font-size: 12px;
+    color: var(--text-gray);
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+}
+
+.api-config-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.api-config-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.api-config-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.api-config-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.api-provider-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.api-provider-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.api-provider-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.api-provider-icon.anthropic {
+    background: rgba(255, 127, 80, 0.15);
+    color: #ff7f50;
+}
+
+.api-provider-icon.openai {
+    background: rgba(16, 163, 127, 0.15);
+    color: #10a37f;
+}
+
+.api-provider-icon.gemini {
+    background: rgba(66, 133, 244, 0.15);
+    color: #4285f4;
+}
+
+.api-provider-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+}
+
+.api-status {
+    display: block;
+    font-size: 11px;
+    color: var(--text-gray);
+    margin-top: 2px;
+}
+
+.api-status.configured {
+    color: var(--status-online);
+}
+
+.api-config-toggle {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-gray);
+    transition: transform 0.2s ease;
+}
+
+.api-config-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+.api-config-toggle[data-expanded="true"] {
+    transform: rotate(180deg);
+}
+
+.api-config-body {
+    padding: 16px;
+    border-top: 1px solid var(--card-border);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.api-config-body .form-group {
+    margin-bottom: 14px;
+}
+
+.api-config-body .form-group:last-of-type {
+    margin-bottom: 16px;
+}
+
+.api-config-body .form-group label {
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.api-config-body .form-group input,
+.api-config-body .form-group select {
+    padding: 10px 12px;
+    font-size: 13px;
+    background: var(--mid-gray);
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+/* Health Section */
+.health-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--card-border);
+}
+
+.section-subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    margin: 0 0 12px 0;
+}
+
+.health-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.health-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.health-label {
+    font-size: 12px;
+    color: var(--text-gray);
+}
+
+.health-value {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--white);
+}
+
+.health-value.status-good {
+    color: var(--status-online);
+}
+
+.health-value.status-warning {
+    color: #f59e0b;
+}
+
+.health-value.status-error {
+    color: var(--status-error);
+}
+
+/* Agent Visibility Dashboard */
+.agent-visibility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.agent-visibility-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.agent-visibility-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.agent-visibility-card .agent-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.agent-visibility-card .agent-indicator.working {
+    background: var(--status-working);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    animation: status-pulse 1.5s infinite;
+}
+
+.agent-visibility-card .agent-indicator.idle {
+    background: var(--status-idle);
+}
+
+.agent-visibility-card .agent-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.agent-visibility-card .agent-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agent-visibility-card .agent-team {
+    font-size: 11px;
+    color: var(--text-gray);
+}
+
+.agent-visibility-card .agent-efficiency {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--status-online);
+}
+
+/* Performance Optimizations */
+.teams-grid {
+    contain: layout style;
+}
+
+.team-card {
+    contain: layout style paint;
+    will-change: transform;
+}
+
+.agent-card {
+    contain: layout style;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .status-pulse,
+    .pulse-green,
+    .pulse-activity,
+    .status-indicator {
+        animation: none;
+    }
+
+    .team-card,
+    .agent-card,
+    .stat-card,
+    .decision-item,
+    .toast {
+        transition: none;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .card-bg {
+        background: rgba(0, 0, 0, 0.9);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .agent-status.working,
+    .agent-status.idle {
+        border: 1px solid currentColor;
+    }
 }
