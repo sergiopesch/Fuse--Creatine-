@@ -16,13 +16,13 @@
     --consent-text: #ffffff;
     --consent-text-secondary: #a0a0a0;
     --consent-border: rgba(255, 255, 255, 0.1);
-    --consent-primary: #00ff88;
-    --consent-primary-hover: #00cc6e;
-    --consent-primary-text: #000000;
+    --consent-primary: #ff3b30;
+    --consent-primary-hover: #d70015;
+    --consent-primary-text: #ffffff;
     --consent-secondary-bg: transparent;
     --consent-secondary-border: rgba(255, 255, 255, 0.3);
     --consent-secondary-hover: rgba(255, 255, 255, 0.1);
-    --consent-tertiary-text: #00ff88;
+    --consent-tertiary-text: #ff3b30;
     --consent-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
     --consent-modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     --consent-radius: 12px;
@@ -365,7 +365,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 2px 8px;
-    background: rgba(0, 255, 136, 0.1);
+    background: rgba(255, 59, 48, 0.1);
     color: var(--consent-primary);
     border-radius: 4px;
 }
@@ -502,7 +502,7 @@
 }
 
 .consent-toggle input:focus + .consent-toggle-slider {
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.3);
 }
 
 /* ==========================================================================
