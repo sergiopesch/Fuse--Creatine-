@@ -80,6 +80,16 @@ function getClientIp(req) {
 }
 
 /**
+ * Get request host (without protocol)
+ */
+function getRequestHost(req) {
+    const forwardedHost = getHeaderValue(req.headers['x-forwarded-host']);
+    const host = forwardedHost || getHeaderValue(req.headers.host);
+    if (!host) return '';
+    return host.split(',')[0].trim();
+}
+
+/**
  * Get authorization token from request
  */
 function getAuthToken(req) {
@@ -114,11 +124,32 @@ function tokensMatch(provided, expected) {
 /**
  * Get appropriate CORS origin
  */
-function getCorsOrigin(requestOrigin) {
-    if (!requestOrigin) return ALLOWED_ORIGINS[0];
+function getCorsOrigin(requestOrigin, requestHost = '') {
+    if (!requestOrigin) return null;
+
     if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
     // Allow Vercel preview deployments
     if (requestOrigin.endsWith('.vercel.app')) return requestOrigin;
+
+    let originHostname = '';
+    try {
+        const originUrl = new URL(requestOrigin);
+        originHostname = originUrl.hostname.toLowerCase();
+    } catch (error) {
+        return null;
+    }
+
+    if (originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname === '::1' || originHostname === '0.0.0.0') {
+        return requestOrigin;
+    }
+
+    if (requestHost) {
+        const hostHostname = requestHost.split(':')[0].toLowerCase();
+        if (originHostname === hostHostname) {
+            return requestOrigin;
+        }
+    }
+
     return null; // Reject unknown origins
 }
 
@@ -402,7 +433,7 @@ function createSecuredHandler(options, handler) {
         const startTime = Date.now();
 
         // Set security headers
-        const origin = getCorsOrigin(req.headers.origin);
+        const origin = getCorsOrigin(req.headers.origin, getRequestHost(req));
         setSecurityHeaders(res, origin, allowedMethods.join(', '));
 
         // Handle CORS preflight
@@ -562,6 +593,7 @@ module.exports = {
     // Helper functions
     getHeaderValue,
     getClientIp,
+    getRequestHost,
     getAuthToken,
     tokensMatch,
 

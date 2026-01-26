@@ -15,6 +15,7 @@ const {
     setSecurityHeaders,
     getCorsOrigin,
     getClientIp,
+    getRequestHost,
     addAuditEntry,
     getAuditLog,
     validateRequestBody,
@@ -375,7 +376,7 @@ function generateAnalytics() {
 
 module.exports = async (req, res) => {
     const clientIp = getClientIp(req);
-    const origin = getCorsOrigin(req.headers.origin);
+    const origin = getCorsOrigin(req.headers.origin, getRequestHost(req));
 
     // Set security headers
     setSecurityHeaders(res, origin, 'GET, POST, PUT, DELETE, OPTIONS');

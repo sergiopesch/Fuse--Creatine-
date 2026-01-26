@@ -654,7 +654,16 @@ input[type="range"] {
     transform: none;
 }
 
-html.js .product-3d-fallback {
+/* 3D fallback stays visible until WebGL is ready */
+.product-3d-fallback {
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 24px 60px rgba(0, 0, 0, 0.45));
+}
+
+.product-3d-container.has-webgl .product-3d-fallback {
     opacity: 0;
     pointer-events: none;
 }

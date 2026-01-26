@@ -49,9 +49,9 @@ const {
 // ============================================================================
 
 // Validate required environment variables at startup
-const SESSION_SECRET = process.env.ENCRYPTION_KEY;
+const SESSION_SECRET = process.env.ENCRYPTION_KEY || null;
 if (!SESSION_SECRET) {
-    console.error('[BiometricAuth] CRITICAL: ENCRYPTION_KEY environment variable is not set');
+    console.warn('[BiometricAuth] ENCRYPTION_KEY not set; session tokens will be disabled');
 }
 
 const CONFIG = {
@@ -80,6 +80,9 @@ const redis =
  * @returns {string} - HMAC-signed session token
  */
 function generateSessionToken(userId, deviceFingerprint) {
+    if (!CONFIG.SESSION_SECRET) {
+        return null;
+    }
     const payload = {
         userId,
         deviceFingerprint,
@@ -102,6 +105,9 @@ function generateSessionToken(userId, deviceFingerprint) {
  * @returns {object|null} - Token payload if valid, null otherwise
  */
 function verifySessionToken(token) {
+    if (!CONFIG.SESSION_SECRET) {
+        return null;
+    }
     try {
         const [dataB64, hmac] = token.split('.');
         if (!dataB64 || !hmac) return null;
@@ -179,16 +185,6 @@ async function clearFailedAttempts(key) {
 
 
 const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
-    // Fail early if encryption key is not configured
-    if (!CONFIG.SESSION_SECRET) {
-        console.error('[BiometricAuth] Authentication disabled: ENCRYPTION_KEY not configured');
-        return res.status(503).json({
-            success: false,
-            error: 'Authentication service temporarily unavailable',
-            code: 'CONFIG_ERROR'
-        });
-    }
-
     const deviceFingerprint = createDeviceFingerprint(req, validatedBody.deviceId);
 
     try {
@@ -208,6 +204,14 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
         // VERIFY SESSION TOKEN
         // ====================================
         if (action === 'verify-session') {
+            if (!CONFIG.SESSION_SECRET) {
+                return res.status(200).json({
+                    success: false,
+                    verified: false,
+                    requiresAuth: true,
+                    error: 'Session tokens unavailable'
+                });
+            }
             if (!sessionToken) {
                 return res.status(400).json({
                     success: false,
@@ -512,14 +516,19 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 migrated: deviceMatch.needsMigration
             });
 
-            return res.status(200).json({
+            const responseBody = {
                 success: true,
                 verified: true,
                 message: 'Welcome back! Dashboard unlocked.',
-                sessionToken: newSessionToken,
-                expiresIn: Math.floor(CONFIG.SESSION_DURATION / 1000),
                 userId: ownerCredential.userId
-            });
+            };
+
+            if (newSessionToken) {
+                responseBody.sessionToken = newSessionToken;
+                responseBody.expiresIn = Math.floor(CONFIG.SESSION_DURATION / 1000);
+            }
+
+            return res.status(200).json(responseBody);
         }
 
         // ... (rest of the actions: create-device-link, claim-device-link)

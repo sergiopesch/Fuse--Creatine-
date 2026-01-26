@@ -144,16 +144,20 @@ describe('Security Module', () => {
             expect(getCorsOrigin('https://malicious-site.com')).toBeNull();
         });
 
-        it('should return first allowed origin for empty/null origin', () => {
-            // getCorsOrigin returns first allowed origin as default when origin is missing
-            expect(getCorsOrigin('')).toBe(ALLOWED_ORIGINS[0]);
-            expect(getCorsOrigin(null)).toBe(ALLOWED_ORIGINS[0]);
+        it('should return null for empty/null origin', () => {
+            expect(getCorsOrigin('')).toBeNull();
+            expect(getCorsOrigin(null)).toBeNull();
         });
 
         it('should handle vercel preview URLs', () => {
             // Vercel preview URLs ending in .vercel.app are allowed
             const result = getCorsOrigin('https://fuse-creatine-abc123.vercel.app');
             expect(result).toBe('https://fuse-creatine-abc123.vercel.app');
+        });
+
+        it('should allow same-host origins', () => {
+            const result = getCorsOrigin('https://custom.example.com', 'custom.example.com');
+            expect(result).toBe('https://custom.example.com');
         });
     });
 

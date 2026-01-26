@@ -12,6 +12,7 @@ const {
     authenticate,
     setSecurityHeaders,
     getCorsOrigin,
+    getRequestHost,
     getClientIp,
     checkRateLimit,
     addAuditEntry,
@@ -44,7 +45,7 @@ const CONFIG = {
 
 module.exports = async (req, res) => {
     const clientIp = getClientIp(req);
-    const origin = getCorsOrigin(req.headers.origin);
+    const origin = getCorsOrigin(req.headers.origin, getRequestHost(req));
 
     // Set security headers
     setSecurityHeaders(res, origin, 'GET, POST, OPTIONS');

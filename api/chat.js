@@ -604,13 +604,30 @@ function validateHistory(history) {
 /**
  * Get CORS origin
  */
-function getCorsOrigin(requestOrigin) {
-    // In development or if origin matches allowed list
-    if (!requestOrigin) return ALLOWED_ORIGINS[0];
+function getCorsOrigin(requestOrigin, requestHost = '') {
+    if (!requestOrigin) return null;
     if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
-    // Allow Vercel preview deployments
     if (requestOrigin.endsWith('.vercel.app')) return requestOrigin;
-    return ALLOWED_ORIGINS[0];
+
+    let originHostname = '';
+    try {
+        originHostname = new URL(requestOrigin).hostname.toLowerCase();
+    } catch (error) {
+        return null;
+    }
+
+    if (originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname === '::1' || originHostname === '0.0.0.0') {
+        return requestOrigin;
+    }
+
+    if (requestHost) {
+        const hostHostname = requestHost.split(':')[0].toLowerCase();
+        if (originHostname === hostHostname) {
+            return requestOrigin;
+        }
+    }
+
+    return null;
 }
 
 /**
@@ -630,7 +647,10 @@ function setSecurityHeaders(res, origin) {
  * Main handler
  */
 module.exports = async (req, res) => {
-    const origin = getCorsOrigin(req.headers.origin);
+    const requestHost = Array.isArray(req.headers['x-forwarded-host'])
+        ? req.headers['x-forwarded-host'][0]
+        : (req.headers['x-forwarded-host'] || req.headers.host || '');
+    const origin = getCorsOrigin(req.headers.origin, requestHost);
     setSecurityHeaders(res, origin);
 
     // Handle preflight

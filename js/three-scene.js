@@ -80,6 +80,7 @@
             this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
             this.container.appendChild(this.renderer.domElement);
+            this.container.classList.add('has-webgl');
 
             this.setupLighting();
             this.createProduct();

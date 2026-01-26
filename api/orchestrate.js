@@ -17,6 +17,7 @@ const {
     setSecurityHeaders,
     getCorsOrigin,
     getClientIp,
+    getRequestHost,
     addAuditEntry,
     sanitizeString,
     ALLOWED_ORIGINS
@@ -291,7 +292,7 @@ async function executeOrchestration(teamId, task, clientIp) {
 
 module.exports = async (req, res) => {
     const clientIp = getClientIp(req);
-    const origin = getCorsOrigin(req.headers.origin);
+    const origin = getCorsOrigin(req.headers.origin, getRequestHost(req));
 
     setSecurityHeaders(res, origin, 'GET, POST, OPTIONS');
 

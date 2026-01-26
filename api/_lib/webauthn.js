@@ -62,7 +62,7 @@ function getRequestProtocol(req) {
 function getExpectedOrigins(req) {
     const origins = new Set();
     const requestOrigin = Array.isArray(req.headers.origin) ? req.headers.origin[0] : req.headers.origin;
-    const corsOrigin = getCorsOrigin(requestOrigin);
+    const corsOrigin = getCorsOrigin(requestOrigin, getRequestHost(req));
 
     if (corsOrigin) origins.add(corsOrigin);
 
