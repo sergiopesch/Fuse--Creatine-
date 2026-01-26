@@ -529,6 +529,21 @@
 
             hideStatus();
 
+            // Handle service errors (e.g., missing BLOB_READ_WRITE_TOKEN)
+            if (accessStatus.serviceError) {
+                console.error('[Dashboard] Service error during access check:', accessStatus.message);
+                btnAuth.style.display = 'none';
+                btnSetup.style.display = 'none';
+                if (gateSubtitle) {
+                    gateSubtitle.textContent = 'Service Unavailable';
+                }
+                if (gateMessage) {
+                    gateMessage.textContent = accessStatus.message || 'Authentication service is temporarily unavailable. Please try again later.';
+                }
+                showStatus('Authentication service error. Please check server configuration.', 'error');
+                return false;
+            }
+
             if (accessStatus.hasOwner) {
                 if (accessStatus.isOwnerDevice) {
                     // Owner device - show auth button

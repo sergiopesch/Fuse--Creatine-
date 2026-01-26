@@ -98,5 +98,17 @@ module.exports = async (req, res) => {
         diagnostics.issues.push('ANTHROPIC_API_KEY has invalid format (expected sk-ant-* prefix)');
     }
 
+    if (!diagnostics.blobStorage.configured) {
+        diagnostics.status = 'degraded';
+        diagnostics.issues = diagnostics.issues || [];
+        diagnostics.issues.push('BLOB_READ_WRITE_TOKEN is not configured - biometric authentication will not work');
+    }
+
+    if (!diagnostics.encryption.configured) {
+        diagnostics.status = 'degraded';
+        diagnostics.issues = diagnostics.issues || [];
+        diagnostics.issues.push('ENCRYPTION_KEY is not configured - biometric session tokens will not work');
+    }
+
     return res.status(200).json(diagnostics);
 };
