@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>FUSE | Agent Command Center</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/agents.css">
+</head>
+<body class="agents-page">
+    <!-- Command Center Header -->
+    <header class="command-header">
+        <div class="header-left">
+            <a href="index.html" class="logo-link">
+                <span class="logo-text">FUSE</span>
+            </a>
+            <span class="header-divider"></span>
+            <h1 class="command-title">Agent Command Center</h1>
+        </div>
+        <div class="header-right">
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">All Systems Operational</span>
+            </div>
+            <div class="user-badge">
+                <span class="user-role">Commander</span>
+                <div class="user-avatar">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Command Interface -->
+    <main class="command-center">
+        <!-- Left Sidebar - Team Navigation -->
+        <aside class="team-sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Teams</h3>
+                <nav class="team-nav">
+                    <button class="team-nav-btn active" data-team="all">
+                        <span class="team-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </span>
+                        <span class="team-name">All Teams</span>
+                        <span class="team-count">18</span>
+                    </button>
+                    <button class="team-nav-btn" data-team="developer">
+                        <span class="team-icon dev-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                        </span>
+                        <span class="team-name">Developer</span>
+                        <span class="team-count">3</span>
+                    </button>
+                    <button class="team-nav-btn" data-team="design">
+                        <span class="team-icon design-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0112 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 00-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 012.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></svg>
+                        </span>
+                        <span class="team-name">Design</span>
+                        <span class="team-count">3</span>
+                    </button>
+                    <button class="team-nav-btn" data-team="communications">
+                        <span class="team-icon comms-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                        </span>
+                        <span class="team-name">Communications</span>
+                        <span class="team-count">3</span>
+                    </button>
+                    <button class="team-nav-btn" data-team="legal">
+                        <span class="team-icon legal-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v2H4V4zm0 4h16v2H4V8zm0 4h16v2H4v-2zm0 4h10v2H4v-2zm16.41-4.17l1.41 1.41L17 18.17l-2.83-2.83 1.41-1.41L17 15.34l3.41-3.51z"/></svg>
+                        </span>
+                        <span class="team-name">Legal</span>
+                        <span class="team-count">3</span>
+                    </button>
+                    <button class="team-nav-btn" data-team="marketing">
+                        <span class="team-icon marketing-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
+                        </span>
+                        <span class="team-name">Marketing</span>
+                        <span class="team-count">3</span>
+                    </button>
+                    <button class="team-nav-btn" data-team="gtm">
+                        <span class="team-icon gtm-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                        </span>
+                        <span class="team-name">Go-to-Market</span>
+                        <span class="team-count">3</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Quick Actions</h3>
+                <div class="quick-actions">
+                    <button class="quick-action-btn" id="newTaskBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        <span>New Task</span>
+                    </button>
+                    <button class="quick-action-btn" id="broadcastBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.58 4.08L6.15 2.65C3.75 4.48 2.17 7.3 2.03 10.5h2c.15-2.65 1.51-4.97 3.55-6.42zm12.39 6.42h2c-.15-3.2-1.73-6.02-4.12-7.85l-1.42 1.43c2.02 1.45 3.39 3.77 3.54 6.42zM18 11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2v-5zm-6 11c.14 0 .27-.01.4-.04.65-.14 1.18-.58 1.44-1.18.1-.24.15-.5.15-.78h-4c.01 1.1.9 2 2.01 2z"/></svg>
+                        <span>Broadcast</span>
+                    </button>
+                    <button class="quick-action-btn" id="syncAllBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                        <span>Sync All</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Central Dashboard -->
+        <section class="dashboard-main">
+            <!-- Top Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-icon active-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="activeAgents">18</span>
+                        <span class="stat-label">Active Agents</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon tasks-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="tasksInProgress">7</span>
+                        <span class="stat-label">Tasks in Progress</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon pending-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="pendingDecisions">3</span>
+                        <span class="stat-label">Awaiting Decision</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon completed-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="completedToday">24</span>
+                        <span class="stat-label">Completed Today</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decision Queue Panel -->
+            <div class="decision-queue-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        Decision Queue
+                    </h2>
+                    <span class="badge urgent">3 Pending</span>
+                </div>
+                <div class="decision-list" id="decisionQueue">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Teams Grid -->
+            <div class="teams-grid" id="teamsGrid">
+                <!-- Developer Team -->
+                <div class="team-card" data-team="developer">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <span class="team-badge dev">DEV</span>
+                            <h3 class="team-title">Developer Team</h3>
+                        </div>
+                        <div class="team-status">
+                            <span class="status-dot online"></span>
+                            <span class="collaboration-indicator">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                Active Collab
+                            </span>
+                        </div>
+                    </div>
+                    <div class="agents-list">
+                        <div class="agent-card" data-agent="architect">
+                            <div class="agent-avatar dev-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Architect</span>
+                                <span class="agent-role">System Design & Architecture</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="coder">
+                            <div class="agent-avatar dev-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Coder</span>
+                                <span class="agent-role">Implementation & Debugging</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="tester">
+                            <div class="agent-avatar dev-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM10 17l-3.5-3.5 1.41-1.41L10 14.17l4.59-4.59L16 11l-6 6z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">QA Engineer</span>
+                                <span class="agent-role">Testing & Quality Assurance</span>
+                            </div>
+                            <div class="agent-status idle">
+                                <span class="status-dot"></span>
+                                Standby
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-tasks">
+                        <div class="current-task">
+                            <span class="task-label">Current Focus:</span>
+                            <span class="task-name">Building Admin Console Features</span>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar" style="--progress: 68%"></div>
+                            <span class="progress-text">68% Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Design Team -->
+                <div class="team-card" data-team="design">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <span class="team-badge design">DSN</span>
+                            <h3 class="team-title">Design Team</h3>
+                        </div>
+                        <div class="team-status">
+                            <span class="status-dot online"></span>
+                            <span class="collaboration-indicator">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                Active Collab
+                            </span>
+                        </div>
+                    </div>
+                    <div class="agents-list">
+                        <div class="agent-card" data-agent="ux-lead">
+                            <div class="agent-avatar design-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">UX Lead</span>
+                                <span class="agent-role">User Experience Strategy</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="ui-artist">
+                            <div class="agent-avatar design-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Visual Designer</span>
+                                <span class="agent-role">UI & Visual Systems</span>
+                            </div>
+                            <div class="agent-status idle">
+                                <span class="status-dot"></span>
+                                Standby
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="motion">
+                            <div class="agent-avatar design-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 2c-2.71 0-5.05 1.54-6.22 3.78-1.28.67-2.34 1.72-3 3C3.54 9.95 2 12.29 2 15c0 3.87 3.13 7 7 7 2.71 0 5.05-1.54 6.22-3.78 1.28-.67 2.34-1.72 3-3C20.46 14.05 22 11.71 22 9c0-3.87-3.13-7-7-7zm-8 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm2.77-7.77c-.58.34-1.06.82-1.4 1.4-.58-.34-1.2-.59-1.87-.73.06-.37.1-.74.1-1.13 0-1.4-.48-2.69-1.28-3.7.51-.08 1-.17 1.45-.31.34.58.82 1.06 1.4 1.4-.34.58-.59 1.2-.73 1.87.37-.06.74-.1 1.13-.1.4 0 .76.04 1.13.1-.14-.67-.39-1.29-.73-1.87.58-.34 1.06-.82 1.4-1.4.45.14.94.23 1.45.31C12.48 6.31 12 7.6 12 9c0 .39.04.76.1 1.13-.67.14-1.29.39-1.87.73-.01.01-.02.02-.04.03.01-.01.02-.02.04-.03-.5.26-.96.58-1.36.97.4-.39.86-.71 1.36-.97zm5.23.84c.14.67.39 1.29.73 1.87-.58.34-1.06.82-1.4 1.4-.45-.14-.94-.23-1.45-.31.8-1.01 1.28-2.3 1.28-3.7 0-.39-.04-.76-.1-1.13.67-.14 1.29-.39 1.87-.73-.34-.58-.82-1.06-1.4-1.4.34-.58.59-1.2.73-1.87.37.06.74.1 1.13.1 1.4 0 2.69-.48 3.7-1.28-.08.51-.17 1-.31 1.45-.58-.34-1.06-.82-1.4-1.4-.34.58-.82 1.06-1.4 1.4.34.58.82 1.06 1.4 1.4-.14.45-.23.94-.31 1.45 1.01-.8 2.3-1.28 3.7-1.28.39 0 .76.04 1.13.1-.14-.67-.39-1.29-.73-1.87.58-.34 1.06-.82 1.4-1.4.45.14.94.23 1.45.31-.8 1.01-1.28 2.3-1.28 3.7 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3c-.39 0-.76.04-1.13.1.14.67.39 1.29.73 1.87z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Motion Designer</span>
+                                <span class="agent-role">Animation & Interactions</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-tasks">
+                        <div class="current-task">
+                            <span class="task-label">Current Focus:</span>
+                            <span class="task-name">Dashboard Visual Refinements</span>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar" style="--progress: 45%"></div>
+                            <span class="progress-text">45% Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Communications Team -->
+                <div class="team-card" data-team="communications">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <span class="team-badge comms">COM</span>
+                            <h3 class="team-title">Communications Team</h3>
+                        </div>
+                        <div class="team-status">
+                            <span class="status-dot online"></span>
+                            <span class="collaboration-indicator active">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                Active Collab
+                            </span>
+                        </div>
+                    </div>
+                    <div class="agents-list">
+                        <div class="agent-card" data-agent="content-strategist">
+                            <div class="agent-avatar comms-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Content Strategist</span>
+                                <span class="agent-role">Content Planning & Voice</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="copywriter">
+                            <div class="agent-avatar comms-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Copywriter</span>
+                                <span class="agent-role">Persuasive Copy & Messaging</span>
+                            </div>
+                            <div class="agent-status idle">
+                                <span class="status-dot"></span>
+                                Standby
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="social-manager">
+                            <div class="agent-avatar comms-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Social Media Manager</span>
+                                <span class="agent-role">Community & Engagement</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-tasks">
+                        <div class="current-task">
+                            <span class="task-label">Current Focus:</span>
+                            <span class="task-name">Launch Announcement Prep</span>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar" style="--progress: 82%"></div>
+                            <span class="progress-text">82% Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal Team -->
+                <div class="team-card" data-team="legal">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <span class="team-badge legal">LGL</span>
+                            <h3 class="team-title">Legal Team</h3>
+                        </div>
+                        <div class="team-status">
+                            <span class="status-dot online"></span>
+                            <span class="collaboration-indicator">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                Monitoring
+                            </span>
+                        </div>
+                    </div>
+                    <div class="agents-list">
+                        <div class="agent-card" data-agent="compliance-officer">
+                            <div class="agent-avatar legal-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Compliance Officer</span>
+                                <span class="agent-role">Regulatory Compliance</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="contract-analyst">
+                            <div class="agent-avatar legal-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Contract Analyst</span>
+                                <span class="agent-role">Terms & Agreements</span>
+                            </div>
+                            <div class="agent-status idle">
+                                <span class="status-dot"></span>
+                                Standby
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="ip-counsel">
+                            <div class="agent-avatar legal-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">IP Counsel</span>
+                                <span class="agent-role">Intellectual Property</span>
+                            </div>
+                            <div class="agent-status idle">
+                                <span class="status-dot"></span>
+                                Standby
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-tasks">
+                        <div class="current-task">
+                            <span class="task-label">Current Focus:</span>
+                            <span class="task-name">GDPR Compliance Review</span>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar" style="--progress: 95%"></div>
+                            <span class="progress-text">95% Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marketing Team -->
+                <div class="team-card" data-team="marketing">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <span class="team-badge marketing">MKT</span>
+                            <h3 class="team-title">Marketing Team</h3>
+                        </div>
+                        <div class="team-status">
+                            <span class="status-dot online"></span>
+                            <span class="collaboration-indicator active">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                High Activity
+                            </span>
+                        </div>
+                    </div>
+                    <div class="agents-list">
+                        <div class="agent-card" data-agent="growth-lead">
+                            <div class="agent-avatar marketing-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Growth Lead</span>
+                                <span class="agent-role">Acquisition & Retention</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="brand-strategist">
+                            <div class="agent-avatar marketing-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Brand Strategist</span>
+                                <span class="agent-role">Brand Identity & Positioning</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="analytics-expert">
+                            <div class="agent-avatar marketing-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Analytics Expert</span>
+                                <span class="agent-role">Data & Performance</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-tasks">
+                        <div class="current-task">
+                            <span class="task-label">Current Focus:</span>
+                            <span class="task-name">Conversion Optimization</span>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar" style="--progress: 72%"></div>
+                            <span class="progress-text">72% Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Go-to-Market Team -->
+                <div class="team-card" data-team="gtm">
+                    <div class="team-header">
+                        <div class="team-info">
+                            <span class="team-badge gtm">GTM</span>
+                            <h3 class="team-title">Go-to-Market Team</h3>
+                        </div>
+                        <div class="team-status">
+                            <span class="status-dot online"></span>
+                            <span class="collaboration-indicator">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                Planning
+                            </span>
+                        </div>
+                    </div>
+                    <div class="agents-list">
+                        <div class="agent-card" data-agent="launch-coordinator">
+                            <div class="agent-avatar gtm-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89L2 10.69l4.05-4.05c.47-.47 1.15-.68 1.81-.55l1.33.26zM11.17 17s3.74-1.55 5.89-3.7c5.4-5.4 4.5-9.62 4.21-10.57-.95-.3-5.17-1.19-10.57 4.21C8.55 9.09 7 12.83 7 12.83L11.17 17zm6.48-2.19c-2.29 2.04-5.58 3.44-5.89 3.57L13.31 22l4.05-4.05c.47-.47.68-1.15.55-1.81l-.26-1.33zM9 18c0 .83-.34 1.58-.88 2.12C6.94 21.3 2 22 2 22s.7-4.94 1.88-6.12C4.42 15.34 5.17 15 6 15c1.66 0 3 1.34 3 3zm4-9c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Launch Coordinator</span>
+                                <span class="agent-role">Launch Planning & Execution</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="partnership-manager">
+                            <div class="agent-avatar gtm-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c1.38 0 2.49-1.12 2.49-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 2.99-1.34 2.99-3S10.66 5 9 5C7.34 5 6 6.34 6 8s1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V19h11v-2.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V19h7v-2.25c0-.85.33-2.34 2.37-3.47C10.5 13.1 9.66 13 9 13z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Partnership Manager</span>
+                                <span class="agent-role">Strategic Partnerships</span>
+                            </div>
+                            <div class="agent-status idle">
+                                <span class="status-dot"></span>
+                                Standby
+                            </div>
+                        </div>
+                        <div class="agent-card" data-agent="market-researcher">
+                            <div class="agent-avatar gtm-avatar">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                            </div>
+                            <div class="agent-info">
+                                <span class="agent-name">Market Researcher</span>
+                                <span class="agent-role">Market Intelligence</span>
+                            </div>
+                            <div class="agent-status working">
+                                <span class="status-pulse"></span>
+                                Working
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-tasks">
+                        <div class="current-task">
+                            <span class="task-label">Current Focus:</span>
+                            <span class="task-name">Launch Strategy Finalization</span>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar" style="--progress: 58%"></div>
+                            <span class="progress-text">58% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel - Activity & Orchestration -->
+        <aside class="activity-panel">
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-tab="activity">Activity Feed</button>
+                <button class="panel-tab" data-tab="orchestration">Orchestration</button>
+                <button class="panel-tab" data-tab="comms">Inter-Agent Comms</button>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="tab-content active" id="activityTab">
+                <div class="activity-feed" id="activityFeed">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Orchestration Panel -->
+            <div class="tab-content" id="orchestrationTab">
+                <div class="orchestration-controls">
+                    <h3 class="section-title">Workflow Orchestration</h3>
+                    <div class="orchestration-mode">
+                        <label class="mode-label">Coordination Mode</label>
+                        <div class="mode-selector">
+                            <button class="mode-btn active" data-mode="autonomous">Autonomous</button>
+                            <button class="mode-btn" data-mode="supervised">Supervised</button>
+                            <button class="mode-btn" data-mode="manual">Manual</button>
+                        </div>
+                    </div>
+                    <div class="workflow-priority">
+                        <label class="mode-label">Priority Queue</label>
+                        <div class="priority-list" id="priorityQueue">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div class="cross-team-projects">
+                        <label class="mode-label">Cross-Team Projects</label>
+                        <div class="project-list" id="projectList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inter-Agent Communications -->
+            <div class="tab-content" id="commsTab">
+                <div class="comms-panel">
+                    <h3 class="section-title">Communication Logs</h3>
+                    <div class="comms-filters">
+                        <select id="commsTeamFilter" class="filter-select">
+                            <option value="all">All Teams</option>
+                            <option value="developer">Developer</option>
+                            <option value="design">Design</option>
+                            <option value="communications">Communications</option>
+                            <option value="legal">Legal</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="gtm">Go-to-Market</option>
+                        </select>
+                    </div>
+                    <div class="comms-log" id="commsLog">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Task Creation Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Task</h2>
+                <button class="modal-close" id="closeTaskModal">&times;</button>
+            </div>
+            <form id="taskForm" class="task-form">
+                <div class="form-group">
+                    <label for="taskTitle">Task Title</label>
+                    <input type="text" id="taskTitle" required placeholder="Enter task title...">
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Description</label>
+                    <textarea id="taskDescription" rows="3" placeholder="Describe the task..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskPriority">Priority</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskTeam">Assign to Team</label>
+                        <select id="taskTeam">
+                            <option value="developer">Developer</option>
+                            <option value="design">Design</option>
+                            <option value="communications">Communications</option>
+                            <option value="legal">Legal</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="gtm">Go-to-Market</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assign to Agents</label>
+                    <div class="agent-checkboxes" id="agentCheckboxes">
+                        <!-- Populated based on team selection -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Dependencies</label>
+                    <div class="dependency-selector">
+                        <input type="text" id="dependencySearch" placeholder="Search for dependent tasks...">
+                        <div class="dependency-list" id="dependencyList"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelTask">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Agent Detail Modal -->
+    <div class="modal-overlay" id="agentModal">
+        <div class="modal-content agent-detail-modal">
+            <div class="modal-header">
+                <h2 id="agentModalTitle">Agent Details</h2>
+                <button class="modal-close" id="closeAgentModal">&times;</button>
+            </div>
+            <div class="agent-detail-content" id="agentDetailContent">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Decision Modal -->
+    <div class="modal-overlay" id="decisionModal">
+        <div class="modal-content decision-modal">
+            <div class="modal-header">
+                <h2>Decision Required</h2>
+                <button class="modal-close" id="closeDecisionModal">&times;</button>
+            </div>
+            <div class="decision-content" id="decisionContent">
+                <!-- Populated by JS -->
+            </div>
+            <div class="decision-actions">
+                <button class="btn-secondary" id="deferDecision">Defer</button>
+                <button class="btn-danger" id="rejectDecision">Reject</button>
+                <button class="btn-primary" id="approveDecision">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Broadcast Modal -->
+    <div class="modal-overlay" id="broadcastModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Broadcast Message</h2>
+                <button class="modal-close" id="closeBroadcastModal">&times;</button>
+            </div>
+            <form id="broadcastForm">
+                <div class="form-group">
+                    <label>Recipients</label>
+                    <div class="recipient-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="all" checked> All Teams
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="developer"> Developer
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="design"> Design
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="communications"> Communications
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="legal"> Legal
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="marketing"> Marketing
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="gtm"> Go-to-Market
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="broadcastMessage">Message</label>
+                    <textarea id="broadcastMessage" rows="4" required placeholder="Enter your message to all agents..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="broadcastPriority">Priority</label>
+                    <select id="broadcastPriority">
+                        <option value="info">Informational</option>
+                        <option value="important">Important</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelBroadcast">Cancel</button>
+                    <button type="submit" class="btn-primary">Send Broadcast</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/agents.js"></script>
+</body>
+</html>
