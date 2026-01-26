@@ -32,13 +32,17 @@
             team: 'developer',
             teamLabel: 'Developer Team',
             capabilities: ['System Architecture', 'API Design', 'Database Modeling', 'Scalability Planning'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            stats: { tasksCompleted: 47, avgResponseTime: '1.2s', uptime: '99.8%' },
             currentTask: {
-                title: 'Awaiting Orchestration',
-                description: 'Start team orchestration to activate this agent',
-                progress: 0
+                title: 'API Gateway Redesign',
+                description: 'Designing new microservices architecture for improved scalability',
+                progress: 65
             },
-            recentActivity: []
+            recentActivity: [
+                { time: '10:30', text: 'Completed database schema review' },
+                { time: '09:45', text: 'Started API gateway analysis' },
+                { time: '09:00', text: 'Morning standup completed' }
+            ]
         },
         'coder': {
             name: 'Coder',
@@ -46,13 +50,17 @@
             team: 'developer',
             teamLabel: 'Developer Team',
             capabilities: ['Full-Stack Development', 'Code Review', 'Testing', 'Documentation'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            stats: { tasksCompleted: 128, avgResponseTime: '0.8s', uptime: '99.9%' },
             currentTask: {
-                title: 'Awaiting Orchestration',
-                description: 'Start team orchestration to activate this agent',
-                progress: 0
+                title: 'Feature Implementation',
+                description: 'Building new dashboard components with React and TypeScript',
+                progress: 42
             },
-            recentActivity: []
+            recentActivity: [
+                { time: '11:15', text: 'Pushed 3 commits to main' },
+                { time: '10:00', text: 'Code review completed' },
+                { time: '09:30', text: 'Started feature branch' }
+            ]
         },
         'tester': {
             name: 'QA Engineer',
@@ -60,13 +68,17 @@
             team: 'developer',
             teamLabel: 'Developer Team',
             capabilities: ['Unit Testing', 'Integration Testing', 'E2E Testing', 'Performance Testing'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            stats: { tasksCompleted: 89, avgResponseTime: '1.5s', uptime: '99.7%' },
             currentTask: {
-                title: 'Awaiting Orchestration',
-                description: 'Start team orchestration to activate this agent',
-                progress: 0
+                title: 'Regression Testing',
+                description: 'Running full test suite on staging environment',
+                progress: 78
             },
-            recentActivity: []
+            recentActivity: [
+                { time: '11:00', text: 'Found and reported 2 bugs' },
+                { time: '10:30', text: 'Integration tests passed' },
+                { time: '09:15', text: 'Started test automation' }
+            ]
         },
         'ux-lead': {
             name: 'UX Lead',
@@ -74,9 +86,17 @@
             team: 'design',
             teamLabel: 'Design Team',
             capabilities: ['User Research', 'Usability Testing', 'Information Architecture', 'Wireframing'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 34, avgResponseTime: '1.8s', uptime: '99.5%' },
+            currentTask: {
+                title: 'User Journey Mapping',
+                description: 'Mapping the onboarding flow to identify friction points',
+                progress: 55
+            },
+            recentActivity: [
+                { time: '11:00', text: 'Completed user interview synthesis' },
+                { time: '10:15', text: 'Updated persona documentation' },
+                { time: '09:30', text: 'Reviewed heatmap analytics' }
+            ]
         },
         'ui-artist': {
             name: 'Visual Designer',
@@ -84,9 +104,17 @@
             team: 'design',
             teamLabel: 'Design Team',
             capabilities: ['UI Design', 'Iconography', 'Design Systems', 'Prototyping'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 52, avgResponseTime: '1.4s', uptime: '99.6%' },
+            currentTask: {
+                title: 'Component Library Update',
+                description: 'Refreshing button and input components with new brand colors',
+                progress: 80
+            },
+            recentActivity: [
+                { time: '10:45', text: 'Exported new icon set to Figma' },
+                { time: '09:30', text: 'Finalized dark mode palette' },
+                { time: '08:45', text: 'Started component audit' }
+            ]
         },
         'motion': {
             name: 'Motion Designer',
@@ -94,9 +122,17 @@
             team: 'design',
             teamLabel: 'Design Team',
             capabilities: ['Motion Design', 'Micro-interactions', 'Animation Systems', 'Lottie Export'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 28, avgResponseTime: '2.1s', uptime: '99.3%' },
+            currentTask: {
+                title: 'Loading Animation Suite',
+                description: 'Creating branded loading spinners and skeleton states',
+                progress: 45
+            },
+            recentActivity: [
+                { time: '11:20', text: 'Exported Lottie files for mobile' },
+                { time: '10:00', text: 'Refined page transition timing' },
+                { time: '09:15', text: 'Completed hover state animations' }
+            ]
         },
         'content-strategist': {
             name: 'Content Strategist',
@@ -104,9 +140,17 @@
             team: 'communications',
             teamLabel: 'Communications Team',
             capabilities: ['Content Strategy', 'Editorial Planning', 'SEO', 'Content Audit'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 41, avgResponseTime: '1.6s', uptime: '99.4%' },
+            currentTask: {
+                title: 'Q1 Editorial Calendar',
+                description: 'Planning content themes and publication schedule for next quarter',
+                progress: 70
+            },
+            recentActivity: [
+                { time: '10:50', text: 'Completed SEO keyword research' },
+                { time: '09:45', text: 'Reviewed competitor content gaps' },
+                { time: '08:30', text: 'Updated content pillar strategy' }
+            ]
         },
         'copywriter': {
             name: 'Copywriter',
@@ -114,9 +158,17 @@
             team: 'communications',
             teamLabel: 'Communications Team',
             capabilities: ['Copywriting', 'Brand Voice', 'UX Writing', 'Email Marketing'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 67, avgResponseTime: '1.1s', uptime: '99.7%' },
+            currentTask: {
+                title: 'Product Launch Copy',
+                description: 'Writing landing page and email sequence for new feature release',
+                progress: 60
+            },
+            recentActivity: [
+                { time: '11:10', text: 'Drafted email subject line variants' },
+                { time: '10:20', text: 'Completed hero section copy' },
+                { time: '09:00', text: 'Brand voice guidelines review' }
+            ]
         },
         'social-manager': {
             name: 'Social Manager',
@@ -124,9 +176,17 @@
             team: 'communications',
             teamLabel: 'Communications Team',
             capabilities: ['Social Media Management', 'Community Engagement', 'Analytics', 'Campaign Planning'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 156, avgResponseTime: '0.9s', uptime: '99.8%' },
+            currentTask: {
+                title: 'Weekly Content Schedule',
+                description: 'Scheduling posts and monitoring engagement across platforms',
+                progress: 85
+            },
+            recentActivity: [
+                { time: '11:30', text: 'Responded to 12 community mentions' },
+                { time: '10:15', text: 'Published LinkedIn thought leadership' },
+                { time: '09:00', text: 'Analyzed weekly engagement metrics' }
+            ]
         },
         'compliance-officer': {
             name: 'Compliance Officer',
@@ -134,9 +194,17 @@
             team: 'legal',
             teamLabel: 'Legal Team',
             capabilities: ['GDPR Compliance', 'Privacy Reviews', 'Risk Assessment', 'Policy Development'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 23, avgResponseTime: '2.3s', uptime: '99.9%' },
+            currentTask: {
+                title: 'Privacy Policy Update',
+                description: 'Reviewing and updating privacy policy for new data handling requirements',
+                progress: 40
+            },
+            recentActivity: [
+                { time: '10:30', text: 'Completed GDPR compliance audit' },
+                { time: '09:15', text: 'Reviewed new vendor DPA' },
+                { time: '08:45', text: 'Updated data retention policy' }
+            ]
         },
         'contract-analyst': {
             name: 'Contract Analyst',
@@ -144,9 +212,17 @@
             team: 'legal',
             teamLabel: 'Legal Team',
             capabilities: ['Contract Review', 'Negotiation Support', 'Risk Analysis', 'Template Management'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 38, avgResponseTime: '1.9s', uptime: '99.6%' },
+            currentTask: {
+                title: 'Enterprise Agreement Review',
+                description: 'Analyzing terms for Fortune 500 client contract',
+                progress: 55
+            },
+            recentActivity: [
+                { time: '11:00', text: 'Flagged 3 risk clauses for review' },
+                { time: '10:00', text: 'Updated SaaS template v3.2' },
+                { time: '09:30', text: 'Completed NDA batch review' }
+            ]
         },
         'ip-counsel': {
             name: 'IP Counsel',
@@ -154,9 +230,17 @@
             team: 'legal',
             teamLabel: 'Legal Team',
             capabilities: ['Patent Filing', 'Trademark Protection', 'IP Strategy', 'Licensing'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 19, avgResponseTime: '2.8s', uptime: '99.4%' },
+            currentTask: {
+                title: 'Patent Application',
+                description: 'Drafting provisional patent for AI orchestration technology',
+                progress: 30
+            },
+            recentActivity: [
+                { time: '10:45', text: 'Submitted trademark application' },
+                { time: '09:30', text: 'Prior art search completed' },
+                { time: '08:00', text: 'IP portfolio quarterly review' }
+            ]
         },
         'growth-lead': {
             name: 'Growth Lead',
@@ -164,9 +248,17 @@
             team: 'marketing',
             teamLabel: 'Marketing Team',
             capabilities: ['Growth Strategy', 'A/B Testing', 'Funnel Optimization', 'Analytics'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 45, avgResponseTime: '1.3s', uptime: '99.7%' },
+            currentTask: {
+                title: 'Conversion Optimization',
+                description: 'Running A/B tests on signup flow to improve conversion rates',
+                progress: 72
+            },
+            recentActivity: [
+                { time: '11:15', text: 'Test variant B showing +15% lift' },
+                { time: '10:00', text: 'Launched pricing page experiment' },
+                { time: '09:00', text: 'Weekly growth metrics review' }
+            ]
         },
         'brand-strategist': {
             name: 'Brand Strategist',
@@ -174,9 +266,17 @@
             team: 'marketing',
             teamLabel: 'Marketing Team',
             capabilities: ['Brand Strategy', 'Positioning', 'Messaging', 'Brand Guidelines'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 31, avgResponseTime: '1.7s', uptime: '99.5%' },
+            currentTask: {
+                title: 'Brand Refresh Initiative',
+                description: 'Updating brand guidelines and messaging framework',
+                progress: 50
+            },
+            recentActivity: [
+                { time: '10:30', text: 'Finalized new tagline options' },
+                { time: '09:45', text: 'Competitor positioning analysis' },
+                { time: '08:30', text: 'Brand perception survey results' }
+            ]
         },
         'analytics-expert': {
             name: 'Analytics Expert',
@@ -184,9 +284,17 @@
             team: 'marketing',
             teamLabel: 'Marketing Team',
             capabilities: ['Marketing Analytics', 'Attribution Modeling', 'Dashboard Creation', 'Reporting'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 58, avgResponseTime: '1.0s', uptime: '99.8%' },
+            currentTask: {
+                title: 'Attribution Model Update',
+                description: 'Implementing multi-touch attribution across all channels',
+                progress: 65
+            },
+            recentActivity: [
+                { time: '11:20', text: 'Updated executive dashboard' },
+                { time: '10:15', text: 'CAC/LTV analysis complete' },
+                { time: '09:00', text: 'Channel performance report sent' }
+            ]
         },
         'launch-coordinator': {
             name: 'Launch Coordinator',
@@ -194,9 +302,17 @@
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
             capabilities: ['Launch Planning', 'Timeline Management', 'Cross-functional Coordination', 'Go-live Support'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 27, avgResponseTime: '1.5s', uptime: '99.6%' },
+            currentTask: {
+                title: 'V2.0 Launch Readiness',
+                description: 'Coordinating cross-functional teams for major product release',
+                progress: 88
+            },
+            recentActivity: [
+                { time: '11:00', text: 'All teams confirmed launch ready' },
+                { time: '10:15', text: 'Updated launch checklist status' },
+                { time: '09:30', text: 'Stakeholder sync completed' }
+            ]
         },
         'partnership-manager': {
             name: 'Partnership Manager',
@@ -204,9 +320,17 @@
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
             capabilities: ['Partner Recruitment', 'Relationship Management', 'Co-marketing', 'Integration Support'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 22, avgResponseTime: '2.0s', uptime: '99.4%' },
+            currentTask: {
+                title: 'Integration Partnership',
+                description: 'Negotiating technical integration with enterprise platform',
+                progress: 45
+            },
+            recentActivity: [
+                { time: '10:45', text: 'Partner demo scheduled for Friday' },
+                { time: '09:30', text: 'Co-marketing proposal sent' },
+                { time: '08:15', text: 'Updated partner portal docs' }
+            ]
         },
         'market-researcher': {
             name: 'Market Researcher',
@@ -214,9 +338,17 @@
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
             capabilities: ['Market Research', 'Competitive Analysis', 'Trend Analysis', 'Customer Insights'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 36, avgResponseTime: '1.8s', uptime: '99.5%' },
+            currentTask: {
+                title: 'Competitive Intelligence Report',
+                description: 'Deep analysis of top 5 competitors new features and pricing',
+                progress: 60
+            },
+            recentActivity: [
+                { time: '11:10', text: 'Competitor pricing update detected' },
+                { time: '10:00', text: 'Market size report finalized' },
+                { time: '09:00', text: 'Industry trend analysis started' }
+            ]
         },
         'sales-director': {
             name: 'Sales Director',
@@ -224,9 +356,17 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Revenue Planning', 'Team Leadership', 'Strategic Accounts', 'Forecasting'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 42, avgResponseTime: '1.2s', uptime: '99.9%' },
+            currentTask: {
+                title: 'Q1 Revenue Planning',
+                description: 'Finalizing quota allocation and territory assignments',
+                progress: 75
+            },
+            recentActivity: [
+                { time: '11:30', text: 'Pipeline review meeting completed' },
+                { time: '10:00', text: 'Updated sales forecast model' },
+                { time: '09:00', text: 'Team performance analysis done' }
+            ]
         },
         'account-executive': {
             name: 'Account Executive',
@@ -234,9 +374,17 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Enterprise Sales', 'Solution Selling', 'Contract Negotiation', 'Relationship Building'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 64, avgResponseTime: '1.0s', uptime: '99.7%' },
+            currentTask: {
+                title: 'Enterprise Deal Closing',
+                description: 'Negotiating final terms with Fortune 100 prospect',
+                progress: 90
+            },
+            recentActivity: [
+                { time: '11:15', text: 'Sent revised proposal to client' },
+                { time: '10:30', text: 'Procurement call successful' },
+                { time: '09:45', text: 'Updated CRM with deal notes' }
+            ]
         },
         'sdr': {
             name: 'SDR Lead',
@@ -244,9 +392,17 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Outbound Prospecting', 'Lead Qualification', 'Cold Outreach', 'Pipeline Generation'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 189, avgResponseTime: '0.7s', uptime: '99.8%' },
+            currentTask: {
+                title: 'Outbound Campaign',
+                description: 'Running targeted outreach to enterprise tech sector',
+                progress: 68
+            },
+            recentActivity: [
+                { time: '11:20', text: 'Booked 3 discovery calls' },
+                { time: '10:45', text: 'Sent 50 personalized emails' },
+                { time: '09:30', text: 'Lead list enrichment complete' }
+            ]
         },
         'solutions-consultant': {
             name: 'Solutions Consultant',
@@ -254,9 +410,17 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Technical Demos', 'Solution Design', 'POC Management', 'Technical Discovery'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 48, avgResponseTime: '1.4s', uptime: '99.6%' },
+            currentTask: {
+                title: 'POC Environment Setup',
+                description: 'Configuring proof-of-concept for enterprise customer',
+                progress: 55
+            },
+            recentActivity: [
+                { time: '11:00', text: 'Demo to CISO went excellently' },
+                { time: '10:15', text: 'Security questionnaire completed' },
+                { time: '09:00', text: 'Architecture review prepared' }
+            ]
         },
         'customer-success': {
             name: 'Customer Success',
@@ -264,9 +428,17 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Onboarding', 'QBR Management', 'Expansion', 'Churn Prevention'],
-            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
-            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
-            recentActivity: []
+            stats: { tasksCompleted: 73, avgResponseTime: '1.1s', uptime: '99.7%' },
+            currentTask: {
+                title: 'QBR Preparation',
+                description: 'Preparing quarterly business reviews for top 10 accounts',
+                progress: 82
+            },
+            recentActivity: [
+                { time: '11:25', text: 'Completed 2 onboarding calls' },
+                { time: '10:30', text: 'Identified expansion opportunity' },
+                { time: '09:15', text: 'NPS survey analysis finished' }
+            ]
         }
     };
 
@@ -306,88 +478,104 @@
 
         if (!gate) return true; // No gate, allow access
 
+        // CRITICAL: Attach event listeners IMMEDIATELY to ensure buttons always work
+        // This prevents the "nothing happens" bug when async operations fail
+        if (btnAuth) {
+            btnAuth.addEventListener('click', handleBiometricAuth);
+        }
+        if (btnSetup) {
+            btnSetup.addEventListener('click', handleBiometricSetup);
+        }
+
         // Check biometric library loaded
         if (typeof BiometricAuth === 'undefined') {
             console.error('[Dashboard] BiometricAuth not loaded');
             gate.classList.add('not-supported');
+            showStatus('Biometric library failed to load', 'error');
             return false;
         }
 
-        // Check if already verified in this session
-        const sessionVerified = await BiometricAuth.isSessionVerified();
-        if (sessionVerified) {
-            hideBiometricGate();
-            return true;
-        }
+        try {
+            // Check if already verified in this session
+            const sessionVerified = await BiometricAuth.isSessionVerified();
+            if (sessionVerified) {
+                hideBiometricGate();
+                return true;
+            }
 
-        // Check biometric support
-        const support = await BiometricAuth.checkSupport();
-        state.biometricSupported = support.supported && support.platformAuthenticator;
-        state.authenticatorType = support.type || 'Biometric';
+            // Check biometric support
+            const support = await BiometricAuth.checkSupport();
+            state.biometricSupported = support.supported && support.platformAuthenticator;
+            state.authenticatorType = support.type || 'Biometric';
 
-        if (!state.biometricSupported) {
-            gate.classList.add('not-supported');
-            return false;
-        }
-
-        // Update UI with authenticator type
-        if (authTypeText) {
-            authTypeText.textContent = state.authenticatorType;
-        }
-
-        // Update icon based on type
-        updateBiometricIcon(state.authenticatorType);
-
-        // Check access status (owner-lock system)
-        showStatus('Checking access...', 'info');
-        const accessStatus = await BiometricAuth.checkAccessStatus();
-
-        hideStatus();
-
-        if (accessStatus.hasOwner) {
-            if (accessStatus.isOwnerDevice) {
-                // Owner device - show auth button
-                btnAuth.style.display = 'flex';
-                btnSetup.style.display = 'none';
-                if (gateSubtitle) {
-                    gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${state.authenticatorType}</span> to unlock.`;
-                }
-                if (gateMessage) {
-                    gateMessage.textContent = 'Your biometric is required to access this dashboard';
-                }
-                updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
-            } else {
-                // Non-owner device - show locked state
-                gate.classList.add('locked');
-                btnAuth.style.display = 'none';
-                btnSetup.style.display = 'none';
-                showLockedIcon();
-                if (gateSubtitle) {
-                    gateSubtitle.textContent = 'Access Denied';
-                }
-                if (gateMessage) {
-                    gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
-                }
-                showStatus('This dashboard is locked to its owner\'s device', 'error');
+            if (!state.biometricSupported) {
+                console.warn('[Dashboard] Platform authenticator not available:', support);
+                gate.classList.add('not-supported');
+                showStatus('Biometric authentication not available on this device', 'error');
                 return false;
             }
-        } else {
-            // No owner yet - show setup for first registration
-            btnAuth.style.display = 'none';
-            btnSetup.style.display = 'flex';
-            if (gateSubtitle) {
-                gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${state.authenticatorType}</span>`;
+
+            // Update UI with authenticator type
+            if (authTypeText) {
+                authTypeText.textContent = state.authenticatorType;
             }
-            if (gateMessage) {
-                gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+
+            // Update icon based on type
+            updateBiometricIcon(state.authenticatorType);
+
+            // Check access status (owner-lock system)
+            showStatus('Checking access...', 'info');
+            const accessStatus = await BiometricAuth.checkAccessStatus();
+
+            hideStatus();
+
+            if (accessStatus.hasOwner) {
+                if (accessStatus.isOwnerDevice) {
+                    // Owner device - show auth button
+                    btnAuth.style.display = 'flex';
+                    btnSetup.style.display = 'none';
+                    if (gateSubtitle) {
+                        gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${state.authenticatorType}</span> to unlock.`;
+                    }
+                    if (gateMessage) {
+                        gateMessage.textContent = 'Your biometric is required to access this dashboard';
+                    }
+                    updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
+                } else {
+                    // Non-owner device - show locked state
+                    gate.classList.add('locked');
+                    btnAuth.style.display = 'none';
+                    btnSetup.style.display = 'none';
+                    showLockedIcon();
+                    if (gateSubtitle) {
+                        gateSubtitle.textContent = 'Access Denied';
+                    }
+                    if (gateMessage) {
+                        gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
+                    }
+                    showStatus('This dashboard is locked to its owner\'s device', 'error');
+                    return false;
+                }
+            } else {
+                // No owner yet - show setup for first registration
+                btnAuth.style.display = 'none';
+                btnSetup.style.display = 'flex';
+                if (gateSubtitle) {
+                    gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${state.authenticatorType}</span>`;
+                }
+                if (gateMessage) {
+                    gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+                }
             }
+
+            return false; // Don't allow access until verified
+
+        } catch (error) {
+            console.error('[Dashboard] Biometric initialization error:', error);
+            showStatus(`Initialization failed: ${error.message}`, 'error');
+            // Keep buttons functional so user can retry
+            return false;
         }
-
-        // Attach event listeners
-        btnAuth.addEventListener('click', handleBiometricAuth);
-        btnSetup.addEventListener('click', handleBiometricSetup);
-
-        return false; // Don't allow access until verified
     }
 
     /**
@@ -444,17 +632,29 @@
      * Handle biometric authentication
      */
     async function handleBiometricAuth() {
+        console.log('[Dashboard] handleBiometricAuth called');
         const iconContainer = document.getElementById('biometricIcon');
 
+        // Check if BiometricAuth is available
+        if (typeof BiometricAuth === 'undefined') {
+            console.error('[Dashboard] BiometricAuth not available');
+            showStatus('Biometric library not loaded. Please refresh.', 'error');
+            return;
+        }
+
         try {
+            console.log('[Dashboard] Starting authentication...');
             updateAuthButton('Verifying...', true);
             iconContainer?.classList.add('scanning');
             iconContainer?.classList.remove('error', 'success');
             hideStatus();
 
             const result = await BiometricAuth.authenticate((progress) => {
+                console.log('[Dashboard] Auth progress:', progress);
                 showStatus(progress, 'info');
             });
+
+            console.log('[Dashboard] Auth result:', result);
 
             if (result.success) {
                 state.biometricVerified = true;
@@ -468,6 +668,18 @@
                     hideBiometricGate();
                     initDashboard();
                 }, 800);
+            } else {
+                // Handle non-success result that didn't throw
+                console.warn('[Dashboard] Auth returned non-success:', result);
+                iconContainer?.classList.remove('scanning');
+                iconContainer?.classList.add('error');
+                showStatus(result.message || 'Authentication failed', 'error');
+                updateAuthButton('Try Again', false);
+
+                setTimeout(() => {
+                    iconContainer?.classList.remove('error');
+                    updateBiometricIcon(state.authenticatorType);
+                }, 2000);
             }
         } catch (error) {
             console.error('[Dashboard] Biometric auth failed:', error);
@@ -640,6 +852,39 @@
 
     function isTablet() {
         return window.innerWidth >= 600 && window.innerWidth < 900;
+    }
+
+    // ============================================
+    // GREETING UPDATE
+    // ============================================
+
+    function updateGreeting() {
+        const greetingTitle = document.getElementById('greetingTitle');
+        const greetingSubtitle = document.getElementById('greetingSubtitle');
+
+        if (!greetingTitle) return;
+
+        const hour = new Date().getHours();
+        let greeting, subtitle;
+
+        if (hour >= 5 && hour < 12) {
+            greeting = 'Good Morning';
+            subtitle = 'Ready to conquer the day';
+        } else if (hour >= 12 && hour < 17) {
+            greeting = 'Good Afternoon';
+            subtitle = 'Your workforce is performing';
+        } else if (hour >= 17 && hour < 21) {
+            greeting = 'Good Evening';
+            subtitle = 'Wrapping up the day strong';
+        } else {
+            greeting = 'Command Center';
+            subtitle = 'Night operations active';
+        }
+
+        greetingTitle.textContent = greeting;
+        if (greetingSubtitle) {
+            greetingSubtitle.textContent = subtitle;
+        }
     }
 
     // ============================================
@@ -1589,6 +1834,9 @@
     // ============================================
 
     function initDashboard() {
+        // Update greeting based on time of day
+        updateGreeting();
+
         // Update time immediately and every second
         updateTime();
         setInterval(updateTime, 1000);
@@ -1670,14 +1918,30 @@
     // ============================================
 
     async function init() {
-        // Check biometric authentication first
-        const verified = await initBiometricAuth();
+        console.log('[Dashboard] Initializing...');
 
-        if (verified) {
-            // Already verified, initialize dashboard immediately
-            initDashboard();
+        try {
+            // Check biometric authentication first
+            const verified = await initBiometricAuth();
+
+            if (verified) {
+                // Already verified, initialize dashboard immediately
+                console.log('[Dashboard] Session verified, initializing dashboard');
+                initDashboard();
+            } else {
+                console.log('[Dashboard] Awaiting biometric authentication');
+            }
+            // If not verified, dashboard will initialize after successful auth
+        } catch (error) {
+            console.error('[Dashboard] Critical initialization error:', error);
+            // Show error to user
+            const statusEl = document.getElementById('biometricStatus');
+            const statusText = document.getElementById('statusText');
+            if (statusEl && statusText) {
+                statusText.textContent = `Error: ${error.message}. Please refresh the page.`;
+                statusEl.className = 'biometric-status visible error';
+            }
         }
-        // If not verified, dashboard will initialize after successful auth
     }
 
     // ============================================

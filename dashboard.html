@@ -121,19 +121,26 @@
                 <span class="logo-text">FUSE</span>
             </a>
             <span class="header-divider"></span>
-            <h1 class="dashboard-title">Company Dashboard</h1>
+            <div class="header-greeting">
+                <h1 class="dashboard-title" id="greetingTitle">Command Center</h1>
+                <span class="greeting-subtitle" id="greetingSubtitle">Your digital workforce awaits</span>
+            </div>
         </div>
         <div class="header-right">
-            <div class="system-status">
+            <div class="system-status" title="System Status">
                 <span class="status-indicator online" id="globalStatus"></span>
                 <span class="status-text" id="globalStatusText">All Systems Operational</span>
             </div>
             <div class="header-time">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
                 <span id="currentTime"></span>
             </div>
             <div class="biometric-verified-badge" id="verifiedBadge">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                <span>Biometric Verified</span>
+                <span>Verified</span>
             </div>
         </div>
     </header>
@@ -497,27 +504,27 @@
                         API Configuration
                     </h3>
                     <div class="api-providers">
-                        <div class="api-provider">
+                        <a href="/agents#configTab" class="api-provider">
                             <div class="provider-info">
                                 <span class="provider-icon anthropic"></span>
                                 <span class="provider-name">Anthropic</span>
                             </div>
                             <span class="provider-status" id="anthropicApiStatus">Not Set</span>
-                        </div>
-                        <div class="api-provider">
+                        </a>
+                        <a href="/agents#configTab" class="api-provider">
                             <div class="provider-info">
                                 <span class="provider-icon openai"></span>
                                 <span class="provider-name">OpenAI</span>
                             </div>
                             <span class="provider-status" id="openaiApiStatus">Not Set</span>
-                        </div>
-                        <div class="api-provider">
+                        </a>
+                        <a href="/agents#configTab" class="api-provider">
                             <div class="provider-info">
                                 <span class="provider-icon gemini"></span>
                                 <span class="provider-name">Gemini</span>
                             </div>
                             <span class="provider-status" id="geminiApiStatus">Not Set</span>
-                        </div>
+                        </a>
                     </div>
                     <a href="/agents#configTab" class="btn-link">Configure APIs</a>
                 </div>
@@ -529,34 +536,34 @@
                         Recent Activity
                     </h3>
                     <div class="activity-list" id="recentActivity">
-                        <div class="activity-item">
+                        <a href="/agents?team=sales" class="activity-item">
                             <div class="activity-dot sales"></div>
                             <div class="activity-content">
                                 <span class="activity-text">Sales Director completed pipeline review</span>
                                 <span class="activity-time">2 min ago</span>
                             </div>
-                        </div>
-                        <div class="activity-item">
+                        </a>
+                        <a href="/agents?team=developer" class="activity-item">
                             <div class="activity-dot dev"></div>
                             <div class="activity-content">
                                 <span class="activity-text">Architect started system design task</span>
                                 <span class="activity-time">5 min ago</span>
                             </div>
-                        </div>
-                        <div class="activity-item">
+                        </a>
+                        <a href="/agents?team=marketing" class="activity-item">
                             <div class="activity-dot marketing"></div>
                             <div class="activity-content">
                                 <span class="activity-text">Growth Lead updated campaign metrics</span>
                                 <span class="activity-time">12 min ago</span>
                             </div>
-                        </div>
-                        <div class="activity-item">
+                        </a>
+                        <a href="/agents?team=communications" class="activity-item">
                             <div class="activity-dot comms"></div>
                             <div class="activity-content">
                                 <span class="activity-text">Content Strategist published blog post</span>
                                 <span class="activity-time">25 min ago</span>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <a href="/agents" class="btn-link">View All Activity</a>
                 </div>
