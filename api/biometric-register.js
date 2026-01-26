@@ -8,11 +8,9 @@
  * - Anti-replay protection with nonces
  * - Rate limiting and lockout
  *
- * @version 2.1.0
+ * @version 2.2.0 - Refactored to use shared biometric utilities
  */
 
-const crypto = require('crypto');
-const { put, list, del } = require('@vercel/blob');
 const { Redis } = require('@upstash/redis');
 const { verifyRegistrationResponse } = require('@simplewebauthn/server');
 const {
@@ -22,23 +20,31 @@ const {
 } = require('./_lib/webauthn');
 const {
     createSecuredHandler,
-    getClientIp,
     addAuditEntry,
     sanitizeString
 } = require('./_lib/security');
+const {
+    CONFIG: BIOMETRIC_CONFIG,
+    createDeviceFingerprint,
+    checkDeviceMatch,
+    normalizeCredentials,
+    getOwnerCredential,
+    storeOwnerCredential,
+    generateChallenge,
+    generateNonce,
+    storeChallenge,
+    verifyChallenge
+} = require('./_lib/biometric-utils');
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 const CONFIG = {
-    CHALLENGE_EXPIRY: 5 * 60 * 1000, // 5 minutes
-    BLOB_PREFIX: 'biometric-credentials/',
-    CHALLENGE_PREFIX: 'biometric-challenges/',
-    OWNER_CREDENTIAL_KEY: 'owner-credential.json',
+    ...BIOMETRIC_CONFIG,
     RATE_LIMIT: { limit: 5, windowMs: 60000 }, // 5 requests per minute (stricter)
     MAX_REGISTRATION_ATTEMPTS: 3,
-    LOCKOUT_DURATION: 60 * 60 * 1000, // 1 hour lockout for registration abuse
+    LOCKOUT_DURATION: 60 * 60 * 1000 // 1 hour lockout for registration abuse
 };
 
 // Initialize Redis client if configuration is available
@@ -49,88 +55,13 @@ const redis =
 
 
 // ============================================================================
-// HELPER FUNCTIONS
+// LOCKOUT FUNCTIONS (Registration-specific, not in shared module)
 // ============================================================================
 
 /**
- * Generate a cryptographically secure challenge
- */
-function generateChallenge() {
-    const challenge = crypto.randomBytes(32);
-    return challenge.toString('base64url');
-}
-
-/**
- * Generate a unique nonce for anti-replay
- */
-function generateNonce() {
-    return crypto.randomBytes(16).toString('hex');
-}
-
-/**
- * Store challenge for verification using Vercel Blob (persistent across serverless invocations)
- */
-async function storeChallenge(key, challenge, nonce) {
-    const blobPath = `${CONFIG.CHALLENGE_PREFIX}reg-${key}.json`;
-    const data = {
-        challenge,
-        nonce,
-        createdAt: Date.now()
-    };
-
-    try {
-        await put(blobPath, JSON.stringify(data), {
-            access: 'private',
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        return true;
-    } catch (error) {
-        console.error('[BiometricRegister] Failed to store challenge:', error);
-        return false;
-    }
-}
-
-/**
- * Verify and consume challenge from Vercel Blob
- */
-async function verifyChallenge(key) {
-    const blobPath = `${CONFIG.CHALLENGE_PREFIX}reg-${key}.json`;
-
-    try {
-        const { blobs } = await list({ prefix: CONFIG.CHALLENGE_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
-
-        if (!blob) return null;
-
-        const response = await fetch(blob.url);
-        if (!response.ok) return null;
-
-        const entry = await response.json();
-
-        // Check expiry
-        if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
-            // Delete expired challenge
-            try {
-                await del(blob.url);
-            } catch (e) { /* ignore cleanup errors */ }
-            return null;
-        }
-
-        // Delete the challenge (consume it - one-time use)
-        try {
-            await del(blob.url);
-        } catch (e) { /* ignore cleanup errors */ }
-
-        return entry;
-    } catch (error) {
-        console.error('[BiometricRegister] Failed to verify challenge:', error);
-        return null;
-    }
-}
-
-/**
  * Check if registration is locked out using Redis
+ * @param {string} ip - Client IP address
+ * @returns {Promise<boolean>} - True if locked out
  */
 async function isRegistrationLockedOut(ip) {
     if (!redis) return false;
@@ -146,6 +77,7 @@ async function isRegistrationLockedOut(ip) {
 
 /**
  * Record failed registration attempt in Redis
+ * @param {string} ip - Client IP address
  */
 async function recordRegistrationAttempt(ip) {
     if (!redis) return;
@@ -153,7 +85,6 @@ async function recordRegistrationAttempt(ip) {
         const key = `lockout:register:${ip}`;
         const attempts = await redis.incr(key);
         if (attempts === 1) {
-            // Set expiry only on the first attempt to start the lockout window
             await redis.expire(key, Math.ceil(CONFIG.LOCKOUT_DURATION / 1000));
         }
     } catch (error) {
@@ -162,150 +93,17 @@ async function recordRegistrationAttempt(ip) {
 }
 
 /**
- * Get the owner credential from Vercel Blob
- * Returns { credential, error } to distinguish between "no owner" and "service error"
+ * Wrapper to store challenge with 'reg' prefix for registration
  */
-async function getOwnerCredential() {
-    try {
-        const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
-        const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
-
-        if (!blob) {
-            // No owner registered - this is a valid state
-            return { credential: null, error: null };
-        }
-
-        const response = await fetch(blob.url);
-        if (!response.ok) {
-            console.error('[BiometricRegister] Blob fetch failed:', response.status);
-            return { credential: null, error: 'BLOB_FETCH_FAILED' };
-        }
-
-        const credential = await response.json();
-        return { credential, error: null };
-    } catch (error) {
-        console.error('[BiometricRegister] Failed to get owner credential:', error);
-        return { credential: null, error: 'SERVICE_ERROR' };
-    }
+async function storeRegChallenge(key, challenge, nonce) {
+    return storeChallenge(key, challenge, nonce, 'reg');
 }
 
 /**
- * Store the owner credential in Vercel Blob
+ * Wrapper to verify challenge with 'reg' prefix for registration
  */
-async function storeOwnerCredential(credentialData) {
-    const blobPath = `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`;
-
-    try {
-        await put(blobPath, JSON.stringify(credentialData), {
-            access: 'private',
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        return true;
-    } catch (error) {
-        console.error('[BiometricRegister] Failed to store owner credential:', error);
-        return false;
-    }
-}
-
-/**
- * Create device fingerprint from client-provided deviceId (new stable method)
- */
-function createClientFingerprint(clientDeviceId) {
-    if (!clientDeviceId || typeof clientDeviceId !== 'string' || clientDeviceId.length < 16) {
-        return null;
-    }
-    // Hash the client deviceId with a server salt for additional security
-    return crypto.createHash('sha256')
-        .update(`client:${clientDeviceId}`)
-        .digest('hex')
-        .substring(0, 32);
-}
-
-/**
- * Create device fingerprint from HTTP headers (legacy method - less stable)
- */
-function createHeaderFingerprint(req) {
-    const ua = req.headers['user-agent'] || '';
-    const acceptLang = req.headers['accept-language'] || '';
-    const acceptEnc = req.headers['accept-encoding'] || '';
-
-    return crypto.createHash('sha256')
-        .update(`${ua}|${acceptLang}|${acceptEnc}`)
-        .digest('hex')
-        .substring(0, 32);
-}
-
-/**
- * Create device fingerprint from request
- * Prefers client-provided deviceId for stability across browser updates
- * Falls back to header-based fingerprint for backwards compatibility
- */
-function createDeviceFingerprint(req, clientDeviceId = null) {
-    // Try client-based fingerprint first (stable across browser updates)
-    const clientFp = createClientFingerprint(clientDeviceId);
-    if (clientFp) {
-        return clientFp;
-    }
-    // Fallback to header-based fingerprint (legacy)
-    return createHeaderFingerprint(req);
-}
-
-/**
- * Check if a device matches any of the authorized devices (with migration support)
- * Supports both legacy single fingerprint and new multi-device array
- * Returns { matches: boolean, needsMigration: boolean, fingerprint: string }
- */
-function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
-    const clientFp = createClientFingerprint(clientDeviceId);
-    const headerFp = createHeaderFingerprint(req);
-    const currentFp = clientFp || headerFp;
-
-    // Get all authorized fingerprints (support both old and new format)
-    const authorizedDevices = ownerCredential.authorizedDevices || [];
-    const legacyFingerprint = ownerCredential.deviceFingerprint;
-
-    // Build list of all valid fingerprints
-    const allFingerprints = [...authorizedDevices.map(d => d.fingerprint)];
-    if (legacyFingerprint && !allFingerprints.includes(legacyFingerprint)) {
-        allFingerprints.push(legacyFingerprint);
-    }
-
-    // Check client fingerprint first
-    if (clientFp && allFingerprints.includes(clientFp)) {
-        return { matches: true, needsMigration: false, fingerprint: clientFp };
-    }
-
-    // Check header fingerprint for backwards compatibility
-    if (allFingerprints.includes(headerFp)) {
-        return { matches: true, needsMigration: !!clientFp, fingerprint: clientFp || headerFp };
-    }
-
-    return { matches: false, needsMigration: false, fingerprint: currentFp };
-}
-
-/**
- * Normalize stored credentials into a list (supports legacy single credential)
- */
-function normalizeCredentials(ownerCredential) {
-    if (!ownerCredential) return [];
-    if (Array.isArray(ownerCredential.credentials) && ownerCredential.credentials.length) {
-        return ownerCredential.credentials;
-    }
-
-    if (ownerCredential.credentialId && ownerCredential.publicKey) {
-        return [{
-            credentialId: ownerCredential.credentialId,
-            publicKey: ownerCredential.publicKey,
-            counter: ownerCredential.counter || 0,
-            transports: ownerCredential.transports || [],
-            createdAt: ownerCredential.registeredAt || new Date().toISOString(),
-            lastUsed: ownerCredential.lastUsed || null,
-            legacy: true
-        }];
-    }
-
-    return [];
+async function verifyRegChallenge(key) {
+    return verifyChallenge(key, 'reg');
 }
 
 const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) => {
@@ -404,7 +202,7 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
 
             const challenge = generateChallenge();
             const nonce = generateNonce();
-            await storeChallenge(deviceFingerprint, challenge, nonce);
+            await storeRegChallenge(deviceFingerprint, challenge, nonce);
 
             addAuditEntry({
                 action: 'BIOMETRIC_CHALLENGE_ISSUED',
@@ -444,7 +242,7 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 });
             }
 
-            const challengeData = await verifyChallenge(deviceFingerprint);
+            const challengeData = await verifyRegChallenge(deviceFingerprint);
             if (!challengeData) {
                 await recordRegistrationAttempt(clientIp);
                 addAuditEntry({

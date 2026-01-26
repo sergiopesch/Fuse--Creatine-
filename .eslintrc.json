@@ -15,7 +15,10 @@
     "gsap": "readonly",
     "ScrollTrigger": "readonly",
     "Lenis": "readonly",
-    "BiometricAuth": "readonly"
+    "BiometricAuth": "readonly",
+    "THREE": "readonly",
+    "Chart": "readonly",
+    "PublicKeyCredential": "readonly"
   },
   "rules": {
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
@@ -28,13 +31,25 @@
     "no-eval": "error",
     "no-implied-eval": "error",
     "no-new-func": "error",
-    "no-script-url": "error"
+    "no-script-url": "error",
+    "no-control-regex": "off",
+    "no-case-declarations": "warn"
   },
   "overrides": [
     {
       "files": ["api/**/*.js"],
       "env": {
         "browser": false,
+        "node": true
+      },
+      "parserOptions": {
+        "sourceType": "script"
+      }
+    },
+    {
+      "files": ["api/**/__tests__/**/*.js", "**/*.test.js", "**/*.spec.js"],
+      "env": {
+        "jest": true,
         "node": true
       }
     },
@@ -43,6 +58,9 @@
       "env": {
         "browser": true,
         "node": false
+      },
+      "globals": {
+        "module": "readonly"
       }
     }
   ]

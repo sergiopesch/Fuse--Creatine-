@@ -68,15 +68,16 @@ The system implements a **three-layer security model**:
 
 ### Key Files
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `/js/biometric-auth.js` | Client-side WebAuthn logic | 921 |
-| `/js/dashboard.js` | Dashboard initialization + auth gate | 2157 |
-| `/api/biometric-authenticate.js` | Authentication API endpoint | 882 |
-| `/api/biometric-register.js` | Registration API endpoint | 669 |
-| `/api/_lib/webauthn.js` | WebAuthn utilities | 111 |
-| `/api/_lib/security.js` | Security middleware | 589 |
-| `/dashboard.html` | Dashboard with biometric gate | 670 |
+| File | Purpose | Description |
+|------|---------|-------------|
+| `/js/biometric-auth.js` | Client-side WebAuthn logic | Device ID management, credential handling |
+| `/js/dashboard.js` | Dashboard initialization + auth gate | Auth flow coordination |
+| `/api/biometric-authenticate.js` | Authentication API endpoint | Challenge/verify flow, session tokens |
+| `/api/biometric-register.js` | Registration API endpoint | First-time owner registration |
+| `/api/_lib/biometric-utils.js` | Shared biometric utilities | Device fingerprinting, challenge management |
+| `/api/_lib/webauthn.js` | WebAuthn utilities | Origin/RP resolution, base64url helpers |
+| `/api/_lib/security.js` | Security middleware | CORS, rate limiting, validation |
+| `/dashboard.html` | Dashboard with biometric gate | HTML structure + UI elements |
 
 ---
 
@@ -676,18 +677,34 @@ Based on the code analysis, the most likely reasons authentication is not workin
 
 For detailed code inspection:
 
-| Component | File Path | Critical Lines |
-|-----------|-----------|----------------|
-| Config Error Check | `/api/biometric-authenticate.js` | 514-522 |
-| Session Token Generation | `/api/biometric-authenticate.js` | 76-91 |
-| Device Fingerprinting | `/api/biometric-authenticate.js` | 278-317 |
-| Challenge Storage | `/api/biometric-authenticate.js` | 127-182 |
-| CORS Origins | `/api/_lib/security.js` | 48-55 |
-| Client Device ID | `/js/biometric-auth.js` | 76-110 |
-| Access Status Check | `/js/biometric-auth.js` | 278-328 |
-| Auth Gate Init | `/js/dashboard.js` | 512-643 |
+| Component | File Path | Description |
+|-----------|-----------|-------------|
+| Config Error Check | `/api/biometric-authenticate.js` | Session secret validation |
+| Session Token Generation | `/api/biometric-authenticate.js` | HMAC-signed token creation |
+| Device Fingerprinting | `/api/_lib/biometric-utils.js` | Shared fingerprinting utilities |
+| Challenge Storage | `/api/_lib/biometric-utils.js` | Vercel Blob challenge management |
+| Credential Management | `/api/_lib/biometric-utils.js` | Owner credential storage |
+| CORS Origins | `/api/_lib/security.js` | Allowed origins whitelist |
+| Client Device ID | `/js/biometric-auth.js` | Client-side device ID generation |
+| Access Status Check | `/js/biometric-auth.js` | API health and access validation |
+| Auth Gate Init | `/js/dashboard.js` | Biometric gate initialization |
+
+### Shared Biometric Utilities (NEW)
+
+The following functions are now centralized in `/api/_lib/biometric-utils.js`:
+
+| Function | Purpose |
+|----------|---------|
+| `createDeviceFingerprint()` | Generate device fingerprint from client ID or headers |
+| `checkDeviceMatch()` | Verify device against authorized list |
+| `getOwnerCredential()` | Retrieve owner credential from Vercel Blob |
+| `storeOwnerCredential()` | Store/update owner credential |
+| `generateChallenge()` | Create cryptographic challenge |
+| `storeChallenge()` / `verifyChallenge()` | Challenge lifecycle management |
+| `normalizeCredentials()` | Normalize legacy and new credential formats |
+| `addAuthorizedDevice()` | Add device to authorized list |
 
 ---
 
-*Report generated: 2026-01-26*
-*Codebase version: Based on git commit 3f56f03*
+*Report updated: 2026-01-26*
+*Codebase version: v2.2.0 (with shared biometric utilities)*
