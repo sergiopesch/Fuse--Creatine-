@@ -161,7 +161,11 @@ const state = {
     },
     adminToken: null,
     charts: {},
-    isAuthenticated: false
+    isAuthenticated: false,
+    // Biometric state
+    biometricSupported: false,
+    biometricVerified: false,
+    authenticatorType: 'Biometric'
 };
 
 // Initialize team orchestration state
@@ -247,7 +251,7 @@ function cacheElements() {
 // INITIALIZATION
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     cacheElements();
     initTabNavigation();
     initClock();
@@ -262,9 +266,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTeamNavButtons();
     updateStats();
 
-    // Start periodic updates
+    // Initialize biometric authentication gate
+    const biometricResult = await initBiometricAuth();
+    
+    // Only start periodic updates if authenticated or no gate
+    if (biometricResult) {
+        setInterval(fetchOrchestrationStatus, 30000);
+    }
+
+    // Clock always updates
     setInterval(updateClock, 1000);
-    setInterval(fetchOrchestrationStatus, 30000);
 
     console.log('[CEO Dashboard] Initialized');
 });
@@ -821,7 +832,8 @@ function updateStats() {
 // ============================================
 
 function initAnalytics() {
-    loadSignups();
+    // Don't auto-load signups - they require authentication
+    // Signups will be loaded after biometric auth succeeds
 
     if (elements.signupSearch) {
         elements.signupSearch.addEventListener('input', filterSignups);
@@ -1394,7 +1406,457 @@ function showToast(type, title, message) {
 // BIOMETRIC AUTH INTEGRATION
 // ============================================
 
-// Listen for successful authentication from biometric-auth.js
+/**
+ * Initialize biometric authentication gate
+ */
+async function initBiometricAuth() {
+    const gate = document.getElementById('biometricGate');
+    const btnAuth = document.getElementById('btnAuthenticate');
+    const btnSetup = document.getElementById('btnSetup');
+    const authTypeText = document.getElementById('authTypeText');
+    const gateSubtitle = document.getElementById('gateSubtitle');
+    const gateMessage = document.getElementById('gateMessage');
+    const iconContainer = document.getElementById('biometricIcon');
+
+    if (!gate) {
+        console.log('[CEO Dashboard] No biometric gate found, allowing access');
+        return true; // No gate, allow access
+    }
+
+    // CRITICAL: Attach event listeners IMMEDIATELY to ensure buttons always work
+    if (btnAuth) {
+        btnAuth.addEventListener('click', handleBiometricAuth);
+        console.log('[CEO Dashboard] Auth button listener attached');
+    }
+    if (btnSetup) {
+        btnSetup.addEventListener('click', handleBiometricSetup);
+        console.log('[CEO Dashboard] Setup button listener attached');
+    }
+
+    // Initialize device linking
+    initDeviceLinking();
+
+    // Check biometric library loaded
+    if (typeof BiometricAuth === 'undefined') {
+        console.error('[CEO Dashboard] BiometricAuth not loaded');
+        gate.classList.add('not-supported');
+        showBiometricStatus('Biometric library failed to load', 'error');
+        return false;
+    }
+
+    try {
+        // Check if already verified in this session
+        const sessionVerified = await BiometricAuth.isSessionVerified();
+        if (sessionVerified) {
+            console.log('[CEO Dashboard] Session already verified');
+            hideBiometricGate();
+            return true;
+        }
+
+        // Check biometric support
+        const support = await BiometricAuth.checkSupport();
+        state.biometricSupported = support.supported && support.platformAuthenticator;
+        state.authenticatorType = support.type || 'Biometric';
+
+        if (!state.biometricSupported) {
+            console.warn('[CEO Dashboard] Platform authenticator not available:', support);
+            gate.classList.add('not-supported');
+            showBiometricStatus('Biometric authentication not available on this device', 'error');
+            return false;
+        }
+
+        // Update UI with authenticator type
+        if (authTypeText) {
+            authTypeText.textContent = state.authenticatorType;
+        }
+
+        // Update icon based on type
+        updateBiometricIcon(state.authenticatorType);
+
+        // Check access status (owner-lock system)
+        showBiometricStatus('Checking access...', 'info');
+        const accessStatus = await BiometricAuth.checkAccessStatus();
+
+        hideBiometricStatus();
+
+        // Handle service errors (e.g., missing BLOB_READ_WRITE_TOKEN)
+        if (accessStatus.serviceError) {
+            console.error('[CEO Dashboard] Service error during access check:', accessStatus.message);
+            if (btnAuth) btnAuth.style.display = 'none';
+            if (btnSetup) btnSetup.style.display = 'none';
+            if (gateSubtitle) {
+                gateSubtitle.textContent = 'Service Unavailable';
+            }
+            if (gateMessage) {
+                gateMessage.textContent = accessStatus.message || 'Authentication service is temporarily unavailable. Please try again later.';
+            }
+            showBiometricStatus('Authentication service error. Please check server configuration.', 'error');
+            return false;
+        }
+
+        if (accessStatus.hasOwner) {
+            if (accessStatus.isOwnerDevice) {
+                // Owner device - show auth button
+                if (btnAuth) btnAuth.style.display = 'flex';
+                if (btnSetup) btnSetup.style.display = 'none';
+                if (gateSubtitle) {
+                    gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${escapeHtml(state.authenticatorType)}</span> to unlock.`;
+                }
+                if (gateMessage) {
+                    gateMessage.textContent = 'Your biometric is required to access this dashboard';
+                }
+                updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
+            } else {
+                // Non-owner device - show locked state with link option
+                gate.classList.add('locked');
+                if (btnAuth) btnAuth.style.display = 'none';
+                if (btnSetup) btnSetup.style.display = 'none';
+                showLockedIcon();
+                if (gateSubtitle) {
+                    gateSubtitle.textContent = 'Access Denied';
+                }
+                if (gateMessage) {
+                    gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
+                }
+                showBiometricStatus('This dashboard is locked to its owner\'s device', 'error');
+
+                // Show link device option if available
+                const btnLinkDevice = document.getElementById('btnLinkDevice');
+                if (btnLinkDevice && accessStatus.canLinkDevice !== false) {
+                    btnLinkDevice.style.display = 'flex';
+                }
+                return false;
+            }
+        } else {
+            // No owner yet - show setup for first registration
+            if (btnAuth) btnAuth.style.display = 'none';
+            if (btnSetup) btnSetup.style.display = 'flex';
+            if (gateSubtitle) {
+                gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${escapeHtml(state.authenticatorType)}</span>`;
+            }
+            if (gateMessage) {
+                gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+            }
+        }
+
+        return false; // Don't allow access until verified
+
+    } catch (error) {
+        console.error('[CEO Dashboard] Biometric initialization error:', error);
+        showBiometricStatus(`Initialization failed: ${error.message}`, 'error');
+        // Keep buttons functional so user can retry
+        return false;
+    }
+}
+
+/**
+ * Handle biometric authentication
+ */
+async function handleBiometricAuth() {
+    console.log('[CEO Dashboard] handleBiometricAuth called');
+    const iconContainer = document.getElementById('biometricIcon');
+
+    // Check if BiometricAuth is available
+    if (typeof BiometricAuth === 'undefined') {
+        console.error('[CEO Dashboard] BiometricAuth not available');
+        showBiometricStatus('Biometric library not loaded. Please refresh the page.', 'error');
+        alert('Error: Biometric authentication library not loaded. Please refresh the page.');
+        return;
+    }
+
+    // Check if WebAuthn is supported
+    if (!state.biometricSupported) {
+        console.error('[CEO Dashboard] Biometric not supported');
+        showBiometricStatus('Biometric authentication not supported on this device.', 'error');
+        return;
+    }
+
+    try {
+        console.log('[CEO Dashboard] Starting authentication...');
+        updateAuthButton('Verifying...', true);
+        iconContainer?.classList.add('scanning');
+        iconContainer?.classList.remove('error', 'success');
+        hideBiometricStatus();
+
+        const result = await BiometricAuth.authenticate((progress) => {
+            console.log('[CEO Dashboard] Auth progress:', progress);
+            showBiometricStatus(progress, 'info');
+        });
+
+        console.log('[CEO Dashboard] Auth result:', result);
+
+        if (result.success) {
+            state.biometricVerified = true;
+            state.isAuthenticated = true;
+            iconContainer?.classList.remove('scanning');
+            iconContainer?.classList.add('success');
+            showSuccessIcon();
+            showBiometricStatus(result.message || 'Welcome back!', 'success');
+
+            // Dispatch custom event for integration
+            window.dispatchEvent(new CustomEvent('biometric-authenticated'));
+
+            // Brief delay to show success
+            setTimeout(() => {
+                hideBiometricGate();
+                // Load authenticated data
+                fetchOrchestrationStatus();
+                loadSignups();
+            }, 800);
+        } else {
+            console.warn('[CEO Dashboard] Auth returned non-success:', result);
+            iconContainer?.classList.remove('scanning');
+            iconContainer?.classList.add('error');
+            showBiometricStatus(result.message || 'Authentication failed', 'error');
+            updateAuthButton('Try Again', false);
+
+            setTimeout(() => {
+                iconContainer?.classList.remove('error');
+                updateBiometricIcon(state.authenticatorType);
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('[CEO Dashboard] Biometric auth failed:', error);
+        iconContainer?.classList.remove('scanning');
+        iconContainer?.classList.add('error');
+
+        let errorMessage = error.message || 'Authentication failed';
+
+        if (errorMessage.includes('temporarily unavailable') || errorMessage.includes('CONFIG_ERROR')) {
+            errorMessage = 'Server configuration error. Please contact administrator.';
+        } else if (errorMessage.includes('Unable to connect')) {
+            errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        } else if (errorMessage.includes('cancelled')) {
+            errorMessage = 'Authentication was cancelled. Please try again.';
+        }
+
+        showBiometricStatus(errorMessage, 'error');
+        updateAuthButton('Try Again', false);
+
+        setTimeout(() => {
+            iconContainer?.classList.remove('error');
+            updateBiometricIcon(state.authenticatorType);
+        }, 2000);
+    }
+}
+
+/**
+ * Handle biometric setup/registration (owner-lock)
+ */
+async function handleBiometricSetup() {
+    console.log('[CEO Dashboard] handleBiometricSetup called');
+    const btnSetup = document.getElementById('btnSetup');
+    const btnAuth = document.getElementById('btnAuthenticate');
+    const iconContainer = document.getElementById('biometricIcon');
+    const btnSetupText = document.getElementById('btnSetupText');
+    const gateMessage = document.getElementById('gateMessage');
+
+    try {
+        if (btnSetup) btnSetup.disabled = true;
+        if (btnSetupText) btnSetupText.textContent = 'Setting up...';
+        iconContainer?.classList.add('scanning');
+        iconContainer?.classList.remove('error', 'success');
+        hideBiometricStatus();
+
+        const result = await BiometricAuth.register((progress) => {
+            showBiometricStatus(progress, 'info');
+        });
+
+        if (result.success) {
+            iconContainer?.classList.remove('scanning');
+            iconContainer?.classList.add('success');
+            showSuccessIcon();
+            showBiometricStatus(result.message || 'Dashboard secured!', 'success');
+
+            if (gateMessage) {
+                gateMessage.textContent = 'Your biometric is now the only key to this dashboard';
+            }
+
+            // Switch to authenticate mode after brief delay
+            setTimeout(() => {
+                if (btnSetup) btnSetup.style.display = 'none';
+                if (btnAuth) btnAuth.style.display = 'flex';
+                updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
+                iconContainer?.classList.remove('success');
+                updateBiometricIcon(state.authenticatorType);
+                showBiometricStatus('Now use your biometric to unlock', 'info');
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('[CEO Dashboard] Biometric setup failed:', error);
+        iconContainer?.classList.remove('scanning');
+        iconContainer?.classList.add('error');
+        showBiometricStatus(error.message || 'Setup failed', 'error');
+        if (btnSetup) btnSetup.disabled = false;
+        if (btnSetupText) btnSetupText.textContent = 'Secure This Dashboard';
+
+        setTimeout(() => {
+            iconContainer?.classList.remove('error');
+            updateBiometricIcon(state.authenticatorType);
+        }, 2000);
+    }
+}
+
+/**
+ * Initialize device linking functionality
+ */
+function initDeviceLinking() {
+    const btnLinkDevice = document.getElementById('btnLinkDevice');
+    const btnClaimLink = document.getElementById('btnClaimLink');
+    const btnCancelLink = document.getElementById('btnCancelLink');
+    const deviceLinkInput = document.getElementById('deviceLinkInput');
+    const linkCodeInput = document.getElementById('linkCodeInput');
+
+    if (btnLinkDevice) {
+        btnLinkDevice.addEventListener('click', () => {
+            if (deviceLinkInput) deviceLinkInput.style.display = 'block';
+            btnLinkDevice.style.display = 'none';
+        });
+    }
+
+    if (btnCancelLink) {
+        btnCancelLink.addEventListener('click', () => {
+            if (deviceLinkInput) deviceLinkInput.style.display = 'none';
+            if (btnLinkDevice) btnLinkDevice.style.display = 'flex';
+            if (linkCodeInput) linkCodeInput.value = '';
+        });
+    }
+
+    if (btnClaimLink && linkCodeInput) {
+        btnClaimLink.addEventListener('click', async () => {
+            const code = linkCodeInput.value.trim().toUpperCase();
+            if (code.length !== 6) {
+                showBiometricStatus('Please enter a 6-character code', 'error');
+                return;
+            }
+
+            try {
+                btnClaimLink.disabled = true;
+                showBiometricStatus('Linking device...', 'info');
+
+                const result = await BiometricAuth.claimDeviceLink(code);
+
+                if (result.success) {
+                    showBiometricStatus('Device linked! You can now register your biometric.', 'success');
+                    if (deviceLinkInput) deviceLinkInput.style.display = 'none';
+
+                    // Show setup button for newly linked device
+                    const btnSetup = document.getElementById('btnSetup');
+                    if (btnSetup) btnSetup.style.display = 'flex';
+                }
+            } catch (error) {
+                showBiometricStatus(error.message || 'Failed to link device', 'error');
+            } finally {
+                btnClaimLink.disabled = false;
+            }
+        });
+    }
+}
+
+/**
+ * Update biometric icon based on authenticator type
+ */
+function updateBiometricIcon(type) {
+    const iconFaceId = document.getElementById('iconFaceId');
+    const iconFingerprint = document.getElementById('iconFingerprint');
+    const iconLocked = document.getElementById('iconLocked');
+    const iconSuccess = document.getElementById('iconSuccess');
+
+    [iconFaceId, iconFingerprint, iconLocked, iconSuccess].forEach(icon => {
+        if (icon) icon.style.display = 'none';
+    });
+
+    if (type === 'Fingerprint' || type === 'Touch ID' || type === 'Windows Hello') {
+        if (iconFingerprint) iconFingerprint.style.display = 'block';
+    } else {
+        if (iconFaceId) iconFaceId.style.display = 'block';
+    }
+}
+
+/**
+ * Show locked icon for non-owner devices
+ */
+function showLockedIcon() {
+    const iconFaceId = document.getElementById('iconFaceId');
+    const iconFingerprint = document.getElementById('iconFingerprint');
+    const iconLocked = document.getElementById('iconLocked');
+
+    [iconFaceId, iconFingerprint].forEach(icon => {
+        if (icon) icon.style.display = 'none';
+    });
+    if (iconLocked) iconLocked.style.display = 'block';
+}
+
+/**
+ * Show success icon
+ */
+function showSuccessIcon() {
+    const iconFaceId = document.getElementById('iconFaceId');
+    const iconFingerprint = document.getElementById('iconFingerprint');
+    const iconSuccess = document.getElementById('iconSuccess');
+
+    [iconFaceId, iconFingerprint].forEach(icon => {
+        if (icon) icon.style.display = 'none';
+    });
+    if (iconSuccess) iconSuccess.style.display = 'block';
+}
+
+/**
+ * Update authenticate button state
+ */
+function updateAuthButton(text, disabled) {
+    const btn = document.getElementById('btnAuthenticate');
+    const textEl = document.getElementById('btnAuthText');
+    if (btn) btn.disabled = disabled;
+    if (textEl) textEl.textContent = text;
+}
+
+/**
+ * Show biometric status message
+ */
+function showBiometricStatus(message, type) {
+    const statusEl = document.getElementById('biometricStatus');
+    const statusText = document.getElementById('statusText');
+    const statusIcon = statusEl?.querySelector('.status-icon');
+
+    if (!statusEl) return;
+
+    if (statusText) statusText.textContent = message;
+    statusEl.className = 'biometric-status visible ' + type;
+
+    if (statusIcon) {
+        statusIcon.innerHTML = type === 'success'
+            ? '<polyline points="20 6 9 17 4 12"/>'
+            : type === 'error'
+            ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+            : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
+    }
+}
+
+/**
+ * Hide biometric status message
+ */
+function hideBiometricStatus() {
+    const statusEl = document.getElementById('biometricStatus');
+    if (statusEl) {
+        statusEl.className = 'biometric-status';
+    }
+}
+
+/**
+ * Hide the biometric gate and show dashboard
+ */
+function hideBiometricGate() {
+    const gate = document.getElementById('biometricGate');
+    if (gate) {
+        gate.classList.add('authenticated');
+        setTimeout(() => {
+            gate.style.display = 'none';
+        }, 500);
+    }
+}
+
+// Listen for successful authentication events
 window.addEventListener('biometric-authenticated', () => {
     state.isAuthenticated = true;
     console.log('[CEO Dashboard] User authenticated via biometrics');
