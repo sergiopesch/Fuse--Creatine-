@@ -698,11 +698,20 @@
     async function handleBiometricAuth() {
         console.log('[Dashboard] handleBiometricAuth called');
         const iconContainer = document.getElementById('biometricIcon');
+        const statusEl = document.getElementById('biometricStatus');
 
         // Check if BiometricAuth is available
         if (typeof BiometricAuth === 'undefined') {
             console.error('[Dashboard] BiometricAuth not available');
-            showStatus('Biometric library not loaded. Please refresh.', 'error');
+            showStatus('Biometric library not loaded. Please refresh the page.', 'error');
+            alert('Error: Biometric authentication library not loaded. Please refresh the page.');
+            return;
+        }
+
+        // Check if WebAuthn is supported
+        if (!state.biometricSupported) {
+            console.error('[Dashboard] Biometric not supported');
+            showStatus('Biometric authentication not supported on this device.', 'error');
             return;
         }
 
@@ -749,8 +758,27 @@
             console.error('[Dashboard] Biometric auth failed:', error);
             iconContainer?.classList.remove('scanning');
             iconContainer?.classList.add('error');
-            showStatus(error.message || 'Authentication failed', 'error');
+
+            // Provide more specific error messages
+            let errorMessage = error.message || 'Authentication failed';
+
+            if (errorMessage.includes('temporarily unavailable') || errorMessage.includes('CONFIG_ERROR')) {
+                errorMessage = 'Server configuration error. Please contact administrator to set up ENCRYPTION_KEY.';
+            } else if (errorMessage.includes('Unable to connect')) {
+                errorMessage = 'Cannot connect to server. Please check your internet connection.';
+            } else if (errorMessage.includes('cancelled')) {
+                errorMessage = 'Authentication was cancelled. Please try again.';
+            }
+
+            showStatus(errorMessage, 'error');
             updateAuthButton('Try Again', false);
+
+            // Also log to console for debugging
+            console.error('[Dashboard] Full error details:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack
+            });
 
             // Reset icon state after delay
             setTimeout(() => {

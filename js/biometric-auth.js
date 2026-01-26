@@ -656,6 +656,7 @@ const BiometricAuth = (() => {
         // Get challenge from server
         let challenge, allowCredentials;
         try {
+            console.log('[BiometricAuth] Requesting challenge from server...');
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -666,7 +667,21 @@ const BiometricAuth = (() => {
                 })
             });
 
+            console.log('[BiometricAuth] Server response status:', response.status);
+
+            // Handle non-OK responses
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('[BiometricAuth] Server error:', response.status, errorData);
+
+                if (response.status === 503) {
+                    throw new Error(errorData.error || 'Authentication service temporarily unavailable. Server may be misconfigured.');
+                }
+                throw new Error(errorData.error || `Server error: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log('[BiometricAuth] Challenge response:', { success: data.success, hasChallenge: !!data.challenge });
 
             if (!data.success) {
                 if (data.isLocked) {
@@ -675,16 +690,25 @@ const BiometricAuth = (() => {
                 if (data.requiresSetup) {
                     throw new Error('Dashboard not configured. Please set up biometric access.');
                 }
+                if (data.code === 'CONFIG_ERROR') {
+                    throw new Error('Server configuration error: ENCRYPTION_KEY not set.');
+                }
                 throw new Error(data.error || 'Authentication failed');
             }
 
             challenge = base64URLToBuffer(data.challenge);
             allowCredentials = data.allowCredentials;
         } catch (error) {
-            if (error.message.includes('denied') || error.message.includes('secured')) {
+            console.error('[BiometricAuth] Challenge request failed:', error);
+            if (error.message.includes('denied') || error.message.includes('secured') ||
+                error.message.includes('temporarily unavailable') || error.message.includes('CONFIG_ERROR') ||
+                error.message.includes('configuration error')) {
                 throw error;
             }
-            throw new Error('Unable to connect to authentication server');
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                throw new Error('Cannot connect to server. Please check your internet connection.');
+            }
+            throw new Error('Unable to connect to authentication server: ' + error.message);
         }
 
         onProgress?.(`Waiting for ${state.authenticatorType}...`);
