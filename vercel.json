@@ -49,7 +49,9 @@
     { "source": "/privacy.html", "destination": "/privacy", "permanent": true },
     { "source": "/terms.html", "destination": "/terms", "permanent": true },
     { "source": "/agents.html", "destination": "/agents", "permanent": true },
-    { "source": "/dashboard.html", "destination": "/dashboard", "permanent": true }
+    { "source": "/dashboard.html", "destination": "/dashboard", "permanent": true },
+    { "source": "/ceo-dashboard.html", "destination": "/ceo", "permanent": true },
+    { "source": "/ceo-dashboard", "destination": "/ceo", "permanent": true }
   ],
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health" },
