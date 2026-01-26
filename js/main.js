@@ -451,6 +451,28 @@
         doseRange.addEventListener('input', () => setDoseUI(parseInt(doseRange.value, 10)));
     }
 
+    // Interest pills selection
+    const interestPills = document.getElementById('interestPills');
+    const mainInterestValue = document.getElementById('mainInterestValue');
+
+    if (interestPills && mainInterestValue) {
+        interestPills.addEventListener('click', (e) => {
+            const pill = e.target.closest('.interest-pill');
+            if (!pill) return;
+
+            // Remove selected from all pills
+            interestPills.querySelectorAll('.interest-pill').forEach((p) => {
+                p.classList.remove('selected');
+            });
+
+            // Add selected to clicked pill
+            pill.classList.add('selected');
+
+            // Update hidden input value
+            mainInterestValue.value = pill.dataset.value || '';
+        });
+    }
+
     // Waitlist modal
     const modalOverlay = document.getElementById('waitlistModal');
     const waitlistForm = document.getElementById('waitlistForm');
@@ -460,6 +482,17 @@
 
     window.openWaitlist = function () {
         if (!modalOverlay) return;
+
+        // Reset interest pills when opening
+        if (interestPills) {
+            interestPills.querySelectorAll('.interest-pill').forEach((p) => {
+                p.classList.remove('selected');
+            });
+        }
+        if (mainInterestValue) {
+            mainInterestValue.value = '';
+        }
+
         modalOverlay.style.display = 'flex';
         gsap.to(modalOverlay, { opacity: 1, duration: 0.45, ease: 'power2.out' });
         gsap.from('.modal-content', { y: 30, opacity: 0, duration: 0.5, delay: 0.05, ease: 'power3.out' });
@@ -549,12 +582,20 @@
                 onComplete: () => {
                     waitlistForm.style.display = 'none';
                     successMessage.classList.add('active');
+
+                    // Set position number (randomized for now, would come from API in production)
+                    const positionEl = document.getElementById('positionNumber');
+                    if (positionEl) {
+                        const position = 1247 + Math.floor(Math.random() * 50) + 1;
+                        positionEl.textContent = position.toLocaleString();
+                    }
+
                     gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
 
-                    // Auto-refresh after 3 seconds
+                    // Auto-refresh after 5 seconds (longer for sharing)
                     setTimeout(() => {
                         window.location.reload();
-                    }, 3000);
+                    }, 5000);
                 },
             });
         };
@@ -585,7 +626,7 @@
             }
 
             if (!data.mainInterest) {
-                setFormError('Please share your main interest.');
+                setFormError('Please select what brings you to FUSE.');
                 return;
             }
 

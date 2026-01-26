@@ -2303,3 +2303,401 @@ body {
         animation: none;
     }
 }
+
+/* ==========================================
+   Social Proof Section
+   ========================================== */
+
+.social-proof {
+    padding: 2.5rem 5%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 1), rgba(18, 18, 18, 1));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.proof-container {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+}
+
+.proof-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.proof-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    color: var(--white);
+    line-height: 1;
+}
+
+.proof-label {
+    font-size: 0.75rem;
+    color: var(--light-gray);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+
+.proof-divider {
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    transition: all 0.25s ease;
+}
+
+.trust-badge:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 59, 48, 0.3);
+}
+
+.badge-icon {
+    font-size: 1rem;
+}
+
+.badge-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.02em;
+}
+
+@media (max-width: 768px) {
+    .proof-container {
+        gap: 2rem;
+    }
+
+    .proof-divider {
+        display: none;
+    }
+
+    .trust-badges {
+        gap: 0.75rem;
+    }
+
+    .trust-badge {
+        padding: 0.5rem 0.85rem;
+    }
+
+    .badge-text {
+        font-size: 0.7rem;
+    }
+}
+
+/* ==========================================
+   Interest Pills (Form)
+   ========================================== */
+
+.interest-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.interest-pill {
+    padding: 0.75rem 1.25rem;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--white);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.interest-pill:hover {
+    background: rgba(255, 59, 48, 0.12);
+    border-color: rgba(255, 59, 48, 0.4);
+}
+
+.interest-pill.selected {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: var(--fuse-red);
+    color: var(--white);
+}
+
+.interest-pill.selected::before {
+    content: '✓ ';
+}
+
+@media (max-width: 480px) {
+    .interest-pills {
+        gap: 0.5rem;
+    }
+
+    .interest-pill {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ==========================================
+   Modal Enhancements
+   ========================================== */
+
+.modal-subtitle {
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.modal-subtitle strong {
+    color: var(--fuse-red-light);
+}
+
+/* ==========================================
+   Success Message Enhancements
+   ========================================== */
+
+.success-position {
+    font-size: 1.25rem;
+    color: var(--white);
+    margin-bottom: 1rem;
+}
+
+.success-position strong {
+    color: var(--fuse-red-light);
+    font-size: 1.5rem;
+}
+
+.success-benefits {
+    color: var(--text-gray);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.success-benefits strong {
+    color: var(--white);
+}
+
+.success-share {
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.share-label {
+    font-size: 0.85rem;
+    color: var(--light-gray);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.share-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.share-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.share-twitter {
+    background: #1DA1F2;
+}
+
+.share-twitter:hover {
+    background: #0d8de0;
+    transform: translateY(-2px);
+}
+
+.share-whatsapp {
+    background: #25D366;
+}
+
+.share-whatsapp:hover {
+    background: #1fb855;
+    transform: translateY(-2px);
+}
+
+.share-email {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.share-email:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   Pricing Preview Section
+   ========================================== */
+
+.pricing-preview {
+    padding: 5rem 5%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 59, 48, 0.08), transparent 60%);
+}
+
+.pricing-card {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+}
+
+.pricing-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--fuse-red);
+    background: rgba(255, 59, 48, 0.12);
+    padding: 0.5rem 1rem;
+    border-radius: 100px;
+    margin-bottom: 2rem;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pricing-main {
+    text-align: left;
+}
+
+.pricing-product {
+    font-size: 1.1rem;
+    color: var(--text-gray);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.pricing-from {
+    font-size: 0.9rem;
+    color: var(--light-gray);
+}
+
+.pricing-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--white);
+}
+
+.pricing-per {
+    font-size: 0.85rem;
+    color: var(--light-gray);
+}
+
+.pricing-offer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    border-radius: 16px;
+}
+
+.pricing-offer-title {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-offer-discount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--fuse-red-light);
+    line-height: 1;
+}
+
+.pricing-offer-note {
+    font-size: 0.85rem;
+    color: var(--light-gray);
+    margin-top: 0.25rem;
+}
+
+.pricing-footer {
+    padding-top: 1.5rem;
+    text-align: center;
+}
+
+.pricing-footer p {
+    color: var(--text-gray);
+    margin-bottom: 1.25rem;
+}
+
+.pricing-footer strong {
+    color: var(--white);
+}
+
+@media (max-width: 600px) {
+    .pricing-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .pricing-main {
+        text-align: center;
+    }
+
+    .pricing-amount {
+        justify-content: center;
+    }
+
+    .pricing-price {
+        font-size: 3rem;
+    }
+}
