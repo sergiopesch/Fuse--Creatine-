@@ -10,6 +10,8 @@
 
 const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
 const { resilientFetch, getCircuit } = require('./_lib/circuit-breaker');
+// Import shared utilities to avoid code duplication
+const { getClientIp: securityGetClientIp, getHeaderValue: securityGetHeaderValue } = require('./_lib/security');
 
 // ============================================================================
 // SECURITY LAYER 1: PROMPT INJECTION DETECTION PATTERNS
@@ -508,24 +510,15 @@ const ALLOWED_ORIGINS = [
 
 /**
  * Get header value (handles array or string)
+ * Uses shared utility from security module
  */
-function getHeaderValue(value) {
-    if (Array.isArray(value)) return value[0] || '';
-    if (typeof value === 'string') return value;
-    return '';
-}
+const getHeaderValue = securityGetHeaderValue;
 
 /**
  * Get client IP from request
+ * Uses shared utility from security module
  */
-function getClientIp(req) {
-    const forwarded = getHeaderValue(req.headers['x-forwarded-for']);
-    if (forwarded) return forwarded.split(',')[0].trim();
-    const realIp = getHeaderValue(req.headers['x-real-ip']);
-    if (realIp) return realIp.trim();
-    const remote = req.socket?.remoteAddress || req.connection?.remoteAddress;
-    return remote || 'unknown';
-}
+const getClientIp = securityGetClientIp;
 
 /**
  * Prune old entries from rate limit store

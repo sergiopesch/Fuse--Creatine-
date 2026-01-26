@@ -20,6 +20,48 @@
     };
 
     // ============================================
+    // CLEANUP TRACKING - Prevent memory leaks
+    // ============================================
+    const cleanupRegistry = {
+        intervals: [],
+        timeouts: [],
+        eventListeners: []
+    };
+
+    // Store interval ID for cleanup
+    function trackInterval(id) {
+        cleanupRegistry.intervals.push(id);
+        return id;
+    }
+
+    // Store timeout ID for cleanup
+    function trackTimeout(id) {
+        cleanupRegistry.timeouts.push(id);
+        return id;
+    }
+
+    // Cleanup function for page unload
+    function cleanupResources() {
+        // Clear all tracked intervals
+        cleanupRegistry.intervals.forEach(id => {
+            try { clearInterval(id); } catch (e) { /* ignore */ }
+        });
+        cleanupRegistry.intervals = [];
+
+        // Clear all tracked timeouts
+        cleanupRegistry.timeouts.forEach(id => {
+            try { clearTimeout(id); } catch (e) { /* ignore */ }
+        });
+        cleanupRegistry.timeouts = [];
+
+        console.log('[Dashboard] Resources cleaned up');
+    }
+
+    // Register cleanup handlers
+    window.addEventListener('beforeunload', cleanupResources);
+    window.addEventListener('pagehide', cleanupResources);
+
+    // ============================================
     // AGENT DATA (for modal details)
     // ============================================
 
@@ -1853,8 +1895,9 @@
         updateGreeting();
 
         // Update time immediately and every second
+        // Track intervals for cleanup to prevent memory leaks
         updateTime();
-        setInterval(updateTime, 1000);
+        trackInterval(setInterval(updateTime, 1000));
 
         // Initial stats update
         updateStats();
@@ -1919,11 +1962,11 @@
         // Resize handler
         window.addEventListener('resize', handleResize);
 
-        // Periodic refresh
-        setInterval(() => {
+        // Periodic refresh - track for cleanup
+        trackInterval(setInterval(() => {
             updateStats();
             fetchApiStatus();
-        }, CONFIG.REFRESH_INTERVAL);
+        }, CONFIG.REFRESH_INTERVAL));
 
         console.log('FUSE Company Dashboard v2.0 initialized');
     }

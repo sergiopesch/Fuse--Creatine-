@@ -17,8 +17,11 @@
     <script defer src="js/consent-manager.js"></script>
 </head>
 <body class="agents-page">
+    <!-- Skip link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Command Center Header -->
-    <header class="command-header">
+    <header class="command-header" role="banner">
         <div class="header-left">
             <a href="index.html" class="logo-link">
                 <span class="logo-text">FUSE</span>
@@ -63,9 +66,9 @@
     </header>
 
     <!-- Main Command Interface -->
-    <main class="command-center">
+    <main class="command-center" id="main-content" role="main" aria-label="Agent Command Center">
         <!-- Left Sidebar - Team Navigation -->
-        <aside class="team-sidebar">
+        <aside class="team-sidebar" role="navigation" aria-label="Team navigation">
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Teams</h3>
                 <nav class="team-nav">
@@ -860,5 +863,15 @@
     </div>
 
     <script src="js/agents.js"></script>
+
+    <!-- Vercel Analytics & Speed Insights -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

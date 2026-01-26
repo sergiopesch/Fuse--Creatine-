@@ -8,6 +8,70 @@
 
     document.documentElement.classList.add('js');
 
+    // ============================================
+    // CLEANUP TRACKING - Prevent memory leaks
+    // ============================================
+    const cleanupRegistry = {
+        intervals: [],
+        timeouts: [],
+        eventListeners: [],
+        gsapAnimations: []
+    };
+
+    // Register interval for cleanup
+    function registerInterval(id) {
+        cleanupRegistry.intervals.push(id);
+        return id;
+    }
+
+    // Register timeout for cleanup
+    function registerTimeout(id) {
+        cleanupRegistry.timeouts.push(id);
+        return id;
+    }
+
+    // Register event listener for cleanup
+    function registerEventListener(element, event, handler, options) {
+        element.addEventListener(event, handler, options);
+        cleanupRegistry.eventListeners.push({ element, event, handler, options });
+    }
+
+    // Cleanup function for page unload
+    function cleanup() {
+        // Clear all intervals
+        cleanupRegistry.intervals.forEach(id => clearInterval(id));
+        cleanupRegistry.intervals = [];
+
+        // Clear all timeouts
+        cleanupRegistry.timeouts.forEach(id => clearTimeout(id));
+        cleanupRegistry.timeouts = [];
+
+        // Remove all event listeners
+        cleanupRegistry.eventListeners.forEach(({ element, event, handler, options }) => {
+            try {
+                element.removeEventListener(event, handler, options);
+            } catch (e) {
+                // Element may no longer exist
+            }
+        });
+        cleanupRegistry.eventListeners = [];
+
+        // Kill GSAP animations
+        if (typeof gsap !== 'undefined') {
+            gsap.killTweensOf('*');
+            ScrollTrigger.getAll().forEach(st => st.kill());
+        }
+
+        // Destroy Lenis
+        if (lenis) {
+            lenis.destroy();
+        }
+    }
+
+    // Register cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+    window.addEventListener('pagehide', cleanup);
+
     gsap.registerPlugin(ScrollTrigger);
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
