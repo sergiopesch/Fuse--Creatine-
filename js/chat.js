@@ -45,12 +45,35 @@
         'API_RATE_LIMITED': "I'm receiving a lot of questions right now. Please try again in a moment.",
         'SERVICE_UNAVAILABLE': "I'm temporarily unavailable. Please try again shortly.",
         'AUTH_FAILED': "I'm having technical difficulties. Please try again later.",
-        'CONFIG_ERROR': "I'm having technical difficulties. Please try again later.",
         'NETWORK_ERROR': "I couldn't connect. Please check your internet and try again.",
         'VALIDATION_ERROR': "There was an issue with your message. Please try rephrasing it.",
         'INVALID_MESSAGE': "I couldn't understand that message. Could you try again?",
         'default': "I'm having a bit of trouble right now. Please try again in a moment."
     };
+
+    /**
+     * Check API health status
+     */
+    async function checkApiHealth() {
+        try {
+            const response = await fetch('/api/health');
+            const data = await response.json();
+
+            if (data.status === 'degraded' || !data.apiKey?.validFormat) {
+                console.warn('[FUSE Chat] API configuration issue detected');
+                if (data.issues) {
+                    data.issues.forEach(issue => console.warn('  -', issue));
+                }
+            } else {
+                console.log('[FUSE Chat] API health check passed');
+            }
+
+            return data;
+        } catch (error) {
+            console.warn('[FUSE Chat] Could not check API health:', error.message);
+            return { error: error.message };
+        }
+    }
 
     /**
      * Initialize the chat widget
@@ -102,6 +125,9 @@
                 chatForm.dispatchEvent(new Event('submit'));
             }
         });
+
+        // Check API health on initialization (for developer debugging)
+        checkApiHealth();
 
         console.log('FUSE Chat: Initialized');
     }
@@ -227,7 +253,7 @@
             } else {
                 // Handle specific error codes
                 const errorCode = data.code || 'default';
-                const errorMessage = errorMessages[errorCode] || errorMessages['default'];
+                const errorMsg = errorMessages[errorCode] || errorMessages['default'];
 
                 // Check if we should retry
                 if (shouldRetry(response.status, errorCode) && retryCount < CONFIG.maxRetries) {
@@ -239,7 +265,7 @@
                     return;
                 }
 
-                addMessage(errorMessage, 'assistant', true);
+                addMessage(errorMsg, 'assistant', true);
             }
         } catch (error) {
             console.error('Chat error:', error);
@@ -402,7 +428,8 @@
             if (chatMessages) {
                 chatMessages.innerHTML = '';
             }
-        }
+        },
+        checkHealth: checkApiHealth
     };
 
 })();

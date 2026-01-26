@@ -96,13 +96,54 @@ The site includes an AI-powered chat widget called the "FUSE Agent" - a friendly
 
 ### Features
 
-- **Conversational AI**: Powered by Claude claude-sonnet-4-20250514 with a custom system prompt that embodies the FUSE brand personality
+- **Conversational AI**: Powered by Claude 3.5 Haiku - fast, cost-effective, and high-quality responses
 - **British Personality**: Smart, polite, evidence-based responses with subtle British charm
 - **Product Knowledge**: Deep understanding of FUSE's technology, dosing guidelines, and scientific backing
 - **Quick Actions**: Pre-defined questions for common queries (What is FUSE?, Dosing guide, etc.)
 - **Rate Limiting**: 20 requests per minute per IP to prevent abuse
 - **Error Handling**: Intelligent retry logic with user-friendly error messages
 - **Accessibility**: Full ARIA support, keyboard navigation, and screen reader compatibility
+
+### Setting Up the Chat Agent
+
+The FUSE Agent requires an Anthropic API key to function.
+
+#### Step 1: Get an Anthropic API Key
+
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Sign in or create an account
+3. Navigate to API Keys section
+4. Create a new API key (it will start with `sk-ant-`)
+
+#### Step 2: Configure Vercel
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Settings** > **Environment Variables**
+3. Add the following variable:
+   - **Name**: `ANTHROPIC_API_KEY`
+   - **Value**: Your API key (e.g., `sk-ant-api03-...`)
+4. Click **Save**
+5. **Redeploy** your project for changes to take effect
+
+#### Step 3: Verify Configuration
+
+1. Visit `/api/health` in your browser
+2. Check that `apiKey.validFormat` is `true`
+3. Check that `status` is `ok`
+
+### Troubleshooting
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "I'm temporarily unavailable" | API key not configured | Set `ANTHROPIC_API_KEY` in Vercel Environment Variables |
+| 503 Service Unavailable | API key missing or invalid | Check `/api/health` for diagnostics |
+| "Service is busy" | Rate limited by Anthropic | Wait a moment and try again |
+
+**Debugging Tips:**
+
+- Open browser DevTools console - the chat widget logs configuration issues
+- Call `FUSEChat.checkHealth()` in the console to run a health check
+- Visit `/api/health` directly to see the full configuration status
 
 ### API Endpoints
 
@@ -126,18 +167,19 @@ FUSEChat.isOpen()
 
 // Clear conversation history
 FUSEChat.clearHistory()
+
+// Check API health (for debugging)
+FUSEChat.checkHealth()
 ```
 
-### Health Check
+## Environment Variables
 
-Visit `/api/health` to verify the chat service configuration. The endpoint returns diagnostic information including API key validation status.
-
-Required environment variables:
-
-- `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token
-- `ADMIN_TOKEN`: shared secret used to authorize `/api/admin-signups`
-- `ENCRYPTION_KEY`: A 32+ character string used to encrypt PII in storage. (Required for security)
-- `ANTHROPIC_API_KEY`: Anthropic API key for Claude chat agent (must start with `sk-ant-`)
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_API_KEY` | Yes (for chat) | Anthropic API key for Claude chat agent. Must start with `sk-ant-`. Get it from [console.anthropic.com](https://console.anthropic.com/) |
+| `BLOB_READ_WRITE_TOKEN` | Yes (for signups) | Vercel Blob read/write token for storing waitlist signups |
+| `ADMIN_TOKEN` | Yes (for admin) | Shared secret used to authorize `/api/admin-signups` |
+| `ENCRYPTION_KEY` | Yes (for security) | A 32+ character string used to encrypt PII in storage |
 
 ## Integration Test (Production-Ready)
 

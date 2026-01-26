@@ -64,17 +64,13 @@ module.exports = async (req, res) => {
         environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
         service: {
             name: 'FUSE Chat Agent',
-            version: '1.0.0'
+            version: '1.0.0',
+            model: 'claude-3-5-haiku-latest'
         },
         apiKey: {
             exists: 'ANTHROPIC_API_KEY' in process.env,
             hasValue: !!apiKey,
             hasTrimmedValue: !!trimmedKey,
-            length: apiKey?.length || 0,
-            trimmedLength: trimmedKey?.length || 0,
-            isEmpty: apiKey === '',
-            isWhitespaceOnly: apiKey?.trim() === '' && apiKey?.length > 0,
-            prefix: trimmedKey ? trimmedKey.substring(0, 7) + '...' : null,
             validFormat: trimmedKey?.startsWith('sk-ant-') || false
         },
         blobStorage: {
@@ -93,7 +89,7 @@ module.exports = async (req, res) => {
     if (!diagnostics.apiKey.exists || !diagnostics.apiKey.hasTrimmedValue) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];
-        diagnostics.issues.push('ANTHROPIC_API_KEY is not configured');
+        diagnostics.issues.push('ANTHROPIC_API_KEY is not configured - set it in Vercel Environment Variables');
     }
 
     if (diagnostics.apiKey.hasTrimmedValue && !diagnostics.apiKey.validFormat) {
