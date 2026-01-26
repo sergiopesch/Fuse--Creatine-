@@ -1,6 +1,6 @@
 /**
  * FUSE Agent Command Center
- * Comprehensive AI Agent Orchestration System
+ * Dynamic AI Agent Orchestration System with Live Feeds
  */
 
 // ============================================
@@ -13,6 +13,9 @@ const AgentTeams = {
         name: 'Developer Team',
         badge: 'DEV',
         color: '#3b82f6',
+        model: 'claude-3-5-sonnet-latest',
+        provider: 'anthropic',
+        description: 'Building and architecting the core platform',
         agents: [
             {
                 id: 'architect',
@@ -22,7 +25,8 @@ const AgentTeams = {
                 skills: ['System Design', 'API Architecture', 'Database Design', 'Scalability'],
                 tasksCompleted: 47,
                 currentTask: 'Designing microservices architecture',
-                efficiency: 94
+                efficiency: 94,
+                avatar: 'shield'
             },
             {
                 id: 'coder',
@@ -32,7 +36,8 @@ const AgentTeams = {
                 skills: ['JavaScript', 'Python', 'React', 'Node.js', 'TypeScript'],
                 tasksCompleted: 128,
                 currentTask: 'Implementing admin console features',
-                efficiency: 91
+                efficiency: 91,
+                avatar: 'code'
             },
             {
                 id: 'tester',
@@ -42,7 +47,8 @@ const AgentTeams = {
                 skills: ['Unit Testing', 'Integration Testing', 'E2E Testing', 'Performance'],
                 tasksCompleted: 89,
                 currentTask: null,
-                efficiency: 96
+                efficiency: 96,
+                avatar: 'test'
             }
         ]
     },
@@ -51,6 +57,9 @@ const AgentTeams = {
         name: 'Design Team',
         badge: 'DSN',
         color: '#8b5cf6',
+        model: 'claude-3-5-sonnet-latest',
+        provider: 'anthropic',
+        description: 'Crafting beautiful user experiences',
         agents: [
             {
                 id: 'ux-lead',
@@ -60,7 +69,8 @@ const AgentTeams = {
                 skills: ['User Research', 'Wireframing', 'Prototyping', 'Usability Testing'],
                 tasksCompleted: 63,
                 currentTask: 'Optimizing user onboarding flow',
-                efficiency: 92
+                efficiency: 92,
+                avatar: 'palette'
             },
             {
                 id: 'ui-artist',
@@ -70,7 +80,8 @@ const AgentTeams = {
                 skills: ['Visual Design', 'Figma', 'Design Systems', 'Branding'],
                 tasksCompleted: 71,
                 currentTask: null,
-                efficiency: 88
+                efficiency: 88,
+                avatar: 'brush'
             },
             {
                 id: 'motion',
@@ -80,7 +91,8 @@ const AgentTeams = {
                 skills: ['Animation', 'Micro-interactions', 'GSAP', 'Lottie'],
                 tasksCompleted: 45,
                 currentTask: 'Creating loading animations',
-                efficiency: 95
+                efficiency: 95,
+                avatar: 'motion'
             }
         ]
     },
@@ -89,6 +101,9 @@ const AgentTeams = {
         name: 'Communications Team',
         badge: 'COM',
         color: '#06b6d4',
+        model: 'gpt-4o',
+        provider: 'openai',
+        description: 'Managing content and brand voice',
         agents: [
             {
                 id: 'content-strategist',
@@ -98,7 +113,8 @@ const AgentTeams = {
                 skills: ['Content Strategy', 'Editorial', 'SEO', 'Brand Voice'],
                 tasksCompleted: 52,
                 currentTask: 'Developing content calendar',
-                efficiency: 89
+                efficiency: 89,
+                avatar: 'document'
             },
             {
                 id: 'copywriter',
@@ -108,7 +124,8 @@ const AgentTeams = {
                 skills: ['Copywriting', 'Headlines', 'Email', 'Ad Copy'],
                 tasksCompleted: 84,
                 currentTask: null,
-                efficiency: 93
+                efficiency: 93,
+                avatar: 'pen'
             },
             {
                 id: 'social-manager',
@@ -118,7 +135,8 @@ const AgentTeams = {
                 skills: ['Social Media', 'Community Management', 'Influencer Outreach', 'Analytics'],
                 tasksCompleted: 67,
                 currentTask: 'Scheduling launch posts',
-                efficiency: 87
+                efficiency: 87,
+                avatar: 'share'
             }
         ]
     },
@@ -127,6 +145,9 @@ const AgentTeams = {
         name: 'Legal Team',
         badge: 'LGL',
         color: '#f59e0b',
+        model: 'claude-3-opus-latest',
+        provider: 'anthropic',
+        description: 'Ensuring compliance and protecting IP',
         agents: [
             {
                 id: 'compliance-officer',
@@ -136,7 +157,8 @@ const AgentTeams = {
                 skills: ['GDPR', 'CCPA', 'FDA Regulations', 'Data Privacy'],
                 tasksCompleted: 34,
                 currentTask: 'Reviewing data handling practices',
-                efficiency: 98
+                efficiency: 98,
+                avatar: 'shield'
             },
             {
                 id: 'contract-analyst',
@@ -146,7 +168,8 @@ const AgentTeams = {
                 skills: ['Contract Review', 'Terms of Service', 'Privacy Policy', 'Licensing'],
                 tasksCompleted: 28,
                 currentTask: null,
-                efficiency: 97
+                efficiency: 97,
+                avatar: 'document'
             },
             {
                 id: 'ip-counsel',
@@ -156,7 +179,8 @@ const AgentTeams = {
                 skills: ['Trademarks', 'Patents', 'Copyright', 'Trade Secrets'],
                 tasksCompleted: 19,
                 currentTask: null,
-                efficiency: 99
+                efficiency: 99,
+                avatar: 'lock'
             }
         ]
     },
@@ -165,6 +189,9 @@ const AgentTeams = {
         name: 'Marketing Team',
         badge: 'MKT',
         color: '#ef4444',
+        model: 'gpt-4o',
+        provider: 'openai',
+        description: 'Driving growth and brand awareness',
         agents: [
             {
                 id: 'growth-lead',
@@ -174,7 +201,8 @@ const AgentTeams = {
                 skills: ['Growth Hacking', 'A/B Testing', 'Funnel Optimization', 'Retention'],
                 tasksCompleted: 56,
                 currentTask: 'Analyzing conversion funnels',
-                efficiency: 90
+                efficiency: 90,
+                avatar: 'chart'
             },
             {
                 id: 'brand-strategist',
@@ -184,7 +212,8 @@ const AgentTeams = {
                 skills: ['Brand Strategy', 'Positioning', 'Competitive Analysis', 'Messaging'],
                 tasksCompleted: 41,
                 currentTask: 'Refining brand guidelines',
-                efficiency: 92
+                efficiency: 92,
+                avatar: 'star'
             },
             {
                 id: 'analytics-expert',
@@ -194,7 +223,8 @@ const AgentTeams = {
                 skills: ['Google Analytics', 'Data Analysis', 'Attribution', 'Reporting'],
                 tasksCompleted: 73,
                 currentTask: 'Building performance dashboard',
-                efficiency: 94
+                efficiency: 94,
+                avatar: 'analytics'
             }
         ]
     },
@@ -203,6 +233,9 @@ const AgentTeams = {
         name: 'Go-to-Market Team',
         badge: 'GTM',
         color: '#10b981',
+        model: 'claude-3-5-sonnet-latest',
+        provider: 'anthropic',
+        description: 'Planning and executing product launches',
         agents: [
             {
                 id: 'launch-coordinator',
@@ -212,7 +245,8 @@ const AgentTeams = {
                 skills: ['Launch Strategy', 'Project Management', 'Timeline Planning', 'Stakeholder Management'],
                 tasksCompleted: 38,
                 currentTask: 'Coordinating launch timeline',
-                efficiency: 91
+                efficiency: 91,
+                avatar: 'rocket'
             },
             {
                 id: 'partnership-manager',
@@ -222,7 +256,8 @@ const AgentTeams = {
                 skills: ['Business Development', 'Negotiations', 'Partner Relations', 'Co-marketing'],
                 tasksCompleted: 22,
                 currentTask: null,
-                efficiency: 88
+                efficiency: 88,
+                avatar: 'handshake'
             },
             {
                 id: 'market-researcher',
@@ -232,7 +267,8 @@ const AgentTeams = {
                 skills: ['Market Research', 'Competitive Intelligence', 'Trend Analysis', 'Surveys'],
                 tasksCompleted: 31,
                 currentTask: 'Analyzing market trends',
-                efficiency: 93
+                efficiency: 93,
+                avatar: 'search'
             }
         ]
     },
@@ -241,6 +277,9 @@ const AgentTeams = {
         name: 'Sales Team',
         badge: 'SLS',
         color: '#ec4899',
+        model: 'gpt-4-turbo',
+        provider: 'openai',
+        description: 'Driving revenue and customer relationships',
         agents: [
             {
                 id: 'sales-director',
@@ -250,7 +289,8 @@ const AgentTeams = {
                 skills: ['Sales Strategy', 'Revenue Operations', 'Team Leadership', 'Pipeline Management'],
                 tasksCompleted: 67,
                 currentTask: 'Optimizing sales pipeline metrics',
-                efficiency: 96
+                efficiency: 96,
+                avatar: 'user'
             },
             {
                 id: 'account-executive',
@@ -260,7 +300,8 @@ const AgentTeams = {
                 skills: ['Enterprise Sales', 'Contract Negotiation', 'Relationship Building', 'Closing Techniques'],
                 tasksCompleted: 89,
                 currentTask: 'Preparing enterprise demo presentations',
-                efficiency: 94
+                efficiency: 94,
+                avatar: 'briefcase'
             },
             {
                 id: 'sdr',
@@ -270,7 +311,8 @@ const AgentTeams = {
                 skills: ['Prospecting', 'Lead Qualification', 'Cold Outreach', 'CRM Management'],
                 tasksCompleted: 156,
                 currentTask: 'Running outbound campaign sequences',
-                efficiency: 91
+                efficiency: 91,
+                avatar: 'email'
             },
             {
                 id: 'solutions-consultant',
@@ -280,7 +322,8 @@ const AgentTeams = {
                 skills: ['Technical Demos', 'Solution Architecture', 'Requirements Analysis', 'POC Management'],
                 tasksCompleted: 42,
                 currentTask: null,
-                efficiency: 97
+                efficiency: 97,
+                avatar: 'monitor'
             },
             {
                 id: 'customer-success',
@@ -290,7 +333,8 @@ const AgentTeams = {
                 skills: ['Customer Retention', 'Upselling', 'Onboarding', 'Health Scoring'],
                 tasksCompleted: 78,
                 currentTask: 'Conducting quarterly business reviews',
-                efficiency: 93
+                efficiency: 93,
+                avatar: 'check'
             }
         ]
     }
@@ -302,6 +346,7 @@ const AgentTeams = {
 
 const state = {
     activeTeam: 'all',
+    currentWorkspaceTeam: null,
     orchestrationMode: 'autonomous',
     decisions: [],
     activities: [],
@@ -309,16 +354,28 @@ const state = {
     tasks: [],
     priorities: [],
     projects: [],
+    liveFeed: [],
+    liveFeedFilter: 'all',
     apiKeyConfig: {
-        anthropic: { configured: false, model: 'claude-3-5-haiku-latest' },
-        openai: { configured: false, model: 'gpt-4-turbo' },
+        anthropic: { configured: false, model: 'claude-3-5-sonnet-latest' },
+        openai: { configured: false, model: 'gpt-4o' },
         gemini: { configured: false, model: 'gemini-pro' }
     },
     healthMetrics: {
         lastCheck: null,
         systemStatus: 'operational'
-    }
+    },
+    teamSettings: {}
 };
+
+// Initialize team settings
+Object.keys(AgentTeams).forEach(teamId => {
+    state.teamSettings[teamId] = {
+        model: AgentTeams[teamId].model,
+        provider: AgentTeams[teamId].provider,
+        apiKeyConfigured: false
+    };
+});
 
 // Initialize decisions queue
 state.decisions = [
@@ -374,109 +431,23 @@ state.decisions = [
 
 // Initialize activities
 state.activities = [
-    {
-        id: 'act-001',
-        agent: 'Architect',
-        team: 'developer',
-        message: 'Completed microservices architecture documentation',
-        tag: 'Completed',
-        timestamp: new Date(Date.now() - 1000 * 60 * 2)
-    },
-    {
-        id: 'act-002',
-        agent: 'Growth Lead',
-        team: 'marketing',
-        message: 'Launched A/B test for landing page hero section',
-        tag: 'Testing',
-        timestamp: new Date(Date.now() - 1000 * 60 * 8)
-    },
-    {
-        id: 'act-003',
-        agent: 'UX Lead',
-        team: 'design',
-        message: 'Finalized mobile navigation prototype',
-        tag: 'Design',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15)
-    },
-    {
-        id: 'act-004',
-        agent: 'Compliance Officer',
-        team: 'legal',
-        message: 'Updated privacy policy for GDPR compliance',
-        tag: 'Legal',
-        timestamp: new Date(Date.now() - 1000 * 60 * 23)
-    },
-    {
-        id: 'act-005',
-        agent: 'Content Strategist',
-        team: 'communications',
-        message: 'Drafted launch announcement blog post',
-        tag: 'Content',
-        timestamp: new Date(Date.now() - 1000 * 60 * 31)
-    },
-    {
-        id: 'act-006',
-        agent: 'Launch Coordinator',
-        team: 'gtm',
-        message: 'Synced launch checklist with all teams',
-        tag: 'Coordination',
-        timestamp: new Date(Date.now() - 1000 * 60 * 42)
-    },
-    {
-        id: 'act-007',
-        agent: 'Coder',
-        team: 'developer',
-        message: 'Deployed hotfix for chat widget performance',
-        tag: 'Deployment',
-        timestamp: new Date(Date.now() - 1000 * 60 * 55)
-    },
-    {
-        id: 'act-008',
-        agent: 'Motion Designer',
-        team: 'design',
-        message: 'Created animated success state for form submissions',
-        tag: 'Animation',
-        timestamp: new Date(Date.now() - 1000 * 60 * 68)
-    }
+    { id: 'act-001', agent: 'Architect', team: 'developer', message: 'Completed microservices architecture documentation', tag: 'Completed', timestamp: new Date(Date.now() - 1000 * 60 * 2) },
+    { id: 'act-002', agent: 'Growth Lead', team: 'marketing', message: 'Launched A/B test for landing page hero section', tag: 'Testing', timestamp: new Date(Date.now() - 1000 * 60 * 8) },
+    { id: 'act-003', agent: 'UX Lead', team: 'design', message: 'Finalized mobile navigation prototype', tag: 'Design', timestamp: new Date(Date.now() - 1000 * 60 * 15) },
+    { id: 'act-004', agent: 'Compliance Officer', team: 'legal', message: 'Updated privacy policy for GDPR compliance', tag: 'Legal', timestamp: new Date(Date.now() - 1000 * 60 * 23) },
+    { id: 'act-005', agent: 'Content Strategist', team: 'communications', message: 'Drafted launch announcement blog post', tag: 'Content', timestamp: new Date(Date.now() - 1000 * 60 * 31) },
+    { id: 'act-006', agent: 'Launch Coordinator', team: 'gtm', message: 'Synced launch checklist with all teams', tag: 'Coordination', timestamp: new Date(Date.now() - 1000 * 60 * 42) },
+    { id: 'act-007', agent: 'Coder', team: 'developer', message: 'Deployed hotfix for chat widget performance', tag: 'Deployment', timestamp: new Date(Date.now() - 1000 * 60 * 55) },
+    { id: 'act-008', agent: 'Motion Designer', team: 'design', message: 'Created animated success state for form submissions', tag: 'Animation', timestamp: new Date(Date.now() - 1000 * 60 * 68) }
 ];
 
 // Initialize inter-agent communications
 state.communications = [
-    {
-        id: 'com-001',
-        from: { agent: 'Architect', team: 'developer' },
-        to: { agent: 'UX Lead', team: 'design' },
-        message: 'The new API endpoints are ready for integration. I\'ve documented the response schemas - can we sync on the data visualization approach?',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5)
-    },
-    {
-        id: 'com-002',
-        from: { agent: 'Growth Lead', team: 'marketing' },
-        to: { agent: 'Content Strategist', team: 'communications' },
-        message: 'Conversion data shows 23% higher engagement with urgency messaging. Can we incorporate this into the launch content?',
-        timestamp: new Date(Date.now() - 1000 * 60 * 18)
-    },
-    {
-        id: 'com-003',
-        from: { agent: 'Compliance Officer', team: 'legal' },
-        to: { agent: 'Coder', team: 'developer' },
-        message: 'Please ensure all user data exports include the new consent audit fields. GDPR requirement effective immediately.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 35)
-    },
-    {
-        id: 'com-004',
-        from: { agent: 'Launch Coordinator', team: 'gtm' },
-        to: { agent: 'Brand Strategist', team: 'marketing' },
-        message: 'Partner assets received. Please verify brand alignment before we proceed with co-marketing materials.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 52)
-    },
-    {
-        id: 'com-005',
-        from: { agent: 'Visual Designer', team: 'design' },
-        to: { agent: 'Social Media Manager', team: 'communications' },
-        message: 'New social media templates are uploaded to the shared drive. Optimized for Instagram, Twitter, and LinkedIn.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 71)
-    }
+    { id: 'com-001', from: { agent: 'Architect', team: 'developer' }, to: { agent: 'UX Lead', team: 'design' }, message: 'The new API endpoints are ready for integration. I\'ve documented the response schemas - can we sync on the data visualization approach?', timestamp: new Date(Date.now() - 1000 * 60 * 5) },
+    { id: 'com-002', from: { agent: 'Growth Lead', team: 'marketing' }, to: { agent: 'Content Strategist', team: 'communications' }, message: 'Conversion data shows 23% higher engagement with urgency messaging. Can we incorporate this into the launch content?', timestamp: new Date(Date.now() - 1000 * 60 * 18) },
+    { id: 'com-003', from: { agent: 'Compliance Officer', team: 'legal' }, to: { agent: 'Coder', team: 'developer' }, message: 'Please ensure all user data exports include the new consent audit fields. GDPR requirement effective immediately.', timestamp: new Date(Date.now() - 1000 * 60 * 35) },
+    { id: 'com-004', from: { agent: 'Launch Coordinator', team: 'gtm' }, to: { agent: 'Brand Strategist', team: 'marketing' }, message: 'Partner assets received. Please verify brand alignment before we proceed with co-marketing materials.', timestamp: new Date(Date.now() - 1000 * 60 * 52) },
+    { id: 'com-005', from: { agent: 'Visual Designer', team: 'design' }, to: { agent: 'Social Media Manager', team: 'communications' }, message: 'New social media templates are uploaded to the shared drive. Optimized for Instagram, Twitter, and LinkedIn.', timestamp: new Date(Date.now() - 1000 * 60 * 71) }
 ];
 
 // Initialize priority queue
@@ -495,32 +466,186 @@ state.projects = [
 ];
 
 // ============================================
+// LIVE FEED DATA GENERATION
+// ============================================
+
+const thoughtTopics = {
+    developer: ['architecture', 'performance', 'security', 'API design', 'database optimization', 'code review', 'testing strategy', 'deployment'],
+    design: ['user flow', 'visual hierarchy', 'accessibility', 'animation timing', 'color theory', 'typography', 'responsive design', 'prototyping'],
+    communications: ['brand voice', 'engagement metrics', 'content strategy', 'audience targeting', 'SEO optimization', 'social trends', 'messaging'],
+    legal: ['compliance', 'data privacy', 'GDPR', 'terms of service', 'intellectual property', 'risk assessment', 'regulatory'],
+    marketing: ['conversion rates', 'user acquisition', 'A/B testing', 'funnel optimization', 'brand awareness', 'growth metrics', 'attribution'],
+    gtm: ['launch timeline', 'market positioning', 'competitive analysis', 'partnership strategy', 'pricing', 'go-to-market'],
+    sales: ['pipeline management', 'lead scoring', 'deal velocity', 'customer success', 'revenue targets', 'enterprise accounts', 'demos']
+};
+
+const actionVerbs = ['Analyzing', 'Processing', 'Evaluating', 'Generating', 'Optimizing', 'Reviewing', 'Synthesizing', 'Computing', 'Refining', 'Validating'];
+const thinkingPhrases = ['Considering approach for', 'Evaluating options in', 'Reasoning about', 'Weighing trade-offs in', 'Exploring solutions for', 'Assessing impact of'];
+
+function generateLiveFeedItem(teamId) {
+    const team = AgentTeams[teamId];
+    if (!team) return null;
+
+    const workingAgents = team.agents.filter(a => a.status === 'working');
+    if (workingAgents.length === 0) return null;
+
+    const agent = workingAgents[Math.floor(Math.random() * workingAgents.length)];
+    const topics = thoughtTopics[teamId] || ['general task'];
+    const topic = topics[Math.floor(Math.random() * topics.length)];
+
+    const feedTypes = ['thinking', 'action', 'comms', 'insight'];
+    const type = feedTypes[Math.floor(Math.random() * feedTypes.length)];
+
+    let content = '';
+    let highlights = [topic];
+
+    switch (type) {
+        case 'thinking':
+            const thinkingPhrase = thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
+            content = `${thinkingPhrase} ${topic}...`;
+            break;
+        case 'action':
+            const actionVerb = actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
+            content = `${actionVerb} ${topic} data and generating recommendations`;
+            break;
+        case 'comms':
+            const otherTeams = Object.keys(AgentTeams).filter(t => t !== teamId);
+            const targetTeam = otherTeams[Math.floor(Math.random() * otherTeams.length)];
+            const targetAgent = AgentTeams[targetTeam].agents[0];
+            content = `Requesting input from ${targetAgent.name} (${AgentTeams[targetTeam].name}) regarding ${topic}`;
+            highlights.push(targetAgent.name);
+            break;
+        case 'insight':
+            content = `Identified optimization opportunity in ${topic} - potential 15% improvement`;
+            highlights.push('optimization');
+            break;
+    }
+
+    return {
+        id: `feed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type,
+        agent: agent.name,
+        agentId: agent.id,
+        team: teamId,
+        content,
+        highlights,
+        timestamp: new Date(),
+        processed: Math.random() > 0.3
+    };
+}
+
+// ============================================
 // DOM ELEMENTS
 // ============================================
 
 const elements = {
+    // Views
+    allTeamsView: document.getElementById('allTeamsView'),
+    teamWorkspace: document.getElementById('teamWorkspace'),
     teamsGrid: document.getElementById('teamsGrid'),
+    // Workspace elements
+    workspaceHeader: document.getElementById('workspaceHeader'),
+    workspaceBadge: document.getElementById('workspaceBadge'),
+    workspaceName: document.getElementById('workspaceName'),
+    workspaceStatus: document.getElementById('workspaceStatus'),
+    agentsWorldGrid: document.getElementById('agentsWorldGrid'),
+    connectionsCanvas: document.getElementById('connectionsCanvas'),
+    liveFeedContainer: document.getElementById('liveFeedContainer'),
+    // Stats
+    teamAgentCount: document.getElementById('teamAgentCount'),
+    teamWorkingCount: document.getElementById('teamWorkingCount'),
+    teamTasksCompleted: document.getElementById('teamTasksCompleted'),
+    teamEfficiency: document.getElementById('teamEfficiency'),
+    teamModelName: document.getElementById('teamModelName'),
+    // Global elements
     decisionQueue: document.getElementById('decisionQueue'),
     activityFeed: document.getElementById('activityFeed'),
     priorityQueue: document.getElementById('priorityQueue'),
     projectList: document.getElementById('projectList'),
     commsLog: document.getElementById('commsLog'),
     toastContainer: document.getElementById('toastContainer'),
+    liveClock: document.getElementById('liveClock'),
     // Modals
     taskModal: document.getElementById('taskModal'),
     agentModal: document.getElementById('agentModal'),
     decisionModal: document.getElementById('decisionModal'),
     broadcastModal: document.getElementById('broadcastModal'),
+    teamSettingsModal: document.getElementById('teamSettingsModal'),
     // Stats
     activeAgents: document.getElementById('activeAgents'),
     tasksInProgress: document.getElementById('tasksInProgress'),
     pendingDecisions: document.getElementById('pendingDecisions'),
-    completedToday: document.getElementById('completedToday')
+    completedToday: document.getElementById('completedToday'),
+    sidebarActiveAgents: document.getElementById('sidebarActiveAgents'),
+    sidebarTasksCount: document.getElementById('sidebarTasksCount'),
+    sidebarEfficiency: document.getElementById('sidebarEfficiency')
 };
 
 // ============================================
 // RENDERING FUNCTIONS
 // ============================================
+
+function renderTeamsGrid() {
+    if (!elements.teamsGrid) return;
+
+    const teamColors = {
+        developer: '#3b82f6',
+        design: '#8b5cf6',
+        communications: '#06b6d4',
+        legal: '#f59e0b',
+        marketing: '#ef4444',
+        gtm: '#10b981',
+        sales: '#ec4899'
+    };
+
+    elements.teamsGrid.innerHTML = Object.entries(AgentTeams).map(([teamId, team]) => {
+        const workingCount = team.agents.filter(a => a.status === 'working').length;
+        const totalTasks = team.agents.reduce((sum, a) => sum + a.tasksCompleted, 0);
+        const avgEfficiency = Math.round(team.agents.reduce((sum, a) => sum + a.efficiency, 0) / team.agents.length);
+
+        return `
+            <div class="team-overview-card" data-team="${teamId}" onclick="openTeamWorkspace('${teamId}')">
+                <div class="team-overview-header">
+                    <div class="team-overview-badge" style="background: ${teamColors[teamId]}20; color: ${teamColors[teamId]}">${team.badge}</div>
+                    <div class="team-overview-info">
+                        <h3 class="team-overview-name">${team.name}</h3>
+                        <span class="team-overview-desc">${team.description}</span>
+                    </div>
+                    <div class="team-overview-status">
+                        <span class="status-dot ${workingCount > 0 ? 'online' : 'idle'}"></span>
+                    </div>
+                </div>
+                <div class="team-overview-agents">
+                    ${team.agents.map(agent => `
+                        <div class="mini-agent ${agent.status}" title="${agent.name} - ${agent.status}">
+                            <div class="mini-agent-avatar" style="background: ${teamColors[teamId]}30; border-color: ${teamColors[teamId]}">
+                                ${agent.name.charAt(0)}
+                            </div>
+                            ${agent.status === 'working' ? '<span class="mini-agent-pulse"></span>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="team-overview-stats">
+                    <div class="team-mini-stat">
+                        <span class="team-mini-stat-value">${workingCount}/${team.agents.length}</span>
+                        <span class="team-mini-stat-label">Active</span>
+                    </div>
+                    <div class="team-mini-stat">
+                        <span class="team-mini-stat-value">${totalTasks}</span>
+                        <span class="team-mini-stat-label">Tasks</span>
+                    </div>
+                    <div class="team-mini-stat">
+                        <span class="team-mini-stat-value">${avgEfficiency}%</span>
+                        <span class="team-mini-stat-label">Efficiency</span>
+                    </div>
+                </div>
+                <div class="team-overview-model">
+                    <span class="model-badge ${team.provider}">${team.model.split('-').slice(0, 2).join(' ')}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 
 function renderDecisionQueue() {
     if (!elements.decisionQueue) return;
@@ -549,7 +674,8 @@ function renderActivityFeed() {
         communications: '#06b6d4',
         legal: '#f59e0b',
         marketing: '#ef4444',
-        gtm: '#10b981'
+        gtm: '#10b981',
+        sales: '#ec4899'
     };
 
     elements.activityFeed.innerHTML = state.activities.map(activity => `
@@ -610,7 +736,8 @@ function renderCommsLog(filter = 'all') {
         communications: '#06b6d4',
         legal: '#f59e0b',
         marketing: '#ef4444',
-        gtm: '#10b981'
+        gtm: '#10b981',
+        sales: '#ec4899'
     };
 
     const filtered = filter === 'all'
@@ -633,7 +760,6 @@ function renderCommsLog(filter = 'all') {
 }
 
 function updateStats() {
-    // Count all agents and working agents
     let totalAgents = 0;
     let activeCount = 0;
     let tasksCount = 0;
@@ -652,21 +778,29 @@ function updateStats() {
 
     const avgEfficiency = totalAgents > 0 ? Math.round(totalEfficiency / totalAgents) : 0;
 
-    if (elements.activeAgents) elements.activeAgents.textContent = totalAgents.toString();
+    if (elements.activeAgents) elements.activeAgents.textContent = activeCount.toString();
     if (elements.tasksInProgress) elements.tasksInProgress.textContent = tasksCount;
     if (elements.pendingDecisions) elements.pendingDecisions.textContent = state.decisions.length;
     if (elements.completedToday) elements.completedToday.textContent = '24';
 
-    // Update health metrics
+    // Sidebar stats
+    if (elements.sidebarActiveAgents) elements.sidebarActiveAgents.textContent = activeCount;
+    if (elements.sidebarTasksCount) elements.sidebarTasksCount.textContent = tasksCount;
+    if (elements.sidebarEfficiency) elements.sidebarEfficiency.textContent = `${avgEfficiency}%`;
+
     state.healthMetrics.lastCheck = new Date().toISOString();
     state.healthMetrics.systemStatus = activeCount > 0 ? 'operational' : 'idle';
 }
 
 // ============================================
-// TEAM FILTERING
+// TEAM WORKSPACE FUNCTIONS
 // ============================================
 
-function filterTeams(teamId) {
+function openTeamWorkspace(teamId) {
+    const team = AgentTeams[teamId];
+    if (!team) return;
+
+    state.currentWorkspaceTeam = teamId;
     state.activeTeam = teamId;
 
     // Update nav buttons
@@ -674,14 +808,294 @@ function filterTeams(teamId) {
         btn.classList.toggle('active', btn.dataset.team === teamId);
     });
 
-    // Filter team cards
-    document.querySelectorAll('.team-card').forEach(card => {
-        if (teamId === 'all') {
-            card.classList.remove('hidden');
-        } else {
-            card.classList.toggle('hidden', card.dataset.team !== teamId);
-        }
+    // Switch views
+    if (elements.allTeamsView) elements.allTeamsView.style.display = 'none';
+    if (elements.teamWorkspace) elements.teamWorkspace.style.display = 'block';
+
+    // Update workspace header
+    const teamColors = {
+        developer: '#3b82f6',
+        design: '#8b5cf6',
+        communications: '#06b6d4',
+        legal: '#f59e0b',
+        marketing: '#ef4444',
+        gtm: '#10b981',
+        sales: '#ec4899'
+    };
+
+    if (elements.workspaceBadge) {
+        elements.workspaceBadge.textContent = team.badge;
+        elements.workspaceBadge.style.background = `${teamColors[teamId]}20`;
+        elements.workspaceBadge.style.color = teamColors[teamId];
+    }
+
+    if (elements.workspaceName) elements.workspaceName.textContent = team.name;
+
+    const workingCount = team.agents.filter(a => a.status === 'working').length;
+    if (elements.workspaceStatus) {
+        elements.workspaceStatus.innerHTML = `
+            <span class="status-dot ${workingCount > 0 ? 'online' : 'idle'}"></span>
+            ${workingCount}/${team.agents.length} agents active
+        `;
+    }
+
+    // Update team stats
+    const totalTasks = team.agents.reduce((sum, a) => sum + a.tasksCompleted, 0);
+    const avgEfficiency = Math.round(team.agents.reduce((sum, a) => sum + a.efficiency, 0) / team.agents.length);
+
+    if (elements.teamAgentCount) elements.teamAgentCount.textContent = team.agents.length;
+    if (elements.teamWorkingCount) elements.teamWorkingCount.textContent = workingCount;
+    if (elements.teamTasksCompleted) elements.teamTasksCompleted.textContent = totalTasks;
+    if (elements.teamEfficiency) elements.teamEfficiency.textContent = `${avgEfficiency}%`;
+    if (elements.teamModelName) {
+        const modelShort = team.model.split('-').slice(0, 2).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+        elements.teamModelName.textContent = modelShort;
+    }
+
+    // Render agent world
+    renderAgentWorld(teamId);
+
+    // Start live feed for this team
+    startTeamLiveFeed(teamId);
+}
+
+function closeTeamWorkspace() {
+    state.currentWorkspaceTeam = null;
+    state.activeTeam = 'all';
+
+    // Update nav buttons
+    document.querySelectorAll('.team-nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.team === 'all');
     });
+
+    // Switch views
+    if (elements.allTeamsView) elements.allTeamsView.style.display = 'block';
+    if (elements.teamWorkspace) elements.teamWorkspace.style.display = 'none';
+
+    // Clear live feed
+    state.liveFeed = [];
+}
+
+function renderAgentWorld(teamId) {
+    const team = AgentTeams[teamId];
+    if (!team || !elements.agentsWorldGrid) return;
+
+    const teamColors = {
+        developer: '#3b82f6',
+        design: '#8b5cf6',
+        communications: '#06b6d4',
+        legal: '#f59e0b',
+        marketing: '#ef4444',
+        gtm: '#10b981',
+        sales: '#ec4899'
+    };
+
+    const color = teamColors[teamId];
+
+    elements.agentsWorldGrid.innerHTML = team.agents.map((agent, index) => `
+        <div class="agent-world-node ${agent.status}" data-agent="${agent.id}" onclick="openAgentModal('${teamId}', '${agent.id}')" style="--agent-color: ${color}; --agent-index: ${index}">
+            <div class="agent-node-glow"></div>
+            <div class="agent-node-avatar">
+                <span class="agent-initial">${agent.name.charAt(0)}</span>
+                ${agent.status === 'working' ? '<div class="agent-node-pulse"></div>' : ''}
+            </div>
+            <div class="agent-node-info">
+                <span class="agent-node-name">${agent.name}</span>
+                <span class="agent-node-role">${agent.role}</span>
+            </div>
+            <div class="agent-node-status">
+                <span class="agent-node-status-badge ${agent.status}">
+                    ${agent.status === 'working' ? 'Working' : 'Standby'}
+                </span>
+            </div>
+            ${agent.currentTask ? `
+                <div class="agent-node-task">
+                    <span class="task-indicator"></span>
+                    <span class="task-text">${agent.currentTask}</span>
+                </div>
+            ` : ''}
+            <div class="agent-node-metrics">
+                <div class="metric">
+                    <span class="metric-value">${agent.tasksCompleted}</span>
+                    <span class="metric-label">Tasks</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-value">${agent.efficiency}%</span>
+                    <span class="metric-label">Efficiency</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    // Draw connections
+    setTimeout(() => drawAgentConnections(teamId), 100);
+}
+
+function drawAgentConnections(teamId) {
+    const canvas = elements.connectionsCanvas;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const container = elements.agentsWorldGrid;
+
+    // Set canvas size
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const nodes = container.querySelectorAll('.agent-world-node');
+    if (nodes.length < 2) return;
+
+    const teamColors = {
+        developer: '#3b82f6',
+        design: '#8b5cf6',
+        communications: '#06b6d4',
+        legal: '#f59e0b',
+        marketing: '#ef4444',
+        gtm: '#10b981',
+        sales: '#ec4899'
+    };
+
+    const color = teamColors[teamId] || '#ffffff';
+
+    // Draw connections between working agents
+    const workingNodes = [...nodes].filter(n => n.classList.contains('working'));
+
+    workingNodes.forEach((node, i) => {
+        workingNodes.forEach((otherNode, j) => {
+            if (i >= j) return;
+
+            const rect1 = node.getBoundingClientRect();
+            const rect2 = otherNode.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const x1 = rect1.left - containerRect.left + rect1.width / 2;
+            const y1 = rect1.top - containerRect.top + rect1.height / 2;
+            const x2 = rect2.left - containerRect.left + rect2.width / 2;
+            const y2 = rect2.top - containerRect.top + rect2.height / 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = `${color}40`;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+
+            // Animated dot
+            const progress = (Date.now() % 2000) / 2000;
+            const dotX = x1 + (x2 - x1) * progress;
+            const dotY = y1 + (y2 - y1) * progress;
+
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        });
+    });
+}
+
+// ============================================
+// LIVE FEED FUNCTIONS
+// ============================================
+
+let liveFeedInterval = null;
+
+function startTeamLiveFeed(teamId) {
+    // Clear existing interval
+    if (liveFeedInterval) {
+        clearInterval(liveFeedInterval);
+    }
+
+    // Clear existing feed
+    state.liveFeed = [];
+
+    // Generate initial feed items
+    for (let i = 0; i < 5; i++) {
+        const item = generateLiveFeedItem(teamId);
+        if (item) {
+            item.timestamp = new Date(Date.now() - (i * 1000 * 30)); // Stagger timestamps
+            state.liveFeed.push(item);
+        }
+    }
+
+    renderLiveFeed();
+
+    // Start generating new items
+    liveFeedInterval = setInterval(() => {
+        if (state.currentWorkspaceTeam === teamId) {
+            const item = generateLiveFeedItem(teamId);
+            if (item) {
+                state.liveFeed.unshift(item);
+                if (state.liveFeed.length > 20) {
+                    state.liveFeed.pop();
+                }
+                renderLiveFeed();
+            }
+        }
+    }, 3000);
+}
+
+function renderLiveFeed() {
+    if (!elements.liveFeedContainer) return;
+
+    const filteredFeed = state.liveFeedFilter === 'all'
+        ? state.liveFeed
+        : state.liveFeed.filter(item => item.type === state.liveFeedFilter);
+
+    const teamColors = {
+        developer: '#3b82f6',
+        design: '#8b5cf6',
+        communications: '#06b6d4',
+        legal: '#f59e0b',
+        marketing: '#ef4444',
+        gtm: '#10b981',
+        sales: '#ec4899'
+    };
+
+    const typeIcons = {
+        thinking: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
+        action: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>`,
+        comms: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>`,
+        insight: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>`
+    };
+
+    elements.liveFeedContainer.innerHTML = filteredFeed.map(item => {
+        const color = teamColors[item.team] || '#ffffff';
+        const highlightedContent = item.highlights.reduce((content, highlight) => {
+            return content.replace(new RegExp(`(${highlight})`, 'gi'), `<span class="feed-highlight">$1</span>`);
+        }, item.content);
+
+        return `
+            <div class="live-feed-item ${item.type} fade-in" style="--feed-color: ${color}">
+                <div class="feed-item-indicator">
+                    <span class="feed-type-icon">${typeIcons[item.type]}</span>
+                </div>
+                <div class="feed-item-content">
+                    <div class="feed-item-header">
+                        <span class="feed-agent">${item.agent}</span>
+                        <span class="feed-type-badge ${item.type}">${item.type}</span>
+                        <span class="feed-time">${getRelativeTime(item.timestamp)}</span>
+                    </div>
+                    <div class="feed-item-message">${highlightedContent}</div>
+                    ${item.processed ? '<span class="feed-processed">Processed</span>' : '<span class="feed-processing">Processing...</span>'}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================
+// TEAM FILTERING
+// ============================================
+
+function filterTeams(teamId) {
+    if (teamId === 'all') {
+        closeTeamWorkspace();
+    } else {
+        openTeamWorkspace(teamId);
+    }
 }
 
 // ============================================
@@ -728,7 +1142,6 @@ function openDecisionModal(decisionId) {
         `;
     }
 
-    // Store current decision ID for action handlers
     elements.decisionModal.dataset.currentDecision = decisionId;
     openModal(elements.decisionModal);
 }
@@ -746,7 +1159,8 @@ function openAgentModal(teamId, agentId) {
         communications: '#06b6d4',
         legal: '#f59e0b',
         marketing: '#ef4444',
-        gtm: '#10b981'
+        gtm: '#10b981',
+        sales: '#ec4899'
     };
 
     const title = document.getElementById('agentModalTitle');
@@ -787,6 +1201,13 @@ function openAgentModal(teamId, agentId) {
                     ${agent.skills.map(skill => `<span class="checkbox-label" style="cursor: default;">${skill}</span>`).join('')}
                 </div>
             </div>
+            <div class="agent-model-info">
+                <label>AI Model</label>
+                <div class="model-info-card">
+                    <span class="model-provider ${team.provider}">${team.provider}</span>
+                    <span class="model-name">${team.model}</span>
+                </div>
+            </div>
             ${agent.currentTask ? `
                 <div class="agent-tasks-section">
                     <h4>Current Task</h4>
@@ -805,6 +1226,125 @@ function openAgentModal(teamId, agentId) {
     openModal(elements.agentModal);
 }
 
+function openTeamSettingsModal(teamId) {
+    const team = AgentTeams[teamId];
+    if (!team) return;
+
+    const title = document.getElementById('teamSettingsTitle');
+    const content = document.getElementById('teamSettingsContent');
+
+    if (title) title.textContent = `${team.name} Settings`;
+
+    if (content) {
+        content.innerHTML = `
+            <div class="team-settings-section">
+                <h3 class="settings-section-title">AI Model Configuration</h3>
+                <div class="form-group">
+                    <label for="teamProvider">AI Provider</label>
+                    <select id="teamProvider" onchange="updateTeamModelOptions('${teamId}')">
+                        <option value="anthropic" ${team.provider === 'anthropic' ? 'selected' : ''}>Anthropic (Claude)</option>
+                        <option value="openai" ${team.provider === 'openai' ? 'selected' : ''}>OpenAI (GPT)</option>
+                        <option value="gemini" ${team.provider === 'gemini' ? 'selected' : ''}>Google (Gemini)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamModel">Model</label>
+                    <select id="teamModel">
+                        ${getModelOptions(team.provider, team.model)}
+                    </select>
+                </div>
+                <div class="api-key-status">
+                    <span class="api-key-label">API Key Status:</span>
+                    <span class="api-key-badge ${state.apiKeyConfig[team.provider].configured ? 'configured' : 'not-configured'}">
+                        ${state.apiKeyConfig[team.provider].configured ? 'Configured' : 'Not Configured'}
+                    </span>
+                </div>
+            </div>
+            <div class="team-settings-section">
+                <h3 class="settings-section-title">Team Performance</h3>
+                <div class="performance-metrics">
+                    <div class="perf-metric">
+                        <span class="perf-metric-label">Avg Response Time</span>
+                        <span class="perf-metric-value">1.2s</span>
+                    </div>
+                    <div class="perf-metric">
+                        <span class="perf-metric-label">Tasks/Hour</span>
+                        <span class="perf-metric-value">8.5</span>
+                    </div>
+                    <div class="perf-metric">
+                        <span class="perf-metric-label">Success Rate</span>
+                        <span class="perf-metric-value">96%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal(elements.teamSettingsModal)">Cancel</button>
+                <button type="button" class="btn-primary" onclick="saveTeamSettings('${teamId}')">Save Settings</button>
+            </div>
+        `;
+    }
+
+    openModal(elements.teamSettingsModal);
+}
+
+function getModelOptions(provider, selectedModel) {
+    const models = {
+        anthropic: [
+            { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku (Fast)' },
+            { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet (Balanced)' },
+            { value: 'claude-3-opus-latest', label: 'Claude 3 Opus (Powerful)' }
+        ],
+        openai: [
+            { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast)' },
+            { value: 'gpt-4o', label: 'GPT-4o (Balanced)' },
+            { value: 'gpt-4-turbo', label: 'GPT-4 Turbo (Powerful)' }
+        ],
+        gemini: [
+            { value: 'gemini-pro', label: 'Gemini Pro' },
+            { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+            { value: 'gemini-pro-vision', label: 'Gemini Pro Vision' }
+        ]
+    };
+
+    return models[provider].map(m =>
+        `<option value="${m.value}" ${m.value === selectedModel ? 'selected' : ''}>${m.label}</option>`
+    ).join('');
+}
+
+function updateTeamModelOptions(teamId) {
+    const providerSelect = document.getElementById('teamProvider');
+    const modelSelect = document.getElementById('teamModel');
+    if (!providerSelect || !modelSelect) return;
+
+    modelSelect.innerHTML = getModelOptions(providerSelect.value, '');
+}
+
+function saveTeamSettings(teamId) {
+    const providerSelect = document.getElementById('teamProvider');
+    const modelSelect = document.getElementById('teamModel');
+
+    if (providerSelect && modelSelect) {
+        state.teamSettings[teamId] = {
+            provider: providerSelect.value,
+            model: modelSelect.value,
+            apiKeyConfigured: state.apiKeyConfig[providerSelect.value].configured
+        };
+
+        AgentTeams[teamId].provider = providerSelect.value;
+        AgentTeams[teamId].model = modelSelect.value;
+
+        // Update the display
+        if (state.currentWorkspaceTeam === teamId && elements.teamModelName) {
+            const modelShort = modelSelect.value.split('-').slice(0, 2).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+            elements.teamModelName.textContent = modelShort;
+        }
+
+        showToast('success', 'Settings Saved', `${AgentTeams[teamId].name} configuration updated successfully.`);
+    }
+
+    closeModal(elements.teamSettingsModal);
+}
+
 // ============================================
 // DECISION ACTIONS
 // ============================================
@@ -815,7 +1355,6 @@ function approveDecision() {
 
     const decision = state.decisions.find(d => d.id === decisionId);
     if (decision) {
-        // Add to activity
         state.activities.unshift({
             id: `act-${Date.now()}`,
             agent: 'Commander',
@@ -825,7 +1364,6 @@ function approveDecision() {
             timestamp: new Date()
         });
 
-        // Remove from decisions
         state.decisions = state.decisions.filter(d => d.id !== decisionId);
 
         renderDecisionQueue();
@@ -889,7 +1427,6 @@ function handleTaskSubmit(e) {
 
     if (!title || !team) return;
 
-    // Add activity
     state.activities.unshift({
         id: `act-${Date.now()}`,
         agent: 'Commander',
@@ -903,7 +1440,6 @@ function handleTaskSubmit(e) {
     showToast('success', 'Task Created', `"${title}" has been assigned to ${AgentTeams[team]?.name || team}.`);
     closeModal(elements.taskModal);
 
-    // Reset form
     e.target.reset();
 }
 
@@ -919,7 +1455,6 @@ function handleBroadcastSubmit(e) {
 
     if (!message) return;
 
-    // Add activity
     state.activities.unshift({
         id: `act-${Date.now()}`,
         agent: 'Commander',
@@ -963,14 +1498,13 @@ function setOrchestrationMode(mode) {
 function syncAll() {
     showToast('info', 'Syncing...', 'Synchronizing all agent states and tasks.');
 
-    // Simulate sync with animation
-    document.querySelectorAll('.team-card').forEach((card, index) => {
+    document.querySelectorAll('.team-card, .team-overview-card, .agent-world-node').forEach((card, index) => {
         setTimeout(() => {
             card.style.transform = 'scale(0.98)';
             setTimeout(() => {
                 card.style.transform = '';
             }, 150);
-        }, index * 100);
+        }, index * 50);
     });
 
     setTimeout(() => {
@@ -1010,7 +1544,6 @@ function showToast(type, title, message) {
 
     elements.toastContainer?.appendChild(toast);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         toast.classList.add('exiting');
         setTimeout(() => toast.remove(), 300);
@@ -1045,12 +1578,139 @@ function updateAgentCheckboxes(teamId) {
     `).join('');
 }
 
+function updateClock() {
+    if (elements.liveClock) {
+        const now = new Date();
+        elements.liveClock.textContent = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+    }
+}
+
+// ============================================
+// API CONFIGURATION FUNCTIONS
+// ============================================
+
+function saveApiConfig(provider) {
+    const keyInput = document.getElementById(`${provider}Key`);
+    const modelSelect = document.getElementById(`${provider}Model`);
+
+    if (!keyInput || !modelSelect) return;
+
+    const apiKey = keyInput.value.trim();
+    const model = modelSelect.value;
+
+    if (!apiKey) {
+        showToast('error', 'Validation Error', 'Please enter an API key');
+        return;
+    }
+
+    const keyPatterns = {
+        anthropic: /^sk-ant-/,
+        openai: /^sk-/,
+        gemini: /^AI/
+    };
+
+    if (!keyPatterns[provider].test(apiKey)) {
+        showToast('error', 'Invalid Format', `API key doesn't match expected format for ${provider}`);
+        return;
+    }
+
+    state.apiKeyConfig[provider] = {
+        configured: true,
+        model: model
+    };
+
+    const statusEl = document.getElementById(`${provider}Status`);
+    if (statusEl) {
+        statusEl.textContent = 'Configured';
+        statusEl.classList.add('configured');
+    }
+
+    keyInput.value = '';
+
+    state.activities.unshift({
+        id: `act-${Date.now()}`,
+        agent: 'Commander',
+        team: 'system',
+        message: `Updated ${provider} API configuration to ${model}`,
+        tag: 'Config',
+        timestamp: new Date()
+    });
+    renderActivityFeed();
+
+    showToast('success', 'Configuration Saved', `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured successfully`);
+}
+
+function runHealthCheck() {
+    showToast('info', 'Health Check', 'Running system health check...');
+
+    const startTime = performance.now();
+
+    setTimeout(() => {
+        const latency = Math.round(performance.now() - startTime);
+
+        state.healthMetrics.lastCheck = new Date().toISOString();
+        state.healthMetrics.systemStatus = 'operational';
+
+        const apiLatencyEl = document.getElementById('apiLatency');
+        const lastCheckEl = document.getElementById('lastHealthCheck');
+        const systemStatusEl = document.getElementById('systemStatus');
+
+        if (apiLatencyEl) apiLatencyEl.textContent = `${latency} ms`;
+        if (lastCheckEl) lastCheckEl.textContent = 'Just now';
+        if (systemStatusEl) {
+            systemStatusEl.textContent = 'Operational';
+            systemStatusEl.className = 'health-value status-good';
+        }
+
+        state.activities.unshift({
+            id: `act-${Date.now()}`,
+            agent: 'System',
+            team: 'system',
+            message: `Health check completed - All systems operational (${latency}ms latency)`,
+            tag: 'Health',
+            timestamp: new Date()
+        });
+        renderActivityFeed();
+
+        showToast('success', 'Health Check Complete', `System operational - ${latency}ms latency`);
+    }, 500);
+}
+
+function initApiConfigPanel() {
+    document.querySelectorAll('.api-config-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const toggle = header.querySelector('.api-config-toggle');
+            const body = header.nextElementSibling;
+
+            if (toggle && body) {
+                const isExpanded = toggle.dataset.expanded === 'true';
+                toggle.dataset.expanded = isExpanded ? 'false' : 'true';
+                body.style.display = isExpanded ? 'none' : 'block';
+            }
+        });
+    });
+
+    Object.entries(state.apiKeyConfig).forEach(([provider, config]) => {
+        const statusEl = document.getElementById(`${provider}Status`);
+        if (statusEl && config.configured) {
+            statusEl.textContent = 'Configured';
+            statusEl.classList.add('configured');
+        }
+    });
+}
+
 // ============================================
 // EVENT LISTENERS
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initial renders
+    renderTeamsGrid();
     renderDecisionQueue();
     renderActivityFeed();
     renderPriorityQueue();
@@ -1061,15 +1721,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize API config panel
     initApiConfigPanel();
 
-    // Initialize lazy loading for performance
-    lazyLoadTeamCards();
-
-    // Initialize agent status monitoring
-    updateAgentVisibilityDashboard();
+    // Start clock
+    updateClock();
+    setInterval(updateClock, 1000);
 
     // Team navigation
     document.querySelectorAll('.team-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => filterTeams(btn.dataset.team));
+    });
+
+    // Back button
+    document.getElementById('backToAllTeams')?.addEventListener('click', closeTeamWorkspace);
+
+    // Team settings button
+    document.getElementById('teamSettingsBtn')?.addEventListener('click', () => {
+        if (state.currentWorkspaceTeam) {
+            openTeamSettingsModal(state.currentWorkspaceTeam);
+        }
+    });
+
+    // Live feed filters
+    document.querySelectorAll('.feed-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.feed-filter').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.liveFeedFilter = btn.dataset.filter;
+            renderLiveFeed();
+        });
     });
 
     // Panel tabs
@@ -1109,6 +1787,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeAgentModal')?.addEventListener('click', () => closeModal(elements.agentModal));
     document.getElementById('closeDecisionModal')?.addEventListener('click', () => closeModal(elements.decisionModal));
     document.getElementById('closeBroadcastModal')?.addEventListener('click', () => closeModal(elements.broadcastModal));
+    document.getElementById('closeTeamSettingsModal')?.addEventListener('click', () => closeModal(elements.teamSettingsModal));
     document.getElementById('cancelTask')?.addEventListener('click', () => closeModal(elements.taskModal));
     document.getElementById('cancelBroadcast')?.addEventListener('click', () => closeModal(elements.broadcastModal));
 
@@ -1131,16 +1810,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCommsLog(e.target.value);
     });
 
-    // Agent card clicks
-    document.querySelectorAll('.agent-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const teamCard = card.closest('.team-card');
-            if (teamCard) {
-                openAgentModal(teamCard.dataset.team, card.dataset.agent);
-            }
-        });
-    });
-
     // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
@@ -1159,14 +1828,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Simulate real-time updates
+    // Real-time activity updates
     setInterval(() => {
-        // Randomly update activity timestamps
-        state.activities.forEach(activity => {
-            activity.timestamp = new Date(activity.timestamp);
-        });
-
-        // Occasionally add new activities
         if (Math.random() > 0.85) {
             const teams = Object.keys(AgentTeams);
             const randomTeam = teams[Math.floor(Math.random() * teams.length)];
@@ -1190,7 +1853,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 timestamp: new Date()
             });
 
-            // Keep only last 20 activities
             if (state.activities.length > 20) {
                 state.activities.pop();
             }
@@ -1198,6 +1860,20 @@ document.addEventListener('DOMContentLoaded', () => {
             renderActivityFeed();
         }
     }, 10000);
+
+    // Redraw connections on resize
+    window.addEventListener('resize', () => {
+        if (state.currentWorkspaceTeam) {
+            drawAgentConnections(state.currentWorkspaceTeam);
+        }
+    });
+
+    // Animate connections periodically
+    setInterval(() => {
+        if (state.currentWorkspaceTeam) {
+            drawAgentConnections(state.currentWorkspaceTeam);
+        }
+    }, 50);
 });
 
 // ============================================
@@ -1235,212 +1911,13 @@ document.addEventListener('dragover', (e) => {
             container.insertBefore(draggedItem, target);
         }
 
-        // Update priority ranks
         container.querySelectorAll('.priority-rank').forEach((rank, index) => {
             rank.textContent = index + 1;
         });
     }
 });
 
-// ============================================
-// API CONFIGURATION FUNCTIONS
-// ============================================
-
-function saveApiConfig(provider) {
-    const keyInput = document.getElementById(`${provider}Key`);
-    const modelSelect = document.getElementById(`${provider}Model`);
-
-    if (!keyInput || !modelSelect) return;
-
-    const apiKey = keyInput.value.trim();
-    const model = modelSelect.value;
-
-    if (!apiKey) {
-        showToast('error', 'Validation Error', 'Please enter an API key');
-        return;
-    }
-
-    // Validate key format
-    const keyPatterns = {
-        anthropic: /^sk-ant-/,
-        openai: /^sk-/,
-        gemini: /^AI/
-    };
-
-    if (!keyPatterns[provider].test(apiKey)) {
-        showToast('error', 'Invalid Format', `API key doesn't match expected format for ${provider}`);
-        return;
-    }
-
-    // Update local state (in production, this would call the API)
-    state.apiKeyConfig[provider] = {
-        configured: true,
-        model: model
-    };
-
-    // Update status display
-    const statusEl = document.getElementById(`${provider}Status`);
-    if (statusEl) {
-        statusEl.textContent = 'Configured';
-        statusEl.classList.add('configured');
-    }
-
-    // Clear the key input for security
-    keyInput.value = '';
-
-    // Add activity
-    state.activities.unshift({
-        id: `act-${Date.now()}`,
-        agent: 'Commander',
-        team: 'system',
-        message: `Updated ${provider} API configuration to ${model}`,
-        tag: 'Config',
-        timestamp: new Date()
-    });
-    renderActivityFeed();
-
-    showToast('success', 'Configuration Saved', `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured successfully`);
-}
-
-function runHealthCheck() {
-    showToast('info', 'Health Check', 'Running system health check...');
-
-    const startTime = performance.now();
-
-    // Simulate API latency check
-    setTimeout(() => {
-        const latency = Math.round(performance.now() - startTime);
-
-        // Update health metrics
-        state.healthMetrics.lastCheck = new Date().toISOString();
-        state.healthMetrics.systemStatus = 'operational';
-
-        // Update UI
-        const apiLatencyEl = document.getElementById('apiLatency');
-        const lastCheckEl = document.getElementById('lastHealthCheck');
-        const systemStatusEl = document.getElementById('systemStatus');
-
-        if (apiLatencyEl) apiLatencyEl.textContent = `${latency} ms`;
-        if (lastCheckEl) lastCheckEl.textContent = 'Just now';
-        if (systemStatusEl) {
-            systemStatusEl.textContent = 'Operational';
-            systemStatusEl.className = 'health-value status-good';
-        }
-
-        // Add to activity feed
-        state.activities.unshift({
-            id: `act-${Date.now()}`,
-            agent: 'System',
-            team: 'system',
-            message: `Health check completed - All systems operational (${latency}ms latency)`,
-            tag: 'Health',
-            timestamp: new Date()
-        });
-        renderActivityFeed();
-
-        showToast('success', 'Health Check Complete', `System operational - ${latency}ms latency`);
-    }, 500);
-}
-
-function initApiConfigPanel() {
-    // Add click handlers for config card toggles
-    document.querySelectorAll('.api-config-header').forEach(header => {
-        header.addEventListener('click', () => {
-            const toggle = header.querySelector('.api-config-toggle');
-            const body = header.nextElementSibling;
-
-            if (toggle && body) {
-                const isExpanded = toggle.dataset.expanded === 'true';
-                toggle.dataset.expanded = isExpanded ? 'false' : 'true';
-                body.style.display = isExpanded ? 'none' : 'block';
-            }
-        });
-    });
-
-    // Initialize API status from state
-    Object.entries(state.apiKeyConfig).forEach(([provider, config]) => {
-        const statusEl = document.getElementById(`${provider}Status`);
-        if (statusEl && config.configured) {
-            statusEl.textContent = 'Configured';
-            statusEl.classList.add('configured');
-        }
-    });
-}
-
-// ============================================
-// PERFORMANCE OPTIMIZATION: LAZY LOADING
-// ============================================
-
-function lazyLoadTeamCards() {
-    const options = {
-        root: null,
-        rootMargin: '50px',
-        threshold: 0.1
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, options);
-
-    document.querySelectorAll('.team-card').forEach(card => {
-        observer.observe(card);
-    });
-}
-
-// ============================================
-// REAL-TIME AGENT STATUS MONITORING
-// ============================================
-
-function getAgentStatusSummary() {
-    const summary = {
-        total: 0,
-        working: 0,
-        idle: 0,
-        teams: {}
-    };
-
-    Object.entries(AgentTeams).forEach(([teamId, team]) => {
-        const teamSummary = {
-            name: team.name,
-            working: 0,
-            idle: 0,
-            total: team.agents.length
-        };
-
-        team.agents.forEach(agent => {
-            summary.total++;
-            if (agent.status === 'working') {
-                summary.working++;
-                teamSummary.working++;
-            } else {
-                summary.idle++;
-                teamSummary.idle++;
-            }
-        });
-
-        teamSummary.utilization = Math.round((teamSummary.working / teamSummary.total) * 100);
-        summary.teams[teamId] = teamSummary;
-    });
-
-    return summary;
-}
-
-function updateAgentVisibilityDashboard() {
-    const summary = getAgentStatusSummary();
-
-    // This data can be used to render an agent visibility dashboard
-    // or expose via window for admin console integration
-    window.AgentStatusSummary = summary;
-
-    return summary;
-}
-
-// Export for potential external use
+// Export for external use
 window.AgentCommander = {
     state,
     AgentTeams,
@@ -1450,6 +1927,8 @@ window.AgentCommander = {
     setOrchestrationMode,
     saveApiConfig,
     runHealthCheck,
-    getAgentStatusSummary,
-    updateAgentVisibilityDashboard
+    openTeamWorkspace,
+    closeTeamWorkspace,
+    openAgentModal,
+    openTeamSettingsModal
 };
