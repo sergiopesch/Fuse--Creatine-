@@ -26,11 +26,8 @@
   },
   "homepage": "https://github.com/sergiopesch/Fuse--Creatine-#readme",
   "dependencies": {
-<<<<<<< HEAD
-    "@upstash/redis": "^1.36.1",
-=======
     "@simplewebauthn/server": "^13.2.2",
->>>>>>> 5332eee5f762b904340d7cae6007cb683b225ee6
+    "@upstash/redis": "^1.36.1",
     "@vercel/blob": "^2.0.1"
   },
   "devDependencies": {
