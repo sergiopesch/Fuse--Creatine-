@@ -14,11 +14,15 @@
 const crypto = require('crypto');
 const { put, list, del } = require('@vercel/blob');
 const { Redis } = require('@upstash/redis');
+const { verifyRegistrationResponse } = require('@simplewebauthn/server');
 const {
+    bufferToBase64url,
+    getExpectedOrigins,
+    getExpectedRpIds
+} = require('./_lib/webauthn');
+const {
+    createSecuredHandler,
     getClientIp,
-    getCorsOrigin,
-    setSecurityHeaders,
-    checkRateLimit,
     addAuditEntry,
     sanitizeString
 } = require('./_lib/security');
@@ -280,54 +284,32 @@ function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
     return { matches: false, needsMigration: false, fingerprint: currentFp };
 }
 
-// ============================================================================
-// REQUEST HANDLER
-// ============================================================================
-
-module.exports = async function handler(req, res) {
-    const clientIp = getClientIp(req);
-    // Extract deviceId early for fingerprinting (will be validated later)
-    const clientDeviceId = req.body?.deviceId;
-    const deviceFingerprint = createDeviceFingerprint(req, clientDeviceId);
-
-    // Set security headers
-    const origin = getCorsOrigin(req.headers.origin);
-    setSecurityHeaders(res, origin, 'POST, OPTIONS');
-
-    // Handle CORS preflight
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+/**
+ * Normalize stored credentials into a list (supports legacy single credential)
+ */
+function normalizeCredentials(ownerCredential) {
+    if (!ownerCredential) return [];
+    if (Array.isArray(ownerCredential.credentials) && ownerCredential.credentials.length) {
+        return ownerCredential.credentials;
     }
 
-    // Only allow POST
-    if (req.method !== 'POST') {
-        return res.status(405).json({
-            success: false,
-            error: 'Method not allowed'
-        });
+    if (ownerCredential.credentialId && ownerCredential.publicKey) {
+        return [{
+            credentialId: ownerCredential.credentialId,
+            publicKey: ownerCredential.publicKey,
+            counter: ownerCredential.counter || 0,
+            transports: ownerCredential.transports || [],
+            createdAt: ownerCredential.registeredAt || new Date().toISOString(),
+            lastUsed: ownerCredential.lastUsed || null,
+            legacy: true
+        }];
     }
 
-    // Rate limiting
-    const rateLimitResult = await checkRateLimit(
-        `biometric-register:${clientIp}`,
-        CONFIG.RATE_LIMIT.limit,
-        CONFIG.RATE_LIMIT.windowMs
-    );
+    return [];
+}
 
-    if (rateLimitResult.limited) {
-        addAuditEntry({
-            action: 'BIOMETRIC_REGISTER_RATE_LIMITED',
-            ip: clientIp,
-            success: false,
-            endpoint: '/api/biometric-register'
-        });
-
-        return res.status(429).json({
-            success: false,
-            error: 'Too many requests. Please wait before trying again.',
-            retryAfter: Math.ceil(rateLimitResult.retryAfterMs / 1000)
-        });
-    }
+const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) => {
+    const deviceFingerprint = createDeviceFingerprint(req, validatedBody.deviceId);
 
     // Check registration lockout
     if (await isRegistrationLockedOut(clientIp)) {
@@ -346,7 +328,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const { action, userId, credentialId, publicKey, clientDataJSON, authenticatorData } = req.body;
+        const { action, userId, credentialId, clientDataJSON } = validatedBody;
 
         // ====================================
         // CHECK OWNER STATUS
@@ -366,7 +348,7 @@ module.exports = async function handler(req, res) {
 
             let isOwnerDevice = false;
             if (ownerCredential) {
-                const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
+                const deviceMatch = checkDeviceMatch(req, validatedBody.deviceId, ownerCredential);
                 isOwnerDevice = deviceMatch.matches;
             }
 
@@ -381,10 +363,8 @@ module.exports = async function handler(req, res) {
         // GET CHALLENGE
         // ====================================
         if (action === 'get-challenge') {
-            // Check if owner already exists
             const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
 
-            // Handle service errors - don't allow registration when we can't verify
             if (credentialError) {
                 console.error('[BiometricRegister] Service error during get-challenge:', credentialError);
                 return res.status(503).json({
@@ -395,8 +375,7 @@ module.exports = async function handler(req, res) {
             }
 
             if (ownerCredential) {
-                // Owner exists - check if this might be the owner's device
-                const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
+                const deviceMatch = checkDeviceMatch(req, validatedBody.deviceId, ownerCredential);
 
                 if (!deviceMatch.matches) {
                     addAuditEntry({
@@ -413,8 +392,7 @@ module.exports = async function handler(req, res) {
                         isLocked: true
                     });
                 }
-
-                // This appears to be the owner's device - allow re-registration
+                
                 addAuditEntry({
                     action: 'BIOMETRIC_REGISTER_OWNER_REAUTH',
                     ip: clientIp,
@@ -426,7 +404,6 @@ module.exports = async function handler(req, res) {
 
             const challenge = generateChallenge();
             const nonce = generateNonce();
-
             await storeChallenge(deviceFingerprint, challenge, nonce);
 
             addAuditEntry({
@@ -449,36 +426,41 @@ module.exports = async function handler(req, res) {
         // REGISTER CREDENTIAL (Owner Lock)
         // ====================================
         if (action === 'register') {
-            // Validate required fields
-            if (!credentialId || !publicKey || !userId) {
+            if (!credentialId || !clientDataJSON || !validatedBody?.attestationObject) {
                 return res.status(400).json({
                     success: false,
                     error: 'Missing credential data'
                 });
             }
 
-            // Verify challenge was issued to this device
+            const expectedOrigins = getExpectedOrigins(req);
+            const expectedRpIds = getExpectedRpIds(req);
+
+            if (!expectedOrigins.length || !expectedRpIds.length) {
+                console.error('[BiometricRegister] Unable to resolve expected origin/RP ID');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Registration configuration error. Please contact support.'
+                });
+            }
+
             const challengeData = await verifyChallenge(deviceFingerprint);
             if (!challengeData) {
                 await recordRegistrationAttempt(clientIp);
-
                 addAuditEntry({
                     action: 'BIOMETRIC_REGISTER_INVALID_CHALLENGE',
                     ip: clientIp,
                     success: false,
                     endpoint: '/api/biometric-register'
                 });
-
                 return res.status(400).json({
                     success: false,
                     error: 'Invalid or expired challenge. Please try again.'
                 });
             }
 
-            // Check if owner already exists
             const { credential: existingOwner, error: existingOwnerError } = await getOwnerCredential();
 
-            // Handle service errors - don't allow registration when we can't verify
             if (existingOwnerError) {
                 console.error('[BiometricRegister] Service error during register:', existingOwnerError);
                 return res.status(503).json({
@@ -489,18 +471,16 @@ module.exports = async function handler(req, res) {
             }
 
             if (existingOwner) {
-                const deviceMatch = checkDeviceMatch(req, clientDeviceId, existingOwner);
+                const deviceMatch = checkDeviceMatch(req, validatedBody.deviceId, existingOwner);
 
                 if (!deviceMatch.matches) {
                     await recordRegistrationAttempt(clientIp);
-
                     addAuditEntry({
                         action: 'BIOMETRIC_REGISTER_BLOCKED_EXISTING_OWNER',
                         ip: clientIp,
                         success: false,
                         endpoint: '/api/biometric-register'
                     });
-
                     return res.status(403).json({
                         success: false,
                         error: 'Dashboard is already secured by another device.',
@@ -509,61 +489,140 @@ module.exports = async function handler(req, res) {
                 }
             }
 
-            // Detect device type for naming
-            const ua = req.headers['user-agent'] || '';
-            let deviceName = 'Primary Device';
-            if (/iPhone|iPad/i.test(ua)) {
-                deviceName = 'iPhone/iPad';
-            } else if (/Android/i.test(ua)) {
-                deviceName = 'Android Device';
-            } else if (/Mac/i.test(ua)) {
-                deviceName = 'Mac';
-            } else if (/Windows/i.test(ua)) {
-                deviceName = 'Windows PC';
+            let verification;
+            try {
+                verification = await verifyRegistrationResponse({
+                    response: {
+                        id: sanitizeString(credentialId, 512),
+                        rawId: sanitizeString(validatedBody?.rawId || credentialId, 512),
+                        type: validatedBody?.type || 'public-key',
+                        response: {
+                            clientDataJSON: sanitizeString(clientDataJSON, 4096),
+                            attestationObject: sanitizeString(validatedBody?.attestationObject, 8192),
+                            transports: Array.isArray(validatedBody?.transports) ? validatedBody.transports : undefined
+                        }
+                    },
+                    expectedChallenge: challengeData.challenge,
+                    expectedOrigin: expectedOrigins,
+                    expectedRPID: expectedRpIds,
+                    requireUserVerification: true
+                });
+            } catch (error) {
+                await recordRegistrationAttempt(clientIp);
+                console.error('[BiometricRegister] Registration verification failed:', error);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Registration verification failed. Please try again.'
+                });
             }
 
-            // Create the owner credential with multi-device support
-            const ownerCredentialData = {
-                // Credential binding
-                credentialId: sanitizeString(credentialId, 256),
-                publicKey: sanitizeString(publicKey, 2048),
-                userId: sanitizeString(userId, 64),
+            if (!verification?.verified || !verification.registrationInfo) {
+                await recordRegistrationAttempt(clientIp);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Registration verification failed. Please try again.'
+                });
+            }
 
-                // Device binding (legacy for backwards compatibility)
-                deviceFingerprint,
+            const {
+                credentialPublicKey,
+                credentialID,
+                counter,
+                fmt,
+                aaguid,
+                credentialDeviceType,
+                credentialBackedUp
+            } = verification.registrationInfo;
 
-                // Multi-device support
-                authorizedDevices: [{
-                    fingerprint: deviceFingerprint,
-                    name: deviceName,
-                    addedAt: new Date().toISOString()
-                }],
+            if (!credentialPublicKey || !credentialID) {
+                await recordRegistrationAttempt(clientIp);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Registration data incomplete. Please try again.'
+                });
+            }
 
-                // Metadata
-                registeredAt: new Date().toISOString(),
-                registeredFromIp: clientIp,
+            const ua = req.headers['user-agent'] || '';
+            let deviceName = 'Primary Device';
+            if (/iPhone|iPad/i.test(ua)) deviceName = 'iPhone/iPad';
+            else if (/Android/i.test(ua)) deviceName = 'Android Device';
+            else if (/Mac/i.test(ua)) deviceName = 'Mac';
+            else if (/Windows/i.test(ua)) deviceName = 'Windows PC';
+
+            const resolvedUserId = existingOwner?.userId || sanitizeString(userId, 64);
+            if (!resolvedUserId) {
+                return res.status(400).json({ success: false, error: 'Missing user identifier' });
+            }
+
+            const newCredential = {
+                credentialId: sanitizeString(bufferToBase64url(credentialID), 512),
+                publicKey: sanitizeString(bufferToBase64url(credentialPublicKey), 2048),
+                counter: typeof counter === 'number' ? counter : 0,
+                transports: Array.isArray(validatedBody?.transports) ? validatedBody.transports : [],
+                deviceName,
+                createdAt: new Date().toISOString(),
                 lastUsed: null,
-                authCount: 0,
-
-                // Security
-                version: '2.1', // Updated version for multi-device support
-                algorithm: 'ES256'
+                fmt: fmt || 'none',
+                aaguid: typeof aaguid === 'string' ? aaguid : (aaguid ? bufferToBase64url(aaguid) : null),
+                credentialDeviceType,
+                credentialBackedUp
             };
+
+            let ownerCredentialData;
+            if (existingOwner) {
+                const credentials = normalizeCredentials(existingOwner);
+                const existingIndex = credentials.findIndex(entry => entry.credentialId === newCredential.credentialId);
+
+                if (existingIndex >= 0) {
+                    credentials[existingIndex] = { ...credentials[existingIndex], ...newCredential, updatedAt: new Date().toISOString() };
+                } else {
+                    credentials.push(newCredential);
+                }
+
+                const authorizedDevices = Array.isArray(existingOwner.authorizedDevices) ? [...existingOwner.authorizedDevices] : [];
+                if (!authorizedDevices.some(device => device.fingerprint === deviceFingerprint)) {
+                    authorizedDevices.push({ fingerprint: deviceFingerprint, name: deviceName, addedAt: new Date().toISOString() });
+                }
+
+                ownerCredentialData = {
+                    ...existingOwner,
+                    userId: resolvedUserId,
+                    credentials,
+                    authorizedDevices,
+                    credentialId: newCredential.credentialId,
+                    publicKey: newCredential.publicKey,
+                    counter: newCredential.counter,
+                    transports: newCredential.transports,
+                    deviceFingerprint: existingOwner.deviceFingerprint || deviceFingerprint,
+                    version: existingOwner.version || '3.0',
+                    algorithm: existingOwner.algorithm || 'ES256',
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                ownerCredentialData = {
+                    credentialId: newCredential.credentialId,
+                    publicKey: newCredential.publicKey,
+                    counter: newCredential.counter,
+                    transports: newCredential.transports,
+                    userId: resolvedUserId,
+                    deviceFingerprint,
+                    credentials: [newCredential],
+                    authorizedDevices: [{ fingerprint: deviceFingerprint, name: deviceName, addedAt: new Date().toISOString() }],
+                    registeredAt: new Date().toISOString(),
+                    registeredFromIp: clientIp,
+                    lastUsed: null,
+                    authCount: 0,
+                    rpId: expectedRpIds[0],
+                    version: '3.0',
+                    algorithm: 'ES256'
+                };
+            }
 
             const stored = await storeOwnerCredential(ownerCredentialData);
 
             if (!stored) {
-                addAuditEntry({
-                    action: 'BIOMETRIC_REGISTER_STORAGE_FAILED',
-                    ip: clientIp,
-                    success: false,
-                    endpoint: '/api/biometric-register'
-                });
-
-                return res.status(500).json({
-                    success: false,
-                    error: 'Failed to secure dashboard. Please try again.'
-                });
+                addAuditEntry({ action: 'BIOMETRIC_REGISTER_STORAGE_FAILED', ip: clientIp, success: false, endpoint: '/api/biometric-register' });
+                return res.status(500).json({ success: false, error: 'Failed to secure dashboard. Please try again.' });
             }
 
             addAuditEntry({
@@ -579,19 +638,15 @@ module.exports = async function handler(req, res) {
                 success: true,
                 message: 'Dashboard secured! Only your biometric can unlock this dashboard.',
                 isOwner: true,
-                userId: ownerCredentialData.userId
+                userId: ownerCredentialData.userId,
+                credentialId: newCredential.credentialId
             });
         }
 
-        // Invalid action
-        return res.status(400).json({
-            success: false,
-            error: 'Invalid action'
-        });
+        return res.status(400).json({ success: false, error: 'Invalid action' });
 
     } catch (error) {
         console.error('[BiometricRegister] Error:', error);
-
         addAuditEntry({
             action: 'BIOMETRIC_REGISTER_ERROR',
             ip: clientIp,
@@ -599,10 +654,16 @@ module.exports = async function handler(req, res) {
             endpoint: '/api/biometric-register',
             error: error.message
         });
-
-        return res.status(500).json({
-            success: false,
-            error: 'Internal server error'
-        });
+        return res.status(500).json({ success: false, error: 'Internal server error' });
     }
-};
+}
+
+module.exports = createSecuredHandler({
+  requireAuth: false,
+  allowedMethods: ['POST', 'OPTIONS'],
+  rateLimit: {
+      limit: CONFIG.RATE_LIMIT.limit,
+      windowMs: CONFIG.RATE_LIMIT.windowMs,
+      keyPrefix: 'biometric-register'
+  },
+}, biometricRegisterHandler);

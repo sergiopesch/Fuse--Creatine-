@@ -88,6 +88,40 @@
     gap: 24px;
 }
 
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.header-nav-link {
+    color: var(--text-gray);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.header-nav-link:hover {
+    color: var(--white);
+}
+
+.header-nav-link.is-active {
+    color: var(--fuse-red);
+}
+
+@media (max-width: 1200px) {
+    .header-nav {
+        display: none;
+    }
+}
+
 .system-status {
     display: flex;
     align-items: center;
