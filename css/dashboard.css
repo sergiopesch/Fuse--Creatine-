@@ -177,7 +177,7 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
     letter-spacing: 0.1em;
-    color: #fff;
+    color: var(--fuse-red);
 }
 
 .header-divider {

@@ -3,27 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://*.vercel-insights.com; object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://*.vercel-insights.com; object-src 'none';">
     <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#000000">
     <title>FUSE Admin | Analytics Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="apple-touch-icon" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="css/consent.css">
 
     <!-- Cookie Consent Manager -->
     <script defer src="js/consent-manager.js"></script>
 </head>
-<body>
-    <main class="admin">
+<body class="admin-page">
+    <!-- Skip link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <main class="admin" id="main-content">
         <header class="admin-header">
-            <div>
-                <span class="admin-eyebrow">Admin Console</span>
-                <h1 class="admin-title">Analytics Dashboard</h1>
+            <div class="admin-header-left">
+                <a href="index.html" class="logo-link" aria-label="FUSE home">
+                    <span class="logo-text">FUSE</span>
+                </a>
+                <span class="header-divider" aria-hidden="true"></span>
+                <div>
+                    <span class="admin-eyebrow">Admin Console</span>
+                    <h1 class="admin-title">Analytics Dashboard</h1>
+                </div>
             </div>
-            <div class="admin-actions">
-                <button class="btn ghost" id="refreshBtn" type="button" disabled>Refresh</button>
-                <button class="btn ghost" id="signOutBtn" type="button" disabled>Sign out</button>
+            <div class="admin-header-right">
+                <nav class="admin-nav" aria-label="Admin navigation">
+                    <a class="admin-nav-link" href="dashboard.html">Dashboard</a>
+                    <a class="admin-nav-link" href="agents.html">Agents</a>
+                    <a class="admin-nav-link" href="index.html">Home</a>
+                </nav>
+                <div class="admin-actions">
+                    <button class="btn ghost" id="refreshBtn" type="button" disabled>Refresh</button>
+                    <button class="btn ghost" id="signOutBtn" type="button" disabled>Sign out</button>
+                </div>
             </div>
         </header>
 
