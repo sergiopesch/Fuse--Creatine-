@@ -1,6 +1,8 @@
 const { put } = require("@vercel/blob");
 const crypto = require("crypto");
 const { encrypt } = require("./_lib/crypto");
+// Import shared utilities to avoid code duplication
+const { getClientIp, getHeaderValue } = require("./_lib/security");
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
@@ -14,21 +16,6 @@ const RATE_LIMIT_EMAIL_MAX = 4;
 const RATE_LIMIT_MAX_ENTRIES = 5000;
 
 const rateLimitStore = new Map();
-
-function getHeaderValue(value) {
-  if (Array.isArray(value)) return value[0] || "";
-  if (typeof value === "string") return value;
-  return "";
-}
-
-function getClientIp(req) {
-  const forwarded = getHeaderValue(req.headers["x-forwarded-for"]);
-  if (forwarded) return forwarded.split(",")[0].trim();
-  const realIp = getHeaderValue(req.headers["x-real-ip"]);
-  if (realIp) return realIp.trim();
-  const remote = req.socket?.remoteAddress || req.connection?.remoteAddress;
-  return remote || "unknown";
-}
 
 function pruneRateLimitStore(now) {
   if (rateLimitStore.size <= RATE_LIMIT_MAX_ENTRIES) return;

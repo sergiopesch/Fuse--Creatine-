@@ -4,6 +4,40 @@
  */
 
 // ============================================
+// SECURITY UTILITIES - XSS Prevention
+// ============================================
+
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ * @param {string} str - The string to escape
+ * @returns {string} - The escaped string
+ */
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+}
+
+/**
+ * Safely create an element with text content
+ * @param {string} tag - HTML tag name
+ * @param {string} text - Text content (will be escaped)
+ * @param {object} attrs - Optional attributes
+ * @returns {HTMLElement}
+ */
+function safeElement(tag, text, attrs = {}) {
+    const el = document.createElement(tag);
+    if (text) el.textContent = text;
+    Object.entries(attrs).forEach(([key, value]) => {
+        if (key === 'style' || key === 'class' || key === 'id' || key.startsWith('data-')) {
+            el.setAttribute(key, String(value));
+        }
+    });
+    return el;
+}
+
+// ============================================
 // AGENT DATA STRUCTURES
 // ============================================
 
@@ -1076,16 +1110,17 @@ function renderControlLog() {
         return;
     }
 
+    // Use escapeHtml to prevent XSS from log content
     container.innerHTML = recentLogs.map(log => {
         const time = new Date(log.timestamp);
         const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const detailsStr = typeof log.details === 'object' ?
-            Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
+            Object.entries(log.details).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(', ') : '';
 
         return `
             <div class="control-log-item">
-                <span class="log-time">${timeStr}</span>
-                <span class="log-action">${log.action}</span>
+                <span class="log-time">${escapeHtml(timeStr)}</span>
+                <span class="log-action">${escapeHtml(log.action)}</span>
                 <span class="log-details">${detailsStr}</span>
             </div>
         `;
@@ -1107,18 +1142,25 @@ function renderPendingActions() {
         return;
     }
 
-    container.innerHTML = pending.map(action => `
-        <div class="pending-action-item" data-id="${action.id}">
-            <div class="pending-action-info">
-                <div class="pending-action-type">${action.actionType}</div>
-                <div class="pending-action-team">${action.teamId}</div>
+    // Use escapeHtml to prevent XSS from action content
+    container.innerHTML = pending.map(action => {
+        const safeId = escapeHtml(action.id);
+        const safeActionType = escapeHtml(action.actionType);
+        const safeTeamId = escapeHtml(action.teamId);
+
+        return `
+            <div class="pending-action-item" data-id="${safeId}">
+                <div class="pending-action-info">
+                    <div class="pending-action-type">${safeActionType}</div>
+                    <div class="pending-action-team">${safeTeamId}</div>
+                </div>
+                <div class="pending-action-actions">
+                    <button class="action-approve-btn" data-id="${safeId}">Approve</button>
+                    <button class="action-reject-btn" data-id="${safeId}">Reject</button>
+                </div>
             </div>
-            <div class="pending-action-actions">
-                <button class="action-approve-btn" data-id="${action.id}">Approve</button>
-                <button class="action-reject-btn" data-id="${action.id}">Reject</button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // ============================================
@@ -1237,19 +1279,28 @@ function renderTeamsGrid() {
 function renderDecisionQueue() {
     if (!elements.decisionQueue) return;
 
-    elements.decisionQueue.innerHTML = state.decisions.map(decision => `
-        <div class="decision-item" data-decision-id="${decision.id}">
-            <div class="decision-priority ${decision.priority}"></div>
-            <div class="decision-info">
-                <div class="decision-title">${decision.title}</div>
-                <div class="decision-meta">
-                    <span>From: ${decision.requestedBy}</span>
-                    <span>${getRelativeTime(decision.timestamp)}</span>
+    // Use escapeHtml to prevent XSS from decision content
+    elements.decisionQueue.innerHTML = state.decisions.map(decision => {
+        const safeId = escapeHtml(decision.id);
+        const safeTitle = escapeHtml(decision.title);
+        const safeRequestedBy = escapeHtml(decision.requestedBy);
+        const safeTime = escapeHtml(getRelativeTime(decision.timestamp));
+        const safePriority = escapeHtml(decision.priority);
+
+        return `
+            <div class="decision-item" data-decision-id="${safeId}">
+                <div class="decision-priority ${safePriority}"></div>
+                <div class="decision-info">
+                    <div class="decision-title">${safeTitle}</div>
+                    <div class="decision-meta">
+                        <span>From: ${safeRequestedBy}</span>
+                        <span>${safeTime}</span>
+                    </div>
                 </div>
+                <button class="decision-action" onclick="openDecisionModal('${safeId}')">Review</button>
             </div>
-            <button class="decision-action" onclick="openDecisionModal('${decision.id}')">Review</button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderActivityFeed() {
@@ -1265,53 +1316,76 @@ function renderActivityFeed() {
         sales: '#ec4899'
     };
 
-    elements.activityFeed.innerHTML = state.activities.map(activity => `
-        <div class="activity-item fade-in">
-            <div class="activity-avatar" style="background: ${teamColors[activity.team]}20">
-                <svg viewBox="0 0 24 24" fill="${teamColors[activity.team]}">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-                </svg>
-            </div>
-            <div class="activity-content">
-                <div class="activity-header">
-                    <span class="activity-agent">${activity.agent}</span>
-                    <span class="activity-time">${getRelativeTime(activity.timestamp)}</span>
+    // Use escapeHtml to prevent XSS from activity content
+    elements.activityFeed.innerHTML = state.activities.map(activity => {
+        const safeAgent = escapeHtml(activity.agent);
+        const safeMessage = escapeHtml(activity.message);
+        const safeTag = escapeHtml(activity.tag);
+        const safeTime = escapeHtml(getRelativeTime(activity.timestamp));
+        const teamColor = teamColors[activity.team] || '#888';
+
+        return `
+            <div class="activity-item fade-in">
+                <div class="activity-avatar" style="background: ${teamColor}20">
+                    <svg viewBox="0 0 24 24" fill="${teamColor}">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
                 </div>
-                <div class="activity-message">${activity.message}</div>
-                <span class="activity-tag">${activity.tag}</span>
+                <div class="activity-content">
+                    <div class="activity-header">
+                        <span class="activity-agent">${safeAgent}</span>
+                        <span class="activity-time">${safeTime}</span>
+                    </div>
+                    <div class="activity-message">${safeMessage}</div>
+                    <span class="activity-tag">${safeTag}</span>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderPriorityQueue() {
     if (!elements.priorityQueue) return;
 
-    elements.priorityQueue.innerHTML = state.priorities.map((priority, index) => `
-        <div class="priority-item" draggable="true" data-priority-id="${priority.id}">
-            <span class="priority-rank">${index + 1}</span>
-            <div class="priority-info">
-                <span class="priority-name">${priority.name}</span>
-                <span class="priority-team">${priority.team}</span>
+    // Use escapeHtml to prevent XSS from priority content
+    elements.priorityQueue.innerHTML = state.priorities.map((priority, index) => {
+        const safeId = escapeHtml(priority.id);
+        const safeName = escapeHtml(priority.name);
+        const safeTeam = escapeHtml(priority.team);
+
+        return `
+            <div class="priority-item" draggable="true" data-priority-id="${safeId}">
+                <span class="priority-rank">${index + 1}</span>
+                <div class="priority-info">
+                    <span class="priority-name">${safeName}</span>
+                    <span class="priority-team">${safeTeam}</span>
+                </div>
+                <span class="drag-handle">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </span>
             </div>
-            <span class="drag-handle">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-            </span>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderProjectList() {
     if (!elements.projectList) return;
 
-    elements.projectList.innerHTML = state.projects.map(project => `
-        <div class="project-item" data-project-id="${project.id}">
-            <div class="project-info">
-                <span class="project-name">${project.name}</span>
-                <span class="project-teams">${project.teams.join(', ')}</span>
+    // Use escapeHtml to prevent XSS from project content
+    elements.projectList.innerHTML = state.projects.map(project => {
+        const safeId = escapeHtml(project.id);
+        const safeName = escapeHtml(project.name);
+        const safeTeams = project.teams.map(t => escapeHtml(t)).join(', ');
+
+        return `
+            <div class="project-item" data-project-id="${safeId}">
+                <div class="project-info">
+                    <span class="project-name">${safeName}</span>
+                    <span class="project-teams">${safeTeams}</span>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderCommsLog(filter = 'all') {
@@ -1331,19 +1405,29 @@ function renderCommsLog(filter = 'all') {
         ? state.communications
         : state.communications.filter(c => c.from.team === filter || c.to.team === filter);
 
-    elements.commsLog.innerHTML = filtered.map(comm => `
-        <div class="comms-item fade-in">
-            <div class="comms-header">
-                <div class="comms-participants">
-                    <span class="comms-from" style="color: ${teamColors[comm.from.team]}">${comm.from.agent}</span>
-                    <span class="comms-arrow">→</span>
-                    <span class="comms-to" style="color: ${teamColors[comm.to.team]}">${comm.to.agent}</span>
+    // Use escapeHtml to prevent XSS from communication content
+    elements.commsLog.innerHTML = filtered.map(comm => {
+        const safeFromAgent = escapeHtml(comm.from?.agent);
+        const safeToAgent = escapeHtml(comm.to?.agent);
+        const safeMessage = escapeHtml(comm.message);
+        const safeTime = escapeHtml(getRelativeTime(comm.timestamp));
+        const fromColor = teamColors[comm.from?.team] || '#888';
+        const toColor = teamColors[comm.to?.team] || '#888';
+
+        return `
+            <div class="comms-item fade-in">
+                <div class="comms-header">
+                    <div class="comms-participants">
+                        <span class="comms-from" style="color: ${fromColor}">${safeFromAgent}</span>
+                        <span class="comms-arrow">→</span>
+                        <span class="comms-to" style="color: ${toColor}">${safeToAgent}</span>
+                    </div>
+                    <span class="comms-time">${safeTime}</span>
                 </div>
-                <span class="comms-time">${getRelativeTime(comm.timestamp)}</span>
+                <div class="comms-message">${safeMessage}</div>
             </div>
-            <div class="comms-message">${comm.message}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function updateStats() {
@@ -2525,12 +2609,16 @@ function updateTeamOrchestrationUI(teamId) {
 
 /**
  * Save admin token to state
+ * Uses sessionStorage for security - token doesn't persist across browser sessions
+ * This prevents token theft via XSS attacks persisting beyond the session
  */
 function saveAdminToken(token) {
     if (token && token.length >= 32) {
         state.adminToken = token;
-        localStorage.setItem('fuse_admin_token', token);
-        showToast('success', 'Token Saved', 'Admin token configured for orchestration');
+        // Use sessionStorage instead of localStorage for better security
+        // Token is cleared when browser tab/window closes
+        sessionStorage.setItem('fuse_admin_token', token);
+        showToast('success', 'Token Saved', 'Admin token configured for this session');
         return true;
     } else {
         showToast('error', 'Invalid Token', 'Admin token must be at least 32 characters');
@@ -2542,7 +2630,20 @@ function saveAdminToken(token) {
  * Load admin token from storage
  */
 function loadAdminToken() {
-    const token = localStorage.getItem('fuse_admin_token');
+    // Try sessionStorage first (preferred), fall back to localStorage for migration
+    let token = sessionStorage.getItem('fuse_admin_token');
+
+    // Migration: if token exists in localStorage, move it to sessionStorage
+    if (!token) {
+        const legacyToken = localStorage.getItem('fuse_admin_token');
+        if (legacyToken) {
+            sessionStorage.setItem('fuse_admin_token', legacyToken);
+            localStorage.removeItem('fuse_admin_token'); // Remove from insecure storage
+            token = legacyToken;
+            console.log('[Security] Migrated admin token from localStorage to sessionStorage');
+        }
+    }
+
     if (token) {
         state.adminToken = token;
     }

@@ -1,0 +1,19 @@
+# Ignore build outputs
+node_modules/
+dist/
+build/
+.vercel/
+
+# Ignore generated files
+*.min.js
+*.min.css
+
+# Ignore assets
+assets/
+*.svg
+*.png
+*.jpg
+*.gif
+*.ico
+*.woff
+*.woff2
