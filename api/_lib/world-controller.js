@@ -65,7 +65,7 @@ let worldState = {
     communications: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
     legal: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
     marketing: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-    'go-to-market': { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
+    gtm: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
     sales: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] }
   },
 
