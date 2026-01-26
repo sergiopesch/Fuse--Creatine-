@@ -158,7 +158,8 @@ const BiometricAuth = (() => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'verify-session',
-                    sessionToken: token
+                    sessionToken: token,
+                    deviceId: getDeviceId()
                 })
             });
 
@@ -204,7 +205,10 @@ const BiometricAuth = (() => {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'check-access' })
+                body: JSON.stringify({
+                    action: 'check-access',
+                    deviceId: getDeviceId()
+                })
             });
 
             const data = await response.json();
@@ -330,7 +334,11 @@ const BiometricAuth = (() => {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get-challenge', userId })
+                body: JSON.stringify({
+                    action: 'get-challenge',
+                    userId,
+                    deviceId: getDeviceId()
+                })
             });
 
             const data = await response.json();
@@ -404,7 +412,8 @@ const BiometricAuth = (() => {
                 credentialId,
                 publicKey: bufferToBase64URL(attestationResponse.getPublicKey()),
                 clientDataJSON: bufferToBase64URL(attestationResponse.clientDataJSON),
-                authenticatorData: bufferToBase64URL(attestationResponse.getAuthenticatorData())
+                authenticatorData: bufferToBase64URL(attestationResponse.getAuthenticatorData()),
+                deviceId: getDeviceId()
             };
 
             const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
@@ -477,7 +486,10 @@ const BiometricAuth = (() => {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get-challenge' })
+                body: JSON.stringify({
+                    action: 'get-challenge',
+                    deviceId: getDeviceId()
+                })
             });
 
             const data = await response.json();
@@ -535,7 +547,8 @@ const BiometricAuth = (() => {
                 credentialId: bufferToBase64URL(assertion.rawId),
                 authenticatorData: bufferToBase64URL(assertion.response.authenticatorData),
                 clientDataJSON: bufferToBase64URL(assertion.response.clientDataJSON),
-                signature: bufferToBase64URL(assertion.response.signature)
+                signature: bufferToBase64URL(assertion.response.signature),
+                deviceId: getDeviceId()
             };
 
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {

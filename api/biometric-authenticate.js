@@ -30,6 +30,7 @@ const {
 const CONFIG = {
     CHALLENGE_EXPIRY: 5 * 60 * 1000, // 5 minutes
     BLOB_PREFIX: 'biometric-credentials/',
+    CHALLENGE_PREFIX: 'biometric-challenges/',
     OWNER_CREDENTIAL_KEY: 'owner-credential.json',
     RATE_LIMIT: { limit: 10, windowMs: 60000 }, // 10 requests per minute
     MAX_FAILED_ATTEMPTS: 5,
@@ -38,10 +39,8 @@ const CONFIG = {
     SESSION_SECRET: process.env.ENCRYPTION_KEY || 'fuse-default-secret-key-change-me'
 };
 
-// In-memory stores (use Redis/KV in production)
-const challengeStore = new Map();
+// In-memory stores for rate limiting only (OK if reset between invocations)
 const failedAttempts = new Map();
-const sessionStore = new Map();
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -107,36 +106,66 @@ function verifySessionToken(token) {
 }
 
 /**
- * Store challenge for verification
+ * Store challenge for verification using Vercel Blob (persistent across serverless invocations)
  */
-function storeChallenge(key, challenge) {
-    challengeStore.set(key, {
+async function storeChallenge(key, challenge) {
+    const blobPath = `${CONFIG.CHALLENGE_PREFIX}auth-${key}.json`;
+    const data = {
         challenge,
         createdAt: Date.now()
-    });
+    };
 
-    // Clean up expired challenges
-    for (const [k, value] of challengeStore.entries()) {
-        if (Date.now() - value.createdAt > CONFIG.CHALLENGE_EXPIRY) {
-            challengeStore.delete(k);
-        }
+    try {
+        await put(blobPath, JSON.stringify(data), {
+            access: 'public',
+            contentType: 'application/json',
+            addRandomSuffix: false
+        });
+        return true;
+    } catch (error) {
+        console.error('[BiometricAuth] Failed to store challenge:', error);
+        return false;
     }
 }
 
 /**
- * Verify and consume challenge
+ * Verify and consume challenge from Vercel Blob
  */
-function verifyChallenge(key) {
-    const entry = challengeStore.get(key);
-    if (!entry) return null;
+async function verifyChallenge(key) {
+    const blobPath = `${CONFIG.CHALLENGE_PREFIX}auth-${key}.json`;
 
-    if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
-        challengeStore.delete(key);
+    try {
+        const { blobs } = await list({ prefix: CONFIG.CHALLENGE_PREFIX });
+        const blob = blobs.find(b => b.pathname === blobPath);
+
+        if (!blob) return null;
+
+        const response = await fetch(blob.url);
+        if (!response.ok) return null;
+
+        const entry = await response.json();
+
+        // Check expiry
+        if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
+            // Delete expired challenge
+            try {
+                const { del } = require('@vercel/blob');
+                await del(blob.url);
+            } catch (e) { /* ignore cleanup errors */ }
+            return null;
+        }
+
+        // Delete the challenge (consume it - one-time use)
+        try {
+            const { del } = require('@vercel/blob');
+            await del(blob.url);
+        } catch (e) { /* ignore cleanup errors */ }
+
+        return entry.challenge;
+    } catch (error) {
+        console.error('[BiometricAuth] Failed to verify challenge:', error);
         return null;
     }
-
-    challengeStore.delete(key);
-    return entry.challenge;
 }
 
 /**
@@ -212,19 +241,73 @@ async function updateOwnerCredential(credential) {
 }
 
 /**
- * Create device fingerprint from request
+ * Create device fingerprint from client-provided deviceId (new stable method)
  */
-function createDeviceFingerprint(req) {
+function createClientFingerprint(clientDeviceId) {
+    if (!clientDeviceId || typeof clientDeviceId !== 'string' || clientDeviceId.length < 16) {
+        return null;
+    }
+    // Hash the client deviceId with a server salt for additional security
+    return crypto.createHash('sha256')
+        .update(`client:${clientDeviceId}`)
+        .digest('hex')
+        .substring(0, 32);
+}
+
+/**
+ * Create device fingerprint from HTTP headers (legacy method - less stable)
+ */
+function createHeaderFingerprint(req) {
     const ua = req.headers['user-agent'] || '';
     const acceptLang = req.headers['accept-language'] || '';
     const acceptEnc = req.headers['accept-encoding'] || '';
 
-    const fingerprint = crypto.createHash('sha256')
+    return crypto.createHash('sha256')
         .update(`${ua}|${acceptLang}|${acceptEnc}`)
         .digest('hex')
         .substring(0, 32);
+}
 
-    return fingerprint;
+/**
+ * Create device fingerprint from request
+ * Prefers client-provided deviceId for stability across browser updates
+ * Falls back to header-based fingerprint for backwards compatibility
+ */
+function createDeviceFingerprint(req, clientDeviceId = null) {
+    // Try client-based fingerprint first (stable across browser updates)
+    const clientFp = createClientFingerprint(clientDeviceId);
+    if (clientFp) {
+        return clientFp;
+    }
+    // Fallback to header-based fingerprint (legacy)
+    return createHeaderFingerprint(req);
+}
+
+/**
+ * Check if a device matches the stored credential (with migration support)
+ * Returns { matches: boolean, needsMigration: boolean, fingerprint: string }
+ */
+function checkDeviceMatch(req, clientDeviceId, storedFingerprint) {
+    // First try the new client-based fingerprint
+    const clientFp = createClientFingerprint(clientDeviceId);
+    if (clientFp && clientFp === storedFingerprint) {
+        return { matches: true, needsMigration: false, fingerprint: clientFp };
+    }
+
+    // Try legacy header-based fingerprint for backwards compatibility
+    const headerFp = createHeaderFingerprint(req);
+    if (headerFp === storedFingerprint) {
+        // User authenticated with old method - needs migration to new deviceId
+        return { matches: true, needsMigration: !!clientFp, fingerprint: clientFp || headerFp };
+    }
+
+    // Also check if stored fingerprint matches new client-based format
+    // (user might have registered with client deviceId but headers changed)
+    if (clientFp) {
+        return { matches: false, needsMigration: false, fingerprint: clientFp };
+    }
+
+    return { matches: false, needsMigration: false, fingerprint: headerFp };
 }
 
 // ============================================================================
@@ -233,7 +316,9 @@ function createDeviceFingerprint(req) {
 
 module.exports = async function handler(req, res) {
     const clientIp = getClientIp(req);
-    const deviceFingerprint = createDeviceFingerprint(req);
+    // Extract deviceId early for fingerprinting (will be validated later)
+    const clientDeviceId = req.body?.deviceId;
+    const deviceFingerprint = createDeviceFingerprint(req, clientDeviceId);
 
     // Set security headers
     const origin = getCorsOrigin(req.headers.origin);
@@ -336,14 +421,15 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            const isOwnerDevice = ownerCredential.deviceFingerprint === deviceFingerprint;
+            // Use migration-aware device matching
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
 
             return res.status(200).json({
                 success: true,
                 hasOwner: true,
-                isOwnerDevice,
-                canAuthenticate: isOwnerDevice,
-                message: isOwnerDevice ?
+                isOwnerDevice: deviceMatch.matches,
+                canAuthenticate: deviceMatch.matches,
+                message: deviceMatch.matches ?
                     'Welcome back. Authenticate to access your dashboard.' :
                     'This dashboard is secured. Only the owner can access it.'
             });
@@ -381,7 +467,10 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            if (ownerCredential.deviceFingerprint !== deviceFingerprint) {
+            // Use migration-aware device matching
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+
+            if (!deviceMatch.matches) {
                 addAuditEntry({
                     action: 'BIOMETRIC_AUTH_NON_OWNER_ATTEMPT',
                     ip: clientIp,
@@ -398,7 +487,8 @@ module.exports = async function handler(req, res) {
             }
 
             const challenge = generateChallenge();
-            storeChallenge(deviceFingerprint, challenge);
+            // Use the current fingerprint for challenge storage (could be new or legacy)
+            await storeChallenge(deviceMatch.fingerprint, challenge);
 
             addAuditEntry({
                 action: 'BIOMETRIC_AUTH_CHALLENGE_ISSUED',
@@ -438,18 +528,7 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            // Verify challenge was issued
-            const issuedChallenge = verifyChallenge(deviceFingerprint);
-            if (!issuedChallenge) {
-                recordFailedAttempt(lockoutKey);
-
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid or expired challenge. Please try again.'
-                });
-            }
-
-            // Get owner credential
+            // Get owner credential first to determine fingerprint format
             const ownerCredential = await getOwnerCredential();
 
             if (!ownerCredential) {
@@ -460,8 +539,22 @@ module.exports = async function handler(req, res) {
                 });
             }
 
+            // Use migration-aware device matching
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+
+            // Verify challenge was issued (try with current fingerprint)
+            const issuedChallenge = await verifyChallenge(deviceMatch.fingerprint);
+            if (!issuedChallenge) {
+                recordFailedAttempt(lockoutKey);
+
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid or expired challenge. Please try again.'
+                });
+            }
+
             // Verify device fingerprint
-            if (ownerCredential.deviceFingerprint !== deviceFingerprint) {
+            if (!deviceMatch.matches) {
                 recordFailedAttempt(lockoutKey);
 
                 addAuditEntry({
@@ -499,13 +592,21 @@ module.exports = async function handler(req, res) {
             // Authentication successful!
             clearFailedAttempts(lockoutKey);
 
-            // Update last used
+            // Update last used and migrate fingerprint if needed
             ownerCredential.lastUsed = new Date().toISOString();
             ownerCredential.authCount = (ownerCredential.authCount || 0) + 1;
+
+            // Migrate to new client-based fingerprint if authenticated with legacy method
+            if (deviceMatch.needsMigration && deviceMatch.fingerprint) {
+                console.log('[BiometricAuth] Migrating credential to client-based fingerprint');
+                ownerCredential.deviceFingerprint = deviceMatch.fingerprint;
+                ownerCredential.migratedAt = new Date().toISOString();
+            }
+
             await updateOwnerCredential(ownerCredential);
 
-            // Generate session token
-            const newSessionToken = generateSessionToken(ownerCredential.userId, deviceFingerprint);
+            // Generate session token with the (possibly migrated) fingerprint
+            const newSessionToken = generateSessionToken(ownerCredential.userId, ownerCredential.deviceFingerprint);
 
             addAuditEntry({
                 action: 'BIOMETRIC_AUTH_SUCCESS',
@@ -513,7 +614,8 @@ module.exports = async function handler(req, res) {
                 success: true,
                 endpoint: '/api/biometric-authenticate',
                 userId: ownerCredential.userId.substring(0, 8) + '...',
-                authCount: ownerCredential.authCount
+                authCount: ownerCredential.authCount,
+                migrated: deviceMatch.needsMigration
             });
 
             return res.status(200).json({
