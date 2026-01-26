@@ -173,27 +173,27 @@
     const heroMessages = [
         {
             message:
-                'The first performance creatine optimised for your morning coffee. No grit. No taste. Pure power.',
+                'Your morning coffee has been missing something. Until now.',
             footnote:
-                'Evidence: ISSN position stands + peer‑reviewed trials on creatine monohydrate efficacy.',
+                'The first creatine engineered to vanish into hot coffee — discover what 1,200+ athletes already know.',
         },
         {
             message:
-                'Creatine monohydrate is one of the most researched supplements—trusted for strength and high‑intensity output.',
+                '6:47 AM. Steam rising. One scoop. Three seconds later — it\'s gone. Your coffee tastes exactly the same. But you\'re not.',
             footnote:
-                'Evidence: International Society of Sports Nutrition position stands confirm safety and efficacy.',
+                'Backed by 500+ peer-reviewed studies. Now optimised for your morning ritual.',
         },
         {
             message:
-                'FUSE dissolves in under 3 seconds. No stirring, no sediment, no taste change—just your coffee, enhanced.',
+                'Most creatine sinks. Clumps. Ruins your coffee. We asked: what if it didn\'t have to?',
             footnote:
-                'Evidence: micro-encapsulation preserves creatine stability while enabling instant dispersion.',
+                'Micro-encapsulation technology developed for hot beverages. No compromise. No grit. No excuses.',
         },
         {
             message:
-                'Consistent daily dosing supports muscle creatine saturation. Add FUSE to your morning routine and let it work.',
+                'The founders\' batch ships in 6 weeks. 247 spots left at the founding price. Then it\'s gone.',
             footnote:
-                'Evidence: controlled studies show saturation with steady daily intake—no special timing required.',
+                'Join 1,200+ athletes who\'ve already secured their place. Will you be one of them?',
         },
     ];
 
