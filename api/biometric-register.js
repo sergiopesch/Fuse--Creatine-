@@ -343,18 +343,30 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 });
             }
 
-            const {
-                credentialPublicKey,
-                credentialID,
+            // Handle both old and new simplewebauthn API (v9+ uses nested credential object)
+            const regInfo = verification.registrationInfo;
+            const credentialPublicKey = regInfo.credential?.publicKey || regInfo.credentialPublicKey;
+            const credentialID = regInfo.credential?.id || regInfo.credentialID;
+            const counter = regInfo.credential?.counter ?? regInfo.counter ?? 0;
+            const fmt = regInfo.fmt;
+            const aaguid = regInfo.aaguid;
+            const credentialDeviceType = regInfo.credentialDeviceType;
+            const credentialBackedUp = regInfo.credentialBackedUp;
+
+            console.log('[BiometricRegister] Registration info:', {
+                hasCredentialPublicKey: !!credentialPublicKey,
+                hasCredentialID: !!credentialID,
                 counter,
                 fmt,
-                aaguid,
-                credentialDeviceType,
-                credentialBackedUp
-            } = verification.registrationInfo;
+                credentialDeviceType
+            });
 
             if (!credentialPublicKey || !credentialID) {
                 await recordRegistrationAttempt(clientIp);
+                console.error('[BiometricRegister] Missing credential data from verification:', {
+                    regInfoKeys: Object.keys(regInfo),
+                    hasCredential: !!regInfo.credential
+                });
                 return res.status(400).json({
                     success: false,
                     error: 'Registration data incomplete. Please try again.'
@@ -373,16 +385,27 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 return res.status(400).json({ success: false, error: 'Missing user identifier' });
             }
 
+            // Convert credential data to base64url strings (handle both Buffer and Uint8Array)
+            const credIdString = typeof credentialID === 'string' 
+                ? credentialID 
+                : bufferToBase64url(credentialID);
+            const pubKeyString = typeof credentialPublicKey === 'string'
+                ? credentialPublicKey
+                : bufferToBase64url(credentialPublicKey);
+            const aaguidString = typeof aaguid === 'string' 
+                ? aaguid 
+                : (aaguid ? bufferToBase64url(aaguid) : null);
+
             const newCredential = {
-                credentialId: sanitizeString(bufferToBase64url(credentialID), 512),
-                publicKey: sanitizeString(bufferToBase64url(credentialPublicKey), 2048),
+                credentialId: sanitizeString(credIdString, 512),
+                publicKey: sanitizeString(pubKeyString, 2048),
                 counter: typeof counter === 'number' ? counter : 0,
                 transports: Array.isArray(validatedBody?.transports) ? validatedBody.transports : [],
                 deviceName,
                 createdAt: new Date().toISOString(),
                 lastUsed: null,
                 fmt: fmt || 'none',
-                aaguid: typeof aaguid === 'string' ? aaguid : (aaguid ? bufferToBase64url(aaguid) : null),
+                aaguid: aaguidString,
                 credentialDeviceType,
                 credentialBackedUp
             };
