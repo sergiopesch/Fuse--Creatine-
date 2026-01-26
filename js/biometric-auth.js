@@ -49,18 +49,61 @@ const BiometricAuth = (() => {
     // DEVICE FINGERPRINTING
     // ============================================
 
+    // In-memory fallback for private/incognito mode
+    let memoryDeviceId = null;
+
+    /**
+     * Check if localStorage is available
+     */
+    function isLocalStorageAvailable() {
+        try {
+            const test = '__localStorage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     /**
      * Generate a consistent device ID for this browser
+     * Falls back to sessionStorage or in-memory if localStorage unavailable
      */
     function getDeviceId() {
-        let deviceId = localStorage.getItem(CONFIG.DEVICE_ID_KEY);
-        if (!deviceId) {
-            const array = new Uint8Array(16);
-            crypto.getRandomValues(array);
-            deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-            localStorage.setItem(CONFIG.DEVICE_ID_KEY, deviceId);
+        // Try localStorage first (persists across sessions)
+        if (isLocalStorageAvailable()) {
+            let deviceId = localStorage.getItem(CONFIG.DEVICE_ID_KEY);
+            if (!deviceId) {
+                const array = new Uint8Array(16);
+                crypto.getRandomValues(array);
+                deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+                localStorage.setItem(CONFIG.DEVICE_ID_KEY, deviceId);
+            }
+            return deviceId;
         }
-        return deviceId;
+
+        // Try sessionStorage (persists for browser session in private mode)
+        try {
+            let deviceId = sessionStorage.getItem(CONFIG.DEVICE_ID_KEY);
+            if (!deviceId) {
+                const array = new Uint8Array(16);
+                crypto.getRandomValues(array);
+                deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+                sessionStorage.setItem(CONFIG.DEVICE_ID_KEY, deviceId);
+            }
+            console.warn('[BiometricAuth] Using sessionStorage for device ID (private mode detected)');
+            return deviceId;
+        } catch (e) {
+            // Last resort: in-memory (will not persist across page reloads)
+            if (!memoryDeviceId) {
+                const array = new Uint8Array(16);
+                crypto.getRandomValues(array);
+                memoryDeviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+                console.warn('[BiometricAuth] Using in-memory device ID (storage unavailable)');
+            }
+            return memoryDeviceId;
+        }
     }
 
     // ============================================
@@ -213,6 +256,19 @@ const BiometricAuth = (() => {
 
             const data = await response.json();
 
+            // Handle service errors (503) - don't assume "no owner"
+            if (!data.success && data.code) {
+                console.error('[BiometricAuth] Service error:', data.code);
+                return {
+                    hasOwner: null, // Unknown - service error
+                    isOwnerDevice: null,
+                    canRegister: false, // Don't allow registration on service error
+                    canAuthenticate: false,
+                    message: data.error || 'Service temporarily unavailable',
+                    serviceError: true
+                };
+            }
+
             state.hasOwner = data.hasOwner || false;
             state.isOwner = data.isOwnerDevice || false;
             state.isRegistered = data.hasOwner && data.isOwnerDevice;
@@ -222,17 +278,19 @@ const BiometricAuth = (() => {
                 isOwnerDevice: data.isOwnerDevice,
                 canRegister: !data.hasOwner || data.isOwnerDevice,
                 canAuthenticate: data.canAuthenticate,
-                message: data.message
+                message: data.message,
+                serviceError: false
             };
         } catch (error) {
             console.error('[BiometricAuth] Access check failed:', error);
-            // Fallback to local check
+            // Network error - don't make assumptions
             return {
-                hasOwner: false,
-                isOwnerDevice: false,
-                canRegister: true,
+                hasOwner: null,
+                isOwnerDevice: null,
+                canRegister: false,
                 canAuthenticate: false,
-                message: 'Unable to verify access status'
+                message: 'Unable to connect to authentication server',
+                serviceError: true
             };
         }
     }
