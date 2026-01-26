@@ -1,8 +1,14 @@
 /**
- * FUSE Biometric Authentication Service
- * Implements WebAuthn for Face ID, Touch ID, and fingerprint authentication
+ * FUSE Elite Biometric Authentication Service
+ * Implements secure WebAuthn with owner-lock system
  *
- * @version 1.0.0
+ * Features:
+ * - Face ID, Touch ID, Windows Hello, Fingerprint
+ * - Owner-lock: First registration locks dashboard to that device
+ * - Session token management
+ * - Premium animations and haptic feedback
+ *
+ * @version 2.0.0
  */
 
 const BiometricAuth = (() => {
@@ -13,13 +19,15 @@ const BiometricAuth = (() => {
     // ============================================
 
     const CONFIG = {
-        RP_NAME: 'FUSE Digital Workforce',
+        RP_NAME: 'FUSE Command Center',
         RP_ID: window.location.hostname,
         API_BASE: '/api',
         CREDENTIAL_STORAGE_KEY: 'fuse_biometric_credential_id',
         USER_ID_KEY: 'fuse_biometric_user_id',
-        AUTH_VERIFIED_KEY: 'fuse_biometric_verified',
+        SESSION_TOKEN_KEY: 'fuse_session_token',
+        DEVICE_ID_KEY: 'fuse_device_id',
         SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
+        ANIMATION_DURATION: 300,
     };
 
     // ============================================
@@ -30,60 +38,199 @@ const BiometricAuth = (() => {
         isSupported: false,
         isRegistered: false,
         isVerified: false,
+        isOwner: false,
+        hasOwner: false,
         lastVerification: null,
-        platformAuthenticator: false
+        platformAuthenticator: false,
+        authenticatorType: 'Biometric'
     };
+
+    // ============================================
+    // DEVICE FINGERPRINTING
+    // ============================================
+
+    /**
+     * Generate a consistent device ID for this browser
+     */
+    function getDeviceId() {
+        let deviceId = localStorage.getItem(CONFIG.DEVICE_ID_KEY);
+        if (!deviceId) {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            localStorage.setItem(CONFIG.DEVICE_ID_KEY, deviceId);
+        }
+        return deviceId;
+    }
 
     // ============================================
     // FEATURE DETECTION
     // ============================================
 
     /**
-     * Check if WebAuthn is supported and if platform authenticator (Face ID/fingerprint) is available
+     * Check if WebAuthn is supported and if platform authenticator is available
      */
     async function checkSupport() {
         // Check basic WebAuthn support
         if (!window.PublicKeyCredential) {
-            console.log('[BiometricAuth] WebAuthn not supported in this browser');
+            console.log('[BiometricAuth] WebAuthn not supported');
             return { supported: false, platformAuthenticator: false };
         }
 
-        // Check for platform authenticator (Face ID, Touch ID, Windows Hello, fingerprint)
+        // Check for platform authenticator
         try {
             const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
             state.isSupported = true;
             state.platformAuthenticator = available;
+            state.authenticatorType = getPlatformAuthenticatorType();
 
-            console.log('[BiometricAuth] WebAuthn supported:', true);
             console.log('[BiometricAuth] Platform authenticator available:', available);
 
             return {
                 supported: true,
                 platformAuthenticator: available,
-                type: getPlatformAuthenticatorType()
+                type: state.authenticatorType
             };
         } catch (error) {
-            console.error('[BiometricAuth] Error checking platform authenticator:', error);
+            console.error('[BiometricAuth] Error checking support:', error);
             return { supported: true, platformAuthenticator: false };
         }
     }
 
     /**
-     * Detect the likely type of platform authenticator
+     * Detect the type of platform authenticator
      */
     function getPlatformAuthenticatorType() {
         const ua = navigator.userAgent.toLowerCase();
+        const platform = navigator.platform?.toLowerCase() || '';
 
         if (/iphone|ipad/.test(ua)) {
-            return 'Face ID / Touch ID';
-        } else if (/mac/.test(ua)) {
+            return 'Face ID';
+        } else if (/mac/.test(platform) || /macintosh/.test(ua)) {
             return 'Touch ID';
         } else if (/android/.test(ua)) {
             return 'Fingerprint';
-        } else if (/windows/.test(ua)) {
+        } else if (/win/.test(platform)) {
             return 'Windows Hello';
         }
         return 'Biometric';
+    }
+
+    // ============================================
+    // SESSION MANAGEMENT
+    // ============================================
+
+    /**
+     * Store session token securely
+     */
+    function storeSessionToken(token) {
+        sessionStorage.setItem(CONFIG.SESSION_TOKEN_KEY, token);
+        state.isVerified = true;
+        state.lastVerification = Date.now();
+    }
+
+    /**
+     * Get stored session token
+     */
+    function getSessionToken() {
+        return sessionStorage.getItem(CONFIG.SESSION_TOKEN_KEY);
+    }
+
+    /**
+     * Clear session
+     */
+    function clearSession() {
+        sessionStorage.removeItem(CONFIG.SESSION_TOKEN_KEY);
+        state.isVerified = false;
+        state.lastVerification = null;
+    }
+
+    /**
+     * Verify session with server
+     */
+    async function verifySession() {
+        const token = getSessionToken();
+        if (!token) return false;
+
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'verify-session',
+                    sessionToken: token
+                })
+            });
+
+            const data = await response.json();
+            if (data.success && data.verified) {
+                state.isVerified = true;
+                return true;
+            }
+
+            clearSession();
+            return false;
+        } catch (error) {
+            console.warn('[BiometricAuth] Session verification failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Check if session is verified (local check + optional server verify)
+     */
+    async function isSessionVerified(serverVerify = false) {
+        const token = getSessionToken();
+        if (!token) return false;
+
+        if (serverVerify) {
+            return await verifySession();
+        }
+
+        // Local check - assume valid if token exists
+        // Server will reject invalid tokens on API calls
+        return true;
+    }
+
+    // ============================================
+    // ACCESS CHECK
+    // ============================================
+
+    /**
+     * Check access status - is there an owner? Is this the owner's device?
+     */
+    async function checkAccessStatus() {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'check-access' })
+            });
+
+            const data = await response.json();
+
+            state.hasOwner = data.hasOwner || false;
+            state.isOwner = data.isOwnerDevice || false;
+            state.isRegistered = data.hasOwner && data.isOwnerDevice;
+
+            return {
+                hasOwner: data.hasOwner,
+                isOwnerDevice: data.isOwnerDevice,
+                canRegister: !data.hasOwner || data.isOwnerDevice,
+                canAuthenticate: data.canAuthenticate,
+                message: data.message
+            };
+        } catch (error) {
+            console.error('[BiometricAuth] Access check failed:', error);
+            // Fallback to local check
+            return {
+                hasOwner: false,
+                isOwnerDevice: false,
+                canRegister: true,
+                canAuthenticate: false,
+                message: 'Unable to verify access status'
+            };
+        }
     }
 
     // ============================================
@@ -91,7 +238,7 @@ const BiometricAuth = (() => {
     // ============================================
 
     /**
-     * Check if user has registered biometric credentials
+     * Check if user has registered credentials locally
      */
     function hasRegisteredCredentials() {
         const credentialId = localStorage.getItem(CONFIG.CREDENTIAL_STORAGE_KEY);
@@ -101,7 +248,7 @@ const BiometricAuth = (() => {
     }
 
     /**
-     * Generate a random user ID for credential storage
+     * Generate a random user ID
      */
     function generateUserId() {
         const array = new Uint8Array(16);
@@ -110,7 +257,7 @@ const BiometricAuth = (() => {
     }
 
     /**
-     * Convert ArrayBuffer to Base64URL string
+     * Convert ArrayBuffer to Base64URL
      */
     function bufferToBase64URL(buffer) {
         const bytes = new Uint8Array(buffer);
@@ -125,7 +272,7 @@ const BiometricAuth = (() => {
     }
 
     /**
-     * Convert Base64URL string to ArrayBuffer
+     * Convert Base64URL to ArrayBuffer
      */
     function base64URLToBuffer(base64url) {
         const base64 = base64url
@@ -140,39 +287,75 @@ const BiometricAuth = (() => {
         return bytes.buffer;
     }
 
+    /**
+     * Clear stored credentials
+     */
+    function clearCredentials() {
+        localStorage.removeItem(CONFIG.CREDENTIAL_STORAGE_KEY);
+        localStorage.removeItem(CONFIG.USER_ID_KEY);
+        clearSession();
+        state.isRegistered = false;
+        state.isVerified = false;
+    }
+
     // ============================================
-    // REGISTRATION
+    // REGISTRATION (Owner Lock)
     // ============================================
 
     /**
-     * Register biometric credentials (Face ID / Fingerprint)
+     * Register biometric credentials - locks dashboard to this device
      */
-    async function register() {
+    async function register(onProgress) {
         if (!state.isSupported) {
             throw new Error('WebAuthn is not supported on this device');
+        }
+
+        onProgress?.('Checking access...');
+
+        // Check if registration is allowed
+        const accessStatus = await checkAccessStatus();
+        if (!accessStatus.canRegister) {
+            throw new Error(accessStatus.message || 'Registration not allowed');
         }
 
         // Generate user ID
         const userId = generateUserId();
         const userIdBuffer = new TextEncoder().encode(userId);
 
+        onProgress?.('Getting secure challenge...');
+
         // Get challenge from server
-        let challenge;
+        let challenge, nonce;
         try {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'get-challenge', userId })
             });
+
             const data = await response.json();
-            if (!data.success) throw new Error(data.error || 'Failed to get challenge');
+
+            if (!data.success) {
+                if (data.isLocked) {
+                    throw new Error('Dashboard is secured by another device. Access denied.');
+                }
+                throw new Error(data.error || 'Failed to get challenge');
+            }
+
             challenge = base64URLToBuffer(data.challenge);
+            nonce = data.nonce;
         } catch (error) {
-            // Fallback to client-generated challenge for demo
-            console.warn('[BiometricAuth] Server unavailable, using client-generated challenge');
-            const challengeArray = new Uint8Array(32);
-            crypto.getRandomValues(challengeArray);
-            challenge = challengeArray.buffer;
+            if (error.message.includes('secured') || error.message.includes('denied')) {
+                throw error;
+            }
+            throw new Error('Unable to connect to authentication server');
+        }
+
+        onProgress?.(`Waiting for ${state.authenticatorType}...`);
+
+        // Trigger haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
         }
 
         // Create credential options
@@ -184,71 +367,83 @@ const BiometricAuth = (() => {
             },
             user: {
                 id: userIdBuffer,
-                name: 'FUSE Admin',
-                displayName: 'FUSE Dashboard User'
+                name: 'FUSE Owner',
+                displayName: 'Dashboard Owner'
             },
             pubKeyCredParams: [
-                { alg: -7, type: 'public-key' },   // ES256
-                { alg: -257, type: 'public-key' }  // RS256
+                { alg: -7, type: 'public-key' },   // ES256 (preferred)
+                { alg: -257, type: 'public-key' }  // RS256 (fallback)
             ],
             authenticatorSelection: {
-                authenticatorAttachment: 'platform', // Force platform authenticator (Face ID/fingerprint)
-                userVerification: 'required',        // Require biometric verification
+                authenticatorAttachment: 'platform',
+                userVerification: 'required',
                 residentKey: 'preferred'
             },
             timeout: 60000,
-            attestation: 'none' // We don't need attestation for this use case
+            attestation: 'none'
         };
 
         try {
-            // Prompt user for biometric registration
+            // Prompt for biometric registration
             const credential = await navigator.credentials.create({
                 publicKey: publicKeyCredentialCreationOptions
             });
 
-            // Store credential ID locally
+            onProgress?.('Securing dashboard...');
+
+            // Store credential locally
             const credentialId = bufferToBase64URL(credential.rawId);
             localStorage.setItem(CONFIG.CREDENTIAL_STORAGE_KEY, credentialId);
             localStorage.setItem(CONFIG.USER_ID_KEY, userId);
 
-            // Send public key to server for storage
-            try {
-                const attestationResponse = credential.response;
-                const publicKeyData = {
-                    action: 'register',
-                    userId,
-                    credentialId,
-                    publicKey: bufferToBase64URL(attestationResponse.getPublicKey()),
-                    clientDataJSON: bufferToBase64URL(attestationResponse.clientDataJSON),
-                    authenticatorData: bufferToBase64URL(attestationResponse.getAuthenticatorData())
-                };
+            // Register with server (owner lock)
+            const attestationResponse = credential.response;
+            const registerData = {
+                action: 'register',
+                userId,
+                credentialId,
+                publicKey: bufferToBase64URL(attestationResponse.getPublicKey()),
+                clientDataJSON: bufferToBase64URL(attestationResponse.clientDataJSON),
+                authenticatorData: bufferToBase64URL(attestationResponse.getAuthenticatorData())
+            };
 
-                await fetch(`${CONFIG.API_BASE}/biometric-register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(publicKeyData)
-                });
-            } catch (error) {
-                console.warn('[BiometricAuth] Could not store credential on server:', error);
-                // Continue anyway - credential is stored locally
+            const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(registerData)
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                clearCredentials();
+                throw new Error(data.error || 'Registration failed');
             }
 
             state.isRegistered = true;
-            console.log('[BiometricAuth] Registration successful');
+            state.isOwner = true;
+            state.hasOwner = true;
+
+            // Haptic success feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 50, 100]);
+            }
+
+            console.log('[BiometricAuth] Owner registration successful');
 
             return {
                 success: true,
-                credentialId,
-                message: 'Biometric registration successful'
+                isOwner: true,
+                message: data.message || 'Dashboard secured! Only your biometric can unlock it.'
             };
 
         } catch (error) {
             console.error('[BiometricAuth] Registration failed:', error);
 
             if (error.name === 'NotAllowedError') {
-                throw new Error('Biometric registration was cancelled or denied');
+                throw new Error(`${state.authenticatorType} verification was cancelled`);
             } else if (error.name === 'NotSupportedError') {
-                throw new Error('This device does not support biometric authentication');
+                throw new Error(`This device doesn't support ${state.authenticatorType}`);
             }
 
             throw error;
@@ -260,9 +455,9 @@ const BiometricAuth = (() => {
     // ============================================
 
     /**
-     * Authenticate using biometric credentials (Face ID / Fingerprint)
+     * Authenticate using biometric credentials
      */
-    async function authenticate() {
+    async function authenticate(onProgress) {
         if (!state.isSupported) {
             throw new Error('WebAuthn is not supported on this device');
         }
@@ -271,26 +466,46 @@ const BiometricAuth = (() => {
         const userId = localStorage.getItem(CONFIG.USER_ID_KEY);
 
         if (!credentialId || !userId) {
-            throw new Error('No biometric credentials registered. Please set up biometric authentication first.');
+            throw new Error('No credentials found. Please set up biometric access first.');
         }
 
+        onProgress?.('Verifying access...');
+
         // Get challenge from server
-        let challenge;
+        let challenge, serverCredentialId;
         try {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get-challenge', userId })
+                body: JSON.stringify({ action: 'get-challenge' })
             });
+
             const data = await response.json();
-            if (!data.success) throw new Error(data.error || 'Failed to get challenge');
+
+            if (!data.success) {
+                if (data.isLocked) {
+                    throw new Error('Access denied. This dashboard is secured by another device.');
+                }
+                if (data.requiresSetup) {
+                    throw new Error('Dashboard not configured. Please set up biometric access.');
+                }
+                throw new Error(data.error || 'Authentication failed');
+            }
+
             challenge = base64URLToBuffer(data.challenge);
+            serverCredentialId = data.credentialId;
         } catch (error) {
-            // Fallback to client-generated challenge for demo
-            console.warn('[BiometricAuth] Server unavailable, using client-generated challenge');
-            const challengeArray = new Uint8Array(32);
-            crypto.getRandomValues(challengeArray);
-            challenge = challengeArray.buffer;
+            if (error.message.includes('denied') || error.message.includes('secured')) {
+                throw error;
+            }
+            throw new Error('Unable to connect to authentication server');
+        }
+
+        onProgress?.(`Waiting for ${state.authenticatorType}...`);
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
         }
 
         // Create authentication options
@@ -298,107 +513,76 @@ const BiometricAuth = (() => {
             challenge: challenge,
             rpId: CONFIG.RP_ID,
             allowCredentials: [{
-                id: base64URLToBuffer(credentialId),
+                id: base64URLToBuffer(serverCredentialId || credentialId),
                 type: 'public-key',
-                transports: ['internal'] // Platform authenticator
+                transports: ['internal']
             }],
             userVerification: 'required',
             timeout: 60000
         };
 
         try {
-            // Prompt user for biometric verification
+            // Prompt for biometric verification
             const assertion = await navigator.credentials.get({
                 publicKey: publicKeyCredentialRequestOptions
             });
 
-            // Verify with server
-            try {
-                const verifyResponse = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'verify',
-                        userId,
-                        credentialId: bufferToBase64URL(assertion.rawId),
-                        authenticatorData: bufferToBase64URL(assertion.response.authenticatorData),
-                        clientDataJSON: bufferToBase64URL(assertion.response.clientDataJSON),
-                        signature: bufferToBase64URL(assertion.response.signature)
-                    })
-                });
+            onProgress?.('Verifying identity...');
 
-                const verifyData = await verifyResponse.json();
-                if (verifyData.success) {
-                    markVerified();
-                    return { success: true, verified: true };
-                }
-            } catch (error) {
-                console.warn('[BiometricAuth] Server verification unavailable:', error);
+            // Verify with server
+            const verifyData = {
+                action: 'verify',
+                credentialId: bufferToBase64URL(assertion.rawId),
+                authenticatorData: bufferToBase64URL(assertion.response.authenticatorData),
+                clientDataJSON: bufferToBase64URL(assertion.response.clientDataJSON),
+                signature: bufferToBase64URL(assertion.response.signature)
+            };
+
+            const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(verifyData)
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Verification failed');
             }
 
-            // If server verification fails or unavailable, accept the local assertion
-            // (The biometric was verified by the device - this is sufficient for our use case)
-            markVerified();
+            // Store session token
+            if (data.sessionToken) {
+                storeSessionToken(data.sessionToken);
+            }
+
+            state.isVerified = true;
+            state.lastVerification = Date.now();
+
+            // Success haptic
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 50, 100]);
+            }
 
             console.log('[BiometricAuth] Authentication successful');
+
             return {
                 success: true,
                 verified: true,
-                message: 'Biometric authentication successful'
+                message: data.message || 'Welcome back! Dashboard unlocked.'
             };
 
         } catch (error) {
             console.error('[BiometricAuth] Authentication failed:', error);
 
             if (error.name === 'NotAllowedError') {
-                throw new Error('Biometric authentication was cancelled or denied');
+                throw new Error(`${state.authenticatorType} verification was cancelled`);
             } else if (error.name === 'InvalidStateError') {
-                // Credential not found - clear stored data
                 clearCredentials();
-                throw new Error('Biometric credentials not found. Please register again.');
+                throw new Error('Credentials not found. Please set up biometric access again.');
             }
 
             throw error;
         }
-    }
-
-    /**
-     * Mark session as verified
-     */
-    function markVerified() {
-        const now = Date.now();
-        state.isVerified = true;
-        state.lastVerification = now;
-        sessionStorage.setItem(CONFIG.AUTH_VERIFIED_KEY, now.toString());
-    }
-
-    /**
-     * Check if current session is verified
-     */
-    function isSessionVerified() {
-        const verifiedAt = sessionStorage.getItem(CONFIG.AUTH_VERIFIED_KEY);
-        if (!verifiedAt) return false;
-
-        const elapsed = Date.now() - parseInt(verifiedAt, 10);
-        const valid = elapsed < CONFIG.SESSION_DURATION;
-
-        if (!valid) {
-            sessionStorage.removeItem(CONFIG.AUTH_VERIFIED_KEY);
-        }
-
-        state.isVerified = valid;
-        return valid;
-    }
-
-    /**
-     * Clear stored credentials
-     */
-    function clearCredentials() {
-        localStorage.removeItem(CONFIG.CREDENTIAL_STORAGE_KEY);
-        localStorage.removeItem(CONFIG.USER_ID_KEY);
-        sessionStorage.removeItem(CONFIG.AUTH_VERIFIED_KEY);
-        state.isRegistered = false;
-        state.isVerified = false;
     }
 
     // ============================================
@@ -410,6 +594,9 @@ const BiometricAuth = (() => {
         checkSupport,
         getPlatformAuthenticatorType,
 
+        // Access control
+        checkAccessStatus,
+
         // Credential management
         hasRegisteredCredentials,
         clearCredentials,
@@ -420,7 +607,9 @@ const BiometricAuth = (() => {
 
         // Session management
         isSessionVerified,
-        markVerified,
+        verifySession,
+        clearSession,
+        getSessionToken,
 
         // State access
         getState: () => ({ ...state }),

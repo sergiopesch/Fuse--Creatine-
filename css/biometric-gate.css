@@ -1,0 +1,651 @@
+/* ============================================
+   FUSE Elite Biometric Gate
+   Premium authentication interface
+   v2.0.0
+   ============================================ */
+
+:root {
+    --gate-bg: #050508;
+    --gate-primary: #6366f1;
+    --gate-primary-light: #818cf8;
+    --gate-accent: #22d3ee;
+    --gate-success: #10b981;
+    --gate-error: #ef4444;
+    --gate-warning: #f59e0b;
+    --gate-glass: rgba(15, 15, 20, 0.85);
+    --gate-glass-light: rgba(255, 255, 255, 0.03);
+    --gate-border: rgba(255, 255, 255, 0.08);
+    --gate-glow: rgba(99, 102, 241, 0.4);
+}
+
+/* ============================================
+   BIOMETRIC GATE OVERLAY
+   ============================================ */
+
+.biometric-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gate-bg);
+    overflow: hidden;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.biometric-gate.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.05);
+    pointer-events: none;
+}
+
+/* Background Effects */
+.biometric-gate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(34, 211, 238, 0.08), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(99, 102, 241, 0.08), transparent);
+    pointer-events: none;
+}
+
+/* Animated Grid Pattern */
+.biometric-gate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+}
+
+/* ============================================
+   GATE CONTENT CONTAINER
+   ============================================ */
+
+.biometric-gate-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+}
+
+/* ============================================
+   BIOMETRIC ICON / SCANNER
+   ============================================ */
+
+.biometric-icon-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin-bottom: 32px;
+}
+
+/* Outer Ring - Pulsing */
+.biometric-ring-outer {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    animation: pulseRing 3s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.08); opacity: 0.2; }
+}
+
+/* Middle Ring */
+.biometric-ring-middle {
+    position: absolute;
+    inset: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    animation: pulseRing 3s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+/* Inner Glass Circle */
+.biometric-icon-inner {
+    position: absolute;
+    inset: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gate-glass);
+    border-radius: 50%;
+    border: 1px solid var(--gate-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.biometric-icon-inner svg {
+    width: 48px;
+    height: 48px;
+    color: var(--gate-primary-light);
+    transition: all 0.4s ease;
+}
+
+/* Icon States */
+.biometric-icon-container.scanning .biometric-icon-inner {
+    border-color: var(--gate-primary);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 40px var(--gate-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.biometric-icon-container.scanning .biometric-icon-inner svg {
+    animation: iconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.biometric-icon-container.success .biometric-icon-inner {
+    border-color: var(--gate-success);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(16, 185, 129, 0.4);
+}
+
+.biometric-icon-container.success .biometric-icon-inner svg {
+    color: var(--gate-success);
+}
+
+.biometric-icon-container.error .biometric-icon-inner {
+    border-color: var(--gate-error);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(239, 68, 68, 0.3);
+    animation: shake 0.5s ease;
+}
+
+.biometric-icon-container.error .biometric-icon-inner svg {
+    color: var(--gate-error);
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+/* Scanning Line Animation */
+.scanning-line {
+    position: absolute;
+    left: 50%;
+    top: 32px;
+    width: 2px;
+    height: 0;
+    background: linear-gradient(180deg, transparent, var(--gate-primary), transparent);
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.biometric-icon-container.scanning .scanning-line {
+    opacity: 1;
+    animation: scanLine 2s ease-in-out infinite;
+}
+
+@keyframes scanLine {
+    0%, 100% { height: 0; top: 32px; }
+    50% { height: 96px; top: 32px; }
+    100% { height: 0; top: 128px; }
+}
+
+/* Rotating Glow */
+.rotating-glow {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        var(--gate-primary) 60deg,
+        transparent 120deg
+    );
+    opacity: 0;
+    filter: blur(8px);
+    animation: none;
+}
+
+.biometric-icon-container.scanning .rotating-glow {
+    opacity: 0.5;
+    animation: rotateGlow 3s linear infinite;
+}
+
+@keyframes rotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   TEXT CONTENT
+   ============================================ */
+
+.biometric-title {
+    font-family: 'Bebas Neue', 'Inter', sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: #fff;
+    margin: 0 0 12px 0;
+    text-shadow: 0 2px 20px rgba(99, 102, 241, 0.3);
+}
+
+.biometric-subtitle {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 8px 0;
+    line-height: 1.6;
+}
+
+.biometric-type {
+    color: var(--gate-primary-light);
+    font-weight: 500;
+}
+
+.biometric-message {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 32px 0;
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+
+.biometric-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-top: 24px;
+}
+
+.btn-biometric {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-biometric svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+/* Primary Button - Gradient */
+.btn-biometric.btn-primary-bio {
+    background: linear-gradient(135deg, var(--gate-primary), #4f46e5);
+    color: #fff;
+    box-shadow:
+        0 4px 20px rgba(99, 102, 241, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-biometric.btn-primary-bio:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 30px rgba(99, 102, 241, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-biometric.btn-primary-bio:hover:not(:disabled) svg {
+    transform: scale(1.1);
+}
+
+.btn-biometric.btn-primary-bio:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-biometric.btn-primary-bio:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Secondary Button - Glass */
+.btn-biometric.btn-secondary-bio {
+    background: var(--gate-glass);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--gate-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-biometric.btn-secondary-bio:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Setup Button - Accent */
+.btn-biometric.btn-setup {
+    background: linear-gradient(135deg, #0891b2, var(--gate-accent));
+    color: #fff;
+    box-shadow:
+        0 4px 20px rgba(34, 211, 238, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-biometric.btn-setup:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 30px rgba(34, 211, 238, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Button Shimmer Effect */
+.btn-biometric::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.btn-biometric:hover::after {
+    left: 100%;
+}
+
+/* ============================================
+   STATUS MESSAGES
+   ============================================ */
+
+.biometric-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 24px;
+    margin-top: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.biometric-status.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.biometric-status.success {
+    color: var(--gate-success);
+}
+
+.biometric-status.error {
+    color: var(--gate-error);
+}
+
+.biometric-status.info {
+    color: var(--gate-primary-light);
+}
+
+.biometric-status.warning {
+    color: var(--gate-warning);
+}
+
+/* Status Icon Animation */
+.status-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.biometric-status.success .status-icon {
+    animation: checkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes checkPop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* ============================================
+   NOT SUPPORTED STATE
+   ============================================ */
+
+.biometric-not-supported {
+    display: none;
+    text-align: center;
+}
+
+.biometric-gate.not-supported .biometric-supported {
+    display: none;
+}
+
+.biometric-gate.not-supported .biometric-not-supported {
+    display: block;
+}
+
+.biometric-not-supported .biometric-icon-inner {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.biometric-not-supported .biometric-icon-inner svg {
+    color: var(--gate-error);
+}
+
+.biometric-alt-actions {
+    margin-top: 32px;
+}
+
+.biometric-alt-actions p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 20px;
+}
+
+/* ============================================
+   LOCKED STATE (Non-owner device)
+   ============================================ */
+
+.biometric-gate.locked .biometric-icon-inner {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.biometric-gate.locked .biometric-icon-inner svg {
+    color: var(--gate-error);
+}
+
+.biometric-gate.locked .biometric-ring-outer,
+.biometric-gate.locked .biometric-ring-middle {
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+
+.biometric-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gate-border);
+}
+
+.biometric-footer p {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.biometric-footer svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Security Badge */
+.security-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--gate-success);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.security-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* ============================================
+   VERIFIED BADGE (Header)
+   ============================================ */
+
+.biometric-verified-badge {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--gate-success);
+    font-weight: 500;
+}
+
+.biometric-verified-badge svg {
+    width: 16px;
+    height: 16px;
+}
+
+.biometric-verified .biometric-verified-badge {
+    display: flex;
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 599px) {
+    .biometric-gate-content {
+        padding: 32px 24px;
+    }
+
+    .biometric-icon-container {
+        width: 140px;
+        height: 140px;
+    }
+
+    .biometric-icon-inner {
+        inset: 28px;
+    }
+
+    .biometric-icon-inner svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .biometric-title {
+        font-size: 26px;
+    }
+
+    .biometric-subtitle {
+        font-size: 14px;
+    }
+
+    .btn-biometric {
+        padding: 14px 20px;
+        font-size: 14px;
+    }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .biometric-gate::after,
+    .biometric-ring-outer,
+    .biometric-ring-middle,
+    .scanning-line,
+    .rotating-glow,
+    .biometric-icon-container.scanning .biometric-icon-inner svg {
+        animation: none;
+    }
+
+    .biometric-gate,
+    .biometric-icon-inner,
+    .btn-biometric,
+    .biometric-status {
+        transition-duration: 0.01ms;
+    }
+}
