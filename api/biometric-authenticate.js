@@ -261,6 +261,65 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
         }
 
         // ====================================
+        // RESET OWNER (Admin only)
+        // ====================================
+        if (action === 'reset-owner') {
+            const adminToken = process.env.ADMIN_TOKEN;
+            const providedToken = validatedBody.adminToken;
+
+            if (!adminToken) {
+                return res.status(503).json({
+                    success: false,
+                    error: 'Admin functionality not configured'
+                });
+            }
+
+            if (!providedToken || providedToken !== adminToken) {
+                addAuditEntry({
+                    action: 'BIOMETRIC_RESET_UNAUTHORIZED',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-authenticate'
+                });
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid admin token'
+                });
+            }
+
+            // Delete the owner credential
+            const { del } = require('@vercel/blob');
+            const blobPath = 'biometric-credentials/owner-credential.json';
+
+            try {
+                const { blobs } = await require('@vercel/blob').list({ prefix: 'biometric-credentials/' });
+                const blob = blobs.find(b => b.pathname === blobPath);
+
+                if (blob) {
+                    await del(blob.url);
+                }
+
+                addAuditEntry({
+                    action: 'BIOMETRIC_OWNER_RESET',
+                    ip: clientIp,
+                    success: true,
+                    endpoint: '/api/biometric-authenticate'
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Owner registration cleared. You can now register a new owner.'
+                });
+            } catch (error) {
+                console.error('[BiometricAuth] Reset owner failed:', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to reset owner registration'
+                });
+            }
+        }
+
+        // ====================================
         // CHECK ACCESS STATUS
         // ====================================
         if (action === 'check-access') {
