@@ -4,7 +4,12 @@
  *
  * SECURITY NOTICE: This file contains critical security controls.
  * Do not modify the security functions without thorough review.
+ *
+ * @version 2.0.0 - Added cost tracking, circuit breaker, improved resilience
  */
+
+const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
+const { resilientFetch, getCircuit } = require('./_lib/circuit-breaker');
 
 // ============================================================================
 // SECURITY LAYER 1: PROMPT INJECTION DETECTION PATTERNS
@@ -758,21 +763,76 @@ module.exports = async (req, res) => {
             { role: 'user', content: securityCheck.sanitizedInput }
         ];
 
-        // Call Claude API
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
+        // Estimate input tokens for cost tracking
+        const inputText = FUSE_KNOWLEDGE + formattedMessages.map(m => m.content).join(' ');
+        const estimatedInputTokens = estimateTokens(inputText);
+
+        const requestStartTime = Date.now();
+        let response;
+        let apiSuccess = false;
+
+        // ================================================================
+        // Call Claude API with circuit breaker for resilience
+        // ================================================================
+        try {
+            response = await resilientFetch(
+                'https://api.anthropic.com/v1/messages',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-3-5-haiku-latest',
+                        max_tokens: 512,
+                        system: FUSE_KNOWLEDGE,
+                        messages: formattedMessages
+                    })
+                },
+                {
+                    circuitName: 'anthropic-api',
+                    circuitOptions: {
+                        failureThreshold: 5,
+                        resetTimeoutMs: 30000,
+                        requestTimeoutMs: 15000
+                    },
+                    retryOptions: {
+                        maxRetries: 2,
+                        shouldRetry: (error) => {
+                            // Retry on network errors and 5xx, not on 4xx
+                            if (error.message?.includes('timeout')) return true;
+                            if (error.status >= 500) return true;
+                            return false;
+                        }
+                    },
+                    fallbackResponse: {
+                        error: 'Chat service is temporarily unavailable',
+                        code: 'CIRCUIT_OPEN'
+                    }
+                }
+            );
+        } catch (circuitError) {
+            console.error('[Chat API] Circuit breaker error:', circuitError.message);
+
+            // Record failed usage
+            recordUsage({
+                provider: 'anthropic',
                 model: 'claude-3-5-haiku-latest',
-                max_tokens: 512,
-                system: FUSE_KNOWLEDGE,
-                messages: formattedMessages
-            })
-        });
+                inputTokens: estimatedInputTokens,
+                outputTokens: 0,
+                endpoint: '/api/chat',
+                clientIp,
+                success: false,
+                latencyMs: Date.now() - requestStartTime
+            });
+
+            return res.status(503).json({
+                error: 'Chat service is temporarily unavailable. Please try again later.',
+                code: 'SERVICE_UNAVAILABLE'
+            });
+        }
 
         // Handle API errors
         if (!response.ok) {
@@ -789,6 +849,18 @@ module.exports = async (req, res) => {
                 statusText: response.statusText,
                 error: errorData,
                 keyPrefix: apiKey.substring(0, 10) + '...'
+            });
+
+            // Record failed usage
+            recordUsage({
+                provider: 'anthropic',
+                model: 'claude-3-5-haiku-latest',
+                inputTokens: estimatedInputTokens,
+                outputTokens: 0,
+                endpoint: '/api/chat',
+                clientIp,
+                success: false,
+                latencyMs: Date.now() - requestStartTime
             });
 
             // Map status codes to user-friendly errors
@@ -834,6 +906,19 @@ module.exports = async (req, res) => {
                 isArray: Array.isArray(data?.content),
                 length: data?.content?.length
             });
+
+            // Record failed usage
+            recordUsage({
+                provider: 'anthropic',
+                model: 'claude-3-5-haiku-latest',
+                inputTokens: estimatedInputTokens,
+                outputTokens: 0,
+                endpoint: '/api/chat',
+                clientIp,
+                success: false,
+                latencyMs: Date.now() - requestStartTime
+            });
+
             return res.status(503).json({
                 error: 'Received an invalid response. Please try again.',
                 code: 'INVALID_RESPONSE'
@@ -850,6 +935,24 @@ module.exports = async (req, res) => {
         }
 
         const assistantMessage = firstContent.text;
+        apiSuccess = true;
+
+        // ================================================================
+        // COST TRACKING: Record successful API usage
+        // ================================================================
+        const outputTokens = data.usage?.output_tokens || estimateTokens(assistantMessage);
+        const actualInputTokens = data.usage?.input_tokens || estimatedInputTokens;
+
+        recordUsage({
+            provider: 'anthropic',
+            model: 'claude-3-5-haiku-latest',
+            inputTokens: actualInputTokens,
+            outputTokens: outputTokens,
+            endpoint: '/api/chat',
+            clientIp,
+            success: true,
+            latencyMs: Date.now() - requestStartTime
+        });
 
         // ================================================================
         // SECURITY CHECK: Validate LLM response for information leakage
@@ -880,6 +983,14 @@ module.exports = async (req, res) => {
             return res.status(503).json({
                 error: 'Unable to connect to chat service. Please try again.',
                 code: 'NETWORK_ERROR'
+            });
+        }
+
+        // Check for circuit breaker errors
+        if (error.message?.includes('Circuit') || error.message?.includes('OPEN')) {
+            return res.status(503).json({
+                error: 'Chat service is temporarily unavailable. Please try again shortly.',
+                code: 'CIRCUIT_OPEN'
             });
         }
 
