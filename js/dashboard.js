@@ -23,6 +23,8 @@
     // AGENT DATA (for modal details)
     // ============================================
 
+    // Agent data - All agents start IDLE (paused by default)
+    // Real activity comes from orchestration API
     const AGENT_DATA = {
         'architect': {
             name: 'Architect',
@@ -30,17 +32,13 @@
             team: 'developer',
             teamLabel: 'Developer Team',
             capabilities: ['System Architecture', 'API Design', 'Database Modeling', 'Scalability Planning'],
-            stats: { tasksCompleted: 147, avgResponseTime: '1.2s', uptime: '99.9%' },
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
             currentTask: {
-                title: 'System Design Review',
-                description: 'Reviewing microservices architecture for the new payment processing module',
-                progress: 68
+                title: 'Awaiting Orchestration',
+                description: 'Start team orchestration to activate this agent',
+                progress: 0
             },
-            recentActivity: [
-                { time: '2m ago', text: 'Completed API specification document' },
-                { time: '15m ago', text: 'Started system design review' },
-                { time: '1h ago', text: 'Pushed architecture diagrams to repository' }
-            ]
+            recentActivity: []
         },
         'coder': {
             name: 'Coder',
@@ -48,17 +46,13 @@
             team: 'developer',
             teamLabel: 'Developer Team',
             capabilities: ['Full-Stack Development', 'Code Review', 'Testing', 'Documentation'],
-            stats: { tasksCompleted: 312, avgResponseTime: '0.8s', uptime: '99.8%' },
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
             currentTask: {
-                title: 'Feature Implementation',
-                description: 'Building the new dashboard components with React and TypeScript',
-                progress: 45
+                title: 'Awaiting Orchestration',
+                description: 'Start team orchestration to activate this agent',
+                progress: 0
             },
-            recentActivity: [
-                { time: '5m ago', text: 'Committed 23 files to feature branch' },
-                { time: '30m ago', text: 'Fixed 3 TypeScript errors' },
-                { time: '2h ago', text: 'Started component implementation' }
-            ]
+            recentActivity: []
         },
         'tester': {
             name: 'QA Engineer',
@@ -66,17 +60,13 @@
             team: 'developer',
             teamLabel: 'Developer Team',
             capabilities: ['Unit Testing', 'Integration Testing', 'E2E Testing', 'Performance Testing'],
-            stats: { tasksCompleted: 89, avgResponseTime: '2.1s', uptime: '99.7%' },
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
             currentTask: {
-                title: 'Standby',
-                description: 'Waiting for new test assignments',
+                title: 'Awaiting Orchestration',
+                description: 'Start team orchestration to activate this agent',
                 progress: 0
             },
-            recentActivity: [
-                { time: '1h ago', text: 'Completed regression test suite' },
-                { time: '3h ago', text: 'Filed 2 bug reports' },
-                { time: '5h ago', text: 'Updated test documentation' }
-            ]
+            recentActivity: []
         },
         'ux-lead': {
             name: 'UX Lead',
@@ -84,17 +74,9 @@
             team: 'design',
             teamLabel: 'Design Team',
             capabilities: ['User Research', 'Usability Testing', 'Information Architecture', 'Wireframing'],
-            stats: { tasksCompleted: 76, avgResponseTime: '1.5s', uptime: '99.9%' },
-            currentTask: {
-                title: 'User Research Analysis',
-                description: 'Analyzing user interview data to identify pain points in the onboarding flow',
-                progress: 82
-            },
-            recentActivity: [
-                { time: '10m ago', text: 'Updated user persona documentation' },
-                { time: '45m ago', text: 'Completed usability test session' },
-                { time: '2h ago', text: 'Started research analysis' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'ui-artist': {
             name: 'Visual Designer',
@@ -102,17 +84,9 @@
             team: 'design',
             teamLabel: 'Design Team',
             capabilities: ['UI Design', 'Iconography', 'Design Systems', 'Prototyping'],
-            stats: { tasksCompleted: 134, avgResponseTime: '1.8s', uptime: '99.6%' },
-            currentTask: {
-                title: 'Standby',
-                description: 'Awaiting design review feedback',
-                progress: 0
-            },
-            recentActivity: [
-                { time: '30m ago', text: 'Submitted design for review' },
-                { time: '2h ago', text: 'Updated icon library' },
-                { time: '4h ago', text: 'Created 5 new component designs' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'motion': {
             name: 'Motion Designer',
@@ -120,17 +94,9 @@
             team: 'design',
             teamLabel: 'Design Team',
             capabilities: ['Motion Design', 'Micro-interactions', 'Animation Systems', 'Lottie Export'],
-            stats: { tasksCompleted: 67, avgResponseTime: '2.3s', uptime: '99.5%' },
-            currentTask: {
-                title: 'Animation Design',
-                description: 'Creating smooth transitions for the new modal components',
-                progress: 55
-            },
-            recentActivity: [
-                { time: '8m ago', text: 'Exported Lottie animations' },
-                { time: '1h ago', text: 'Updated animation timing curves' },
-                { time: '3h ago', text: 'Started modal transition design' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'content-strategist': {
             name: 'Content Strategist',
@@ -138,17 +104,9 @@
             team: 'communications',
             teamLabel: 'Communications Team',
             capabilities: ['Content Strategy', 'Editorial Planning', 'SEO', 'Content Audit'],
-            stats: { tasksCompleted: 98, avgResponseTime: '1.4s', uptime: '99.8%' },
-            currentTask: {
-                title: 'Content Planning',
-                description: 'Developing Q2 content calendar and editorial guidelines',
-                progress: 72
-            },
-            recentActivity: [
-                { time: '5m ago', text: 'Updated content calendar' },
-                { time: '1h ago', text: 'Reviewed blog post drafts' },
-                { time: '3h ago', text: 'Completed competitor analysis' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'copywriter': {
             name: 'Copywriter',
@@ -156,17 +114,9 @@
             team: 'communications',
             teamLabel: 'Communications Team',
             capabilities: ['Copywriting', 'Brand Voice', 'UX Writing', 'Email Marketing'],
-            stats: { tasksCompleted: 156, avgResponseTime: '1.1s', uptime: '99.7%' },
-            currentTask: {
-                title: 'Standby',
-                description: 'Ready for new writing assignments',
-                progress: 0
-            },
-            recentActivity: [
-                { time: '45m ago', text: 'Submitted landing page copy' },
-                { time: '2h ago', text: 'Revised email sequences' },
-                { time: '4h ago', text: 'Updated product descriptions' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'social-manager': {
             name: 'Social Manager',
@@ -174,17 +124,9 @@
             team: 'communications',
             teamLabel: 'Communications Team',
             capabilities: ['Social Media Management', 'Community Engagement', 'Analytics', 'Campaign Planning'],
-            stats: { tasksCompleted: 203, avgResponseTime: '0.9s', uptime: '99.9%' },
-            currentTask: {
-                title: 'Community Engagement',
-                description: 'Responding to community feedback and managing social conversations',
-                progress: 40
-            },
-            recentActivity: [
-                { time: '2m ago', text: 'Responded to 15 comments' },
-                { time: '20m ago', text: 'Scheduled posts for the week' },
-                { time: '1h ago', text: 'Published engagement report' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'compliance-officer': {
             name: 'Compliance Officer',
@@ -192,17 +134,9 @@
             team: 'legal',
             teamLabel: 'Legal Team',
             capabilities: ['GDPR Compliance', 'Privacy Reviews', 'Risk Assessment', 'Policy Development'],
-            stats: { tasksCompleted: 45, avgResponseTime: '3.2s', uptime: '99.9%' },
-            currentTask: {
-                title: 'GDPR Review',
-                description: 'Conducting quarterly data processing compliance audit',
-                progress: 35
-            },
-            recentActivity: [
-                { time: '15m ago', text: 'Updated privacy policy draft' },
-                { time: '2h ago', text: 'Completed vendor assessment' },
-                { time: '1d ago', text: 'Filed compliance report' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'contract-analyst': {
             name: 'Contract Analyst',
@@ -210,17 +144,9 @@
             team: 'legal',
             teamLabel: 'Legal Team',
             capabilities: ['Contract Review', 'Negotiation Support', 'Risk Analysis', 'Template Management'],
-            stats: { tasksCompleted: 67, avgResponseTime: '2.8s', uptime: '99.6%' },
-            currentTask: {
-                title: 'Standby',
-                description: 'Ready for contract review requests',
-                progress: 0
-            },
-            recentActivity: [
-                { time: '3h ago', text: 'Completed vendor contract review' },
-                { time: '6h ago', text: 'Updated contract templates' },
-                { time: '1d ago', text: 'Negotiation support for partnership' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'ip-counsel': {
             name: 'IP Counsel',
@@ -228,17 +154,9 @@
             team: 'legal',
             teamLabel: 'Legal Team',
             capabilities: ['Patent Filing', 'Trademark Protection', 'IP Strategy', 'Licensing'],
-            stats: { tasksCompleted: 34, avgResponseTime: '4.1s', uptime: '99.8%' },
-            currentTask: {
-                title: 'Standby',
-                description: 'Monitoring IP portfolio',
-                progress: 0
-            },
-            recentActivity: [
-                { time: '1d ago', text: 'Filed provisional patent' },
-                { time: '3d ago', text: 'Completed trademark search' },
-                { time: '1w ago', text: 'Updated licensing agreements' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'growth-lead': {
             name: 'Growth Lead',
@@ -246,17 +164,9 @@
             team: 'marketing',
             teamLabel: 'Marketing Team',
             capabilities: ['Growth Strategy', 'A/B Testing', 'Funnel Optimization', 'Analytics'],
-            stats: { tasksCompleted: 112, avgResponseTime: '1.3s', uptime: '99.9%' },
-            currentTask: {
-                title: 'Acquisition Campaign',
-                description: 'Optimizing paid acquisition channels and landing page conversion',
-                progress: 58
-            },
-            recentActivity: [
-                { time: '5m ago', text: 'Updated campaign targeting' },
-                { time: '30m ago', text: 'Analyzed A/B test results' },
-                { time: '2h ago', text: 'Launched new ad creative' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'brand-strategist': {
             name: 'Brand Strategist',
@@ -264,17 +174,9 @@
             team: 'marketing',
             teamLabel: 'Marketing Team',
             capabilities: ['Brand Strategy', 'Positioning', 'Messaging', 'Brand Guidelines'],
-            stats: { tasksCompleted: 56, avgResponseTime: '2.0s', uptime: '99.7%' },
-            currentTask: {
-                title: 'Brand Positioning',
-                description: 'Refining brand positioning for the enterprise market segment',
-                progress: 75
-            },
-            recentActivity: [
-                { time: '20m ago', text: 'Completed competitor positioning map' },
-                { time: '1h ago', text: 'Updated brand guidelines' },
-                { time: '4h ago', text: 'Presented brand strategy to leadership' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'analytics-expert': {
             name: 'Analytics Expert',
@@ -282,17 +184,9 @@
             team: 'marketing',
             teamLabel: 'Marketing Team',
             capabilities: ['Marketing Analytics', 'Attribution Modeling', 'Dashboard Creation', 'Reporting'],
-            stats: { tasksCompleted: 189, avgResponseTime: '1.6s', uptime: '99.8%' },
-            currentTask: {
-                title: 'Data Analysis',
-                description: 'Building attribution model for multi-touch campaign analysis',
-                progress: 62
-            },
-            recentActivity: [
-                { time: '10m ago', text: 'Published weekly metrics report' },
-                { time: '1h ago', text: 'Updated attribution dashboard' },
-                { time: '3h ago', text: 'Analyzed channel performance' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'launch-coordinator': {
             name: 'Launch Coordinator',
@@ -300,17 +194,9 @@
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
             capabilities: ['Launch Planning', 'Timeline Management', 'Cross-functional Coordination', 'Go-live Support'],
-            stats: { tasksCompleted: 78, avgResponseTime: '1.5s', uptime: '99.9%' },
-            currentTask: {
-                title: 'Timeline Management',
-                description: 'Coordinating Q2 product launch across all departments',
-                progress: 48
-            },
-            recentActivity: [
-                { time: '15m ago', text: 'Updated launch timeline' },
-                { time: '1h ago', text: 'Completed stakeholder alignment call' },
-                { time: '3h ago', text: 'Reviewed launch checklist' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'partnership-manager': {
             name: 'Partnership Manager',
@@ -318,17 +204,9 @@
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
             capabilities: ['Partner Recruitment', 'Relationship Management', 'Co-marketing', 'Integration Support'],
-            stats: { tasksCompleted: 45, avgResponseTime: '2.2s', uptime: '99.6%' },
-            currentTask: {
-                title: 'Standby',
-                description: 'Monitoring partner pipeline and relationship health',
-                progress: 0
-            },
-            recentActivity: [
-                { time: '2h ago', text: 'Completed partner onboarding' },
-                { time: '6h ago', text: 'Negotiated co-marketing deal' },
-                { time: '1d ago', text: 'Updated partner documentation' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'market-researcher': {
             name: 'Market Researcher',
@@ -336,17 +214,9 @@
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
             capabilities: ['Market Research', 'Competitive Analysis', 'Trend Analysis', 'Customer Insights'],
-            stats: { tasksCompleted: 67, avgResponseTime: '2.5s', uptime: '99.7%' },
-            currentTask: {
-                title: 'Trend Analysis',
-                description: 'Researching emerging trends in AI-powered automation',
-                progress: 80
-            },
-            recentActivity: [
-                { time: '10m ago', text: 'Published industry trends report' },
-                { time: '2h ago', text: 'Completed competitive analysis' },
-                { time: '5h ago', text: 'Interviewed 3 industry experts' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'sales-director': {
             name: 'Sales Director',
@@ -354,17 +224,9 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Revenue Planning', 'Team Leadership', 'Strategic Accounts', 'Forecasting'],
-            stats: { tasksCompleted: 156, avgResponseTime: '1.0s', uptime: '99.9%' },
-            currentTask: {
-                title: 'Revenue Strategy',
-                description: 'Developing Q2 revenue acceleration plan and territory alignment',
-                progress: 70
-            },
-            recentActivity: [
-                { time: '2m ago', text: 'Completed pipeline review' },
-                { time: '30m ago', text: 'Updated revenue forecast' },
-                { time: '2h ago', text: 'Coached team on enterprise deals' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'account-executive': {
             name: 'Account Executive',
@@ -372,17 +234,9 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Enterprise Sales', 'Solution Selling', 'Contract Negotiation', 'Relationship Building'],
-            stats: { tasksCompleted: 234, avgResponseTime: '0.9s', uptime: '99.8%' },
-            currentTask: {
-                title: 'Enterprise Deals',
-                description: 'Managing pipeline of 12 enterprise opportunities worth $2.4M',
-                progress: 55
-            },
-            recentActivity: [
-                { time: '5m ago', text: 'Sent proposal to Fortune 500 prospect' },
-                { time: '1h ago', text: 'Completed discovery call' },
-                { time: '3h ago', text: 'Updated CRM with deal notes' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'sdr': {
             name: 'SDR Lead',
@@ -390,17 +244,9 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Outbound Prospecting', 'Lead Qualification', 'Cold Outreach', 'Pipeline Generation'],
-            stats: { tasksCompleted: 456, avgResponseTime: '0.7s', uptime: '99.9%' },
-            currentTask: {
-                title: 'Prospecting',
-                description: 'Running multi-channel outreach campaign to ICP accounts',
-                progress: 65
-            },
-            recentActivity: [
-                { time: '1m ago', text: 'Booked 3 new meetings' },
-                { time: '15m ago', text: 'Sent 50 personalized emails' },
-                { time: '1h ago', text: 'Updated lead scoring criteria' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'solutions-consultant': {
             name: 'Solutions Consultant',
@@ -408,17 +254,9 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Technical Demos', 'Solution Design', 'POC Management', 'Technical Discovery'],
-            stats: { tasksCompleted: 123, avgResponseTime: '1.8s', uptime: '99.7%' },
-            currentTask: {
-                title: 'Standby',
-                description: 'Preparing for upcoming technical demos',
-                progress: 0
-            },
-            recentActivity: [
-                { time: '2h ago', text: 'Completed technical demo' },
-                { time: '5h ago', text: 'Built custom POC environment' },
-                { time: '1d ago', text: 'Updated demo scripts' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         },
         'customer-success': {
             name: 'Customer Success',
@@ -426,17 +264,9 @@
             team: 'sales',
             teamLabel: 'Sales Team',
             capabilities: ['Onboarding', 'QBR Management', 'Expansion', 'Churn Prevention'],
-            stats: { tasksCompleted: 267, avgResponseTime: '1.1s', uptime: '99.9%' },
-            currentTask: {
-                title: 'QBR Preparation',
-                description: 'Preparing quarterly business reviews for top 10 accounts',
-                progress: 42
-            },
-            recentActivity: [
-                { time: '10m ago', text: 'Completed customer health check' },
-                { time: '45m ago', text: 'Identified expansion opportunity' },
-                { time: '2h ago', text: 'Onboarded new enterprise customer' }
-            ]
+            stats: { tasksCompleted: 0, avgResponseTime: '-', uptime: '-' },
+            currentTask: { title: 'Awaiting Orchestration', description: 'Start team orchestration to activate', progress: 0 },
+            recentActivity: []
         }
     };
 

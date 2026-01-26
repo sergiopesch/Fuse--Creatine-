@@ -7,6 +7,7 @@
 // AGENT DATA STRUCTURES
 // ============================================
 
+// All agents default to IDLE - orchestration must be started to activate them
 const AgentTeams = {
     developer: {
         id: 'developer',
@@ -16,27 +17,28 @@ const AgentTeams = {
         model: 'claude-3-5-sonnet-latest',
         provider: 'anthropic',
         description: 'Building and architecting the core platform',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'architect',
                 name: 'Architect',
                 role: 'System Design & Architecture',
-                status: 'working',
+                status: 'idle',
                 skills: ['System Design', 'API Architecture', 'Database Design', 'Scalability'],
-                tasksCompleted: 47,
-                currentTask: 'Designing microservices architecture',
-                efficiency: 94,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'shield'
             },
             {
                 id: 'coder',
                 name: 'Coder',
                 role: 'Implementation & Debugging',
-                status: 'working',
+                status: 'idle',
                 skills: ['JavaScript', 'Python', 'React', 'Node.js', 'TypeScript'],
-                tasksCompleted: 128,
-                currentTask: 'Implementing admin console features',
-                efficiency: 91,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'code'
             },
             {
@@ -45,9 +47,9 @@ const AgentTeams = {
                 role: 'Testing & Quality Assurance',
                 status: 'idle',
                 skills: ['Unit Testing', 'Integration Testing', 'E2E Testing', 'Performance'],
-                tasksCompleted: 89,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 96,
+                efficiency: 0,
                 avatar: 'test'
             }
         ]
@@ -60,16 +62,17 @@ const AgentTeams = {
         model: 'claude-3-5-sonnet-latest',
         provider: 'anthropic',
         description: 'Crafting beautiful user experiences',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'ux-lead',
                 name: 'UX Lead',
                 role: 'User Experience Strategy',
-                status: 'working',
+                status: 'idle',
                 skills: ['User Research', 'Wireframing', 'Prototyping', 'Usability Testing'],
-                tasksCompleted: 63,
-                currentTask: 'Optimizing user onboarding flow',
-                efficiency: 92,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'palette'
             },
             {
@@ -78,20 +81,20 @@ const AgentTeams = {
                 role: 'UI & Visual Systems',
                 status: 'idle',
                 skills: ['Visual Design', 'Figma', 'Design Systems', 'Branding'],
-                tasksCompleted: 71,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 88,
+                efficiency: 0,
                 avatar: 'brush'
             },
             {
                 id: 'motion',
                 name: 'Motion Designer',
                 role: 'Animation & Interactions',
-                status: 'working',
+                status: 'idle',
                 skills: ['Animation', 'Micro-interactions', 'GSAP', 'Lottie'],
-                tasksCompleted: 45,
-                currentTask: 'Creating loading animations',
-                efficiency: 95,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'motion'
             }
         ]
@@ -104,16 +107,17 @@ const AgentTeams = {
         model: 'gpt-4o',
         provider: 'openai',
         description: 'Managing content and brand voice',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'content-strategist',
                 name: 'Content Strategist',
                 role: 'Content Planning & Voice',
-                status: 'working',
+                status: 'idle',
                 skills: ['Content Strategy', 'Editorial', 'SEO', 'Brand Voice'],
-                tasksCompleted: 52,
-                currentTask: 'Developing content calendar',
-                efficiency: 89,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'document'
             },
             {
@@ -122,20 +126,20 @@ const AgentTeams = {
                 role: 'Persuasive Copy & Messaging',
                 status: 'idle',
                 skills: ['Copywriting', 'Headlines', 'Email', 'Ad Copy'],
-                tasksCompleted: 84,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 93,
+                efficiency: 0,
                 avatar: 'pen'
             },
             {
                 id: 'social-manager',
                 name: 'Social Media Manager',
                 role: 'Community & Engagement',
-                status: 'working',
+                status: 'idle',
                 skills: ['Social Media', 'Community Management', 'Influencer Outreach', 'Analytics'],
-                tasksCompleted: 67,
-                currentTask: 'Scheduling launch posts',
-                efficiency: 87,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'share'
             }
         ]
@@ -148,16 +152,17 @@ const AgentTeams = {
         model: 'claude-3-opus-latest',
         provider: 'anthropic',
         description: 'Ensuring compliance and protecting IP',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'compliance-officer',
                 name: 'Compliance Officer',
                 role: 'Regulatory Compliance',
-                status: 'working',
+                status: 'idle',
                 skills: ['GDPR', 'CCPA', 'FDA Regulations', 'Data Privacy'],
-                tasksCompleted: 34,
-                currentTask: 'Reviewing data handling practices',
-                efficiency: 98,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'shield'
             },
             {
@@ -166,9 +171,9 @@ const AgentTeams = {
                 role: 'Terms & Agreements',
                 status: 'idle',
                 skills: ['Contract Review', 'Terms of Service', 'Privacy Policy', 'Licensing'],
-                tasksCompleted: 28,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 97,
+                efficiency: 0,
                 avatar: 'document'
             },
             {
@@ -177,9 +182,9 @@ const AgentTeams = {
                 role: 'Intellectual Property',
                 status: 'idle',
                 skills: ['Trademarks', 'Patents', 'Copyright', 'Trade Secrets'],
-                tasksCompleted: 19,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 99,
+                efficiency: 0,
                 avatar: 'lock'
             }
         ]
@@ -192,38 +197,39 @@ const AgentTeams = {
         model: 'gpt-4o',
         provider: 'openai',
         description: 'Driving growth and brand awareness',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'growth-lead',
                 name: 'Growth Lead',
                 role: 'Acquisition & Retention',
-                status: 'working',
+                status: 'idle',
                 skills: ['Growth Hacking', 'A/B Testing', 'Funnel Optimization', 'Retention'],
-                tasksCompleted: 56,
-                currentTask: 'Analyzing conversion funnels',
-                efficiency: 90,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'chart'
             },
             {
                 id: 'brand-strategist',
                 name: 'Brand Strategist',
                 role: 'Brand Identity & Positioning',
-                status: 'working',
+                status: 'idle',
                 skills: ['Brand Strategy', 'Positioning', 'Competitive Analysis', 'Messaging'],
-                tasksCompleted: 41,
-                currentTask: 'Refining brand guidelines',
-                efficiency: 92,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'star'
             },
             {
                 id: 'analytics-expert',
                 name: 'Analytics Expert',
                 role: 'Data & Performance',
-                status: 'working',
+                status: 'idle',
                 skills: ['Google Analytics', 'Data Analysis', 'Attribution', 'Reporting'],
-                tasksCompleted: 73,
-                currentTask: 'Building performance dashboard',
-                efficiency: 94,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'analytics'
             }
         ]
@@ -236,16 +242,17 @@ const AgentTeams = {
         model: 'claude-3-5-sonnet-latest',
         provider: 'anthropic',
         description: 'Planning and executing product launches',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'launch-coordinator',
                 name: 'Launch Coordinator',
                 role: 'Launch Planning & Execution',
-                status: 'working',
+                status: 'idle',
                 skills: ['Launch Strategy', 'Project Management', 'Timeline Planning', 'Stakeholder Management'],
-                tasksCompleted: 38,
-                currentTask: 'Coordinating launch timeline',
-                efficiency: 91,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'rocket'
             },
             {
@@ -254,20 +261,20 @@ const AgentTeams = {
                 role: 'Strategic Partnerships',
                 status: 'idle',
                 skills: ['Business Development', 'Negotiations', 'Partner Relations', 'Co-marketing'],
-                tasksCompleted: 22,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 88,
+                efficiency: 0,
                 avatar: 'handshake'
             },
             {
                 id: 'market-researcher',
                 name: 'Market Researcher',
                 role: 'Market Intelligence',
-                status: 'working',
+                status: 'idle',
                 skills: ['Market Research', 'Competitive Intelligence', 'Trend Analysis', 'Surveys'],
-                tasksCompleted: 31,
-                currentTask: 'Analyzing market trends',
-                efficiency: 93,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'search'
             }
         ]
@@ -280,38 +287,39 @@ const AgentTeams = {
         model: 'gpt-4-turbo',
         provider: 'openai',
         description: 'Driving revenue and customer relationships',
+        orchestrationStatus: 'paused',
         agents: [
             {
                 id: 'sales-director',
                 name: 'Sales Director',
                 role: 'Revenue Strategy & Team Leadership',
-                status: 'working',
+                status: 'idle',
                 skills: ['Sales Strategy', 'Revenue Operations', 'Team Leadership', 'Pipeline Management'],
-                tasksCompleted: 67,
-                currentTask: 'Optimizing sales pipeline metrics',
-                efficiency: 96,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'user'
             },
             {
                 id: 'account-executive',
                 name: 'Account Executive',
                 role: 'Enterprise Sales & Closing',
-                status: 'working',
+                status: 'idle',
                 skills: ['Enterprise Sales', 'Contract Negotiation', 'Relationship Building', 'Closing Techniques'],
-                tasksCompleted: 89,
-                currentTask: 'Preparing enterprise demo presentations',
-                efficiency: 94,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'briefcase'
             },
             {
                 id: 'sdr',
                 name: 'SDR Lead',
                 role: 'Outbound Prospecting & Lead Qualification',
-                status: 'working',
+                status: 'idle',
                 skills: ['Prospecting', 'Lead Qualification', 'Cold Outreach', 'CRM Management'],
-                tasksCompleted: 156,
-                currentTask: 'Running outbound campaign sequences',
-                efficiency: 91,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'email'
             },
             {
@@ -320,20 +328,20 @@ const AgentTeams = {
                 role: 'Technical Sales & Demos',
                 status: 'idle',
                 skills: ['Technical Demos', 'Solution Architecture', 'Requirements Analysis', 'POC Management'],
-                tasksCompleted: 42,
+                tasksCompleted: 0,
                 currentTask: null,
-                efficiency: 97,
+                efficiency: 0,
                 avatar: 'monitor'
             },
             {
                 id: 'customer-success',
                 name: 'Customer Success Manager',
                 role: 'Retention & Expansion',
-                status: 'working',
+                status: 'idle',
                 skills: ['Customer Retention', 'Upselling', 'Onboarding', 'Health Scoring'],
-                tasksCompleted: 78,
-                currentTask: 'Conducting quarterly business reviews',
-                efficiency: 93,
+                tasksCompleted: 0,
+                currentTask: null,
+                efficiency: 0,
                 avatar: 'check'
             }
         ]
@@ -342,19 +350,29 @@ const AgentTeams = {
 
 // ============================================
 // STATE MANAGEMENT
+// All teams default to PAUSED - must be explicitly started
 // ============================================
 
 const state = {
     activeTeam: 'all',
     currentWorkspaceTeam: null,
-    orchestrationMode: 'autonomous',
+    orchestrationMode: 'manual',  // DEFAULT: manual (all paused)
+    teamOrchestrationState: {
+        developer: { status: 'paused', lastRun: null },
+        design: { status: 'paused', lastRun: null },
+        communications: { status: 'paused', lastRun: null },
+        legal: { status: 'paused', lastRun: null },
+        marketing: { status: 'paused', lastRun: null },
+        gtm: { status: 'paused', lastRun: null },
+        sales: { status: 'paused', lastRun: null }
+    },
     decisions: [],
-    activities: [],
+    activities: [],  // Only real activities from orchestration
     communications: [],
     tasks: [],
     priorities: [],
     projects: [],
-    liveFeed: [],
+    liveFeed: [],  // Only real orchestration events
     liveFeedFilter: 'all',
     apiKeyConfig: {
         anthropic: { configured: false, model: 'claude-3-5-sonnet-latest' },
@@ -363,9 +381,10 @@ const state = {
     },
     healthMetrics: {
         lastCheck: null,
-        systemStatus: 'operational'
+        systemStatus: 'idle'  // All teams paused by default
     },
-    teamSettings: {}
+    teamSettings: {},
+    adminToken: null  // Set via API config for orchestration
 };
 
 // Initialize team settings
@@ -377,160 +396,56 @@ Object.keys(AgentTeams).forEach(teamId => {
     };
 });
 
-// Initialize decisions queue
-state.decisions = [
-    {
-        id: 'dec-001',
-        title: 'Launch Email Campaign Approval',
-        description: 'The Marketing Team has prepared the launch email sequence. Review and approve the messaging and timing.',
-        priority: 'critical',
-        team: 'marketing',
-        requestedBy: 'Growth Lead',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15),
-        impact: 'This will trigger automated emails to 2,400+ waitlist subscribers. Expected conversion rate: 12-15%.',
-        details: {
-            'Email Count': '5 emails over 7 days',
-            'Total Recipients': '2,487 subscribers',
-            'Scheduled Start': 'Tomorrow 9:00 AM EST',
-            'A/B Testing': 'Subject lines (2 variants)'
-        }
-    },
-    {
-        id: 'dec-002',
-        title: 'API Rate Limit Increase',
-        description: 'Developer Team requests increasing API rate limits from 100 to 500 requests/minute to handle expected traffic.',
-        priority: 'high',
-        team: 'developer',
-        requestedBy: 'Architect',
-        timestamp: new Date(Date.now() - 1000 * 60 * 45),
-        impact: 'Infrastructure cost increase ~$150/month. Prevents potential service degradation during peak hours.',
-        details: {
-            'Current Limit': '100 req/min',
-            'Proposed Limit': '500 req/min',
-            'Cost Impact': '+$150/month',
-            'Performance Gain': '5x capacity'
-        }
-    },
-    {
-        id: 'dec-003',
-        title: 'Partner Integration Timeline',
-        description: 'GTM Team needs approval to extend partner integration deadline by 2 weeks due to API compatibility issues.',
-        priority: 'medium',
-        team: 'gtm',
-        requestedBy: 'Partnership Manager',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120),
-        impact: 'May delay one partner launch feature. All other launch components unaffected.',
-        details: {
-            'Original Deadline': 'Feb 1, 2026',
-            'New Deadline': 'Feb 15, 2026',
-            'Affected Partner': 'NutriTrack API',
-            'Risk Level': 'Low'
-        }
-    }
-];
-
-// Initialize activities
-state.activities = [
-    { id: 'act-001', agent: 'Architect', team: 'developer', message: 'Completed microservices architecture documentation', tag: 'Completed', timestamp: new Date(Date.now() - 1000 * 60 * 2) },
-    { id: 'act-002', agent: 'Growth Lead', team: 'marketing', message: 'Launched A/B test for landing page hero section', tag: 'Testing', timestamp: new Date(Date.now() - 1000 * 60 * 8) },
-    { id: 'act-003', agent: 'UX Lead', team: 'design', message: 'Finalized mobile navigation prototype', tag: 'Design', timestamp: new Date(Date.now() - 1000 * 60 * 15) },
-    { id: 'act-004', agent: 'Compliance Officer', team: 'legal', message: 'Updated privacy policy for GDPR compliance', tag: 'Legal', timestamp: new Date(Date.now() - 1000 * 60 * 23) },
-    { id: 'act-005', agent: 'Content Strategist', team: 'communications', message: 'Drafted launch announcement blog post', tag: 'Content', timestamp: new Date(Date.now() - 1000 * 60 * 31) },
-    { id: 'act-006', agent: 'Launch Coordinator', team: 'gtm', message: 'Synced launch checklist with all teams', tag: 'Coordination', timestamp: new Date(Date.now() - 1000 * 60 * 42) },
-    { id: 'act-007', agent: 'Coder', team: 'developer', message: 'Deployed hotfix for chat widget performance', tag: 'Deployment', timestamp: new Date(Date.now() - 1000 * 60 * 55) },
-    { id: 'act-008', agent: 'Motion Designer', team: 'design', message: 'Created animated success state for form submissions', tag: 'Animation', timestamp: new Date(Date.now() - 1000 * 60 * 68) }
-];
-
-// Initialize inter-agent communications
-state.communications = [
-    { id: 'com-001', from: { agent: 'Architect', team: 'developer' }, to: { agent: 'UX Lead', team: 'design' }, message: 'The new API endpoints are ready for integration. I\'ve documented the response schemas - can we sync on the data visualization approach?', timestamp: new Date(Date.now() - 1000 * 60 * 5) },
-    { id: 'com-002', from: { agent: 'Growth Lead', team: 'marketing' }, to: { agent: 'Content Strategist', team: 'communications' }, message: 'Conversion data shows 23% higher engagement with urgency messaging. Can we incorporate this into the launch content?', timestamp: new Date(Date.now() - 1000 * 60 * 18) },
-    { id: 'com-003', from: { agent: 'Compliance Officer', team: 'legal' }, to: { agent: 'Coder', team: 'developer' }, message: 'Please ensure all user data exports include the new consent audit fields. GDPR requirement effective immediately.', timestamp: new Date(Date.now() - 1000 * 60 * 35) },
-    { id: 'com-004', from: { agent: 'Launch Coordinator', team: 'gtm' }, to: { agent: 'Brand Strategist', team: 'marketing' }, message: 'Partner assets received. Please verify brand alignment before we proceed with co-marketing materials.', timestamp: new Date(Date.now() - 1000 * 60 * 52) },
-    { id: 'com-005', from: { agent: 'Visual Designer', team: 'design' }, to: { agent: 'Social Media Manager', team: 'communications' }, message: 'New social media templates are uploaded to the shared drive. Optimized for Instagram, Twitter, and LinkedIn.', timestamp: new Date(Date.now() - 1000 * 60 * 71) }
-];
-
-// Initialize priority queue
-state.priorities = [
-    { id: 'pri-001', name: 'Launch Email Sequence', team: 'Marketing + Communications' },
-    { id: 'pri-002', name: 'Performance Optimization', team: 'Developer' },
-    { id: 'pri-003', name: 'Legal Review Completion', team: 'Legal' },
-    { id: 'pri-004', name: 'Partner Integration', team: 'GTM + Developer' }
-];
-
-// Initialize cross-team projects
-state.projects = [
-    { id: 'proj-001', name: 'Product Launch v1.0', teams: ['All Teams'] },
-    { id: 'proj-002', name: 'Waitlist Conversion Campaign', teams: ['Marketing', 'Communications', 'Design'] },
-    { id: 'proj-003', name: 'Platform Scalability', teams: ['Developer', 'GTM'] }
-];
+// All data starts empty - only real orchestration creates activities
+// No mock decisions, activities, or communications
+state.decisions = [];
+state.activities = [];
+state.communications = [];
+state.priorities = [];
+state.projects = [];
 
 // ============================================
-// LIVE FEED DATA GENERATION
+// LIVE FEED - REAL DATA ONLY
+// No fake data generation - all activities come from orchestration API
 // ============================================
 
-const thoughtTopics = {
-    developer: ['architecture', 'performance', 'security', 'API design', 'database optimization', 'code review', 'testing strategy', 'deployment'],
-    design: ['user flow', 'visual hierarchy', 'accessibility', 'animation timing', 'color theory', 'typography', 'responsive design', 'prototyping'],
-    communications: ['brand voice', 'engagement metrics', 'content strategy', 'audience targeting', 'SEO optimization', 'social trends', 'messaging'],
-    legal: ['compliance', 'data privacy', 'GDPR', 'terms of service', 'intellectual property', 'risk assessment', 'regulatory'],
-    marketing: ['conversion rates', 'user acquisition', 'A/B testing', 'funnel optimization', 'brand awareness', 'growth metrics', 'attribution'],
-    gtm: ['launch timeline', 'market positioning', 'competitive analysis', 'partnership strategy', 'pricing', 'go-to-market'],
-    sales: ['pipeline management', 'lead scoring', 'deal velocity', 'customer success', 'revenue targets', 'enterprise accounts', 'demos']
-};
+// Fetch real activities from orchestration API
+async function fetchRealActivities(teamId) {
+    try {
+        const url = teamId && teamId !== 'all'
+            ? `/api/orchestrate?teamId=${teamId}`
+            : '/api/orchestrate?action=activities&limit=20';
 
-const actionVerbs = ['Analyzing', 'Processing', 'Evaluating', 'Generating', 'Optimizing', 'Reviewing', 'Synthesizing', 'Computing', 'Refining', 'Validating'];
-const thinkingPhrases = ['Considering approach for', 'Evaluating options in', 'Reasoning about', 'Weighing trade-offs in', 'Exploring solutions for', 'Assessing impact of'];
+        const response = await fetch(url);
+        if (!response.ok) return [];
 
-function generateLiveFeedItem(teamId) {
-    const team = AgentTeams[teamId];
-    if (!team) return null;
-
-    const workingAgents = team.agents.filter(a => a.status === 'working');
-    if (workingAgents.length === 0) return null;
-
-    const agent = workingAgents[Math.floor(Math.random() * workingAgents.length)];
-    const topics = thoughtTopics[teamId] || ['general task'];
-    const topic = topics[Math.floor(Math.random() * topics.length)];
-
-    const feedTypes = ['thinking', 'action', 'comms', 'insight'];
-    const type = feedTypes[Math.floor(Math.random() * feedTypes.length)];
-
-    let content = '';
-    let highlights = [topic];
-
-    switch (type) {
-        case 'thinking':
-            const thinkingPhrase = thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
-            content = `${thinkingPhrase} ${topic}...`;
-            break;
-        case 'action':
-            const actionVerb = actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
-            content = `${actionVerb} ${topic} data and generating recommendations`;
-            break;
-        case 'comms':
-            const otherTeams = Object.keys(AgentTeams).filter(t => t !== teamId);
-            const targetTeam = otherTeams[Math.floor(Math.random() * otherTeams.length)];
-            const targetAgent = AgentTeams[targetTeam].agents[0];
-            content = `Requesting input from ${targetAgent.name} (${AgentTeams[targetTeam].name}) regarding ${topic}`;
-            highlights.push(targetAgent.name);
-            break;
-        case 'insight':
-            content = `Identified optimization opportunity in ${topic} - potential 15% improvement`;
-            highlights.push('optimization');
-            break;
+        const data = await response.json();
+        if (data.success) {
+            return teamId && teamId !== 'all'
+                ? data.data.activities || []
+                : data.data || [];
+        }
+        return [];
+    } catch (error) {
+        console.error('[LiveFeed] Failed to fetch activities:', error);
+        return [];
     }
+}
 
+// Convert activity to live feed item format
+function activityToFeedItem(activity) {
     return {
-        id: `feed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type,
-        agent: agent.name,
-        agentId: agent.id,
-        team: teamId,
-        content,
-        highlights,
-        timestamp: new Date(),
-        processed: Math.random() > 0.3
+        id: activity.id,
+        type: activity.tag?.toLowerCase() === 'started' ? 'action' :
+              activity.tag?.toLowerCase() === 'paused' ? 'insight' : 'action',
+        agent: activity.agent,
+        agentId: activity.agentId || activity.agent.toLowerCase().replace(/\s+/g, '-'),
+        team: activity.teamId,
+        content: activity.message,
+        highlights: [],
+        timestamp: new Date(activity.timestamp),
+        processed: true,
+        isReal: true  // Flag indicating this is real data
     };
 }
 
@@ -1002,7 +917,7 @@ function drawAgentConnections(teamId) {
 
 let liveFeedInterval = null;
 
-function startTeamLiveFeed(teamId) {
+async function startTeamLiveFeed(teamId) {
     // Clear existing interval
     if (liveFeedInterval) {
         clearInterval(liveFeedInterval);
@@ -1011,30 +926,30 @@ function startTeamLiveFeed(teamId) {
     // Clear existing feed
     state.liveFeed = [];
 
-    // Generate initial feed items
-    for (let i = 0; i < 5; i++) {
-        const item = generateLiveFeedItem(teamId);
-        if (item) {
-            item.timestamp = new Date(Date.now() - (i * 1000 * 30)); // Stagger timestamps
-            state.liveFeed.push(item);
-        }
-    }
+    // Fetch real activities from API
+    const activities = await fetchRealActivities(teamId);
+    state.liveFeed = activities.map(activityToFeedItem);
 
     renderLiveFeed();
 
-    // Start generating new items
-    liveFeedInterval = setInterval(() => {
+    // Poll for new activities (real data only)
+    liveFeedInterval = setInterval(async () => {
         if (state.currentWorkspaceTeam === teamId) {
-            const item = generateLiveFeedItem(teamId);
-            if (item) {
-                state.liveFeed.unshift(item);
-                if (state.liveFeed.length > 20) {
-                    state.liveFeed.pop();
+            const newActivities = await fetchRealActivities(teamId);
+            if (newActivities.length > 0) {
+                // Only add truly new items
+                const existingIds = new Set(state.liveFeed.map(f => f.id));
+                const newItems = newActivities
+                    .filter(a => !existingIds.has(a.id))
+                    .map(activityToFeedItem);
+
+                if (newItems.length > 0) {
+                    state.liveFeed = [...newItems, ...state.liveFeed].slice(0, 20);
+                    renderLiveFeed();
                 }
-                renderLiveFeed();
             }
         }
-    }, 3000);
+    }, 5000);  // Poll every 5 seconds
 }
 
 function renderLiveFeed() {
@@ -1705,10 +1620,272 @@ function initApiConfigPanel() {
 }
 
 // ============================================
+// ORCHESTRATION CONTROLS
+// ============================================
+
+/**
+ * Start orchestration for a team
+ */
+async function startTeamOrchestration(teamId) {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in API Settings to orchestrate teams.');
+        return false;
+    }
+
+    try {
+        const response = await fetch('/api/orchestrate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.adminToken}`
+            },
+            body: JSON.stringify({ teamId, action: 'start' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            state.teamOrchestrationState[teamId] = { status: 'running', lastRun: new Date().toISOString() };
+            AgentTeams[teamId].orchestrationStatus = 'running';
+            showToast('success', 'Orchestration Started', `${AgentTeams[teamId].name} is now running`);
+            updateTeamOrchestrationUI(teamId);
+            return true;
+        } else {
+            showToast('error', 'Start Failed', data.error || 'Failed to start orchestration');
+            return false;
+        }
+    } catch (error) {
+        console.error('[Orchestration] Start error:', error);
+        showToast('error', 'Connection Error', 'Failed to start orchestration');
+        return false;
+    }
+}
+
+/**
+ * Stop orchestration for a team
+ */
+async function stopTeamOrchestration(teamId) {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in API Settings');
+        return false;
+    }
+
+    try {
+        const response = await fetch('/api/orchestrate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.adminToken}`
+            },
+            body: JSON.stringify({ teamId, action: 'stop' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: new Date().toISOString() };
+            AgentTeams[teamId].orchestrationStatus = 'paused';
+
+            // Set all agents to idle
+            AgentTeams[teamId].agents.forEach(agent => {
+                agent.status = 'idle';
+                agent.currentTask = null;
+            });
+
+            showToast('info', 'Orchestration Paused', `${AgentTeams[teamId].name} is now paused`);
+            updateTeamOrchestrationUI(teamId);
+            return true;
+        } else {
+            showToast('error', 'Stop Failed', data.error || 'Failed to stop orchestration');
+            return false;
+        }
+    } catch (error) {
+        console.error('[Orchestration] Stop error:', error);
+        showToast('error', 'Connection Error', 'Failed to stop orchestration');
+        return false;
+    }
+}
+
+/**
+ * Execute one orchestration cycle for a team
+ */
+async function executeTeamOrchestration(teamId, task = null) {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in API Settings');
+        return null;
+    }
+
+    // Check if team is running
+    if (state.teamOrchestrationState[teamId]?.status !== 'running') {
+        showToast('warning', 'Not Running', 'Start team orchestration first');
+        return null;
+    }
+
+    try {
+        showToast('info', 'Executing...', `Running ${AgentTeams[teamId].name} orchestration cycle`);
+
+        const response = await fetch('/api/orchestrate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.adminToken}`
+            },
+            body: JSON.stringify({ teamId, action: 'execute', task })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const result = data.data;
+
+            // Update activities
+            if (result.activities && result.activities.length > 0) {
+                state.activities = [...result.activities, ...state.activities].slice(0, 50);
+                state.liveFeed = result.activities.map(activityToFeedItem).concat(state.liveFeed).slice(0, 20);
+                renderLiveFeed();
+                renderActivityFeed();
+            }
+
+            // Update agent statuses based on activities
+            result.activities?.forEach(activity => {
+                const agent = AgentTeams[teamId].agents.find(a =>
+                    a.name.toLowerCase() === activity.agent.toLowerCase()
+                );
+                if (agent) {
+                    agent.status = 'working';
+                    agent.currentTask = activity.message;
+                    agent.tasksCompleted++;
+                }
+            });
+
+            showToast('success', 'Orchestration Complete', `Used ${result.usage?.outputTokens || 0} tokens`);
+            updateTeamOrchestrationUI(teamId);
+            renderTeamsGrid();
+            return result;
+        } else {
+            showToast('error', 'Execution Failed', data.error || 'Orchestration failed');
+            return null;
+        }
+    } catch (error) {
+        console.error('[Orchestration] Execute error:', error);
+        showToast('error', 'Execution Error', 'Orchestration execution failed');
+        return null;
+    }
+}
+
+/**
+ * Toggle orchestration for a team (start/stop)
+ */
+async function toggleTeamOrchestration(teamId) {
+    const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
+    if (isRunning) {
+        await stopTeamOrchestration(teamId);
+    } else {
+        await startTeamOrchestration(teamId);
+    }
+}
+
+/**
+ * Fetch orchestration status from API
+ */
+async function fetchOrchestrationStatus() {
+    try {
+        const response = await fetch('/api/orchestrate?action=status');
+        const data = await response.json();
+
+        if (data.success) {
+            state.orchestrationMode = data.data.globalMode || 'manual';
+
+            Object.entries(data.data.teams || {}).forEach(([teamId, teamState]) => {
+                state.teamOrchestrationState[teamId] = {
+                    status: teamState.status,
+                    lastRun: teamState.lastRun
+                };
+                if (AgentTeams[teamId]) {
+                    AgentTeams[teamId].orchestrationStatus = teamState.status;
+                }
+            });
+
+            return data.data;
+        }
+    } catch (error) {
+        console.error('[Orchestration] Status fetch error:', error);
+    }
+    return null;
+}
+
+/**
+ * Update UI to reflect team orchestration state
+ */
+function updateTeamOrchestrationUI(teamId) {
+    const team = AgentTeams[teamId];
+    if (!team) return;
+
+    const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
+
+    // Update team workspace if viewing this team
+    if (state.currentWorkspaceTeam === teamId) {
+        // Update agent nodes
+        team.agents.forEach(agent => {
+            const agentNode = document.querySelector(`.agent-node[data-agent="${agent.id}"]`);
+            if (agentNode) {
+                agentNode.className = `agent-node ${agent.status}`;
+            }
+        });
+    }
+
+    // Update team card in grid
+    const teamCard = document.querySelector(`.team-card[data-team="${teamId}"]`);
+    if (teamCard) {
+        const statusIndicator = teamCard.querySelector('.team-status-indicator');
+        if (statusIndicator) {
+            statusIndicator.textContent = isRunning ? 'Running' : 'Paused';
+            statusIndicator.className = `team-status-indicator ${isRunning ? 'running' : 'paused'}`;
+        }
+    }
+
+    // Update sidebar team item
+    const teamItem = document.querySelector(`.team-nav-btn[data-team="${teamId}"]`);
+    if (teamItem) {
+        teamItem.classList.toggle('running', isRunning);
+    }
+}
+
+/**
+ * Save admin token to state
+ */
+function saveAdminToken(token) {
+    if (token && token.length >= 32) {
+        state.adminToken = token;
+        localStorage.setItem('fuse_admin_token', token);
+        showToast('success', 'Token Saved', 'Admin token configured for orchestration');
+        return true;
+    } else {
+        showToast('error', 'Invalid Token', 'Admin token must be at least 32 characters');
+        return false;
+    }
+}
+
+/**
+ * Load admin token from storage
+ */
+function loadAdminToken() {
+    const token = localStorage.getItem('fuse_admin_token');
+    if (token) {
+        state.adminToken = token;
+    }
+}
+
+// ============================================
 // EVENT LISTENERS
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Load admin token from storage
+    loadAdminToken();
+
+    // Fetch orchestration status on load
+    fetchOrchestrationStatus();
     // Initial renders
     renderTeamsGrid();
     renderDecisionQueue();
@@ -1828,38 +2005,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Real-time activity updates
-    setInterval(() => {
-        if (Math.random() > 0.85) {
-            const teams = Object.keys(AgentTeams);
-            const randomTeam = teams[Math.floor(Math.random() * teams.length)];
-            const team = AgentTeams[randomTeam];
-            const randomAgent = team.agents[Math.floor(Math.random() * team.agents.length)];
-
-            const actions = [
-                'Completed sub-task',
-                'Started new analysis',
-                'Updated progress',
-                'Synced with team',
-                'Generated report'
-            ];
-
-            state.activities.unshift({
-                id: `act-${Date.now()}`,
-                agent: randomAgent.name,
-                team: randomTeam,
-                message: actions[Math.floor(Math.random() * actions.length)],
-                tag: 'Update',
-                timestamp: new Date()
-            });
-
-            if (state.activities.length > 20) {
-                state.activities.pop();
-            }
-
-            renderActivityFeed();
-        }
-    }, 10000);
+    // Real activities only - no random generation
+    // Activities come from real orchestration via /api/orchestrate
 
     // Redraw connections on resize
     window.addEventListener('resize', () => {
