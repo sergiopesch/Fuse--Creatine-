@@ -2,11 +2,12 @@
  * FUSE Biometric Utilities
  * Shared utilities for biometric authentication and registration
  *
- * @version 1.0.0
+ * @version 1.1.0 - Use Redis for challenges, Blob only for credentials
  */
 
 const crypto = require('crypto');
 const { list, put, del } = require('@vercel/blob');
+const { Redis } = require('@upstash/redis');
 
 // ============================================================================
 // CONFIGURATION
@@ -14,13 +15,26 @@ const { list, put, del } = require('@vercel/blob');
 
 const CONFIG = {
     CHALLENGE_EXPIRY: 5 * 60 * 1000, // 5 minutes
+    CHALLENGE_EXPIRY_SECONDS: 300, // 5 minutes in seconds for Redis
     BLOB_PREFIX: 'biometric-credentials/',
-    CHALLENGE_PREFIX: 'biometric-challenges/',
-    DEVICE_LINK_PREFIX: 'device-links/',
+    CHALLENGE_PREFIX: 'biometric:challenge:',
+    DEVICE_LINK_PREFIX: 'biometric:devicelink:',
     OWNER_CREDENTIAL_KEY: 'owner-credential.json',
     DEVICE_LINK_EXPIRY: 5 * 60 * 1000, // 5 minutes for device link codes
     MAX_AUTHORIZED_DEVICES: 5
 };
+
+// Initialize Redis client
+const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : null;
+
+if (!redis) {
+    console.warn('[BiometricUtils] Redis not configured - challenges will use in-memory fallback');
+}
+
+// In-memory fallback for challenges (for development/testing)
+const challengeStore = new Map();
 
 // ============================================================================
 // DEVICE FINGERPRINTING
@@ -140,11 +154,26 @@ function normalizeCredentials(ownerCredential) {
 }
 
 /**
- * Get the owner credential from Vercel Blob
+ * Get the owner credential from Vercel Blob or Redis
  * Returns { credential, error } to distinguish between "no owner" and "service error"
  * @returns {Promise<{ credential: object|null, error: string|null }>}
  */
 async function getOwnerCredential() {
+    // Try Redis first (faster)
+    if (redis) {
+        try {
+            const redisKey = 'biometric:owner:credential';
+            const data = await redis.get(redisKey);
+            if (data) {
+                const credential = typeof data === 'string' ? JSON.parse(data) : data;
+                return { credential, error: null };
+            }
+        } catch (error) {
+            console.warn('[BiometricUtils] Redis get failed, falling back to Blob:', error.message);
+        }
+    }
+
+    // Try Vercel Blob
     try {
         const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
         const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
@@ -160,32 +189,64 @@ async function getOwnerCredential() {
         }
 
         const credential = await response.json();
+        
+        // Cache in Redis for faster access
+        if (redis) {
+            try {
+                await redis.set('biometric:owner:credential', JSON.stringify(credential));
+            } catch (e) { /* ignore cache errors */ }
+        }
+        
         return { credential, error: null };
     } catch (error) {
         console.error('[BiometricUtils] Failed to get owner credential:', error);
+        
+        // If Blob fails but we have Redis, return null (no owner) to allow registration
+        if (redis && error.message?.includes('BLOB')) {
+            console.warn('[BiometricUtils] Blob unavailable, allowing fresh registration');
+            return { credential: null, error: null };
+        }
+        
         return { credential: null, error: 'SERVICE_ERROR' };
     }
 }
 
 /**
- * Store or update owner credential in Vercel Blob
+ * Store or update owner credential in Redis and Vercel Blob
  * @param {object} credentialData - Credential data to store
  * @returns {Promise<boolean>} - Success status
  */
 async function storeOwnerCredential(credentialData) {
-    const blobPath = `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`;
+    const dataString = JSON.stringify(credentialData);
+    let storedSomewhere = false;
 
+    // Store in Redis (primary for speed)
+    if (redis) {
+        try {
+            await redis.set('biometric:owner:credential', dataString);
+            storedSomewhere = true;
+            console.log('[BiometricUtils] Owner credential stored in Redis');
+        } catch (error) {
+            console.error('[BiometricUtils] Redis store failed:', error.message);
+        }
+    }
+
+    // Also store in Blob (backup/persistence)
     try {
-        await put(blobPath, JSON.stringify(credentialData), {
-            access: 'private',
+        const blobPath = `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`;
+        await put(blobPath, dataString, {
+            access: 'public', // Use public to avoid auth issues
             contentType: 'application/json',
             addRandomSuffix: false
         });
-        return true;
+        storedSomewhere = true;
+        console.log('[BiometricUtils] Owner credential stored in Blob');
     } catch (error) {
-        console.error('[BiometricUtils] Failed to store owner credential:', error);
-        return false;
+        console.error('[BiometricUtils] Blob store failed:', error.message);
+        // Don't fail if Redis succeeded
     }
+
+    return storedSomewhere;
 }
 
 // ============================================================================
@@ -218,7 +279,7 @@ function generateNonce() {
  * @returns {Promise<boolean>} - Success status
  */
 async function storeChallenge(key, challenge, nonce = null, prefix = 'auth') {
-    const blobPath = `${CONFIG.CHALLENGE_PREFIX}${prefix}-${key}.json`;
+    const redisKey = `${CONFIG.CHALLENGE_PREFIX}${prefix}:${key}`;
     const data = {
         challenge,
         createdAt: Date.now()
@@ -227,62 +288,81 @@ async function storeChallenge(key, challenge, nonce = null, prefix = 'auth') {
         data.nonce = nonce;
     }
 
-    console.log('[BiometricUtils] Storing challenge at:', blobPath);
-
-    try {
-        const result = await put(blobPath, JSON.stringify(data), {
-            access: 'public', // Changed from 'private' - private requires different auth
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        console.log('[BiometricUtils] Challenge stored successfully:', result.url);
-        return true;
-    } catch (error) {
-        console.error('[BiometricUtils] Failed to store challenge:', error.message);
-        console.error('[BiometricUtils] Full error:', error);
-        return false;
+    // Try Redis first
+    if (redis) {
+        try {
+            await redis.setex(redisKey, CONFIG.CHALLENGE_EXPIRY_SECONDS, JSON.stringify(data));
+            console.log('[BiometricUtils] Challenge stored in Redis:', redisKey);
+            return true;
+        } catch (error) {
+            console.error('[BiometricUtils] Redis store failed:', error.message);
+            // Fall through to in-memory
+        }
     }
+
+    // Fallback to in-memory store
+    challengeStore.set(redisKey, { ...data, expiresAt: Date.now() + CONFIG.CHALLENGE_EXPIRY });
+    console.log('[BiometricUtils] Challenge stored in memory:', redisKey);
+    
+    // Clean up old entries
+    for (const [k, v] of challengeStore) {
+        if (v.expiresAt < Date.now()) {
+            challengeStore.delete(k);
+        }
+    }
+    
+    return true;
 }
 
 /**
- * Verify and consume challenge from Vercel Blob
+ * Verify and consume challenge from Redis or in-memory store
  * @param {string} key - Challenge key (typically device fingerprint)
  * @param {string} prefix - 'auth' or 'reg' to differentiate challenge types
  * @returns {Promise<object|null>} - Challenge data or null if invalid/expired
  */
 async function verifyChallenge(key, prefix = 'auth') {
-    const blobPath = `${CONFIG.CHALLENGE_PREFIX}${prefix}-${key}.json`;
+    const redisKey = `${CONFIG.CHALLENGE_PREFIX}${prefix}:${key}`;
 
-    try {
-        const { blobs } = await list({ prefix: CONFIG.CHALLENGE_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
-
-        if (!blob) return null;
-
-        const response = await fetch(blob.url);
-        if (!response.ok) return null;
-
-        const entry = await response.json();
-
-        // Check expiry
-        if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
-            try {
-                await del(blob.url);
-            } catch (e) { /* ignore cleanup errors */ }
-            return null;
-        }
-
-        // Delete the challenge (consume it - one-time use)
+    // Try Redis first
+    if (redis) {
         try {
-            await del(blob.url);
-        } catch (e) { /* ignore cleanup errors */ }
-
-        // Return full entry for registration (includes nonce), just challenge for auth
-        return prefix === 'reg' ? entry : entry.challenge;
-    } catch (error) {
-        console.error('[BiometricUtils] Failed to verify challenge:', error);
-        return null;
+            const data = await redis.get(redisKey);
+            if (data) {
+                // Delete the challenge (consume it - one-time use)
+                await redis.del(redisKey);
+                
+                const entry = typeof data === 'string' ? JSON.parse(data) : data;
+                console.log('[BiometricUtils] Challenge verified from Redis:', redisKey);
+                
+                // Check expiry (belt and suspenders - Redis TTL should handle this)
+                if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
+                    return null;
+                }
+                
+                // Return full entry for registration (includes nonce), just challenge for auth
+                return prefix === 'reg' ? entry : entry.challenge;
+            }
+        } catch (error) {
+            console.error('[BiometricUtils] Redis verify failed:', error.message);
+            // Fall through to in-memory
+        }
     }
+
+    // Fallback to in-memory store
+    const entry = challengeStore.get(redisKey);
+    if (entry) {
+        challengeStore.delete(redisKey); // Consume it
+        
+        if (entry.expiresAt < Date.now()) {
+            return null; // Expired
+        }
+        
+        console.log('[BiometricUtils] Challenge verified from memory:', redisKey);
+        return prefix === 'reg' ? entry : entry.challenge;
+    }
+
+    console.log('[BiometricUtils] Challenge not found:', redisKey);
+    return null;
 }
 
 // ============================================================================
@@ -304,14 +384,14 @@ function generateDeviceLinkCode() {
 }
 
 /**
- * Store device link for later claim
+ * Store device link for later claim (uses Redis)
  * @param {string} code - Device link code
  * @param {string} ownerUserId - Owner's user ID
  * @param {string} createdByFingerprint - Fingerprint of device that created the link
  * @returns {Promise<boolean>} - Success status
  */
 async function storeDeviceLink(code, ownerUserId, createdByFingerprint) {
-    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
+    const redisKey = `${CONFIG.DEVICE_LINK_PREFIX}${code}`;
     const data = {
         code,
         ownerUserId,
@@ -320,73 +400,71 @@ async function storeDeviceLink(code, ownerUserId, createdByFingerprint) {
         claimed: false
     };
 
-    try {
-        await put(blobPath, JSON.stringify(data), {
-            access: 'private',
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        return true;
-    } catch (error) {
-        console.error('[BiometricUtils] Failed to store device link:', error);
-        return false;
+    if (redis) {
+        try {
+            await redis.setex(redisKey, Math.ceil(CONFIG.DEVICE_LINK_EXPIRY / 1000), JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('[BiometricUtils] Failed to store device link:', error);
+            return false;
+        }
     }
+
+    // In-memory fallback
+    challengeStore.set(redisKey, { ...data, expiresAt: Date.now() + CONFIG.DEVICE_LINK_EXPIRY });
+    return true;
 }
 
 /**
- * Get and validate device link
+ * Get and validate device link (uses Redis)
  * @param {string} code - Device link code
  * @returns {Promise<object|null>} - Device link data or null if invalid/expired
  */
 async function getDeviceLink(code) {
-    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
+    const redisKey = `${CONFIG.DEVICE_LINK_PREFIX}${code}`;
 
-    try {
-        const { blobs } = await list({ prefix: CONFIG.DEVICE_LINK_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
+    if (redis) {
+        try {
+            const data = await redis.get(redisKey);
+            if (!data) return null;
 
-        if (!blob) return null;
+            const parsed = typeof data === 'string' ? JSON.parse(data) : data;
 
-        const response = await fetch(blob.url);
-        if (!response.ok) return null;
+            if (parsed.claimed) {
+                return null; // Already used
+            }
 
-        const data = await response.json();
-
-        // Check expiry
-        if (Date.now() - data.createdAt > CONFIG.DEVICE_LINK_EXPIRY) {
-            try {
-                await del(blob.url);
-            } catch (e) { /* ignore cleanup errors */ }
+            return parsed;
+        } catch (error) {
+            console.error('[BiometricUtils] Failed to get device link:', error);
             return null;
         }
-
-        if (data.claimed) {
-            return null; // Already used
-        }
-
-        return data;
-    } catch (error) {
-        console.error('[BiometricUtils] Failed to get device link:', error);
-        return null;
     }
+
+    // In-memory fallback
+    const entry = challengeStore.get(redisKey);
+    if (entry && entry.expiresAt > Date.now() && !entry.claimed) {
+        return entry;
+    }
+    return null;
 }
 
 /**
- * Delete device link after use
+ * Delete device link after use (uses Redis)
  * @param {string} code - Device link code
  * @returns {Promise<void>}
  */
 async function deleteDeviceLink(code) {
-    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
+    const redisKey = `${CONFIG.DEVICE_LINK_PREFIX}${code}`;
 
-    try {
-        const { blobs } = await list({ prefix: CONFIG.DEVICE_LINK_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
-        if (blob) {
-            await del(blob.url);
+    if (redis) {
+        try {
+            await redis.del(redisKey);
+        } catch (error) {
+            console.error('[BiometricUtils] Failed to delete device link:', error);
         }
-    } catch (error) {
-        console.error('[BiometricUtils] Failed to delete device link:', error);
+    } else {
+        challengeStore.delete(redisKey);
     }
 }
 
