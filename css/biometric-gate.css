@@ -504,6 +504,148 @@
 }
 
 /* ============================================
+   DEVICE LINKING
+   ============================================ */
+
+/* Link Device Button */
+.btn-biometric.btn-link-device {
+    background: var(--gate-glass);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--gate-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin-top: 16px;
+}
+
+.btn-biometric.btn-link-device:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--gate-primary);
+}
+
+.btn-biometric.btn-link-device:hover:not(:disabled) svg {
+    color: var(--gate-primary-light);
+}
+
+/* Device Link Input Container */
+.device-link-input {
+    width: 100%;
+    margin-top: 24px;
+    padding: 24px;
+    background: var(--gate-glass);
+    border: 1px solid var(--gate-border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.link-instruction {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.link-code-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.link-code-container input {
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 20px;
+    font-family: 'Inter', monospace;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-align: center;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--gate-border);
+    border-radius: 12px;
+    color: #fff;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.link-code-container input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.2em;
+}
+
+.link-code-container input:focus {
+    border-color: var(--gate-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Claim Link Button */
+.btn-biometric.btn-claim-link {
+    min-width: 120px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, var(--gate-primary), #4f46e5);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+.btn-biometric.btn-claim-link:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+}
+
+.btn-biometric.btn-claim-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Cancel Link Button */
+.btn-text-link {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 16px;
+    transition: color 0.2s ease;
+}
+
+.btn-text-link:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Mobile responsiveness for link input */
+@media (max-width: 599px) {
+    .device-link-input {
+        padding: 20px 16px;
+    }
+
+    .link-code-container {
+        flex-direction: column;
+    }
+
+    .link-code-container input {
+        font-size: 24px;
+        padding: 16px;
+    }
+
+    .btn-biometric.btn-claim-link {
+        width: 100%;
+    }
+}
+
+/* ============================================
    FOOTER
    ============================================ */
 

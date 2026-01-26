@@ -37,11 +37,14 @@ const CONFIG = {
     CHALLENGE_EXPIRY: 5 * 60 * 1000, // 5 minutes
     BLOB_PREFIX: 'biometric-credentials/',
     CHALLENGE_PREFIX: 'biometric-challenges/',
+    DEVICE_LINK_PREFIX: 'device-links/',
     OWNER_CREDENTIAL_KEY: 'owner-credential.json',
     RATE_LIMIT: { limit: 10, windowMs: 60000 }, // 10 requests per minute
     MAX_FAILED_ATTEMPTS: 5,
     LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
     SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
+    DEVICE_LINK_EXPIRY: 5 * 60 * 1000, // 5 minutes for device link codes
+    MAX_AUTHORIZED_DEVICES: 5, // Maximum number of authorized devices
     SESSION_SECRET: SESSION_SECRET
 };
 
@@ -298,30 +301,174 @@ function createDeviceFingerprint(req, clientDeviceId = null) {
 }
 
 /**
- * Check if a device matches the stored credential (with migration support)
+ * Generate a 6-character device link code (uppercase alphanumeric)
+ */
+function generateDeviceLinkCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous chars
+    let code = '';
+    const bytes = crypto.randomBytes(6);
+    for (let i = 0; i < 6; i++) {
+        code += chars[bytes[i] % chars.length];
+    }
+    return code;
+}
+
+/**
+ * Store device link for later claim
+ */
+async function storeDeviceLink(code, ownerUserId, createdByFingerprint) {
+    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
+    const data = {
+        code,
+        ownerUserId,
+        createdByFingerprint,
+        createdAt: Date.now(),
+        claimed: false
+    };
+
+    try {
+        await put(blobPath, JSON.stringify(data), {
+            access: 'public',
+            contentType: 'application/json',
+            addRandomSuffix: false
+        });
+        return true;
+    } catch (error) {
+        console.error('[BiometricAuth] Failed to store device link:', error);
+        return false;
+    }
+}
+
+/**
+ * Get and validate device link
+ */
+async function getDeviceLink(code) {
+    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
+
+    try {
+        const { blobs } = await list({ prefix: CONFIG.DEVICE_LINK_PREFIX });
+        const blob = blobs.find(b => b.pathname === blobPath);
+
+        if (!blob) return null;
+
+        const response = await fetch(blob.url);
+        if (!response.ok) return null;
+
+        const data = await response.json();
+
+        // Check expiry
+        if (Date.now() - data.createdAt > CONFIG.DEVICE_LINK_EXPIRY) {
+            // Delete expired link
+            try {
+                const { del } = require('@vercel/blob');
+                await del(blob.url);
+            } catch (e) { /* ignore cleanup errors */ }
+            return null;
+        }
+
+        if (data.claimed) {
+            return null; // Already used
+        }
+
+        return data;
+    } catch (error) {
+        console.error('[BiometricAuth] Failed to get device link:', error);
+        return null;
+    }
+}
+
+/**
+ * Delete device link after use
+ */
+async function deleteDeviceLink(code) {
+    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
+
+    try {
+        const { blobs } = await list({ prefix: CONFIG.DEVICE_LINK_PREFIX });
+        const blob = blobs.find(b => b.pathname === blobPath);
+        if (blob) {
+            const { del } = require('@vercel/blob');
+            await del(blob.url);
+        }
+    } catch (error) {
+        console.error('[BiometricAuth] Failed to delete device link:', error);
+    }
+}
+
+/**
+ * Add a new device to the authorized devices list
+ */
+async function addAuthorizedDevice(ownerCredential, newFingerprint, deviceName = 'Unknown Device') {
+    // Initialize authorizedDevices array if needed
+    if (!ownerCredential.authorizedDevices) {
+        ownerCredential.authorizedDevices = [];
+        // Migrate legacy single device if exists
+        if (ownerCredential.deviceFingerprint) {
+            ownerCredential.authorizedDevices.push({
+                fingerprint: ownerCredential.deviceFingerprint,
+                name: 'Primary Device',
+                addedAt: ownerCredential.registeredAt || new Date().toISOString()
+            });
+        }
+    }
+
+    // Check max devices limit
+    if (ownerCredential.authorizedDevices.length >= CONFIG.MAX_AUTHORIZED_DEVICES) {
+        return { success: false, error: 'Maximum devices limit reached' };
+    }
+
+    // Check if already authorized
+    if (ownerCredential.authorizedDevices.some(d => d.fingerprint === newFingerprint)) {
+        return { success: false, error: 'Device already authorized' };
+    }
+
+    // Add new device
+    ownerCredential.authorizedDevices.push({
+        fingerprint: newFingerprint,
+        name: deviceName,
+        addedAt: new Date().toISOString()
+    });
+
+    // Save updated credential
+    const saved = await updateOwnerCredential(ownerCredential);
+    if (!saved) {
+        return { success: false, error: 'Failed to save device' };
+    }
+
+    return { success: true, deviceCount: ownerCredential.authorizedDevices.length };
+}
+
+/**
+ * Check if a device matches any of the authorized devices (with migration support)
+ * Supports both legacy single fingerprint and new multi-device array
  * Returns { matches: boolean, needsMigration: boolean, fingerprint: string }
  */
-function checkDeviceMatch(req, clientDeviceId, storedFingerprint) {
-    // First try the new client-based fingerprint
+function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
     const clientFp = createClientFingerprint(clientDeviceId);
-    if (clientFp && clientFp === storedFingerprint) {
+    const headerFp = createHeaderFingerprint(req);
+    const currentFp = clientFp || headerFp;
+
+    // Get all authorized fingerprints (support both old and new format)
+    const authorizedDevices = ownerCredential.authorizedDevices || [];
+    const legacyFingerprint = ownerCredential.deviceFingerprint;
+
+    // Build list of all valid fingerprints
+    const allFingerprints = [...authorizedDevices.map(d => d.fingerprint)];
+    if (legacyFingerprint && !allFingerprints.includes(legacyFingerprint)) {
+        allFingerprints.push(legacyFingerprint);
+    }
+
+    // Check client fingerprint first
+    if (clientFp && allFingerprints.includes(clientFp)) {
         return { matches: true, needsMigration: false, fingerprint: clientFp };
     }
 
-    // Try legacy header-based fingerprint for backwards compatibility
-    const headerFp = createHeaderFingerprint(req);
-    if (headerFp === storedFingerprint) {
-        // User authenticated with old method - needs migration to new deviceId
+    // Check header fingerprint for backwards compatibility
+    if (allFingerprints.includes(headerFp)) {
         return { matches: true, needsMigration: !!clientFp, fingerprint: clientFp || headerFp };
     }
 
-    // Also check if stored fingerprint matches new client-based format
-    // (user might have registered with client deviceId but headers changed)
-    if (clientFp) {
-        return { matches: false, needsMigration: false, fingerprint: clientFp };
-    }
-
-    return { matches: false, needsMigration: false, fingerprint: headerFp };
+    return { matches: false, needsMigration: false, fingerprint: currentFp };
 }
 
 // ============================================================================
@@ -471,14 +618,15 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            // Use migration-aware device matching
-            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+            // Use migration-aware device matching (supports multi-device)
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
 
             return res.status(200).json({
                 success: true,
                 hasOwner: true,
                 isOwnerDevice: deviceMatch.matches,
                 canAuthenticate: deviceMatch.matches,
+                canLinkDevice: !deviceMatch.matches, // Non-owner devices can request to link
                 message: deviceMatch.matches ?
                     'Welcome back. Authenticate to access your dashboard.' :
                     'This dashboard is secured. Only the owner can access it.'
@@ -527,8 +675,8 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            // Use migration-aware device matching
-            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+            // Use migration-aware device matching (supports multi-device)
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
 
             if (!deviceMatch.matches) {
                 addAuditEntry({
@@ -542,7 +690,8 @@ module.exports = async function handler(req, res) {
                 return res.status(403).json({
                     success: false,
                     error: 'Access denied. This dashboard is secured by another device.',
-                    isLocked: true
+                    isLocked: true,
+                    canLinkDevice: true // Hint that device linking is available
                 });
             }
 
@@ -609,8 +758,8 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            // Use migration-aware device matching
-            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+            // Use migration-aware device matching (supports multi-device)
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
 
             // Verify challenge was issued (try with current fingerprint)
             const issuedChallenge = await verifyChallenge(deviceMatch.fingerprint);
@@ -694,6 +843,175 @@ module.exports = async function handler(req, res) {
                 message: 'Welcome back! Dashboard unlocked.',
                 sessionToken: newSessionToken,
                 expiresIn: Math.floor(CONFIG.SESSION_DURATION / 1000)
+            });
+        }
+
+        // ====================================
+        // CREATE DEVICE LINK (from authenticated session)
+        // ====================================
+        if (action === 'create-device-link') {
+            const { sessionToken: linkSessionToken } = req.body;
+
+            // Verify session
+            if (!linkSessionToken) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Authentication required'
+                });
+            }
+
+            const sessionPayload = verifySessionToken(linkSessionToken);
+            if (!sessionPayload) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid or expired session',
+                    requiresAuth: true
+                });
+            }
+
+            // Get owner credential
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            if (credentialError || !ownerCredential) {
+                return res.status(503).json({
+                    success: false,
+                    error: 'Unable to create device link'
+                });
+            }
+
+            // Verify this is an owner device
+            const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
+            if (!deviceMatch.matches) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Only the owner can create device links'
+                });
+            }
+
+            // Check device limit
+            const currentDevices = ownerCredential.authorizedDevices?.length || 1;
+            if (currentDevices >= CONFIG.MAX_AUTHORIZED_DEVICES) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Maximum of ${CONFIG.MAX_AUTHORIZED_DEVICES} devices allowed`
+                });
+            }
+
+            // Generate link code
+            const linkCode = generateDeviceLinkCode();
+            const stored = await storeDeviceLink(linkCode, ownerCredential.userId, deviceFingerprint);
+
+            if (!stored) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to create device link'
+                });
+            }
+
+            addAuditEntry({
+                action: 'DEVICE_LINK_CREATED',
+                ip: clientIp,
+                success: true,
+                endpoint: '/api/biometric-authenticate',
+                note: `Link code created, expires in ${CONFIG.DEVICE_LINK_EXPIRY / 60000} minutes`
+            });
+
+            return res.status(200).json({
+                success: true,
+                linkCode,
+                expiresIn: Math.floor(CONFIG.DEVICE_LINK_EXPIRY / 1000),
+                message: 'Device link created. Enter this code on your new device.'
+            });
+        }
+
+        // ====================================
+        // CLAIM DEVICE LINK (from new device)
+        // ====================================
+        if (action === 'claim-device-link') {
+            const { linkCode } = req.body;
+
+            if (!linkCode || typeof linkCode !== 'string' || linkCode.length !== 6) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid link code format'
+                });
+            }
+
+            // Normalize code (uppercase)
+            const normalizedCode = linkCode.toUpperCase().trim();
+
+            // Get and validate link
+            const linkData = await getDeviceLink(normalizedCode);
+            if (!linkData) {
+                addAuditEntry({
+                    action: 'DEVICE_LINK_CLAIM_FAILED',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-authenticate',
+                    note: 'Invalid or expired link code'
+                });
+
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid or expired link code. Please request a new one.'
+                });
+            }
+
+            // Get owner credential
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            if (credentialError || !ownerCredential) {
+                return res.status(503).json({
+                    success: false,
+                    error: 'Unable to complete device linking'
+                });
+            }
+
+            // Verify link belongs to this owner
+            if (ownerCredential.userId !== linkData.ownerUserId) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Link code is not valid'
+                });
+            }
+
+            // Detect device type for naming
+            const ua = req.headers['user-agent'] || '';
+            let deviceName = 'New Device';
+            if (/iPhone|iPad/i.test(ua)) {
+                deviceName = 'iPhone/iPad';
+            } else if (/Android/i.test(ua)) {
+                deviceName = 'Android Device';
+            } else if (/Mac/i.test(ua)) {
+                deviceName = 'Mac';
+            } else if (/Windows/i.test(ua)) {
+                deviceName = 'Windows PC';
+            }
+
+            // Add this device to authorized list
+            const result = await addAuthorizedDevice(ownerCredential, deviceFingerprint, deviceName);
+
+            if (!result.success) {
+                return res.status(400).json({
+                    success: false,
+                    error: result.error
+                });
+            }
+
+            // Delete the used link code
+            await deleteDeviceLink(normalizedCode);
+
+            addAuditEntry({
+                action: 'DEVICE_LINK_CLAIMED',
+                ip: clientIp,
+                success: true,
+                endpoint: '/api/biometric-authenticate',
+                note: `New device added: ${deviceName}. Total devices: ${result.deviceCount}`
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: 'Device linked successfully! You can now set up biometric access.',
+                deviceName,
+                deviceCount: result.deviceCount
             });
         }
 

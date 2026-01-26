@@ -85,6 +85,30 @@
                         </svg>
                         <span id="btnSetupText">Secure This Dashboard</span>
                     </button>
+
+                    <!-- Link Device Button (for non-owner devices) -->
+                    <button class="btn-biometric btn-link-device" id="btnLinkDevice" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span id="btnLinkDeviceText">I Have a Link Code</span>
+                    </button>
+                </div>
+
+                <!-- Device Link Input (hidden by default) -->
+                <div class="device-link-input" id="deviceLinkInput" style="display: none;">
+                    <p class="link-instruction">Enter the 6-character code from your authorized device:</p>
+                    <div class="link-code-container">
+                        <input type="text" id="linkCodeInput" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters">
+                        <button class="btn-biometric btn-claim-link" id="btnClaimLink">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <span>Link Device</span>
+                        </button>
+                    </div>
+                    <button class="btn-text-link" id="btnCancelLink">Cancel</button>
                 </div>
 
                 <div class="biometric-status" id="biometricStatus">
