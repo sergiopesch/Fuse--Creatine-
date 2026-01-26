@@ -202,7 +202,23 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
 
             const challenge = generateChallenge();
             const nonce = generateNonce();
-            await storeRegChallenge(deviceFingerprint, challenge, nonce);
+            const challengeStored = await storeRegChallenge(deviceFingerprint, challenge, nonce);
+
+            if (!challengeStored) {
+                console.error('[BiometricRegister] Failed to store challenge for fingerprint:', deviceFingerprint.substring(0, 8) + '...');
+                addAuditEntry({
+                    action: 'BIOMETRIC_CHALLENGE_STORE_FAILED',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-register',
+                    deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
+                });
+                return res.status(503).json({
+                    success: false,
+                    error: 'Failed to initialize registration. Please check server configuration (BLOB_READ_WRITE_TOKEN).',
+                    code: 'CHALLENGE_STORE_FAILED'
+                });
+            }
 
             addAuditEntry({
                 action: 'BIOMETRIC_CHALLENGE_ISSUED',
@@ -242,18 +258,23 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 });
             }
 
+            console.log('[BiometricRegister] Verifying challenge for fingerprint:', deviceFingerprint.substring(0, 8) + '...');
             const challengeData = await verifyRegChallenge(deviceFingerprint);
+            console.log('[BiometricRegister] Challenge data:', challengeData ? 'found' : 'NOT FOUND');
+            
             if (!challengeData) {
                 await recordRegistrationAttempt(clientIp);
                 addAuditEntry({
                     action: 'BIOMETRIC_REGISTER_INVALID_CHALLENGE',
                     ip: clientIp,
                     success: false,
-                    endpoint: '/api/biometric-register'
+                    endpoint: '/api/biometric-register',
+                    deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
                 });
                 return res.status(400).json({
                     success: false,
-                    error: 'Invalid or expired challenge. Please try again.'
+                    error: 'Invalid or expired challenge. Please try again.',
+                    hint: 'Challenge verification failed. This can happen if storage is not configured correctly.'
                 });
             }
 

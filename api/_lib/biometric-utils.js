@@ -227,15 +227,19 @@ async function storeChallenge(key, challenge, nonce = null, prefix = 'auth') {
         data.nonce = nonce;
     }
 
+    console.log('[BiometricUtils] Storing challenge at:', blobPath);
+
     try {
-        await put(blobPath, JSON.stringify(data), {
-            access: 'private',
+        const result = await put(blobPath, JSON.stringify(data), {
+            access: 'public', // Changed from 'private' - private requires different auth
             contentType: 'application/json',
             addRandomSuffix: false
         });
+        console.log('[BiometricUtils] Challenge stored successfully:', result.url);
         return true;
     } catch (error) {
-        console.error('[BiometricUtils] Failed to store challenge:', error);
+        console.error('[BiometricUtils] Failed to store challenge:', error.message);
+        console.error('[BiometricUtils] Full error:', error);
         return false;
     }
 }
