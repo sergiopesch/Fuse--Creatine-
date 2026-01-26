@@ -2079,6 +2079,27 @@ body {
     transform: translateY(0) scale(1);
 }
 
+/* Session Terminated State (Security) */
+.chat-window.chat-session-terminated {
+    border-color: rgba(255, 100, 100, 0.3);
+}
+
+.chat-window.chat-session-terminated .chat-header {
+    background: rgba(80, 0, 0, 0.4);
+    border-bottom-color: rgba(255, 100, 100, 0.15);
+}
+
+.chat-window.chat-session-terminated .chat-input-form textarea:disabled {
+    background: rgba(50, 50, 50, 0.5);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+}
+
+.chat-window.chat-session-terminated .chat-input-form button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 /* Chat Header */
 .chat-header {
     display: flex;
