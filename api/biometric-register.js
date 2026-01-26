@@ -8,11 +8,12 @@
  * - Anti-replay protection with nonces
  * - Rate limiting and lockout
  *
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 const crypto = require('crypto');
 const { put, list, del } = require('@vercel/blob');
+const { Redis } = require('@upstash/redis');
 const {
     getClientIp,
     getCorsOrigin,
@@ -36,8 +37,12 @@ const CONFIG = {
     LOCKOUT_DURATION: 60 * 60 * 1000, // 1 hour lockout for registration abuse
 };
 
-// In-memory store for rate limiting only (OK if reset between invocations)
-const registrationAttempts = new Map();
+// Initialize Redis client if configuration is available
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : null;
+
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -71,7 +76,7 @@ async function storeChallenge(key, challenge, nonce) {
 
     try {
         await put(blobPath, JSON.stringify(data), {
-            access: 'public',
+            access: 'private',
             contentType: 'application/json',
             addRandomSuffix: false
         });
@@ -121,29 +126,35 @@ async function verifyChallenge(key) {
 }
 
 /**
- * Check if registration is locked out
+ * Check if registration is locked out using Redis
  */
-function isRegistrationLockedOut(ip) {
-    const entry = registrationAttempts.get(ip);
-    if (!entry) return false;
-
-    if (entry.count >= CONFIG.MAX_REGISTRATION_ATTEMPTS) {
-        if (Date.now() - entry.lastAttempt < CONFIG.LOCKOUT_DURATION) {
-            return true;
-        }
-        registrationAttempts.delete(ip);
+async function isRegistrationLockedOut(ip) {
+    if (!redis) return false;
+    try {
+        const key = `lockout:register:${ip}`;
+        const attempts = await redis.get(key);
+        return attempts && parseInt(attempts, 10) >= CONFIG.MAX_REGISTRATION_ATTEMPTS;
+    } catch (error) {
+        console.error('Redis registration lockout check failed:', error);
+        return false; // Fail open
     }
-    return false;
 }
 
 /**
- * Record failed registration attempt
+ * Record failed registration attempt in Redis
  */
-function recordRegistrationAttempt(ip) {
-    const entry = registrationAttempts.get(ip) || { count: 0, lastAttempt: 0 };
-    entry.count++;
-    entry.lastAttempt = Date.now();
-    registrationAttempts.set(ip, entry);
+async function recordRegistrationAttempt(ip) {
+    if (!redis) return;
+    try {
+        const key = `lockout:register:${ip}`;
+        const attempts = await redis.incr(key);
+        if (attempts === 1) {
+            // Set expiry only on the first attempt to start the lockout window
+            await redis.expire(key, Math.ceil(CONFIG.LOCKOUT_DURATION / 1000));
+        }
+    } catch (error) {
+        console.error('Redis record registration attempt failed:', error);
+    }
 }
 
 /**
@@ -182,7 +193,7 @@ async function storeOwnerCredential(credentialData) {
 
     try {
         await put(blobPath, JSON.stringify(credentialData), {
-            access: 'public',
+            access: 'private',
             contentType: 'application/json',
             addRandomSuffix: false
         });
@@ -297,7 +308,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Rate limiting
-    const rateLimitResult = checkRateLimit(
+    const rateLimitResult = await checkRateLimit(
         `biometric-register:${clientIp}`,
         CONFIG.RATE_LIMIT.limit,
         CONFIG.RATE_LIMIT.windowMs
@@ -319,7 +330,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Check registration lockout
-    if (isRegistrationLockedOut(clientIp)) {
+    if (await isRegistrationLockedOut(clientIp)) {
         addAuditEntry({
             action: 'BIOMETRIC_REGISTER_LOCKED_OUT',
             ip: clientIp,
@@ -449,7 +460,7 @@ module.exports = async function handler(req, res) {
             // Verify challenge was issued to this device
             const challengeData = await verifyChallenge(deviceFingerprint);
             if (!challengeData) {
-                recordRegistrationAttempt(clientIp);
+                await recordRegistrationAttempt(clientIp);
 
                 addAuditEntry({
                     action: 'BIOMETRIC_REGISTER_INVALID_CHALLENGE',
@@ -481,7 +492,7 @@ module.exports = async function handler(req, res) {
                 const deviceMatch = checkDeviceMatch(req, clientDeviceId, existingOwner);
 
                 if (!deviceMatch.matches) {
-                    recordRegistrationAttempt(clientIp);
+                    await recordRegistrationAttempt(clientIp);
 
                     addAuditEntry({
                         action: 'BIOMETRIC_REGISTER_BLOCKED_EXISTING_OWNER',

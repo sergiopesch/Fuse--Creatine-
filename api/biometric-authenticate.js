@@ -119,14 +119,8 @@ function verifySessionToken(token) {
  */
 async function storeChallenge(key, challenge) {
     const blobPath = `${CONFIG.CHALLENGE_PREFIX}auth-${key}.json`;
-    const data = {
-        challenge,
-        createdAt: Date.now()
-    };
-
-    try {
         await put(blobPath, JSON.stringify(data), {
-            access: 'public',
+            access: 'private',
             contentType: 'application/json',
             addRandomSuffix: false
         });
@@ -246,7 +240,7 @@ async function updateOwnerCredential(credential) {
 
     try {
         await put(blobPath, JSON.stringify(credential), {
-            access: 'public',
+            access: 'private',
             contentType: 'application/json',
             addRandomSuffix: false
         });
@@ -328,7 +322,7 @@ async function storeDeviceLink(code, ownerUserId, createdByFingerprint) {
 
     try {
         await put(blobPath, JSON.stringify(data), {
-            access: 'public',
+            access: 'private',
             contentType: 'application/json',
             addRandomSuffix: false
         });

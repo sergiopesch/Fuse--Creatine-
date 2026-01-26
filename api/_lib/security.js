@@ -2,11 +2,12 @@
  * FUSE Security Middleware Library
  * Provides authentication, rate limiting, request validation, and audit logging
  *
- * @version 2.0.0
+ * @version 2.1.0
  * @security-critical - Do not modify without thorough review
  */
 
 const crypto = require('crypto');
+const { Redis } = require('@upstash/redis');
 
 // ============================================================================
 // CONFIGURATION
@@ -16,7 +17,6 @@ const CONFIG = {
     // Rate limiting defaults
     RATE_LIMIT_WINDOW_MS: 60 * 1000, // 1 minute
     RATE_LIMIT_MAX_REQUESTS: 100,
-    RATE_LIMIT_MAX_ENTRIES: 5000,
 
     // Request size limits
     MAX_REQUEST_BODY_SIZE: 10 * 1024, // 10KB
@@ -31,10 +31,14 @@ const CONFIG = {
 };
 
 // ============================================================================
-// IN-MEMORY STORES (Consider Redis/KV for production)
+// REDIS & IN-MEMORY STORES
 // ============================================================================
 
-const rateLimitStore = new Map();
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : null;
+
 const auditLog = [];
 
 // ============================================================================
@@ -101,20 +105,6 @@ function tokensMatch(provided, expected) {
 
     if (providedBuffer.length !== expectedBuffer.length) return false;
     return crypto.timingSafeEqual(providedBuffer, expectedBuffer);
-}
-
-/**
- * Prune old entries from rate limit store
- */
-function pruneRateLimitStore(now) {
-    if (rateLimitStore.size <= CONFIG.RATE_LIMIT_MAX_ENTRIES) return;
-
-    for (const [key, entry] of rateLimitStore.entries()) {
-        if (!entry || !entry.lastSeen || now - entry.lastSeen > CONFIG.RATE_LIMIT_WINDOW_MS) {
-            rateLimitStore.delete(key);
-        }
-        if (rateLimitStore.size <= CONFIG.RATE_LIMIT_MAX_ENTRIES) break;
-    }
 }
 
 // ============================================================================
@@ -184,40 +174,49 @@ function authenticate(req, expectedToken) {
 // ============================================================================
 
 /**
- * Check rate limit for a given key
+ * Check rate limit for a given key using Redis.
  * @param {string} key - Rate limit key (e.g., 'ip:192.168.1.1' or 'user:admin')
  * @param {number} limit - Maximum requests allowed
  * @param {number} windowMs - Time window in milliseconds
- * @returns {{ limited: boolean, remaining: number, retryAfterMs?: number }}
+ * @returns {Promise<{ limited: boolean, remaining: number, retryAfterMs?: number }>}
  */
-function checkRateLimit(key, limit = CONFIG.RATE_LIMIT_MAX_REQUESTS, windowMs = CONFIG.RATE_LIMIT_WINDOW_MS) {
-    const now = Date.now();
-    const entry = rateLimitStore.get(key);
-    const timestamps = entry ? entry.timestamps : [];
-    const cutoff = now - windowMs;
-    const recent = timestamps.filter(ts => ts > cutoff);
-
-    if (recent.length >= limit) {
-        rateLimitStore.set(key, { timestamps: recent, lastSeen: now });
-        pruneRateLimitStore(now);
-        const retryAfterMs = recent[0] + windowMs - now;
-        return {
-            limited: true,
-            remaining: 0,
-            retryAfterMs,
-            resetAt: new Date(recent[0] + windowMs).toISOString()
-        };
+async function checkRateLimit(key, limit = CONFIG.RATE_LIMIT_MAX_REQUESTS, windowMs = CONFIG.RATE_LIMIT_WINDOW_MS) {
+    if (!redis) {
+        console.warn('Rate limiting is disabled because Redis is not configured.');
+        return { limited: false, remaining: limit, resetAt: new Date(Date.now() + windowMs) };
     }
 
-    recent.push(now);
-    rateLimitStore.set(key, { timestamps: recent, lastSeen: now });
-    pruneRateLimitStore(now);
+    const windowSec = Math.ceil(windowMs / 1000);
+    const rateLimitKey = `rate_limit:security:${key}`;
 
-    return {
-        limited: false,
-        remaining: limit - recent.length,
-        resetAt: new Date(now + windowMs).toISOString()
-    };
+    try {
+        const count = await redis.incr(rateLimitKey);
+
+        if (count === 1) {
+            await redis.expire(rateLimitKey, windowSec);
+        }
+
+        const ttl = await redis.ttl(rateLimitKey);
+
+        if (count > limit) {
+            return {
+                limited: true,
+                remaining: 0,
+                retryAfterMs: ttl * 1000,
+                resetAt: new Date(Date.now() + ttl * 1000).toISOString()
+            };
+        }
+
+        return {
+            limited: false,
+            remaining: limit - count,
+            resetAt: new Date(Date.now() + ttl * 1000).toISOString()
+        };
+    } catch (error) {
+        console.error('Redis rate limit check failed:', error);
+        // Fail open
+        return { limited: false, remaining: limit, resetAt: new Date(Date.now() + windowMs) };
+    }
 }
 
 // ============================================================================
@@ -436,7 +435,7 @@ function createSecuredHandler(options, handler) {
 
         // Rate limiting
         if (rateLimit) {
-            const rateLimitResult = checkRateLimit(
+            const rateLimitResult = await checkRateLimit(
                 `${req.url}:${clientIp}`,
                 rateLimit.limit,
                 rateLimit.windowMs
@@ -575,7 +574,6 @@ module.exports = {
 
     // Rate limiting
     checkRateLimit,
-    rateLimitStore, // Exposed for testing
 
     // Validation
     validateRequestBody,

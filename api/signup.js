@@ -1,5 +1,6 @@
 const { put } = require("@vercel/blob");
 const crypto = require("crypto");
+const { Redis } = require("@upstash/redis");
 const { encrypt } = require("./_lib/crypto");
 // Import shared utilities to avoid code duplication
 const { getClientIp, getHeaderValue } = require("./_lib/security");
@@ -13,39 +14,55 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_IP_MAX = 8;
 const RATE_LIMIT_EMAIL_MAX = 4;
-const RATE_LIMIT_MAX_ENTRIES = 5000;
 
-const rateLimitStore = new Map();
+// Initialize Redis client if configuration is available
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : null;
 
-function pruneRateLimitStore(now) {
-  if (rateLimitStore.size <= RATE_LIMIT_MAX_ENTRIES) return;
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (!entry || !entry.lastSeen || now - entry.lastSeen > RATE_LIMIT_WINDOW_MS) {
-      rateLimitStore.delete(key);
+/**
+ * Checks rate limit for a given key using a fixed window counter algorithm in Redis.
+ * @param {Redis | null} redis - The Redis client instance.
+ * @param {string} key - The key to rate limit against.
+ * @param {number} limit - The maximum number of requests allowed.
+ * @param {number} windowMs - The time window in milliseconds.
+ * @returns {Promise<{ limited: boolean, retryAfterMs: number }>}
+ */
+async function checkRateLimit(redis, key, limit, windowMs) {
+  if (!redis) {
+    // If Redis is not configured, bypass rate limiting.
+    // Log this event for monitoring purposes.
+    console.warn("Rate limiting is disabled because Redis is not configured.");
+    return { limited: false, retryAfterMs: 0 };
+  }
+
+  const windowSec = Math.ceil(windowMs / 1000);
+  // Add a prefix to avoid key collisions in Redis
+  const rateLimitKey = `rate_limit:signup:${key}`;
+
+  try {
+    const count = await redis.incr(rateLimitKey);
+
+    // Set expiry only on the first increment in the window
+    if (count === 1) {
+      await redis.expire(rateLimitKey, windowSec);
     }
-    if (rateLimitStore.size <= RATE_LIMIT_MAX_ENTRIES) break;
+
+    if (count > limit) {
+      const ttl = await redis.ttl(rateLimitKey);
+      // Return retry-after in milliseconds
+      return { limited: true, retryAfterMs: ttl * 1000 };
+    }
+
+    return { limited: false, retryAfterMs: 0 };
+  } catch (error) {
+    console.error("Redis rate limit check failed:", error);
+    // In case of Redis error, fail open (allow request) to not block users.
+    return { limited: false, retryAfterMs: 0 };
   }
 }
 
-function checkRateLimit(key, limit, windowMs) {
-  const now = Date.now();
-  const entry = rateLimitStore.get(key);
-  const timestamps = entry ? entry.timestamps : [];
-  const cutoff = now - windowMs;
-  const recent = timestamps.filter((ts) => ts > cutoff);
-
-  if (recent.length >= limit) {
-    rateLimitStore.set(key, { timestamps: recent, lastSeen: now });
-    pruneRateLimitStore(now);
-    const retryAfterMs = recent[0] + windowMs - now;
-    return { limited: true, retryAfterMs };
-  }
-
-  recent.push(now);
-  rateLimitStore.set(key, { timestamps: recent, lastSeen: now });
-  pruneRateLimitStore(now);
-  return { limited: false, retryAfterMs: 0 };
-}
 
 function parseBody(req) {
   if (!req || typeof req.body === "undefined") return {};
@@ -117,7 +134,7 @@ module.exports = async (req, res) => {
   }
 
   const clientIp = getClientIp(req);
-  const ipLimit = checkRateLimit(`ip:${clientIp}`, RATE_LIMIT_IP_MAX, RATE_LIMIT_WINDOW_MS);
+  const ipLimit = await checkRateLimit(redis, `ip:${clientIp}`, RATE_LIMIT_IP_MAX, RATE_LIMIT_WINDOW_MS);
   if (ipLimit.limited) {
     res.setHeader("Retry-After", Math.ceil(ipLimit.retryAfterMs / 1000));
     return res.status(429).json({ error: "Too many requests. Please try again later." });
@@ -147,7 +164,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "Valid email is required" });
   }
 
-  const emailLimit = checkRateLimit(`email:${email}`, RATE_LIMIT_EMAIL_MAX, RATE_LIMIT_WINDOW_MS);
+  const emailLimit = await checkRateLimit(redis, `email:${email}`, RATE_LIMIT_EMAIL_MAX, RATE_LIMIT_WINDOW_MS);
   if (emailLimit.limited) {
     res.setHeader("Retry-After", Math.ceil(emailLimit.retryAfterMs / 1000));
     return res.status(429).json({ error: "Too many requests. Please try again later." });
@@ -205,7 +222,7 @@ module.exports = async (req, res) => {
     }
 
     await put(filename, JSON.stringify(dataToStore), {
-      access: "public",
+      access: "private",
       addRandomSuffix: true,
       contentType: "application/json",
     });
