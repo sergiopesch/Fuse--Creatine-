@@ -24,6 +24,9 @@ const {
 
 const { recordUsage, getUsageSummary } = require('./_lib/cost-tracker');
 
+// World Controller - Master Control System
+const worldController = require('./_lib/world-controller');
+
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
@@ -539,6 +542,62 @@ function handleGet(action, query, res, clientIp) {
                 data: getUsageSummary(period)
             });
 
+        // ====================================================================
+        // WORLD CONTROLLER - OWNER CONTROL ENDPOINTS
+        // ====================================================================
+
+        case 'world-status':
+            return res.status(200).json({
+                success: true,
+                data: worldController.getWorldStatus()
+            });
+
+        case 'team-control-status':
+            const controlTeamId = query.teamId;
+            if (controlTeamId) {
+                return res.status(200).json({
+                    success: true,
+                    data: worldController.getTeamStatus(controlTeamId)
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                data: worldController.getWorldStatus().teamControls
+            });
+
+        case 'pending-actions':
+            return res.status(200).json({
+                success: true,
+                data: worldController.getPendingActions()
+            });
+
+        case 'credit-status':
+            return res.status(200).json({
+                success: true,
+                data: worldController.checkCreditLimits()
+            });
+
+        case 'control-log':
+            const logLimit = parseInt(query.limit) || 50;
+            return res.status(200).json({
+                success: true,
+                data: worldController.getControlLog(logLimit)
+            });
+
+        case 'can-execute':
+            const checkTeamId = query.teamId;
+            const checkAction = query.actionType;
+            if (!checkTeamId || !checkAction) {
+                return res.status(400).json({
+                    error: 'teamId and actionType are required',
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                data: worldController.canExecuteAction(checkTeamId, checkAction)
+            });
+
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });
     }
@@ -744,6 +803,122 @@ function handlePost(action, body, res, clientIp) {
             });
             return res.status(200).json({ success: true, data: syncResult });
 
+        // ====================================================================
+        // WORLD CONTROLLER - OWNER CONTROL POST ENDPOINTS
+        // ====================================================================
+
+        case 'world-pause':
+            const pauseReason = body.reason || 'Manual pause by owner';
+            const pauseResult = worldController.pauseWorld(pauseReason, 'owner');
+            addActivity('OWNER', 'system', `WORLD PAUSED: ${pauseReason}`, 'Emergency');
+            addAuditEntry({
+                action: 'WORLD_PAUSED',
+                ip: clientIp,
+                success: pauseResult.success,
+                reason: pauseReason
+            });
+            return res.status(200).json({ success: true, data: pauseResult });
+
+        case 'world-resume':
+            const targetState = body.targetState || worldController.WORLD_STATES.MANUAL;
+            const resumeResult = worldController.resumeWorld('owner', targetState);
+            if (resumeResult.success) {
+                addActivity('OWNER', 'system', `WORLD RESUMED in ${targetState} mode`, 'System');
+            }
+            addAuditEntry({
+                action: 'WORLD_RESUMED',
+                ip: clientIp,
+                success: resumeResult.success,
+                targetState
+            });
+            return res.status(200).json({ success: true, data: resumeResult });
+
+        case 'emergency-stop':
+            const emergencyReason = body.reason || 'Emergency stop triggered by owner';
+            const emergencyResult = worldController.triggerEmergencyStop(emergencyReason);
+            addActivity('OWNER', 'system', `EMERGENCY STOP: ${emergencyReason}`, 'Critical');
+            addAuditEntry({
+                action: 'EMERGENCY_STOP',
+                ip: clientIp,
+                success: true,
+                reason: emergencyReason
+            });
+            return res.status(200).json({ success: true, data: emergencyResult });
+
+        case 'reset-emergency':
+            const confirmCode = body.confirmationCode;
+            const resetResult = worldController.resetEmergencyStop('owner', confirmCode);
+            if (resetResult.success) {
+                addActivity('OWNER', 'system', 'Emergency stop reset', 'System');
+            }
+            addAuditEntry({
+                action: 'EMERGENCY_RESET_ATTEMPT',
+                ip: clientIp,
+                success: resetResult.success
+            });
+            return res.status(200).json({ success: true, data: resetResult });
+
+        case 'trigger-action':
+            const { teamId: actionTeamId, actionType, parameters } = body;
+            if (!actionTeamId || !actionType) {
+                return res.status(400).json({
+                    error: 'teamId and actionType are required',
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+            const triggerResult = worldController.triggerTeamAction(actionTeamId, actionType, parameters || {});
+            if (triggerResult.success) {
+                addActivity('OWNER', actionTeamId, `Triggered action: ${actionType}`, 'Manual Trigger');
+            }
+            addAuditEntry({
+                action: 'ACTION_TRIGGERED',
+                ip: clientIp,
+                success: triggerResult.success,
+                teamId: actionTeamId,
+                actionType
+            });
+            return res.status(200).json({ success: true, data: triggerResult });
+
+        case 'queue-action':
+            const queueResult = worldController.queueAction(
+                body.teamId,
+                body.actionType,
+                body.parameters || {},
+                body.requiresApproval !== false
+            );
+            addAuditEntry({
+                action: 'ACTION_QUEUED',
+                ip: clientIp,
+                success: queueResult.success,
+                teamId: body.teamId,
+                actionType: body.actionType
+            });
+            return res.status(200).json({ success: true, data: queueResult });
+
+        case 'approve-action':
+            const approveResult = worldController.approveAction(body.actionId);
+            if (approveResult.success) {
+                addActivity('OWNER', 'system', `Approved action: ${body.actionId}`, 'Approval');
+            }
+            addAuditEntry({
+                action: 'ACTION_APPROVED',
+                ip: clientIp,
+                success: approveResult.success,
+                actionId: body.actionId
+            });
+            return res.status(200).json({ success: true, data: approveResult });
+
+        case 'reject-action':
+            const rejectResult = worldController.rejectAction(body.actionId, body.reason);
+            addActivity('OWNER', 'system', `Rejected action: ${body.actionId}`, 'Rejection');
+            addAuditEntry({
+                action: 'ACTION_REJECTED',
+                ip: clientIp,
+                success: rejectResult.success,
+                actionId: body.actionId
+            });
+            return res.status(200).json({ success: true, data: rejectResult });
+
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });
     }
@@ -937,6 +1112,169 @@ function handlePut(action, body, res, clientIp) {
             });
 
             return res.status(200).json({ success: true, data: { updated: true } });
+
+        // ====================================================================
+        // WORLD CONTROLLER - OWNER CONTROL PUT ENDPOINTS
+        // ====================================================================
+
+        case 'world-state':
+            const newWorldState = body.state;
+            if (!newWorldState) {
+                return res.status(400).json({
+                    error: 'state is required',
+                    code: 'VALIDATION_ERROR',
+                    validStates: Object.values(worldController.WORLD_STATES)
+                });
+            }
+            const stateResult = worldController.setWorldState(newWorldState, 'owner');
+            if (stateResult.success) {
+                addActivity('OWNER', 'system', `World state changed to: ${newWorldState}`, 'Mode Change');
+            }
+            addAuditEntry({
+                action: 'WORLD_STATE_CHANGED',
+                ip: clientIp,
+                success: stateResult.success,
+                newState: newWorldState
+            });
+            return res.status(200).json({ success: true, data: stateResult });
+
+        case 'team-pause':
+            const pauseTeamId = body.teamId;
+            const teamPauseReason = body.reason || 'Manual pause';
+            if (!pauseTeamId) {
+                return res.status(400).json({ error: 'teamId is required', code: 'VALIDATION_ERROR' });
+            }
+            const teamPauseResult = worldController.pauseTeam(pauseTeamId, teamPauseReason, 'owner');
+            if (teamPauseResult.success) {
+                addActivity('OWNER', pauseTeamId, `Team PAUSED: ${teamPauseReason}`, 'Team Control');
+            }
+            addAuditEntry({
+                action: 'TEAM_PAUSED',
+                ip: clientIp,
+                success: teamPauseResult.success,
+                teamId: pauseTeamId
+            });
+            return res.status(200).json({ success: true, data: teamPauseResult });
+
+        case 'team-resume':
+            const resumeTeamId = body.teamId;
+            if (!resumeTeamId) {
+                return res.status(400).json({ error: 'teamId is required', code: 'VALIDATION_ERROR' });
+            }
+            const teamResumeResult = worldController.resumeTeam(resumeTeamId, 'owner');
+            if (teamResumeResult.success) {
+                addActivity('OWNER', resumeTeamId, 'Team RESUMED', 'Team Control');
+            }
+            addAuditEntry({
+                action: 'TEAM_RESUMED',
+                ip: clientIp,
+                success: teamResumeResult.success,
+                teamId: resumeTeamId
+            });
+            return res.status(200).json({ success: true, data: teamResumeResult });
+
+        case 'team-automation':
+            const autoTeamId = body.teamId;
+            const autoLevel = body.level;
+            const allowedActions = body.allowedActions || [];
+            if (!autoTeamId || !autoLevel) {
+                return res.status(400).json({
+                    error: 'teamId and level are required',
+                    code: 'VALIDATION_ERROR',
+                    validLevels: Object.values(worldController.AUTOMATION_LEVELS)
+                });
+            }
+            const autoResult = worldController.setTeamAutomationLevel(autoTeamId, autoLevel, allowedActions);
+            if (autoResult.success) {
+                addActivity('OWNER', autoTeamId, `Automation set to: ${autoLevel}`, 'Team Control');
+            }
+            addAuditEntry({
+                action: 'TEAM_AUTOMATION_CHANGED',
+                ip: clientIp,
+                success: autoResult.success,
+                teamId: autoTeamId,
+                level: autoLevel
+            });
+            return res.status(200).json({ success: true, data: autoResult });
+
+        case 'credit-limits':
+            const creditResult = worldController.setCreditLimits(body.dailyLimit, body.monthlyLimit);
+            addActivity('OWNER', 'system', `Credit limits updated: $${body.dailyLimit}/day, $${body.monthlyLimit}/month`, 'Config');
+            addAuditEntry({
+                action: 'CREDIT_LIMITS_UPDATED',
+                ip: clientIp,
+                success: creditResult.success,
+                dailyLimit: body.dailyLimit,
+                monthlyLimit: body.monthlyLimit
+            });
+            return res.status(200).json({ success: true, data: creditResult });
+
+        case 'record-spend':
+            const spendResult = worldController.recordSpend(body.amount, body.source || 'manual');
+            addAuditEntry({
+                action: 'SPEND_RECORDED',
+                ip: clientIp,
+                success: true,
+                amount: body.amount
+            });
+            return res.status(200).json({ success: true, data: spendResult });
+
+        case 'reset-daily-spend':
+            const dailyResetResult = worldController.resetDailySpend();
+            addActivity('OWNER', 'system', 'Daily spend counter reset', 'Config');
+            addAuditEntry({
+                action: 'DAILY_SPEND_RESET',
+                ip: clientIp,
+                success: true
+            });
+            return res.status(200).json({ success: true, data: dailyResetResult });
+
+        case 'reset-monthly-spend':
+            const monthlyResetResult = worldController.resetMonthlySpend();
+            addActivity('OWNER', 'system', 'Monthly spend counter reset', 'Config');
+            addAuditEntry({
+                action: 'MONTHLY_SPEND_RESET',
+                ip: clientIp,
+                success: true
+            });
+            return res.status(200).json({ success: true, data: monthlyResetResult });
+
+        case 'automation-schedule':
+            const scheduleResult = worldController.setAutomationSchedule(
+                body.enabled,
+                body.windows || [],
+                body.timezone || 'UTC'
+            );
+            addActivity('OWNER', 'system', `Automation schedule ${body.enabled ? 'enabled' : 'disabled'}`, 'Config');
+            addAuditEntry({
+                action: 'AUTOMATION_SCHEDULE_UPDATED',
+                ip: clientIp,
+                success: scheduleResult.success
+            });
+            return res.status(200).json({ success: true, data: scheduleResult });
+
+        case 'add-automation-window':
+            const windowResult = worldController.addAutomationWindow(
+                body.start,
+                body.end,
+                body.teams || [],
+                body.actions || []
+            );
+            addAuditEntry({
+                action: 'AUTOMATION_WINDOW_ADDED',
+                ip: clientIp,
+                success: windowResult.success
+            });
+            return res.status(200).json({ success: true, data: windowResult });
+
+        case 'remove-automation-window':
+            const removeWindowResult = worldController.removeAutomationWindow(body.windowId);
+            addAuditEntry({
+                action: 'AUTOMATION_WINDOW_REMOVED',
+                ip: clientIp,
+                success: removeWindowResult.success
+            });
+            return res.status(200).json({ success: true, data: removeWindowResult });
 
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });

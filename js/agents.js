@@ -365,7 +365,38 @@ const state = {
         lastCheck: null,
         systemStatus: 'operational'
     },
-    teamSettings: {}
+    teamSettings: {},
+    // World Controller State - Owner Control
+    worldController: {
+        worldStatus: 'manual',  // 'paused', 'manual', 'semi_auto', 'autonomous'
+        globalPaused: false,
+        pausedAt: null,
+        pauseReason: null,
+        emergencyStop: {
+            triggered: false,
+            triggeredAt: null,
+            reason: null
+        },
+        teamControls: {
+            developer: { paused: false, automationLevel: 'manual', allowedActions: [] },
+            design: { paused: false, automationLevel: 'manual', allowedActions: [] },
+            communications: { paused: false, automationLevel: 'manual', allowedActions: [] },
+            legal: { paused: false, automationLevel: 'manual', allowedActions: [] },
+            marketing: { paused: false, automationLevel: 'manual', allowedActions: [] },
+            gtm: { paused: false, automationLevel: 'manual', allowedActions: [] },
+            sales: { paused: false, automationLevel: 'manual', allowedActions: [] }
+        },
+        creditProtection: {
+            enabled: true,
+            dailyLimit: 50.00,
+            monthlyLimit: 500.00,
+            currentDailySpend: 0,
+            currentMonthlySpend: 0,
+            autoStopOnLimit: true
+        },
+        pendingActions: [],
+        controlLog: []
+    }
 };
 
 // Initialize team settings
@@ -532,6 +563,678 @@ function generateLiveFeedItem(teamId) {
         timestamp: new Date(),
         processed: Math.random() > 0.3
     };
+}
+
+// ============================================
+// WORLD CONTROLLER FUNCTIONS - Owner Control
+// ============================================
+
+const WORLD_STATES = {
+    PAUSED: 'paused',
+    MANUAL: 'manual',
+    SEMI_AUTO: 'semi_auto',
+    AUTONOMOUS: 'autonomous'
+};
+
+const AUTOMATION_LEVELS = {
+    STOPPED: 'stopped',
+    MANUAL: 'manual',
+    SUPERVISED: 'supervised',
+    AUTONOMOUS: 'autonomous'
+};
+
+const ACTION_TYPES = {
+    THINK: 'think',
+    EXECUTE: 'execute',
+    COMMUNICATE: 'communicate',
+    REPORT: 'report',
+    SYNC: 'sync',
+    RESEARCH: 'research',
+    CREATE: 'create',
+    REVIEW: 'review'
+};
+
+// World Controller Functions
+function pauseWorld(reason = 'Manual pause by owner') {
+    state.worldController.globalPaused = true;
+    state.worldController.pausedAt = new Date().toISOString();
+    state.worldController.pauseReason = reason;
+    state.worldController.worldStatus = WORLD_STATES.PAUSED;
+
+    // Pause all teams
+    Object.keys(state.worldController.teamControls).forEach(team => {
+        state.worldController.teamControls[team].paused = true;
+    });
+
+    addControlLog('WORLD_PAUSED', { reason });
+    updateWorldControlUI();
+    showToast(`World PAUSED: ${reason}`, 'warning');
+
+    // Add activity
+    state.activities.unshift({
+        id: `act-${Date.now()}`,
+        agent: 'OWNER',
+        team: 'system',
+        message: `WORLD PAUSED: ${reason}`,
+        tag: 'Emergency',
+        timestamp: new Date()
+    });
+    renderActivityFeed();
+}
+
+function resumeWorld(targetState = WORLD_STATES.MANUAL) {
+    if (state.worldController.emergencyStop.triggered) {
+        showToast('Emergency stop active. Reset required.', 'error');
+        return false;
+    }
+
+    state.worldController.globalPaused = false;
+    state.worldController.pausedAt = null;
+    state.worldController.pauseReason = null;
+    state.worldController.worldStatus = targetState;
+
+    // Resume all teams
+    Object.keys(state.worldController.teamControls).forEach(team => {
+        state.worldController.teamControls[team].paused = false;
+    });
+
+    addControlLog('WORLD_RESUMED', { targetState });
+    updateWorldControlUI();
+    showToast(`World resumed in ${targetState.toUpperCase()} mode`, 'success');
+
+    state.activities.unshift({
+        id: `act-${Date.now()}`,
+        agent: 'OWNER',
+        team: 'system',
+        message: `World resumed in ${targetState} mode`,
+        tag: 'System',
+        timestamp: new Date()
+    });
+    renderActivityFeed();
+    return true;
+}
+
+function setWorldState(newState) {
+    if (!Object.values(WORLD_STATES).includes(newState)) {
+        showToast('Invalid world state', 'error');
+        return false;
+    }
+
+    const previousState = state.worldController.worldStatus;
+    state.worldController.worldStatus = newState;
+
+    if (newState === WORLD_STATES.PAUSED) {
+        state.worldController.globalPaused = true;
+        state.worldController.pausedAt = new Date().toISOString();
+    } else {
+        state.worldController.globalPaused = false;
+    }
+
+    addControlLog('WORLD_STATE_CHANGED', { from: previousState, to: newState });
+    updateWorldControlUI();
+    showToast(`World state: ${newState.toUpperCase()}`, 'info');
+    return true;
+}
+
+function triggerEmergencyStop(reason = 'Emergency stop by owner') {
+    state.worldController.emergencyStop = {
+        triggered: true,
+        triggeredAt: new Date().toISOString(),
+        reason
+    };
+
+    pauseWorld(reason);
+    addControlLog('EMERGENCY_STOP', { reason });
+
+    // Show emergency modal
+    const emergencyModal = document.getElementById('emergencyStopModal');
+    if (emergencyModal) {
+        emergencyModal.classList.add('active');
+    }
+
+    showToast('EMERGENCY STOP ACTIVATED', 'error');
+}
+
+function resetEmergencyStop(confirmationCode) {
+    if (confirmationCode !== 'CONFIRM_RESET') {
+        showToast('Invalid confirmation code', 'error');
+        return false;
+    }
+
+    state.worldController.emergencyStop = {
+        triggered: false,
+        triggeredAt: null,
+        reason: null
+    };
+
+    addControlLog('EMERGENCY_RESET', {});
+
+    const emergencyModal = document.getElementById('emergencyStopModal');
+    if (emergencyModal) {
+        emergencyModal.classList.remove('active');
+    }
+
+    showToast('Emergency stop reset. World remains paused.', 'success');
+    return true;
+}
+
+function pauseTeam(teamId, reason = 'Manual pause') {
+    if (!state.worldController.teamControls[teamId]) {
+        showToast(`Unknown team: ${teamId}`, 'error');
+        return false;
+    }
+
+    state.worldController.teamControls[teamId].paused = true;
+    state.worldController.teamControls[teamId].pausedAt = new Date().toISOString();
+    state.worldController.teamControls[teamId].pauseReason = reason;
+
+    addControlLog('TEAM_PAUSED', { teamId, reason });
+    updateTeamControlsUI();
+    showToast(`Team ${teamId} paused`, 'warning');
+    return true;
+}
+
+function resumeTeam(teamId) {
+    if (!state.worldController.teamControls[teamId]) {
+        showToast(`Unknown team: ${teamId}`, 'error');
+        return false;
+    }
+
+    if (state.worldController.globalPaused) {
+        showToast('Cannot resume team while world is paused', 'error');
+        return false;
+    }
+
+    state.worldController.teamControls[teamId].paused = false;
+    delete state.worldController.teamControls[teamId].pausedAt;
+    delete state.worldController.teamControls[teamId].pauseReason;
+
+    addControlLog('TEAM_RESUMED', { teamId });
+    updateTeamControlsUI();
+    showToast(`Team ${teamId} resumed`, 'success');
+    return true;
+}
+
+function setTeamAutomationLevel(teamId, level, allowedActions = []) {
+    if (!state.worldController.teamControls[teamId]) {
+        return false;
+    }
+
+    state.worldController.teamControls[teamId].automationLevel = level;
+    state.worldController.teamControls[teamId].allowedActions = allowedActions;
+
+    addControlLog('TEAM_AUTOMATION_CHANGED', { teamId, level, allowedActions });
+    updateTeamControlsUI();
+    return true;
+}
+
+function triggerTeamAction(teamId, actionType, parameters = {}) {
+    if (state.worldController.globalPaused) {
+        showToast('Cannot trigger action while world is paused', 'error');
+        return false;
+    }
+
+    if (state.worldController.teamControls[teamId]?.paused) {
+        showToast(`Cannot trigger action while team ${teamId} is paused`, 'error');
+        return false;
+    }
+
+    // Check credit limits
+    const creditCheck = checkCreditLimits();
+    if (!creditCheck.canProceed) {
+        showToast(creditCheck.message, 'error');
+        return false;
+    }
+
+    const action = {
+        id: `action_${Date.now()}`,
+        teamId,
+        actionType,
+        parameters,
+        triggeredAt: new Date().toISOString(),
+        status: 'triggered'
+    };
+
+    addControlLog('ACTION_TRIGGERED', action);
+    showToast(`Action ${actionType} triggered for ${teamId}`, 'success');
+
+    // Add to activity feed
+    state.activities.unshift({
+        id: `act-${Date.now()}`,
+        agent: 'OWNER',
+        team: teamId,
+        message: `Triggered action: ${actionType}`,
+        tag: 'Manual',
+        timestamp: new Date()
+    });
+    renderActivityFeed();
+
+    return true;
+}
+
+function setCreditLimits(daily, monthly) {
+    if (daily !== null) {
+        state.worldController.creditProtection.dailyLimit = daily;
+    }
+    if (monthly !== null) {
+        state.worldController.creditProtection.monthlyLimit = monthly;
+    }
+
+    addControlLog('CREDIT_LIMITS_UPDATED', {
+        dailyLimit: state.worldController.creditProtection.dailyLimit,
+        monthlyLimit: state.worldController.creditProtection.monthlyLimit
+    });
+    updateCreditUI();
+    showToast('Credit limits updated', 'success');
+}
+
+function recordSpend(amount, source = 'agent_action') {
+    state.worldController.creditProtection.currentDailySpend += amount;
+    state.worldController.creditProtection.currentMonthlySpend += amount;
+
+    const status = checkCreditLimits();
+    updateCreditUI();
+
+    // Auto-pause if limit reached
+    if (!status.canProceed && state.worldController.creditProtection.autoStopOnLimit) {
+        pauseWorld(`Credit limit reached: ${status.message}`);
+    }
+
+    return status;
+}
+
+function checkCreditLimits() {
+    const cp = state.worldController.creditProtection;
+    const dailyUsageRatio = cp.currentDailySpend / cp.dailyLimit;
+    const monthlyUsageRatio = cp.currentMonthlySpend / cp.monthlyLimit;
+
+    let status = 'ok';
+    let canProceed = true;
+    let message = 'Within limits';
+
+    if (dailyUsageRatio >= 1 || monthlyUsageRatio >= 1) {
+        status = 'hard_stop';
+        canProceed = false;
+        message = 'Credit limit reached';
+    } else if (dailyUsageRatio >= 0.9 || monthlyUsageRatio >= 0.9) {
+        status = 'critical';
+        message = 'Critical credit usage';
+    } else if (dailyUsageRatio >= 0.75 || monthlyUsageRatio >= 0.75) {
+        status = 'caution';
+        message = 'High credit usage';
+    } else if (dailyUsageRatio >= 0.5 || monthlyUsageRatio >= 0.5) {
+        status = 'warning';
+        message = 'Moderate credit usage';
+    }
+
+    return {
+        status,
+        canProceed,
+        message,
+        dailySpent: cp.currentDailySpend,
+        dailyLimit: cp.dailyLimit,
+        dailyRemaining: cp.dailyLimit - cp.currentDailySpend,
+        dailyPercent: Math.round(dailyUsageRatio * 100),
+        monthlySpent: cp.currentMonthlySpend,
+        monthlyLimit: cp.monthlyLimit,
+        monthlyRemaining: cp.monthlyLimit - cp.currentMonthlySpend,
+        monthlyPercent: Math.round(monthlyUsageRatio * 100)
+    };
+}
+
+function addControlLog(action, details) {
+    state.worldController.controlLog.unshift({
+        timestamp: new Date().toISOString(),
+        action,
+        details
+    });
+
+    // Keep log size manageable
+    if (state.worldController.controlLog.length > 100) {
+        state.worldController.controlLog = state.worldController.controlLog.slice(0, 100);
+    }
+
+    renderControlLog();
+}
+
+function canExecuteAction(teamId, actionType) {
+    // Emergency stop blocks everything
+    if (state.worldController.emergencyStop.triggered) {
+        return { allowed: false, reason: 'Emergency stop active', code: 'EMERGENCY_STOP' };
+    }
+
+    // Global pause blocks everything
+    if (state.worldController.globalPaused) {
+        return { allowed: false, reason: 'World is paused', code: 'WORLD_PAUSED' };
+    }
+
+    // Team pause blocks team actions
+    if (state.worldController.teamControls[teamId]?.paused) {
+        return { allowed: false, reason: `Team ${teamId} is paused`, code: 'TEAM_PAUSED' };
+    }
+
+    // Credit limits
+    const creditCheck = checkCreditLimits();
+    if (!creditCheck.canProceed) {
+        return { allowed: false, reason: creditCheck.message, code: 'CREDIT_LIMIT' };
+    }
+
+    // Check world state and team automation level
+    switch (state.worldController.worldStatus) {
+        case WORLD_STATES.PAUSED:
+            return { allowed: false, reason: 'World is paused', code: 'WORLD_PAUSED' };
+        case WORLD_STATES.MANUAL:
+            return { allowed: false, reason: 'Manual mode - requires trigger', code: 'REQUIRES_TRIGGER', requiresApproval: true };
+        case WORLD_STATES.SEMI_AUTO:
+            const teamControl = state.worldController.teamControls[teamId];
+            if (teamControl?.allowedActions?.includes(actionType)) {
+                return { allowed: true, reason: 'Action allowed in semi-auto' };
+            }
+            return { allowed: false, reason: 'Action not in allowed list', code: 'REQUIRES_APPROVAL', requiresApproval: true };
+        case WORLD_STATES.AUTONOMOUS:
+            return { allowed: true, reason: 'Autonomous mode' };
+        default:
+            return { allowed: false, reason: 'Unknown state', code: 'UNKNOWN' };
+    }
+}
+
+// UI Update Functions
+function updateWorldControlUI() {
+    const wc = state.worldController;
+
+    // Update world state indicator in header
+    const indicator = document.getElementById('worldStateIndicator');
+    if (indicator) {
+        indicator.className = 'world-state-indicator';
+        const stateText = indicator.querySelector('.world-state-text');
+        if (stateText) {
+            stateText.textContent = wc.worldStatus.toUpperCase().replace('_', '-');
+        }
+
+        if (wc.worldStatus === 'paused') indicator.classList.add('paused');
+        else if (wc.worldStatus === 'semi_auto') indicator.classList.add('semi-auto');
+        else if (wc.worldStatus === 'autonomous') indicator.classList.add('autonomous');
+    }
+
+    // Update pause overlay
+    const pauseOverlay = document.getElementById('worldPausedOverlay');
+    const pauseReasonText = document.getElementById('pauseReasonText');
+    if (pauseOverlay) {
+        if (wc.globalPaused && !wc.emergencyStop.triggered) {
+            pauseOverlay.classList.add('active');
+            if (pauseReasonText) {
+                pauseReasonText.textContent = wc.pauseReason || 'All agent operations are halted.';
+            }
+        } else {
+            pauseOverlay.classList.remove('active');
+        }
+    }
+
+    // Update emergency modal
+    const emergencyModal = document.getElementById('emergencyStopModal');
+    const emergencyReasonText = document.getElementById('emergencyReasonText');
+    if (emergencyModal) {
+        if (wc.emergencyStop.triggered) {
+            emergencyModal.classList.add('active');
+            if (emergencyReasonText) {
+                emergencyReasonText.textContent = wc.emergencyStop.reason || 'All agent operations have been immediately halted.';
+            }
+        } else {
+            emergencyModal.classList.remove('active');
+        }
+    }
+
+    // Update master pause button
+    const pauseBtn = document.getElementById('masterPauseBtn');
+    if (pauseBtn) {
+        const btnText = pauseBtn.querySelector('span');
+        if (wc.globalPaused) {
+            pauseBtn.classList.add('is-paused');
+            if (btnText) btnText.textContent = 'RESUME';
+        } else {
+            pauseBtn.classList.remove('is-paused');
+            if (btnText) btnText.textContent = 'PAUSE';
+        }
+    }
+
+    // Update emergency stop button
+    const emergencyBtn = document.getElementById('emergencyStopBtn');
+    if (emergencyBtn) {
+        if (wc.emergencyStop.triggered) {
+            emergencyBtn.classList.add('active');
+        } else {
+            emergencyBtn.classList.remove('active');
+        }
+    }
+
+    // Update system status
+    const statusIndicator = document.getElementById('systemStatusIndicator');
+    const statusText = document.getElementById('systemStatusText');
+    if (statusIndicator && statusText) {
+        if (wc.emergencyStop.triggered) {
+            statusIndicator.className = 'status-indicator emergency';
+            statusText.textContent = 'EMERGENCY STOP';
+        } else if (wc.globalPaused) {
+            statusIndicator.className = 'status-indicator paused';
+            statusText.textContent = 'World Paused';
+        } else {
+            statusIndicator.className = 'status-indicator online';
+            statusText.textContent = 'All Systems Operational';
+        }
+    }
+
+    // Update state buttons in World Control tab
+    document.querySelectorAll('.state-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.state === wc.worldStatus) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Update state description
+    const stateDesc = document.getElementById('stateDescription');
+    if (stateDesc) {
+        const descriptions = {
+            paused: 'World is PAUSED. All agent operations are halted.',
+            manual: 'Manual mode: You must trigger every action. Full control.',
+            semi_auto: 'Semi-auto mode: Agents can perform allowed actions. Major decisions require approval.',
+            autonomous: 'Autonomous mode: Agents operate independently. Use with caution.'
+        };
+        stateDesc.textContent = descriptions[wc.worldStatus] || '';
+    }
+
+    updateCreditUI();
+    updateTeamControlsUI();
+}
+
+function updateCreditUI() {
+    const cp = state.worldController.creditProtection;
+    const status = checkCreditLimits();
+
+    // Header credit indicator
+    const creditIndicator = document.getElementById('creditIndicator');
+    const creditValue = document.getElementById('creditValue');
+    const creditLimit = document.getElementById('creditLimit');
+    if (creditIndicator && creditValue && creditLimit) {
+        creditValue.textContent = `$${cp.currentDailySpend.toFixed(2)}`;
+        creditLimit.textContent = `/ $${cp.dailyLimit}`;
+
+        creditIndicator.className = 'credit-indicator';
+        if (status.status === 'critical' || status.status === 'hard_stop') {
+            creditIndicator.classList.add('critical');
+        } else if (status.status === 'warning' || status.status === 'caution') {
+            creditIndicator.classList.add('warning');
+        }
+    }
+
+    // Credit bar in World Control tab
+    const creditBar = document.getElementById('creditBar');
+    if (creditBar) {
+        creditBar.style.width = `${Math.min(status.dailyPercent, 100)}%`;
+        creditBar.className = 'credit-bar';
+        if (status.status === 'critical' || status.status === 'hard_stop') {
+            creditBar.classList.add('critical');
+        } else if (status.status === 'warning' || status.status === 'caution') {
+            creditBar.classList.add('warning');
+        }
+    }
+
+    // Credit stats
+    const spentDisplay = document.getElementById('creditSpentDisplay');
+    const remainingDisplay = document.getElementById('creditRemainingDisplay');
+    if (spentDisplay) {
+        spentDisplay.textContent = `$${cp.currentDailySpend.toFixed(2)} spent today`;
+    }
+    if (remainingDisplay) {
+        remainingDisplay.textContent = `$${status.dailyRemaining.toFixed(2)} remaining`;
+        remainingDisplay.className = 'credit-remaining';
+        if (status.status === 'critical') remainingDisplay.classList.add('critical');
+        else if (status.status === 'warning') remainingDisplay.classList.add('warning');
+    }
+
+    // Update limit inputs
+    const dailyInput = document.getElementById('dailyLimitInput');
+    const monthlyInput = document.getElementById('monthlyLimitInput');
+    if (dailyInput) dailyInput.value = cp.dailyLimit;
+    if (monthlyInput) monthlyInput.value = cp.monthlyLimit;
+}
+
+function updateTeamControlsUI() {
+    const container = document.getElementById('teamControlsList');
+    if (!container) return;
+
+    const teamColors = {
+        developer: '#3b82f6',
+        design: '#8b5cf6',
+        communications: '#06b6d4',
+        legal: '#f59e0b',
+        marketing: '#ef4444',
+        gtm: '#10b981',
+        sales: '#ec4899'
+    };
+
+    const teamNames = {
+        developer: 'Developer',
+        design: 'Design',
+        communications: 'Comms',
+        legal: 'Legal',
+        marketing: 'Marketing',
+        gtm: 'GTM',
+        sales: 'Sales'
+    };
+
+    container.innerHTML = Object.entries(state.worldController.teamControls).map(([teamId, control]) => {
+        const isPaused = control.paused;
+        const color = teamColors[teamId] || '#888';
+        const name = teamNames[teamId] || teamId;
+        const badge = AgentTeams[teamId]?.badge || teamId.substring(0, 3).toUpperCase();
+
+        return `
+            <div class="team-control-item ${isPaused ? 'paused' : ''}" data-team="${teamId}">
+                <div class="team-control-badge" style="background: ${color}">${badge}</div>
+                <div class="team-control-info">
+                    <div class="team-control-name">${name}</div>
+                    <div class="team-control-status">${isPaused ? 'PAUSED' : control.automationLevel}</div>
+                </div>
+                <select class="team-automation-select" data-team="${teamId}" ${isPaused ? 'disabled' : ''}>
+                    <option value="manual" ${control.automationLevel === 'manual' ? 'selected' : ''}>Manual</option>
+                    <option value="supervised" ${control.automationLevel === 'supervised' ? 'selected' : ''}>Supervised</option>
+                    <option value="autonomous" ${control.automationLevel === 'autonomous' ? 'selected' : ''}>Autonomous</option>
+                </select>
+                <div class="team-control-actions">
+                    ${isPaused ?
+                        `<button class="team-control-btn play-btn" data-action="resume" data-team="${teamId}" title="Resume Team">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </button>` :
+                        `<button class="team-control-btn pause-btn" data-action="pause" data-team="${teamId}" title="Pause Team">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>`
+                    }
+                    <button class="team-control-btn trigger-btn" data-action="trigger" data-team="${teamId}" title="Trigger Action" ${isPaused ? 'disabled' : ''}>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Add event listeners
+    container.querySelectorAll('.team-control-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const action = btn.dataset.action;
+            const teamId = btn.dataset.team;
+            if (action === 'pause') pauseTeam(teamId);
+            else if (action === 'resume') resumeTeam(teamId);
+            else if (action === 'trigger') {
+                // Set the trigger form to this team
+                const triggerSelect = document.getElementById('triggerTeamSelect');
+                if (triggerSelect) triggerSelect.value = teamId;
+            }
+        });
+    });
+
+    container.querySelectorAll('.team-automation-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const teamId = select.dataset.team;
+            setTeamAutomationLevel(teamId, select.value);
+        });
+    });
+}
+
+function renderControlLog() {
+    const container = document.getElementById('controlLogList');
+    if (!container) return;
+
+    const recentLogs = state.worldController.controlLog.slice(0, 20);
+
+    if (recentLogs.length === 0) {
+        container.innerHTML = '<p class="empty-message">No control actions yet</p>';
+        return;
+    }
+
+    container.innerHTML = recentLogs.map(log => {
+        const time = new Date(log.timestamp);
+        const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const detailsStr = typeof log.details === 'object' ?
+            Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
+
+        return `
+            <div class="control-log-item">
+                <span class="log-time">${timeStr}</span>
+                <span class="log-action">${log.action}</span>
+                <span class="log-details">${detailsStr}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderPendingActions() {
+    const container = document.getElementById('pendingActionsList');
+    const badge = document.getElementById('pendingActionsBadge');
+
+    if (!container) return;
+
+    const pending = state.worldController.pendingActions || [];
+
+    if (badge) badge.textContent = pending.length;
+
+    if (pending.length === 0) {
+        container.innerHTML = '<p class="empty-message">No pending actions</p>';
+        return;
+    }
+
+    container.innerHTML = pending.map(action => `
+        <div class="pending-action-item" data-id="${action.id}">
+            <div class="pending-action-info">
+                <div class="pending-action-type">${action.actionType}</div>
+                <div class="pending-action-team">${action.teamId}</div>
+            </div>
+            <div class="pending-action-actions">
+                <button class="action-approve-btn" data-id="${action.id}">Approve</button>
+                <button class="action-reject-btn" data-id="${action.id}">Reject</button>
+            </div>
+        </div>
+    `).join('');
 }
 
 // ============================================
@@ -1718,12 +2421,107 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCommsLog();
     updateStats();
 
+    // Initialize World Controller UI
+    updateWorldControlUI();
+    renderControlLog();
+    renderPendingActions();
+
     // Initialize API config panel
     initApiConfigPanel();
 
     // Start clock
     updateClock();
     setInterval(updateClock, 1000);
+
+    // ============================================
+    // WORLD CONTROLLER EVENT LISTENERS
+    // ============================================
+
+    // Master Pause Button
+    document.getElementById('masterPauseBtn')?.addEventListener('click', () => {
+        if (state.worldController.globalPaused) {
+            resumeWorld(WORLD_STATES.MANUAL);
+        } else {
+            pauseWorld('Manual pause by owner');
+        }
+    });
+
+    // Emergency Stop Button
+    document.getElementById('emergencyStopBtn')?.addEventListener('click', () => {
+        if (state.worldController.emergencyStop.triggered) {
+            // Show confirmation dialog
+            const code = prompt('Enter confirmation code to reset emergency stop:');
+            if (code) resetEmergencyStop(code);
+        } else {
+            if (confirm('EMERGENCY STOP: This will immediately halt ALL agent operations. Continue?')) {
+                triggerEmergencyStop('Emergency stop triggered by owner');
+            }
+        }
+    });
+
+    // World State Buttons
+    document.querySelectorAll('.state-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const newState = btn.dataset.state;
+            if (newState === 'paused') {
+                pauseWorld('State set to paused');
+            } else {
+                if (state.worldController.globalPaused) {
+                    resumeWorld(newState);
+                } else {
+                    setWorldState(newState);
+                }
+            }
+        });
+    });
+
+    // Credit Limits Update
+    document.getElementById('updateCreditLimitsBtn')?.addEventListener('click', () => {
+        const daily = parseFloat(document.getElementById('dailyLimitInput')?.value) || 50;
+        const monthly = parseFloat(document.getElementById('monthlyLimitInput')?.value) || 500;
+        setCreditLimits(daily, monthly);
+    });
+
+    // Auto-stop toggle
+    document.getElementById('autoStopOnLimit')?.addEventListener('change', (e) => {
+        state.worldController.creditProtection.autoStopOnLimit = e.target.checked;
+        showToast(`Auto-pause on limit ${e.target.checked ? 'enabled' : 'disabled'}`, 'info');
+    });
+
+    // Trigger Action Button
+    document.getElementById('triggerActionBtn')?.addEventListener('click', () => {
+        const teamId = document.getElementById('triggerTeamSelect')?.value;
+        const actionType = document.getElementById('triggerActionSelect')?.value;
+        if (teamId && actionType) {
+            triggerTeamAction(teamId, actionType);
+        }
+    });
+
+    // Credit indicator click - scroll to World Control tab
+    document.getElementById('creditIndicator')?.addEventListener('click', () => {
+        // Switch to World Control tab
+        document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        const worldControlTab = document.querySelector('[data-tab="worldcontrol"]');
+        const worldControlContent = document.getElementById('worldcontrolTab');
+        if (worldControlTab) worldControlTab.classList.add('active');
+        if (worldControlContent) worldControlContent.classList.add('active');
+    });
+
+    // Resume from pause overlay
+    document.getElementById('resumeFromOverlay')?.addEventListener('click', () => {
+        resumeWorld(WORLD_STATES.MANUAL);
+        const overlay = document.getElementById('worldPausedOverlay');
+        if (overlay) overlay.classList.remove('active');
+    });
+
+    // Emergency Reset Button
+    document.getElementById('emergencyResetBtn')?.addEventListener('click', () => {
+        const code = document.getElementById('emergencyResetCode')?.value;
+        if (resetEmergencyStop(code)) {
+            document.getElementById('emergencyResetCode').value = '';
+        }
+    });
 
     // Team navigation
     document.querySelectorAll('.team-nav-btn').forEach(btn => {
@@ -1930,5 +2728,23 @@ window.AgentCommander = {
     openTeamWorkspace,
     closeTeamWorkspace,
     openAgentModal,
-    openTeamSettingsModal
+    openTeamSettingsModal,
+    // World Controller exports
+    WORLD_STATES,
+    AUTOMATION_LEVELS,
+    ACTION_TYPES,
+    pauseWorld,
+    resumeWorld,
+    setWorldState,
+    triggerEmergencyStop,
+    resetEmergencyStop,
+    pauseTeam,
+    resumeTeam,
+    setTeamAutomationLevel,
+    triggerTeamAction,
+    setCreditLimits,
+    recordSpend,
+    checkCreditLimits,
+    canExecuteAction,
+    updateWorldControlUI
 };
