@@ -1397,10 +1397,13 @@
     border-radius: 8px;
     transition: all var(--transition-fast) ease;
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
 }
 
 .api-provider:hover {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.45);
+    transform: translateX(4px);
 }
 
 .provider-info {
@@ -1475,16 +1478,18 @@
 .activity-item {
     display: flex;
     gap: var(--space-sm);
-    padding: 8px 0;
+    padding: 8px;
     cursor: pointer;
     border-radius: 6px;
     margin: 0 -8px;
-    padding: 8px;
     transition: all var(--transition-fast) ease;
+    text-decoration: none;
+    color: inherit;
 }
 
 .activity-item:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(4px);
 }
 
 .activity-dot {
