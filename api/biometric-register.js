@@ -237,29 +237,36 @@ function createDeviceFingerprint(req, clientDeviceId = null) {
 }
 
 /**
- * Check if a device matches the stored credential (with migration support)
+ * Check if a device matches any of the authorized devices (with migration support)
+ * Supports both legacy single fingerprint and new multi-device array
  * Returns { matches: boolean, needsMigration: boolean, fingerprint: string }
  */
-function checkDeviceMatch(req, clientDeviceId, storedFingerprint) {
-    // First try the new client-based fingerprint
+function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
     const clientFp = createClientFingerprint(clientDeviceId);
-    if (clientFp && clientFp === storedFingerprint) {
+    const headerFp = createHeaderFingerprint(req);
+    const currentFp = clientFp || headerFp;
+
+    // Get all authorized fingerprints (support both old and new format)
+    const authorizedDevices = ownerCredential.authorizedDevices || [];
+    const legacyFingerprint = ownerCredential.deviceFingerprint;
+
+    // Build list of all valid fingerprints
+    const allFingerprints = [...authorizedDevices.map(d => d.fingerprint)];
+    if (legacyFingerprint && !allFingerprints.includes(legacyFingerprint)) {
+        allFingerprints.push(legacyFingerprint);
+    }
+
+    // Check client fingerprint first
+    if (clientFp && allFingerprints.includes(clientFp)) {
         return { matches: true, needsMigration: false, fingerprint: clientFp };
     }
 
-    // Try legacy header-based fingerprint for backwards compatibility
-    const headerFp = createHeaderFingerprint(req);
-    if (headerFp === storedFingerprint) {
-        // User authenticated with old method - needs migration to new deviceId
+    // Check header fingerprint for backwards compatibility
+    if (allFingerprints.includes(headerFp)) {
         return { matches: true, needsMigration: !!clientFp, fingerprint: clientFp || headerFp };
     }
 
-    // No match found
-    if (clientFp) {
-        return { matches: false, needsMigration: false, fingerprint: clientFp };
-    }
-
-    return { matches: false, needsMigration: false, fingerprint: headerFp };
+    return { matches: false, needsMigration: false, fingerprint: currentFp };
 }
 
 // ============================================================================
@@ -348,7 +355,7 @@ module.exports = async function handler(req, res) {
 
             let isOwnerDevice = false;
             if (ownerCredential) {
-                const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+                const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
                 isOwnerDevice = deviceMatch.matches;
             }
 
@@ -378,7 +385,7 @@ module.exports = async function handler(req, res) {
 
             if (ownerCredential) {
                 // Owner exists - check if this might be the owner's device
-                const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential.deviceFingerprint);
+                const deviceMatch = checkDeviceMatch(req, clientDeviceId, ownerCredential);
 
                 if (!deviceMatch.matches) {
                     addAuditEntry({
@@ -471,7 +478,7 @@ module.exports = async function handler(req, res) {
             }
 
             if (existingOwner) {
-                const deviceMatch = checkDeviceMatch(req, clientDeviceId, existingOwner.deviceFingerprint);
+                const deviceMatch = checkDeviceMatch(req, clientDeviceId, existingOwner);
 
                 if (!deviceMatch.matches) {
                     recordRegistrationAttempt(clientIp);
@@ -491,15 +498,35 @@ module.exports = async function handler(req, res) {
                 }
             }
 
-            // Create the owner credential
+            // Detect device type for naming
+            const ua = req.headers['user-agent'] || '';
+            let deviceName = 'Primary Device';
+            if (/iPhone|iPad/i.test(ua)) {
+                deviceName = 'iPhone/iPad';
+            } else if (/Android/i.test(ua)) {
+                deviceName = 'Android Device';
+            } else if (/Mac/i.test(ua)) {
+                deviceName = 'Mac';
+            } else if (/Windows/i.test(ua)) {
+                deviceName = 'Windows PC';
+            }
+
+            // Create the owner credential with multi-device support
             const ownerCredentialData = {
                 // Credential binding
                 credentialId: sanitizeString(credentialId, 256),
                 publicKey: sanitizeString(publicKey, 2048),
                 userId: sanitizeString(userId, 64),
 
-                // Device binding
+                // Device binding (legacy for backwards compatibility)
                 deviceFingerprint,
+
+                // Multi-device support
+                authorizedDevices: [{
+                    fingerprint: deviceFingerprint,
+                    name: deviceName,
+                    addedAt: new Date().toISOString()
+                }],
 
                 // Metadata
                 registeredAt: new Date().toISOString(),
@@ -508,7 +535,7 @@ module.exports = async function handler(req, res) {
                 authCount: 0,
 
                 // Security
-                version: '2.0',
+                version: '2.1', // Updated version for multi-device support
                 algorithm: 'ES256'
             };
 

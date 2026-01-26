@@ -657,6 +657,88 @@ const BiometricAuth = (() => {
     }
 
     // ============================================
+    // DEVICE LINKING
+    // ============================================
+
+    /**
+     * Create a device link code (for authenticated owners to share with new devices)
+     */
+    async function createDeviceLink() {
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+            throw new Error('You must be authenticated to create a device link');
+        }
+
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'create-device-link',
+                    sessionToken,
+                    deviceId: getDeviceId()
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to create device link');
+            }
+
+            return {
+                success: true,
+                linkCode: data.linkCode,
+                expiresIn: data.expiresIn,
+                message: data.message
+            };
+        } catch (error) {
+            console.error('[BiometricAuth] Create device link failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Claim a device link code (for new devices to authorize themselves)
+     */
+    async function claimDeviceLink(linkCode) {
+        if (!linkCode || typeof linkCode !== 'string') {
+            throw new Error('Invalid link code');
+        }
+
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'claim-device-link',
+                    linkCode: linkCode.toUpperCase().trim(),
+                    deviceId: getDeviceId()
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to claim device link');
+            }
+
+            // Update state
+            state.isOwner = true;
+            state.hasOwner = true;
+
+            return {
+                success: true,
+                deviceName: data.deviceName,
+                message: data.message
+            };
+        } catch (error) {
+            console.error('[BiometricAuth] Claim device link failed:', error);
+            throw error;
+        }
+    }
+
+    // ============================================
     // PUBLIC API
     // ============================================
 
@@ -675,6 +757,10 @@ const BiometricAuth = (() => {
         // Registration & Authentication
         register,
         authenticate,
+
+        // Device linking
+        createDeviceLink,
+        claimDeviceLink,
 
         // Session management
         isSessionVerified,

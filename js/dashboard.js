@@ -599,7 +599,7 @@
                     }
                     updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
                 } else {
-                    // Non-owner device - show locked state
+                    // Non-owner device - show locked state with link option
                     gate.classList.add('locked');
                     btnAuth.style.display = 'none';
                     btnSetup.style.display = 'none';
@@ -611,6 +611,13 @@
                         gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
                     }
                     showStatus('This dashboard is locked to its owner\'s device', 'error');
+
+                    // Show link device option if available
+                    const btnLinkDevice = document.getElementById('btnLinkDevice');
+                    if (btnLinkDevice && accessStatus.canLinkDevice !== false) {
+                        btnLinkDevice.style.display = 'flex';
+                        initDeviceLinking();
+                    }
                     return false;
                 }
             } else {
@@ -865,6 +872,135 @@
         // Add verified class to body
         document.body.classList.add('biometric-verified');
         state.biometricVerified = true;
+    }
+
+    /**
+     * Initialize device linking functionality
+     */
+    function initDeviceLinking() {
+        const btnLinkDevice = document.getElementById('btnLinkDevice');
+        const deviceLinkInput = document.getElementById('deviceLinkInput');
+        const linkCodeInput = document.getElementById('linkCodeInput');
+        const btnClaimLink = document.getElementById('btnClaimLink');
+        const btnCancelLink = document.getElementById('btnCancelLink');
+
+        if (!btnLinkDevice) return;
+
+        // Show link code input when button clicked
+        btnLinkDevice.addEventListener('click', () => {
+            btnLinkDevice.style.display = 'none';
+            if (deviceLinkInput) {
+                deviceLinkInput.style.display = 'block';
+                linkCodeInput?.focus();
+            }
+            hideStatus();
+        });
+
+        // Cancel link - go back to locked state
+        btnCancelLink?.addEventListener('click', () => {
+            if (deviceLinkInput) {
+                deviceLinkInput.style.display = 'none';
+            }
+            btnLinkDevice.style.display = 'flex';
+            if (linkCodeInput) {
+                linkCodeInput.value = '';
+            }
+            showStatus('This dashboard is locked to its owner\'s device', 'error');
+        });
+
+        // Format input as uppercase
+        linkCodeInput?.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+
+        // Handle claim button click
+        btnClaimLink?.addEventListener('click', handleClaimLink);
+
+        // Handle enter key in input
+        linkCodeInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleClaimLink();
+            }
+        });
+    }
+
+    /**
+     * Handle claiming a device link code
+     */
+    async function handleClaimLink() {
+        const linkCodeInput = document.getElementById('linkCodeInput');
+        const btnClaimLink = document.getElementById('btnClaimLink');
+        const deviceLinkInput = document.getElementById('deviceLinkInput');
+        const btnSetup = document.getElementById('btnSetup');
+        const gateSubtitle = document.getElementById('gateSubtitle');
+        const gateMessage = document.getElementById('gateMessage');
+        const gate = document.getElementById('biometricGate');
+
+        const code = linkCodeInput?.value?.trim();
+
+        if (!code || code.length !== 6) {
+            showStatus('Please enter a valid 6-character code', 'error');
+            return;
+        }
+
+        // Check if BiometricAuth is available
+        if (typeof BiometricAuth === 'undefined') {
+            showStatus('Biometric library not loaded. Please refresh.', 'error');
+            return;
+        }
+
+        try {
+            // Disable button during claim
+            if (btnClaimLink) {
+                btnClaimLink.disabled = true;
+                btnClaimLink.querySelector('span').textContent = 'Linking...';
+            }
+            showStatus('Verifying link code...', 'info');
+
+            const result = await BiometricAuth.claimDeviceLink(code);
+
+            if (result.success) {
+                showStatus(result.message || 'Device linked successfully!', 'success');
+
+                // Remove locked state
+                gate?.classList.remove('locked');
+
+                // Hide link input
+                if (deviceLinkInput) {
+                    deviceLinkInput.style.display = 'none';
+                }
+
+                // Update icon back to biometric
+                updateBiometricIcon(state.authenticatorType);
+
+                // Update messages
+                if (gateSubtitle) {
+                    gateSubtitle.innerHTML = `Device linked! Now secure with <span class="biometric-type">${state.authenticatorType}</span>`;
+                }
+                if (gateMessage) {
+                    gateMessage.textContent = 'Set up biometric access on this device to complete the link';
+                }
+
+                // Show setup button
+                if (btnSetup) {
+                    btnSetup.style.display = 'flex';
+                }
+
+                // Trigger haptic feedback
+                if (navigator.vibrate) {
+                    navigator.vibrate([50, 50, 100]);
+                }
+            }
+        } catch (error) {
+            console.error('[Dashboard] Device link claim failed:', error);
+            showStatus(error.message || 'Failed to link device. Please try again.', 'error');
+
+            // Re-enable button
+            if (btnClaimLink) {
+                btnClaimLink.disabled = false;
+                btnClaimLink.querySelector('span').textContent = 'Link Device';
+            }
+        }
     }
 
     // ============================================
