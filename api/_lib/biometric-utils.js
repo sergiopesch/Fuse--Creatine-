@@ -154,99 +154,113 @@ function normalizeCredentials(ownerCredential) {
 }
 
 /**
- * Get the owner credential from Vercel Blob or Redis
+ * Get the owner credential from Redis (primary) or Vercel Blob (backup)
  * Returns { credential, error } to distinguish between "no owner" and "service error"
  * @returns {Promise<{ credential: object|null, error: string|null }>}
  */
 async function getOwnerCredential() {
-    // Try Redis first (faster)
+    const redisKey = 'biometric:owner:credential';
+    
+    // Try Redis first (primary storage)
     if (redis) {
         try {
-            const redisKey = 'biometric:owner:credential';
             const data = await redis.get(redisKey);
+            console.log('[BiometricUtils] Redis get result:', data ? 'found' : 'not found');
+            
             if (data) {
                 const credential = typeof data === 'string' ? JSON.parse(data) : data;
                 return { credential, error: null };
             }
+            // Data not in Redis, continue to check Blob
         } catch (error) {
-            console.warn('[BiometricUtils] Redis get failed, falling back to Blob:', error.message);
+            console.warn('[BiometricUtils] Redis get failed:', error.message);
+            // Continue to Blob as fallback
         }
     }
 
-    // Try Vercel Blob
+    // Try Vercel Blob (backup storage) - but don't fail if unavailable
     try {
         const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
         const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
 
         if (!blob) {
-            return { credential: null, error: null };
+            console.log('[BiometricUtils] No owner credential in Blob');
+            return { credential: null, error: null }; // No owner yet
         }
 
         const response = await fetch(blob.url);
         if (!response.ok) {
             console.error('[BiometricUtils] Blob fetch failed:', response.status);
-            return { credential: null, error: 'BLOB_FETCH_FAILED' };
+            // Blob had a file but couldn't fetch - still return null to allow re-registration
+            return { credential: null, error: null };
         }
 
         const credential = await response.json();
+        console.log('[BiometricUtils] Owner credential loaded from Blob');
         
-        // Cache in Redis for faster access
+        // Cache in Redis for faster access next time
         if (redis) {
             try {
-                await redis.set('biometric:owner:credential', JSON.stringify(credential));
-            } catch (e) { /* ignore cache errors */ }
+                await redis.set(redisKey, JSON.stringify(credential));
+                console.log('[BiometricUtils] Cached credential in Redis');
+            } catch (e) { 
+                console.warn('[BiometricUtils] Failed to cache in Redis:', e.message);
+            }
         }
         
         return { credential, error: null };
     } catch (error) {
-        console.error('[BiometricUtils] Failed to get owner credential:', error);
-        
-        // If Blob fails but we have Redis, return null (no owner) to allow registration
-        if (redis && error.message?.includes('BLOB')) {
-            console.warn('[BiometricUtils] Blob unavailable, allowing fresh registration');
-            return { credential: null, error: null };
-        }
-        
-        return { credential: null, error: 'SERVICE_ERROR' };
+        console.warn('[BiometricUtils] Blob unavailable:', error.message);
+        // Blob storage not configured - that's OK, we'll use Redis only
+        return { credential: null, error: null };
     }
 }
 
 /**
- * Store or update owner credential in Redis and Vercel Blob
+ * Store or update owner credential in Redis (primary) and Vercel Blob (backup)
  * @param {object} credentialData - Credential data to store
  * @returns {Promise<boolean>} - Success status
  */
 async function storeOwnerCredential(credentialData) {
+    const redisKey = 'biometric:owner:credential';
     const dataString = JSON.stringify(credentialData);
-    let storedSomewhere = false;
+    let storedInRedis = false;
+    let storedInBlob = false;
 
-    // Store in Redis (primary for speed)
+    // Store in Redis (primary storage)
     if (redis) {
         try {
-            await redis.set('biometric:owner:credential', dataString);
-            storedSomewhere = true;
+            await redis.set(redisKey, dataString);
+            storedInRedis = true;
             console.log('[BiometricUtils] Owner credential stored in Redis');
+            
+            // Verify it was stored
+            const verify = await redis.get(redisKey);
+            console.log('[BiometricUtils] Redis verify:', verify ? 'confirmed' : 'FAILED');
         } catch (error) {
             console.error('[BiometricUtils] Redis store failed:', error.message);
         }
+    } else {
+        console.warn('[BiometricUtils] Redis not available for storing credential');
     }
 
-    // Also store in Blob (backup/persistence)
+    // Also try to store in Blob (backup) - but don't fail if unavailable
     try {
         const blobPath = `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`;
         await put(blobPath, dataString, {
-            access: 'public', // Use public to avoid auth issues
+            access: 'public',
             contentType: 'application/json',
             addRandomSuffix: false
         });
-        storedSomewhere = true;
+        storedInBlob = true;
         console.log('[BiometricUtils] Owner credential stored in Blob');
     } catch (error) {
-        console.error('[BiometricUtils] Blob store failed:', error.message);
-        // Don't fail if Redis succeeded
+        console.warn('[BiometricUtils] Blob store failed (non-critical):', error.message);
     }
 
-    return storedSomewhere;
+    const success = storedInRedis || storedInBlob;
+    console.log('[BiometricUtils] Store result - Redis:', storedInRedis, 'Blob:', storedInBlob, 'Success:', success);
+    return success;
 }
 
 // ============================================================================
