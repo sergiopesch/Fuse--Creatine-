@@ -1333,6 +1333,116 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     margin-top: 0.75rem;
 }
 
+/* Interest Pills */
+.interest-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.interest-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--white);
+    padding: 0.6rem 1rem;
+    border-radius: 980px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out-expo);
+}
+
+.interest-pill:hover {
+    background: rgba(255, 59, 48, 0.12);
+    border-color: rgba(255, 59, 48, 0.4);
+}
+
+.interest-pill.selected {
+    background: var(--fuse-red);
+    border-color: var(--fuse-red);
+    color: var(--white);
+}
+
+/* Modal Subtitle */
+.modal-subtitle {
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.modal-subtitle strong {
+    color: var(--fuse-red);
+}
+
+/* Success Message Styling */
+.success-position {
+    font-size: 1.2rem;
+    color: var(--white);
+    margin-bottom: 0.75rem;
+}
+
+.success-position strong {
+    color: var(--fuse-red);
+}
+
+.success-benefits {
+    color: var(--text-gray);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.success-benefits strong {
+    color: var(--white);
+}
+
+.success-share {
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.share-label {
+    font-size: 0.85rem;
+    color: var(--light-gray);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+
+.share-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.share-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    transition: all 0.25s var(--ease-out-expo);
+    text-decoration: none;
+}
+
+.share-btn:hover {
+    background: var(--fuse-red);
+    border-color: var(--fuse-red);
+    transform: scale(1.08);
+}
+
+.share-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
 .honeypot {
     position: absolute;
     left: -10000px;
@@ -1503,6 +1613,18 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     color: var(--white);
     text-decoration: none;
     margin: 1rem 0;
+    transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.mobile-menu a:hover {
+    color: var(--fuse-red);
+    transform: scale(1.05);
+}
+
+.mobile-menu-cta {
+    margin-top: 2rem;
+    font-size: 1.1rem;
+    padding: 1rem 2.5rem;
 }
 
 .mobile-toggle {
@@ -2393,10 +2515,15 @@ body {
 }
 
 .footer-logo .logo-uk {
-    color: var(--fuse-red);
-    font-size: 0.6em;
-    vertical-align: super;
-    margin-left: 2px;
+    font-size: 0.55rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    background: var(--fuse-red);
+    color: var(--white);
+    padding: 0.1rem 0.25rem;
+    border-radius: 2px;
+    margin-left: 0.35rem;
+    vertical-align: middle;
 }
 
 .footer-tagline {
