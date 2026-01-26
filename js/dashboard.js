@@ -306,88 +306,104 @@
 
         if (!gate) return true; // No gate, allow access
 
+        // CRITICAL: Attach event listeners IMMEDIATELY to ensure buttons always work
+        // This prevents the "nothing happens" bug when async operations fail
+        if (btnAuth) {
+            btnAuth.addEventListener('click', handleBiometricAuth);
+        }
+        if (btnSetup) {
+            btnSetup.addEventListener('click', handleBiometricSetup);
+        }
+
         // Check biometric library loaded
         if (typeof BiometricAuth === 'undefined') {
             console.error('[Dashboard] BiometricAuth not loaded');
             gate.classList.add('not-supported');
+            showStatus('Biometric library failed to load', 'error');
             return false;
         }
 
-        // Check if already verified in this session
-        const sessionVerified = await BiometricAuth.isSessionVerified();
-        if (sessionVerified) {
-            hideBiometricGate();
-            return true;
-        }
+        try {
+            // Check if already verified in this session
+            const sessionVerified = await BiometricAuth.isSessionVerified();
+            if (sessionVerified) {
+                hideBiometricGate();
+                return true;
+            }
 
-        // Check biometric support
-        const support = await BiometricAuth.checkSupport();
-        state.biometricSupported = support.supported && support.platformAuthenticator;
-        state.authenticatorType = support.type || 'Biometric';
+            // Check biometric support
+            const support = await BiometricAuth.checkSupport();
+            state.biometricSupported = support.supported && support.platformAuthenticator;
+            state.authenticatorType = support.type || 'Biometric';
 
-        if (!state.biometricSupported) {
-            gate.classList.add('not-supported');
-            return false;
-        }
-
-        // Update UI with authenticator type
-        if (authTypeText) {
-            authTypeText.textContent = state.authenticatorType;
-        }
-
-        // Update icon based on type
-        updateBiometricIcon(state.authenticatorType);
-
-        // Check access status (owner-lock system)
-        showStatus('Checking access...', 'info');
-        const accessStatus = await BiometricAuth.checkAccessStatus();
-
-        hideStatus();
-
-        if (accessStatus.hasOwner) {
-            if (accessStatus.isOwnerDevice) {
-                // Owner device - show auth button
-                btnAuth.style.display = 'flex';
-                btnSetup.style.display = 'none';
-                if (gateSubtitle) {
-                    gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${state.authenticatorType}</span> to unlock.`;
-                }
-                if (gateMessage) {
-                    gateMessage.textContent = 'Your biometric is required to access this dashboard';
-                }
-                updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
-            } else {
-                // Non-owner device - show locked state
-                gate.classList.add('locked');
-                btnAuth.style.display = 'none';
-                btnSetup.style.display = 'none';
-                showLockedIcon();
-                if (gateSubtitle) {
-                    gateSubtitle.textContent = 'Access Denied';
-                }
-                if (gateMessage) {
-                    gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
-                }
-                showStatus('This dashboard is locked to its owner\'s device', 'error');
+            if (!state.biometricSupported) {
+                console.warn('[Dashboard] Platform authenticator not available:', support);
+                gate.classList.add('not-supported');
+                showStatus('Biometric authentication not available on this device', 'error');
                 return false;
             }
-        } else {
-            // No owner yet - show setup for first registration
-            btnAuth.style.display = 'none';
-            btnSetup.style.display = 'flex';
-            if (gateSubtitle) {
-                gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${state.authenticatorType}</span>`;
+
+            // Update UI with authenticator type
+            if (authTypeText) {
+                authTypeText.textContent = state.authenticatorType;
             }
-            if (gateMessage) {
-                gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+
+            // Update icon based on type
+            updateBiometricIcon(state.authenticatorType);
+
+            // Check access status (owner-lock system)
+            showStatus('Checking access...', 'info');
+            const accessStatus = await BiometricAuth.checkAccessStatus();
+
+            hideStatus();
+
+            if (accessStatus.hasOwner) {
+                if (accessStatus.isOwnerDevice) {
+                    // Owner device - show auth button
+                    btnAuth.style.display = 'flex';
+                    btnSetup.style.display = 'none';
+                    if (gateSubtitle) {
+                        gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${state.authenticatorType}</span> to unlock.`;
+                    }
+                    if (gateMessage) {
+                        gateMessage.textContent = 'Your biometric is required to access this dashboard';
+                    }
+                    updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
+                } else {
+                    // Non-owner device - show locked state
+                    gate.classList.add('locked');
+                    btnAuth.style.display = 'none';
+                    btnSetup.style.display = 'none';
+                    showLockedIcon();
+                    if (gateSubtitle) {
+                        gateSubtitle.textContent = 'Access Denied';
+                    }
+                    if (gateMessage) {
+                        gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
+                    }
+                    showStatus('This dashboard is locked to its owner\'s device', 'error');
+                    return false;
+                }
+            } else {
+                // No owner yet - show setup for first registration
+                btnAuth.style.display = 'none';
+                btnSetup.style.display = 'flex';
+                if (gateSubtitle) {
+                    gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${state.authenticatorType}</span>`;
+                }
+                if (gateMessage) {
+                    gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+                }
             }
+
+            return false; // Don't allow access until verified
+
+        } catch (error) {
+            console.error('[Dashboard] Biometric initialization error:', error);
+            showStatus(`Initialization failed: ${error.message}`, 'error');
+            // Keep buttons functional so user can retry
+            return false;
         }
-
-        // Attach event listeners
-        btnAuth.addEventListener('click', handleBiometricAuth);
-        btnSetup.addEventListener('click', handleBiometricSetup);
-
-        return false; // Don't allow access until verified
     }
 
     /**
@@ -444,17 +460,29 @@
      * Handle biometric authentication
      */
     async function handleBiometricAuth() {
+        console.log('[Dashboard] handleBiometricAuth called');
         const iconContainer = document.getElementById('biometricIcon');
 
+        // Check if BiometricAuth is available
+        if (typeof BiometricAuth === 'undefined') {
+            console.error('[Dashboard] BiometricAuth not available');
+            showStatus('Biometric library not loaded. Please refresh.', 'error');
+            return;
+        }
+
         try {
+            console.log('[Dashboard] Starting authentication...');
             updateAuthButton('Verifying...', true);
             iconContainer?.classList.add('scanning');
             iconContainer?.classList.remove('error', 'success');
             hideStatus();
 
             const result = await BiometricAuth.authenticate((progress) => {
+                console.log('[Dashboard] Auth progress:', progress);
                 showStatus(progress, 'info');
             });
+
+            console.log('[Dashboard] Auth result:', result);
 
             if (result.success) {
                 state.biometricVerified = true;
@@ -468,6 +496,18 @@
                     hideBiometricGate();
                     initDashboard();
                 }, 800);
+            } else {
+                // Handle non-success result that didn't throw
+                console.warn('[Dashboard] Auth returned non-success:', result);
+                iconContainer?.classList.remove('scanning');
+                iconContainer?.classList.add('error');
+                showStatus(result.message || 'Authentication failed', 'error');
+                updateAuthButton('Try Again', false);
+
+                setTimeout(() => {
+                    iconContainer?.classList.remove('error');
+                    updateBiometricIcon(state.authenticatorType);
+                }, 2000);
             }
         } catch (error) {
             console.error('[Dashboard] Biometric auth failed:', error);
@@ -1670,14 +1710,30 @@
     // ============================================
 
     async function init() {
-        // Check biometric authentication first
-        const verified = await initBiometricAuth();
+        console.log('[Dashboard] Initializing...');
 
-        if (verified) {
-            // Already verified, initialize dashboard immediately
-            initDashboard();
+        try {
+            // Check biometric authentication first
+            const verified = await initBiometricAuth();
+
+            if (verified) {
+                // Already verified, initialize dashboard immediately
+                console.log('[Dashboard] Session verified, initializing dashboard');
+                initDashboard();
+            } else {
+                console.log('[Dashboard] Awaiting biometric authentication');
+            }
+            // If not verified, dashboard will initialize after successful auth
+        } catch (error) {
+            console.error('[Dashboard] Critical initialization error:', error);
+            // Show error to user
+            const statusEl = document.getElementById('biometricStatus');
+            const statusText = document.getElementById('statusText');
+            if (statusEl && statusText) {
+                statusText.textContent = `Error: ${error.message}. Please refresh the page.`;
+                statusEl.className = 'biometric-status visible error';
+            }
         }
-        // If not verified, dashboard will initialize after successful auth
     }
 
     // ============================================
