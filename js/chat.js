@@ -27,7 +27,9 @@
         messageCount: 0,
         conversationHistory: [],
         retryCount: 0,
-        sessionTerminated: false // Security: track if session was terminated
+        sessionTerminated: false, // Security: track if session was terminated
+        userScrolledUp: false, // Track if user has scrolled up
+        unreadCount: 0 // Track unread messages when scrolled up
     };
 
     // DOM Elements
@@ -105,6 +107,9 @@
         elements.chatInput.addEventListener('keydown', handleInputKeydown);
         elements.chatInput.addEventListener('input', handleInputChange);
 
+        // Scroll tracking for smart scroll behavior
+        elements.chatMessages.addEventListener('scroll', handleScroll);
+
         // Close on click outside
         elements.chatWidget.addEventListener('click', (e) => {
             if (e.target === elements.chatWidget && state.isOpen) {
@@ -143,6 +148,30 @@
     function handleInputChange() {
         autoResizeInput();
         updateCharCount();
+    }
+
+    /**
+     * Handle scroll events for smart scroll behavior
+     */
+    function handleScroll() {
+        const container = elements.chatMessages;
+        if (!container) return;
+
+        const scrollTop = container.scrollTop;
+        const scrollHeight = container.scrollHeight;
+        const clientHeight = container.clientHeight;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+        // Consider "at bottom" if within 50px threshold
+        const isAtBottom = distanceFromBottom < 50;
+
+        if (isAtBottom) {
+            state.userScrolledUp = false;
+            state.unreadCount = 0;
+            hideNewMessageIndicator();
+        } else {
+            state.userScrolledUp = true;
+        }
     }
 
     /**
@@ -635,39 +664,125 @@
 
     /**
      * Scroll chat to bottom smoothly
+     * Uses double RAF to ensure DOM is fully updated before calculating scroll
+     * @param {boolean} force - Force scroll even if user scrolled up
      */
-    function scrollToBottom() {
-        // Use requestAnimationFrame for smooth scrolling
+    function scrollToBottom(force = false) {
+        const container = elements.chatMessages;
+        if (!container) return;
+
+        // Don't auto-scroll if user has scrolled up (unless forced)
+        if (state.userScrolledUp && !force) {
+            state.unreadCount++;
+            showNewMessageIndicator();
+            return;
+        }
+
+        // Double RAF ensures DOM is fully painted before we calculate scroll position
+        // First RAF: browser has queued the layout/paint
+        // Second RAF: layout/paint is complete, safe to read dimensions
         requestAnimationFrame(() => {
-            const container = elements.chatMessages;
-            const scrollHeight = container.scrollHeight;
-            const height = container.clientHeight;
-            const maxScroll = scrollHeight - height;
+            requestAnimationFrame(() => {
+                const scrollHeight = container.scrollHeight;
+                const clientHeight = container.clientHeight;
+                const maxScroll = scrollHeight - clientHeight;
 
-            // Smooth scroll animation
-            const startScroll = container.scrollTop;
-            const distance = maxScroll - startScroll;
-            const duration = 200;
-            let startTime = null;
+                // Nothing to scroll
+                if (maxScroll <= 0) return;
 
-            function animateScroll(currentTime) {
-                if (!startTime) startTime = currentTime;
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
-                // Ease out cubic
-                const easeOut = 1 - Math.pow(1 - progress, 3);
-                container.scrollTop = startScroll + (distance * easeOut);
-
-                if (progress < 1) {
-                    requestAnimationFrame(animateScroll);
+                // Try native smooth scrolling first (better performance)
+                if ('scrollBehavior' in document.documentElement.style) {
+                    container.scrollTo({
+                        top: maxScroll,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    // Fallback: custom animation for older browsers
+                    animateScroll(container, maxScroll);
                 }
-            }
-
-            if (distance > 0) {
-                requestAnimationFrame(animateScroll);
-            }
+            });
         });
+    }
+
+    /**
+     * Custom scroll animation fallback for browsers without smooth scroll
+     * @param {HTMLElement} container - The scrollable container
+     * @param {number} targetScroll - Target scroll position
+     */
+    function animateScroll(container, targetScroll) {
+        const startScroll = container.scrollTop;
+        const distance = targetScroll - startScroll;
+        const duration = 250;
+        let startTime = null;
+
+        function step(currentTime) {
+            if (!startTime) startTime = currentTime;
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Ease out cubic for smooth deceleration
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            container.scrollTop = startScroll + (distance * easeOut);
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            }
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    /**
+     * Show new message indicator when user has scrolled up
+     */
+    function showNewMessageIndicator() {
+        let indicator = document.getElementById('chatNewMessage');
+
+        if (!indicator) {
+            indicator = document.createElement('button');
+            indicator.id = 'chatNewMessage';
+            indicator.className = 'chat-new-message-indicator';
+            indicator.setAttribute('aria-label', 'New messages below, click to scroll down');
+            indicator.innerHTML = `
+                <span class="chat-new-message-text">New message</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            `;
+            indicator.addEventListener('click', () => {
+                state.userScrolledUp = false;
+                state.unreadCount = 0;
+                scrollToBottom(true);
+                hideNewMessageIndicator();
+            });
+
+            // Insert before the input form
+            const chatWindow = elements.chatWindow;
+            const chatForm = elements.chatForm;
+            if (chatWindow && chatForm) {
+                chatWindow.insertBefore(indicator, chatForm);
+            }
+        }
+
+        // Update text with count if multiple messages
+        const textEl = indicator.querySelector('.chat-new-message-text');
+        if (textEl && state.unreadCount > 1) {
+            textEl.textContent = `${state.unreadCount} new messages`;
+        } else if (textEl) {
+            textEl.textContent = 'New message';
+        }
+
+        indicator.classList.add('visible');
+    }
+
+    /**
+     * Hide new message indicator
+     */
+    function hideNewMessageIndicator() {
+        const indicator = document.getElementById('chatNewMessage');
+        if (indicator) {
+            indicator.classList.remove('visible');
+        }
     }
 
     /**
@@ -744,6 +859,9 @@
             state.hasShownEmailCapture = false;
             state.showWelcome = true;
             state.sessionTerminated = false;
+            state.userScrolledUp = false;
+            state.unreadCount = 0;
+            hideNewMessageIndicator();
 
             // Re-enable input if it was disabled
             if (elements.chatInput) {
