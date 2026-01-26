@@ -683,6 +683,39 @@
     }
 
     // ============================================
+    // GREETING UPDATE
+    // ============================================
+
+    function updateGreeting() {
+        const greetingTitle = document.getElementById('greetingTitle');
+        const greetingSubtitle = document.getElementById('greetingSubtitle');
+
+        if (!greetingTitle) return;
+
+        const hour = new Date().getHours();
+        let greeting, subtitle;
+
+        if (hour >= 5 && hour < 12) {
+            greeting = 'Good Morning';
+            subtitle = 'Ready to conquer the day';
+        } else if (hour >= 12 && hour < 17) {
+            greeting = 'Good Afternoon';
+            subtitle = 'Your workforce is performing';
+        } else if (hour >= 17 && hour < 21) {
+            greeting = 'Good Evening';
+            subtitle = 'Wrapping up the day strong';
+        } else {
+            greeting = 'Command Center';
+            subtitle = 'Night operations active';
+        }
+
+        greetingTitle.textContent = greeting;
+        if (greetingSubtitle) {
+            greetingSubtitle.textContent = subtitle;
+        }
+    }
+
+    // ============================================
     // TIME UPDATE
     // ============================================
 
@@ -1629,6 +1662,9 @@
     // ============================================
 
     function initDashboard() {
+        // Update greeting based on time of day
+        updateGreeting();
+
         // Update time immediately and every second
         updateTime();
         setInterval(updateTime, 1000);

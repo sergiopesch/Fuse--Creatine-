@@ -121,19 +121,26 @@
                 <span class="logo-text">FUSE</span>
             </a>
             <span class="header-divider"></span>
-            <h1 class="dashboard-title">Company Dashboard</h1>
+            <div class="header-greeting">
+                <h1 class="dashboard-title" id="greetingTitle">Command Center</h1>
+                <span class="greeting-subtitle" id="greetingSubtitle">Your digital workforce awaits</span>
+            </div>
         </div>
         <div class="header-right">
-            <div class="system-status">
+            <div class="system-status" title="System Status">
                 <span class="status-indicator online" id="globalStatus"></span>
                 <span class="status-text" id="globalStatusText">All Systems Operational</span>
             </div>
             <div class="header-time">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
                 <span id="currentTime"></span>
             </div>
             <div class="biometric-verified-badge" id="verifiedBadge">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                <span>Biometric Verified</span>
+                <span>Verified</span>
             </div>
         </div>
     </header>
