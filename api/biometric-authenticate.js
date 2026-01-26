@@ -9,11 +9,10 @@
  * - Rate limiting with exponential backoff
  * - Session token generation
  *
- * @version 2.1.0
+ * @version 2.2.0 - Refactored to use shared biometric utilities
  */
 
 const crypto = require('crypto');
-const { list, put, del } = require('@vercel/blob');
 const { Redis } = require('@upstash/redis');
 const { verifyAuthenticationResponse } = require('@simplewebauthn/server');
 const {
@@ -26,6 +25,24 @@ const {
     addAuditEntry,
     sanitizeString
 } = require('./_lib/security');
+const {
+    CONFIG: BIOMETRIC_CONFIG,
+    createClientFingerprint,
+    createHeaderFingerprint,
+    createDeviceFingerprint,
+    checkDeviceMatch,
+    normalizeCredentials,
+    getOwnerCredential,
+    storeOwnerCredential: updateOwnerCredential,
+    generateChallenge,
+    storeChallenge,
+    verifyChallenge,
+    generateDeviceLinkCode,
+    storeDeviceLink,
+    getDeviceLink,
+    deleteDeviceLink,
+    addAuthorizedDevice
+} = require('./_lib/biometric-utils');
 
 // ============================================================================
 // CONFIGURATION
@@ -38,17 +55,11 @@ if (!SESSION_SECRET) {
 }
 
 const CONFIG = {
-    CHALLENGE_EXPIRY: 5 * 60 * 1000, // 5 minutes
-    BLOB_PREFIX: 'biometric-credentials/',
-    CHALLENGE_PREFIX: 'biometric-challenges/',
-    DEVICE_LINK_PREFIX: 'device-links/',
-    OWNER_CREDENTIAL_KEY: 'owner-credential.json',
+    ...BIOMETRIC_CONFIG,
     RATE_LIMIT: { limit: 10, windowMs: 60000 }, // 10 requests per minute
     MAX_FAILED_ATTEMPTS: 5,
     LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
     SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
-    DEVICE_LINK_EXPIRY: 5 * 60 * 1000, // 5 minutes for device link codes
-    MAX_AUTHORIZED_DEVICES: 5, // Maximum number of authorized devices
     SESSION_SECRET: SESSION_SECRET
 };
 
@@ -59,19 +70,14 @@ const redis =
     : null;
 
 // ============================================================================
-// HELPER FUNCTIONS
+// SESSION & LOCKOUT FUNCTIONS (Auth-specific, not in shared module)
 // ============================================================================
 
 /**
- * Generate a cryptographically secure challenge
- */
-function generateChallenge() {
-    const challenge = crypto.randomBytes(32);
-    return challenge.toString('base64url');
-}
-
-/**
  * Generate a secure session token
+ * @param {string} userId - User identifier
+ * @param {string} deviceFingerprint - Device fingerprint
+ * @returns {string} - HMAC-signed session token
  */
 function generateSessionToken(userId, deviceFingerprint) {
     const payload = {
@@ -92,6 +98,8 @@ function generateSessionToken(userId, deviceFingerprint) {
 
 /**
  * Verify session token
+ * @param {string} token - Session token to verify
+ * @returns {object|null} - Token payload if valid, null otherwise
  */
 function verifySessionToken(token) {
     try {
@@ -122,67 +130,9 @@ function verifySessionToken(token) {
 }
 
 /**
- * Store challenge for verification using Vercel Blob (persistent across serverless invocations)
- */
-async function storeChallenge(key, challenge) {
-    const blobPath = `${CONFIG.CHALLENGE_PREFIX}auth-${key}.json`;
-    const data = {
-        challenge,
-        createdAt: Date.now()
-    };
-    try {
-        await put(blobPath, JSON.stringify(data), {
-            access: 'private',
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        return true;
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to store challenge:', error);
-        return false;
-    }
-}
-
-/**
- * Verify and consume challenge from Vercel Blob
- */
-async function verifyChallenge(key) {
-    const blobPath = `${CONFIG.CHALLENGE_PREFIX}auth-${key}.json`;
-
-    try {
-        const { blobs } = await list({ prefix: CONFIG.CHALLENGE_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
-
-        if (!blob) return null;
-
-        const response = await fetch(blob.url);
-        if (!response.ok) return null;
-
-        const entry = await response.json();
-
-        // Check expiry
-        if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
-            // Delete expired challenge
-            try {
-                await del(blob.url);
-            } catch (e) { /* ignore cleanup errors */ }
-            return null;
-        }
-
-        // Delete the challenge (consume it - one-time use)
-        try {
-            await del(blob.url);
-        } catch (e) { /* ignore cleanup errors */ }
-
-        return entry.challenge;
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to verify challenge:', error);
-        return null;
-    }
-}
-
-/**
- * Check if user is locked out using Redis.
+ * Check if user is locked out using Redis
+ * @param {string} key - Lockout key (typically device fingerprint)
+ * @returns {Promise<boolean>} - True if locked out
  */
 async function isLockedOut(key) {
     if (!redis) return false;
@@ -197,14 +147,14 @@ async function isLockedOut(key) {
 }
 
 /**
- * Record failed attempt in Redis.
+ * Record failed attempt in Redis
+ * @param {string} key - Lockout key (typically device fingerprint)
  */
 async function recordFailedAttempt(key) {
     if (!redis) return;
     try {
         const lockoutKey = `lockout:auth:${key}`;
         const attempts = await redis.incr(lockoutKey);
-        // Set expiry only on the first attempt to start the lockout window
         if (attempts === 1) {
             await redis.expire(lockoutKey, Math.ceil(CONFIG.LOCKOUT_DURATION / 1000));
         }
@@ -214,7 +164,8 @@ async function recordFailedAttempt(key) {
 }
 
 /**
- * Clear failed attempts on success from Redis.
+ * Clear failed attempts on success from Redis
+ * @param {string} key - Lockout key (typically device fingerprint)
  */
 async function clearFailedAttempts(key) {
     if (!redis) return;
@@ -224,289 +175,6 @@ async function clearFailedAttempts(key) {
     } catch (error) {
         console.error('Redis clear failed attempts failed:', error);
     }
-}
-
-/**
- * Get the owner credential from Vercel Blob
- * Returns { credential, error } to distinguish between "no owner" and "service error"
- */
-async function getOwnerCredential() {
-    try {
-        const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
-        const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
-
-        if (!blob) {
-            // No owner registered - this is a valid state
-            return { credential: null, error: null };
-        }
-
-        const response = await fetch(blob.url);
-        if (!response.ok) {
-            console.error('[BiometricAuth] Blob fetch failed:', response.status);
-            return { credential: null, error: 'BLOB_FETCH_FAILED' };
-        }
-
-        const credential = await response.json();
-        return { credential, error: null };
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to get owner credential:', error);
-        return { credential: null, error: 'SERVICE_ERROR' };
-    }
-}
-
-/**
- * Update owner credential (for last used tracking)
- */
-async function updateOwnerCredential(credential) {
-    const blobPath = `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`;
-
-    try {
-        await put(blobPath, JSON.stringify(credential), {
-            access: 'private',
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        return true;
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to update owner credential:', error);
-        return false;
-    }
-}
-
-/**
- * Create device fingerprint from client-provided deviceId (new stable method)
- */
-function createClientFingerprint(clientDeviceId) {
-    if (!clientDeviceId || typeof clientDeviceId !== 'string' || clientDeviceId.length < 16) {
-        return null;
-    }
-    // Hash the client deviceId with a server salt for additional security
-    return crypto.createHash('sha256')
-        .update(`client:${clientDeviceId}`)
-        .digest('hex')
-        .substring(0, 32);
-}
-
-/**
- * Create device fingerprint from HTTP headers (legacy method - less stable)
- */
-function createHeaderFingerprint(req) {
-    const ua = req.headers['user-agent'] || '';
-    const acceptLang = req.headers['accept-language'] || '';
-    const acceptEnc = req.headers['accept-encoding'] || '';
-
-    return crypto.createHash('sha256')
-        .update(`${ua}|${acceptLang}|${acceptEnc}`)
-        .digest('hex')
-        .substring(0, 32);
-}
-
-/**
- * Create device fingerprint from request
- * Prefers client-provided deviceId for stability across browser updates
- * Falls back to header-based fingerprint for backwards compatibility
- */
-function createDeviceFingerprint(req, clientDeviceId = null) {
-    // Try client-based fingerprint first (stable across browser updates)
-    const clientFp = createClientFingerprint(clientDeviceId);
-    if (clientFp) {
-        return clientFp;
-    }
-    // Fallback to header-based fingerprint (legacy)
-    return createHeaderFingerprint(req);
-}
-
-/**
- * Generate a 6-character device link code (uppercase alphanumeric)
- */
-function generateDeviceLinkCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous chars
-    let code = '';
-    const bytes = crypto.randomBytes(6);
-    for (let i = 0; i < 6; i++) {
-        code += chars[bytes[i] % chars.length];
-    }
-    return code;
-}
-
-/**
- * Store device link for later claim
- */
-async function storeDeviceLink(code, ownerUserId, createdByFingerprint) {
-    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
-    const data = {
-        code,
-        ownerUserId,
-        createdByFingerprint,
-        createdAt: Date.now(),
-        claimed: false
-    };
-
-    try {
-        await put(blobPath, JSON.stringify(data), {
-            access: 'private',
-            contentType: 'application/json',
-            addRandomSuffix: false
-        });
-        return true;
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to store device link:', error);
-        return false;
-    }
-}
-
-/**
- * Get and validate device link
- */
-async function getDeviceLink(code) {
-    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
-
-    try {
-        const { blobs } = await list({ prefix: CONFIG.DEVICE_LINK_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
-
-        if (!blob) return null;
-
-        const response = await fetch(blob.url);
-        if (!response.ok) return null;
-
-        const data = await response.json();
-
-        // Check expiry
-        if (Date.now() - data.createdAt > CONFIG.DEVICE_LINK_EXPIRY) {
-            // Delete expired link
-            try {
-                await del(blob.url);
-            } catch (e) { /* ignore cleanup errors */ }
-            return null;
-        }
-
-        if (data.claimed) {
-            return null; // Already used
-        }
-
-        return data;
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to get device link:', error);
-        return null;
-    }
-}
-
-/**
- * Delete device link after use
- */
-async function deleteDeviceLink(code) {
-    const blobPath = `${CONFIG.DEVICE_LINK_PREFIX}${code}.json`;
-
-    try {
-        const { blobs } = await list({ prefix: CONFIG.DEVICE_LINK_PREFIX });
-        const blob = blobs.find(b => b.pathname === blobPath);
-        if (blob) {
-            await del(blob.url);
-        }
-    } catch (error) {
-        console.error('[BiometricAuth] Failed to delete device link:', error);
-    }
-}
-
-/**
- * Add a new device to the authorized devices list
- */
-async function addAuthorizedDevice(ownerCredential, newFingerprint, deviceName = 'Unknown Device') {
-    // Initialize authorizedDevices array if needed
-    if (!ownerCredential.authorizedDevices) {
-        ownerCredential.authorizedDevices = [];
-        // Migrate legacy single device if exists
-        if (ownerCredential.deviceFingerprint) {
-            ownerCredential.authorizedDevices.push({
-                fingerprint: ownerCredential.deviceFingerprint,
-                name: 'Primary Device',
-                addedAt: ownerCredential.registeredAt || new Date().toISOString()
-            });
-        }
-    }
-
-    // Check max devices limit
-    if (ownerCredential.authorizedDevices.length >= CONFIG.MAX_AUTHORIZED_DEVICES) {
-        return { success: false, error: 'Maximum devices limit reached' };
-    }
-
-    // Check if already authorized
-    if (ownerCredential.authorizedDevices.some(d => d.fingerprint === newFingerprint)) {
-        return { success: false, error: 'Device already authorized' };
-    }
-
-    // Add new device
-    ownerCredential.authorizedDevices.push({
-        fingerprint: newFingerprint,
-        name: deviceName,
-        addedAt: new Date().toISOString()
-    });
-
-    // Save updated credential
-    const saved = await updateOwnerCredential(ownerCredential);
-    if (!saved) {
-        return { success: false, error: 'Failed to save device' };
-    }
-
-    return { success: true, deviceCount: ownerCredential.authorizedDevices.length };
-}
-
-/**
- * Check if a device matches any of the authorized devices (with migration support)
- * Supports both legacy single fingerprint and new multi-device array
- * Returns { matches: boolean, needsMigration: boolean, fingerprint: string }
- */
-function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
-    const clientFp = createClientFingerprint(clientDeviceId);
-    const headerFp = createHeaderFingerprint(req);
-    const currentFp = clientFp || headerFp;
-
-    // Get all authorized fingerprints (support both old and new format)
-    const authorizedDevices = ownerCredential.authorizedDevices || [];
-    const legacyFingerprint = ownerCredential.deviceFingerprint;
-
-    // Build list of all valid fingerprints
-    const allFingerprints = [...authorizedDevices.map(d => d.fingerprint)];
-    if (legacyFingerprint && !allFingerprints.includes(legacyFingerprint)) {
-        allFingerprints.push(legacyFingerprint);
-    }
-
-    // Check client fingerprint first
-    if (clientFp && allFingerprints.includes(clientFp)) {
-        return { matches: true, needsMigration: false, fingerprint: clientFp };
-    }
-
-    // Check header fingerprint for backwards compatibility
-    if (allFingerprints.includes(headerFp)) {
-        return { matches: true, needsMigration: !!clientFp, fingerprint: clientFp || headerFp };
-    }
-
-    return { matches: false, needsMigration: false, fingerprint: currentFp };
-}
-
-/**
- * Normalize stored credentials into a list (supports legacy single credential)
- */
-function normalizeCredentials(ownerCredential) {
-    if (!ownerCredential) return [];
-    if (Array.isArray(ownerCredential.credentials) && ownerCredential.credentials.length) {
-        return ownerCredential.credentials;
-    }
-
-    if (ownerCredential.credentialId && ownerCredential.publicKey) {
-        return [{
-            credentialId: ownerCredential.credentialId,
-            publicKey: ownerCredential.publicKey,
-            counter: ownerCredential.counter || 0,
-            transports: ownerCredential.transports || [],
-            createdAt: ownerCredential.registeredAt || new Date().toISOString(),
-            lastUsed: ownerCredential.lastUsed || null,
-            legacy: true
-        }];
-    }
-
-    return [];
 }
 
 
