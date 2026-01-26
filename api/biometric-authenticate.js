@@ -14,6 +14,12 @@
 
 const crypto = require('crypto');
 const { list, put } = require('@vercel/blob');
+const { verifyAuthenticationResponse } = require('@simplewebauthn/server');
+const {
+    base64urlToBuffer,
+    getExpectedOrigins,
+    getExpectedRpIds
+} = require('./_lib/webauthn');
 const {
     getClientIp,
     getCorsOrigin,
@@ -471,6 +477,30 @@ function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
     return { matches: false, needsMigration: false, fingerprint: currentFp };
 }
 
+/**
+ * Normalize stored credentials into a list (supports legacy single credential)
+ */
+function normalizeCredentials(ownerCredential) {
+    if (!ownerCredential) return [];
+    if (Array.isArray(ownerCredential.credentials) && ownerCredential.credentials.length) {
+        return ownerCredential.credentials;
+    }
+
+    if (ownerCredential.credentialId && ownerCredential.publicKey) {
+        return [{
+            credentialId: ownerCredential.credentialId,
+            publicKey: ownerCredential.publicKey,
+            counter: ownerCredential.counter || 0,
+            transports: ownerCredential.transports || [],
+            createdAt: ownerCredential.registeredAt || new Date().toISOString(),
+            lastUsed: ownerCredential.lastUsed || null,
+            legacy: true
+        }];
+    }
+
+    return [];
+}
+
 // ============================================================================
 // REQUEST HANDLER
 // ============================================================================
@@ -531,7 +561,17 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const { action, credentialId, authenticatorData, clientDataJSON, signature, sessionToken } = req.body;
+        const {
+            action,
+            credentialId,
+            authenticatorData,
+            clientDataJSON,
+            signature,
+            sessionToken,
+            rawId,
+            type,
+            userHandle
+        } = req.body;
 
         // ====================================
         // VERIFY SESSION TOKEN
@@ -695,6 +735,15 @@ module.exports = async function handler(req, res) {
                 });
             }
 
+            const credentials = normalizeCredentials(ownerCredential);
+            if (!credentials.length) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'No credentials available. Please re-register.',
+                    requiresSetup: true
+                });
+            }
+
             const challenge = generateChallenge();
             // Use the current fingerprint for challenge storage (could be new or legacy)
             await storeChallenge(deviceMatch.fingerprint, challenge);
@@ -710,7 +759,11 @@ module.exports = async function handler(req, res) {
             return res.status(200).json({
                 success: true,
                 challenge,
-                credentialId: ownerCredential.credentialId
+                allowCredentials: credentials.map(credential => ({
+                    id: credential.credentialId,
+                    type: 'public-key',
+                    transports: credential.transports || ['internal']
+                }))
             });
         }
 
@@ -730,10 +783,21 @@ module.exports = async function handler(req, res) {
             }
 
             // Validate required fields
-            if (!credentialId || !authenticatorData || !signature) {
+            if (!credentialId || !authenticatorData || !signature || !clientDataJSON) {
                 return res.status(400).json({
                     success: false,
                     error: 'Missing authentication data'
+                });
+            }
+
+            const expectedOrigins = getExpectedOrigins(req);
+            const expectedRpIds = getExpectedRpIds(req);
+
+            if (!expectedOrigins.length || !expectedRpIds.length) {
+                console.error('[BiometricAuth] Unable to resolve expected origin/RP ID');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Authentication configuration error. Please contact support.'
                 });
             }
 
@@ -790,9 +854,11 @@ module.exports = async function handler(req, res) {
                 });
             }
 
-            // Verify credential ID matches
-            const sanitizedCredentialId = sanitizeString(credentialId, 256);
-            if (ownerCredential.credentialId !== sanitizedCredentialId) {
+            const sanitizedCredentialId = sanitizeString(credentialId, 512);
+            const credentials = normalizeCredentials(ownerCredential);
+            const credentialRecord = credentials.find(entry => entry.credentialId === sanitizedCredentialId);
+
+            if (!credentialRecord) {
                 recordFailedAttempt(lockoutKey);
 
                 addAuditEntry({
@@ -808,12 +874,73 @@ module.exports = async function handler(req, res) {
                 });
             }
 
+            const credentialIdBuffer = base64urlToBuffer(credentialRecord.credentialId);
+            const publicKeyBuffer = base64urlToBuffer(credentialRecord.publicKey);
+            if (!credentialIdBuffer || !publicKeyBuffer) {
+                recordFailedAttempt(lockoutKey);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Stored credential is invalid. Please re-register.'
+                });
+            }
+
+            let verification;
+            try {
+                verification = await verifyAuthenticationResponse({
+                    response: {
+                        id: sanitizedCredentialId,
+                        rawId: sanitizeString(rawId || sanitizedCredentialId, 512),
+                        type: type || 'public-key',
+                        response: {
+                            authenticatorData: sanitizeString(authenticatorData, 4096),
+                            clientDataJSON: sanitizeString(clientDataJSON, 4096),
+                            signature: sanitizeString(signature, 4096),
+                            userHandle: userHandle ? sanitizeString(userHandle, 512) : undefined
+                        }
+                    },
+                    expectedChallenge: issuedChallenge,
+                    expectedOrigin: expectedOrigins,
+                    expectedRPID: expectedRpIds,
+                    credential: {
+                        id: credentialIdBuffer,
+                        publicKey: publicKeyBuffer,
+                        counter: credentialRecord.counter || 0,
+                        transports: credentialRecord.transports
+                    }
+                });
+            } catch (error) {
+                recordFailedAttempt(lockoutKey);
+                console.error('[BiometricAuth] Authentication verification failed:', error);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Authentication verification failed'
+                });
+            }
+
+            if (!verification?.verified || !verification.authenticationInfo) {
+                recordFailedAttempt(lockoutKey);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Authentication verification failed'
+                });
+            }
+
             // Authentication successful!
             clearFailedAttempts(lockoutKey);
 
             // Update last used and migrate fingerprint if needed
             ownerCredential.lastUsed = new Date().toISOString();
             ownerCredential.authCount = (ownerCredential.authCount || 0) + 1;
+
+            credentialRecord.counter = typeof verification.authenticationInfo.newCounter === 'number'
+                ? verification.authenticationInfo.newCounter
+                : credentialRecord.counter;
+            credentialRecord.lastUsed = new Date().toISOString();
+            ownerCredential.credentials = credentials;
+            ownerCredential.credentialId = credentialRecord.credentialId;
+            ownerCredential.publicKey = credentialRecord.publicKey;
+            ownerCredential.counter = credentialRecord.counter;
+            ownerCredential.transports = credentialRecord.transports;
 
             // Migrate to new client-based fingerprint if authenticated with legacy method
             if (deviceMatch.needsMigration && deviceMatch.fingerprint) {
@@ -842,7 +969,8 @@ module.exports = async function handler(req, res) {
                 verified: true,
                 message: 'Welcome back! Dashboard unlocked.',
                 sessionToken: newSessionToken,
-                expiresIn: Math.floor(CONFIG.SESSION_DURATION / 1000)
+                expiresIn: Math.floor(CONFIG.SESSION_DURATION / 1000),
+                userId: ownerCredential.userId
             });
         }
 

@@ -148,6 +148,8 @@ curl /api/orchestrate?teamId=developer
 | `ENCRYPTION_KEY` | Yes | PII encryption key (32+ chars) |
 | `OPENAI_API_KEY` | Optional | OpenAI API key (alternative provider) |
 | `GEMINI_API_KEY` | Optional | Google Gemini API key (alternative provider) |
+| `WEBAUTHN_RP_ID` | Optional | Override WebAuthn RP ID (comma-separated) |
+| `WEBAUTHN_ORIGINS` | Optional | Override allowed WebAuthn origins (comma-separated) |
 | `DAILY_BUDGET_LIMIT` | Optional | Daily API cost limit (default: $50) |
 | `MONTHLY_BUDGET_LIMIT` | Optional | Monthly API cost limit (default: $500) |
 
@@ -198,6 +200,7 @@ Configure environment variables in Vercel Dashboard > Settings > Environment Var
 ## Security Features
 
 - **Authentication**: Admin token + WebAuthn biometric
+- **Biometric Login**: WebAuthn passkeys (Face ID/Touch ID) with server verification
 - **Rate Limiting**: Per-IP and per-email limits
 - **Input Validation**: Schema-based with sanitization
 - **CORS**: Explicit origin whitelist

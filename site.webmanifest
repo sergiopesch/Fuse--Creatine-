@@ -32,9 +32,9 @@
     ],
     "screenshots": [
         {
-            "src": "/assets/og-image.jpg",
+            "src": "/assets/og-image.png",
             "sizes": "1200x630",
-            "type": "image/jpeg",
+            "type": "image/png",
             "label": "FUSE Coffee Creatine Homepage"
         }
     ]
