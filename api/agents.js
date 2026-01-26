@@ -70,6 +70,19 @@ const defaultAgentTeams = {
             { id: 'partnership-manager', name: 'Partnership Manager', role: 'Strategic Partnerships', status: 'idle' },
             { id: 'market-researcher', name: 'Market Researcher', role: 'Market Intelligence', status: 'working' }
         ]
+    },
+    sales: {
+        id: 'sales',
+        name: 'Sales Team',
+        badge: 'SLS',
+        color: '#ec4899',
+        agents: [
+            { id: 'sales-director', name: 'Sales Director', role: 'Revenue Strategy & Team Leadership', status: 'working' },
+            { id: 'account-executive', name: 'Account Executive', role: 'Enterprise Sales & Closing', status: 'working' },
+            { id: 'sdr', name: 'SDR Lead', role: 'Outbound Prospecting & Lead Qualification', status: 'working' },
+            { id: 'solutions-consultant', name: 'Solutions Consultant', role: 'Technical Sales & Demos', status: 'idle' },
+            { id: 'customer-success', name: 'Customer Success Manager', role: 'Retention & Expansion', status: 'working' }
+        ]
     }
 };
 
@@ -80,7 +93,20 @@ let agentState = {
     decisions: [],
     activities: [],
     communications: [],
-    orchestrationMode: 'autonomous'
+    orchestrationMode: 'autonomous',
+    // API Key configuration for agents (stored securely, only metadata exposed)
+    apiKeyConfig: {
+        anthropic: { configured: false, model: 'claude-3-5-haiku-latest', lastUpdated: null },
+        openai: { configured: false, model: 'gpt-4-turbo', lastUpdated: null },
+        gemini: { configured: false, model: 'gemini-pro', lastUpdated: null }
+    },
+    // Agent health metrics
+    healthMetrics: {
+        lastHealthCheck: null,
+        systemLoad: 0,
+        memoryUsage: 0,
+        apiLatency: {}
+    }
 };
 
 // CORS headers for all responses
@@ -128,16 +154,42 @@ export default async function handler(req, res) {
 function handleGet(action, query, res) {
     switch (action) {
         case 'status':
+            const totalAgents = countTotalAgents();
             return res.status(200).json({
                 success: true,
                 data: {
-                    totalAgents: 18,
+                    totalAgents,
                     activeAgents: countActiveAgents(),
+                    idleAgents: totalAgents - countActiveAgents(),
                     tasksInProgress: agentState.tasks.filter(t => t.status === 'in_progress').length,
                     pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length,
                     orchestrationMode: agentState.orchestrationMode,
+                    apiKeyConfig: getApiKeyStatus(),
+                    healthMetrics: agentState.healthMetrics,
+                    teamCount: Object.keys(agentState.teams).length,
                     timestamp: new Date().toISOString()
                 }
+            });
+
+        case 'health':
+            // Detailed health check for monitoring
+            return res.status(200).json({
+                success: true,
+                data: {
+                    status: 'healthy',
+                    uptime: process.uptime ? process.uptime() : 'N/A',
+                    memory: process.memoryUsage ? process.memoryUsage() : 'N/A',
+                    agents: getAgentHealthSummary(),
+                    apiKeys: getApiKeyStatus(),
+                    lastCheck: new Date().toISOString()
+                }
+            });
+
+        case 'api-keys':
+            // Return API key configuration status (never expose actual keys)
+            return res.status(200).json({
+                success: true,
+                data: getApiKeyStatus()
             });
 
         case 'teams':
@@ -359,6 +411,69 @@ function handlePut(action, body, res) {
             }
             return res.status(200).json({ success: true, data: { updated: true } });
 
+        case 'api-key':
+            // Update API key configuration (key is validated but never stored in memory)
+            const { provider, model, apiKey } = body;
+            const validProviders = ['anthropic', 'openai', 'gemini'];
+
+            if (!validProviders.includes(provider)) {
+                return res.status(400).json({ error: 'Invalid provider' });
+            }
+
+            // Validate API key format
+            const keyPatterns = {
+                anthropic: /^sk-ant-/,
+                openai: /^sk-/,
+                gemini: /^AI/
+            };
+
+            if (apiKey && !keyPatterns[provider].test(apiKey)) {
+                return res.status(400).json({ error: 'Invalid API key format for provider' });
+            }
+
+            // Update configuration metadata (actual key should be set via env vars)
+            agentState.apiKeyConfig[provider] = {
+                configured: Boolean(apiKey),
+                model: model || agentState.apiKeyConfig[provider].model,
+                lastUpdated: new Date().toISOString()
+            };
+
+            addActivity('Commander', 'system', `Updated ${provider} API configuration`, 'Config Update');
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    provider,
+                    model: agentState.apiKeyConfig[provider].model,
+                    configured: agentState.apiKeyConfig[provider].configured,
+                    message: 'API key configuration updated. For production, set keys via environment variables.'
+                }
+            });
+
+        case 'agent-model':
+            // Update which model a specific team uses
+            const { teamId: modelTeamId, agentId: modelAgentId, modelProvider, selectedModel } = body;
+
+            if (modelTeamId && agentState.teams[modelTeamId]) {
+                if (modelAgentId) {
+                    const agent = agentState.teams[modelTeamId].agents.find(a => a.id === modelAgentId);
+                    if (agent) {
+                        agent.modelProvider = modelProvider;
+                        agent.model = selectedModel;
+                        addActivity(agent.name, modelTeamId, `Model changed to ${selectedModel}`, 'Config Update');
+                    }
+                } else {
+                    // Apply to all agents in team
+                    agentState.teams[modelTeamId].agents.forEach(agent => {
+                        agent.modelProvider = modelProvider;
+                        agent.model = selectedModel;
+                    });
+                    addActivity('System', modelTeamId, `Team model changed to ${selectedModel}`, 'Config Update');
+                }
+            }
+
+            return res.status(200).json({ success: true, data: { updated: true } });
+
         default:
             return res.status(400).json({ error: 'Unknown action' });
     }
@@ -390,12 +505,74 @@ function handleDelete(action, query, res) {
 }
 
 // Helper functions
+function countTotalAgents() {
+    let count = 0;
+    Object.values(agentState.teams).forEach(team => {
+        count += team.agents.length;
+    });
+    return count;
+}
+
 function countActiveAgents() {
     let count = 0;
     Object.values(agentState.teams).forEach(team => {
         count += team.agents.filter(a => a.status === 'working').length;
     });
     return count;
+}
+
+function getApiKeyStatus() {
+    // Check environment variables for configured keys (never expose actual values)
+    const anthropicConfigured = Boolean(process.env.ANTHROPIC_API_KEY);
+    const openaiConfigured = Boolean(process.env.OPENAI_API_KEY);
+    const geminiConfigured = Boolean(process.env.GEMINI_API_KEY);
+
+    return {
+        anthropic: {
+            configured: anthropicConfigured || agentState.apiKeyConfig.anthropic.configured,
+            model: agentState.apiKeyConfig.anthropic.model,
+            lastUpdated: agentState.apiKeyConfig.anthropic.lastUpdated,
+            provider: 'Anthropic',
+            models: ['claude-3-5-haiku-latest', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest']
+        },
+        openai: {
+            configured: openaiConfigured || agentState.apiKeyConfig.openai.configured,
+            model: agentState.apiKeyConfig.openai.model,
+            lastUpdated: agentState.apiKeyConfig.openai.lastUpdated,
+            provider: 'OpenAI',
+            models: ['gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo']
+        },
+        gemini: {
+            configured: geminiConfigured || agentState.apiKeyConfig.gemini.configured,
+            model: agentState.apiKeyConfig.gemini.model,
+            lastUpdated: agentState.apiKeyConfig.gemini.lastUpdated,
+            provider: 'Google',
+            models: ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro']
+        }
+    };
+}
+
+function getAgentHealthSummary() {
+    const summary = {
+        totalAgents: countTotalAgents(),
+        activeAgents: countActiveAgents(),
+        idleAgents: countTotalAgents() - countActiveAgents(),
+        teamHealth: {}
+    };
+
+    Object.entries(agentState.teams).forEach(([teamId, team]) => {
+        const activeInTeam = team.agents.filter(a => a.status === 'working').length;
+        const totalInTeam = team.agents.length;
+        summary.teamHealth[teamId] = {
+            name: team.name,
+            active: activeInTeam,
+            total: totalInTeam,
+            utilization: Math.round((activeInTeam / totalInTeam) * 100),
+            status: activeInTeam === 0 ? 'idle' : activeInTeam === totalInTeam ? 'full-capacity' : 'operational'
+        };
+    });
+
+    return summary;
 }
 
 function addActivity(agent, teamId, message, tag) {
