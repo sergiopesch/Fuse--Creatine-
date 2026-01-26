@@ -1,190 +1,248 @@
-# FUSE - Performance Coffee Creatine
+# FUSE - Performance Coffee Creatine + AI Agent Command Center
 
-Britain's first coffee-optimized creatine with Instant Fusion Technology.
+Britain's first coffee-optimized creatine with Instant Fusion Technology, powered by an AI-driven corporate agent orchestration system.
 
 ## Overview
 
-FUSE is a premium marketing website for an innovative performance supplement - a creatine product engineered specifically to dissolve seamlessly in hot coffee without clumping, grit, or taste alteration. The site showcases cutting-edge web animation techniques and delivers a high-end, immersive brand experience.
+FUSE is a dual-purpose platform:
+1. **Product Website** - Premium marketing site for FUSE creatine supplement
+2. **AI Agent Command Center** - Corporate simulation with orchestratable AI agent teams
 
-## Features
+## Architecture
 
-### Product Highlights
-- **Instant Activation** - Micro-encapsulation system disperses particles evenly without clumping
-- **Triple Shield Technology** - Three layers of thermal protection maintain 100% bioavailability in hot beverages
-- **Zero Stirring Required** - Self-dispersing formula dissolves in under 3 seconds
-- **Taste Neutral** - Preserves your coffee's original flavor profile
-- **Configurable Dosing** - 5g to 20g adjustable serving sizes
-
-### Website Features
-- Smooth scrolling experience powered by Lenis
-- Advanced GSAP animations with ScrollTrigger integration
-- Interactive 3D product packaging visualization
-- Magnetic button effects and card tilt interactions
-- Custom cursor with blend mode effects
-- Dose configurator with real-time visual feedback
-- Fully responsive design for all device sizes
-- Accessibility-first approach with reduced motion support
-- Glassmorphic navigation with scroll-aware behavior
-
-## Tech Stack
+### Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| HTML5 | Semantic markup with ARIA accessibility |
-| CSS3 | Custom properties, Grid, Flexbox, Backdrop filters |
-| Vanilla JavaScript | No framework dependencies |
-| [GSAP 3.12](https://greensock.com/gsap/) | Animation engine |
-| [ScrollTrigger](https://greensock.com/scrolltrigger/) | Scroll-based animations |
-| [Lenis](https://lenis.studiofreight.com/) | Smooth scroll implementation |
-| Google Fonts | Bebas Neue + Inter typography |
+| **Frontend** | Vanilla JavaScript, CSS3, HTML5, GSAP, ScrollTrigger, Lenis |
+| **Backend** | Vercel Serverless Functions (Node.js) |
+| **Storage** | Vercel Blob (signups, credentials), In-memory state (agents) |
+| **AI Provider** | Anthropic Claude API (primary), OpenAI/Gemini (optional) |
+| **Authentication** | WebAuthn (biometric), Admin token-based |
 
-## Project Structure
+### Project Structure
 
 ```
 fuse-creatine/
-├── admin.html          # Admin signups view
-├── privacy.html        # Privacy policy
-├── terms.html          # Terms and conditions
+├── index.html              # Marketing landing page
+├── dashboard.html          # Company Dashboard (biometric-protected)
+├── agents.html             # Agent Command Center
+├── admin.html              # Admin analytics portal
+├── privacy.html            # Privacy policy
+├── terms.html              # Terms and conditions
 ├── api/
-│   ├── admin-signups.js # Protected admin API
-│   ├── chat.js          # FUSE Agent chat API (Anthropic Claude)
-│   ├── health.js        # Health check endpoint
-│   └── signup.js        # Waitlist signup API
-├── index.html          # Single-page application
-├── css/
-│   ├── admin.css       # Admin UI styles
-│   ├── legal.css       # Legal page styles
-│   └── style.css       # All styling (CSS custom properties, responsive)
+│   ├── _lib/
+│   │   ├── security.js     # Authentication, rate limiting, validation
+│   │   ├── cost-tracker.js # API usage and cost tracking
+│   │   └── circuit-breaker.js # Resilience patterns
+│   ├── agents.js           # Agent management API
+│   ├── orchestrate.js      # Team orchestration API (Claude integration)
+│   ├── chat.js             # FUSE Agent chat API
+│   ├── signup.js           # Waitlist signup API
+│   ├── health.js           # Health check endpoint
+│   ├── costs.js            # Cost tracking API
+│   ├── admin-signups.js    # Protected admin API
+│   ├── biometric-authenticate.js # WebAuthn verification
+│   └── biometric-register.js     # WebAuthn registration
 ├── js/
-│   ├── admin.js        # Admin UI logic
-│   ├── chat.js         # FUSE Agent chat widget
-│   └── main.js         # Animation & interaction logic
-├── assets/
-│   └── favicon.svg     # Brand favicon
-└── README.md           # Documentation
+│   ├── main.js             # Marketing page animations
+│   ├── agents.js           # Agent Command Center UI
+│   ├── dashboard.js        # Company Dashboard UI
+│   ├── admin.js            # Admin portal UI
+│   ├── chat.js             # Chat widget
+│   └── biometric-auth.js   # WebAuthn client
+├── css/
+│   ├── style.css           # Marketing page styles
+│   ├── agents.css          # Agent Command Center styles
+│   ├── dashboard.css       # Dashboard styles
+│   ├── admin.css           # Admin styles
+│   └── legal.css           # Legal pages styles
+└── assets/
+    └── favicon.svg         # Brand favicon
 ```
 
-## Getting Started
+## AI Agent Command Center
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/fuse-creatine.git
-   ```
+### Corporate Structure
 
-2. Open `index.html` in a modern browser, or serve locally:
-   ```bash
-   # Using Python
-   python -m http.server 8000
+The platform simulates a corporate workforce with 7 specialized AI agent teams:
 
-   # Using Node.js
-   npx serve
-   ```
+| Team | Badge | Agents | Focus |
+|------|-------|--------|-------|
+| **Developer** | DEV | Architect, Coder, QA Engineer | Platform development |
+| **Design** | DSN | UX Lead, Visual Designer, Motion Designer | User experience |
+| **Communications** | COM | Content Strategist, Copywriter, Social Manager | Brand voice |
+| **Legal** | LGL | Compliance Officer, Contract Analyst, IP Counsel | Compliance |
+| **Marketing** | MKT | Growth Lead, Brand Strategist, Analytics Expert | Growth |
+| **Go-to-Market** | GTM | Launch Coordinator, Partnership Manager, Market Researcher | Launch |
+| **Sales** | SLS | Sales Director, Account Executive, SDR Lead, Solutions Consultant, Customer Success | Revenue |
 
-3. Navigate to `http://localhost:8000`
+### Orchestration Modes
 
-## Waitlist Storage and Admin Access
+Teams operate in one of three modes:
 
-The waitlist form posts to `/api/signup`, which stores signups in Vercel Blob storage
-using non-guessable filenames. Users must consent to be contacted and agree to the Terms and
-Privacy Policy. Admins can view signups at `/admin` (or `/admin.html`) by providing the admin token.
-Legal pages are available at `/privacy` and `/terms`.
-Rate limiting is enforced on the signup API to mitigate abuse.
+| Mode | Description | Default |
+|------|-------------|---------|
+| **Manual** | All agent actions require explicit approval | YES |
+| **Supervised** | Major decisions require approval | No |
+| **Autonomous** | Agents operate independently | No |
 
-## FUSE Agent Chat
+**Important**: All teams default to **Manual/Paused** state. You must explicitly start orchestration.
 
-The site includes an AI-powered chat widget called the "FUSE Agent" - a friendly, British customer service assistant powered by Claude (Anthropic). The chat widget appears as a floating button in the bottom-right corner of the page.
+### Starting Team Orchestration
 
-### Features
-
-- **Conversational AI**: Powered by Claude 3.5 Haiku - fast, cost-effective, and high-quality responses
-- **British Personality**: Smart, polite, evidence-based responses with subtle British charm
-- **Product Knowledge**: Deep understanding of FUSE's technology, dosing guidelines, and scientific backing
-- **Quick Actions**: Pre-defined questions for common queries (What is FUSE?, Dosing guide, etc.)
-- **Rate Limiting**: 20 requests per minute per IP to prevent abuse
-- **Error Handling**: Intelligent retry logic with user-friendly error messages
-- **Accessibility**: Full ARIA support, keyboard navigation, and screen reader compatibility
-
-### Setting Up the Chat Agent
-
-The FUSE Agent requires an Anthropic API key to function.
-
-#### Step 1: Get an Anthropic API Key
-
-1. Go to [Anthropic Console](https://console.anthropic.com/)
-2. Sign in or create an account
-3. Navigate to API Keys section
-4. Create a new API key (it will start with `sk-ant-`)
-
-#### Step 2: Configure Vercel
-
-1. Go to your Vercel project dashboard
-2. Navigate to **Settings** > **Environment Variables**
-3. Add the following variable:
-   - **Name**: `ANTHROPIC_API_KEY`
-   - **Value**: Your API key (e.g., `sk-ant-api03-...`)
-4. Click **Save**
-5. **Redeploy** your project for changes to take effect
-
-#### Step 3: Verify Configuration
-
-1. Visit `/api/health` in your browser
-2. Check that `apiKey.validFormat` is `true`
-3. Check that `status` is `ok`
-
-### Troubleshooting
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| "I'm temporarily unavailable" | API key not configured | Set `ANTHROPIC_API_KEY` in Vercel Environment Variables |
-| 503 Service Unavailable | API key missing or invalid | Check `/api/health` for diagnostics |
-| "Service is busy" | Rate limited by Anthropic | Wait a moment and try again |
-
-**Debugging Tips:**
-
-- Open browser DevTools console - the chat widget logs configuration issues
-- Call `FUSEChat.checkHealth()` in the console to run a health check
-- Visit `/api/health` directly to see the full configuration status
+1. Navigate to `/agents` (Agent Command Center)
+2. Select a team from the sidebar
+3. Click "Start Orchestration" to begin
+4. Monitor activities in the Live Feed
+5. Approve/reject decisions in the Decision Queue
 
 ### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/chat` | POST | Send messages to the FUSE Agent |
-| `/api/health` | GET | Check API configuration and health status |
+| `/api/agents` | GET | Get agent status, teams, tasks, decisions |
+| `/api/agents` | POST | Create tasks, decisions, broadcasts |
+| `/api/agents` | PUT | Update agent status, orchestration mode |
+| `/api/orchestrate` | POST | Execute team orchestration (Claude API) |
+| `/api/chat` | POST | FUSE Agent chat interactions |
+| `/api/health` | GET | System health and API status |
+| `/api/costs` | GET | Usage and cost metrics |
 
-### Chat Widget API
+### Orchestration API
 
-The chat widget exposes a global `FUSEChat` object:
+Start team orchestration:
 
-```javascript
-// Open/close the chat window
-FUSEChat.open()
-FUSEChat.close()
-FUSEChat.toggle()
+```bash
+curl -X POST /api/orchestrate \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "developer",
+    "action": "start",
+    "task": "Review current sprint priorities"
+  }'
+```
 
-// Check if chat is open
-FUSEChat.isOpen()
+Stop orchestration:
 
-// Clear conversation history
-FUSEChat.clearHistory()
+```bash
+curl -X POST /api/orchestrate \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{ "teamId": "developer", "action": "stop" }'
+```
 
-// Check API health (for debugging)
-FUSEChat.checkHealth()
+Get orchestration status:
+
+```bash
+curl /api/orchestrate?teamId=developer
 ```
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes (for chat) | Anthropic API key for Claude chat agent. Must start with `sk-ant-`. Get it from [console.anthropic.com](https://console.anthropic.com/) |
-| `BLOB_READ_WRITE_TOKEN` | Yes (for signups) | Vercel Blob read/write token for storing waitlist signups |
-| `ADMIN_TOKEN` | Yes (for admin) | Shared secret used to authorize `/api/admin-signups` |
-| `ENCRYPTION_KEY` | Yes (for security) | A 32+ character string used to encrypt PII in storage |
+| `ANTHROPIC_API_KEY` | Yes | Claude API key for agent orchestration |
+| `BLOB_READ_WRITE_TOKEN` | Yes | Vercel Blob storage token |
+| `ADMIN_TOKEN` | Yes | Admin authentication token (32+ chars) |
+| `ENCRYPTION_KEY` | Yes | PII encryption key (32+ chars) |
+| `OPENAI_API_KEY` | Optional | OpenAI API key (alternative provider) |
+| `GEMINI_API_KEY` | Optional | Google Gemini API key (alternative provider) |
+| `DAILY_BUDGET_LIMIT` | Optional | Daily API cost limit (default: $50) |
+| `MONTHLY_BUDGET_LIMIT` | Optional | Monthly API cost limit (default: $500) |
 
-## Integration Test (Production-Ready)
+## Getting Started
 
-Run a real end-to-end test against your deployed environment. This will submit a real signup
-and then confirm it appears in the admin listing.
+### Prerequisites
+
+- Node.js 18+
+- Vercel CLI (`npm i -g vercel`)
+- Anthropic API key
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/fuse-creatine.git
+   cd fuse-creatine
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create `.env` file:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+4. Start development server:
+   ```bash
+   vercel dev
+   ```
+
+5. Open `http://localhost:3000`
+
+### Deployment
+
+Deploy to Vercel:
+
+```bash
+vercel --prod
+```
+
+Configure environment variables in Vercel Dashboard > Settings > Environment Variables.
+
+## Security Features
+
+- **Authentication**: Admin token + WebAuthn biometric
+- **Rate Limiting**: Per-IP and per-email limits
+- **Input Validation**: Schema-based with sanitization
+- **CORS**: Explicit origin whitelist
+- **Encryption**: AES-256-GCM for PII
+- **Prompt Injection Detection**: 100+ pattern checks
+- **Circuit Breaker**: API resilience with auto-recovery
+- **Audit Logging**: All authenticated actions logged
+
+## Cost Management
+
+The platform tracks API usage and costs:
+
+- Real-time token counting
+- Per-request cost calculation
+- Daily/monthly budget alerts
+- Cost breakdown by provider and endpoint
+
+View costs at `/api/costs` or in the Admin portal.
+
+## Product Website Features
+
+### Marketing Pages
+
+- Smooth scrolling with Lenis
+- GSAP animations with ScrollTrigger
+- Interactive 3D product visualization
+- Magnetic button effects
+- Custom cursor with blend mode
+- Dose configurator
+- Waitlist signup modal
+
+### FUSE Agent Chat
+
+AI-powered customer service assistant:
+
+- Powered by Claude 3.5 Haiku
+- British personality with evidence-based responses
+- Product knowledge for FUSE creatine
+- Quick action buttons
+- Conversation history
+- Security: prompt injection detection, response validation
+
+## Testing
+
+### Integration Test
 
 ```bash
 BASE_URL="https://your-deployment-url" \
@@ -192,27 +250,14 @@ ADMIN_TOKEN="your-admin-token" \
 npm test
 ```
 
-The test script retries the admin lookup with exponential backoff to account for
-storage consistency delays.
+### Orchestration Test
 
-## Sections
-
-| Section | Description |
-|---------|-------------|
-| **Hero** | Full-viewport landing with animated title, product visual, and rotating evidence-based messaging |
-| **Stats Bar** | Key metrics with animated counters (20G max dose, 0 stirring, 3s dissolve, 100% taste) |
-| **Science** | Two-step process explanation with animated fusion visuals |
-| **Comparison** | Side-by-side cards comparing regular creatine vs FUSE |
-| **Product** | Detailed product showcase with feature highlights |
-| **CTA** | Interactive dose configurator and waitlist signup |
-
-## Accessibility
-
-- Respects `prefers-reduced-motion` - animations disabled when user preference is set
-- Respects `pointer: coarse` - touch-friendly interactions on mobile devices
-- ARIA labels and roles for screen reader compatibility
-- Keyboard navigation support (Escape closes modals, Enter submits forms)
-- Focus states on all interactive elements
+```bash
+# Start Developer team orchestration
+curl -X POST https://your-url/api/orchestrate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"teamId":"developer","action":"start","task":"Test task"}'
+```
 
 ## Browser Support
 
@@ -220,30 +265,6 @@ storage consistency delays.
 - Firefox 88+
 - Safari 14+
 - Edge 90+
-
-## Performance Considerations
-
-- Transform-based animations for GPU acceleration
-- `will-change` hints on frequently animated elements
-- Lazy reveal system for off-screen content
-- Optimized scroll handlers with GSAP's ticker
-- SVG-based favicon for crisp rendering at all sizes
-
-## Public API
-
-The site exposes a global `FUSE` object for programmatic control:
-
-```javascript
-// Smooth scroll to any section
-FUSE.scrollTo('#science')
-
-// Open/close waitlist modal
-FUSE.openWaitlist()
-FUSE.closeWaitlist()
-
-// Access Lenis instance
-FUSE.lenis
-```
 
 ## License
 
