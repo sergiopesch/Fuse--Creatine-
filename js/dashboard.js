@@ -459,6 +459,180 @@
     };
 
     // ============================================
+    // BIOMETRIC AUTHENTICATION
+    // ============================================
+
+    /**
+     * Initialize biometric authentication gate
+     */
+    async function initBiometricAuth() {
+        const gate = document.getElementById('biometricGate');
+        const btnAuth = document.getElementById('btnAuthenticate');
+        const btnSetup = document.getElementById('btnSetup');
+        const authTypeText = document.getElementById('authTypeText');
+        const statusEl = document.getElementById('biometricStatus');
+
+        if (!gate) return true; // No gate, allow access
+
+        // Check if already verified in this session
+        if (typeof BiometricAuth !== 'undefined' && BiometricAuth.isSessionVerified()) {
+            hideBiometricGate();
+            return true;
+        }
+
+        // Check biometric support
+        if (typeof BiometricAuth === 'undefined') {
+            console.error('[Dashboard] BiometricAuth not loaded');
+            gate.classList.add('not-supported');
+            return false;
+        }
+
+        const support = await BiometricAuth.checkSupport();
+        state.biometricSupported = support.supported && support.platformAuthenticator;
+
+        if (!state.biometricSupported) {
+            gate.classList.add('not-supported');
+            return false;
+        }
+
+        // Update UI with authenticator type
+        if (authTypeText && support.type) {
+            authTypeText.textContent = support.type;
+        }
+
+        // Check if credentials are registered
+        const hasCredentials = BiometricAuth.hasRegisteredCredentials();
+
+        if (hasCredentials) {
+            // User has registered - show authenticate button
+            btnAuth.style.display = 'flex';
+            btnSetup.style.display = 'none';
+            updateAuthButton('Unlock with ' + support.type, false);
+        } else {
+            // New user - show setup button
+            btnAuth.style.display = 'none';
+            btnSetup.style.display = 'flex';
+        }
+
+        return false; // Don't allow access until verified
+    }
+
+    /**
+     * Handle biometric authentication
+     */
+    window.handleBiometricAuth = async function() {
+        const btnAuth = document.getElementById('btnAuthenticate');
+        const iconEl = document.getElementById('biometricIcon');
+        const statusEl = document.getElementById('biometricStatus');
+
+        try {
+            updateAuthButton('Verifying...', true);
+            iconEl.classList.add('scanning');
+            hideStatus();
+
+            const result = await BiometricAuth.authenticate();
+
+            if (result.success) {
+                state.biometricVerified = true;
+                showStatus('Authentication successful!', 'success');
+                iconEl.classList.remove('scanning');
+
+                // Brief delay to show success message
+                setTimeout(() => {
+                    hideBiometricGate();
+                    initDashboard();
+                }, 500);
+            }
+        } catch (error) {
+            console.error('[Dashboard] Biometric auth failed:', error);
+            iconEl.classList.remove('scanning');
+            showStatus(error.message || 'Authentication failed. Please try again.', 'error');
+            updateAuthButton('Try Again', false);
+        }
+    };
+
+    /**
+     * Handle biometric setup/registration
+     */
+    window.handleBiometricSetup = async function() {
+        const btnSetup = document.getElementById('btnSetup');
+        const btnAuth = document.getElementById('btnAuthenticate');
+        const iconEl = document.getElementById('biometricIcon');
+        const statusEl = document.getElementById('biometricStatus');
+        const support = await BiometricAuth.checkSupport();
+
+        try {
+            btnSetup.disabled = true;
+            btnSetup.querySelector('span').textContent = 'Setting up...';
+            iconEl.classList.add('scanning');
+            hideStatus();
+
+            const result = await BiometricAuth.register();
+
+            if (result.success) {
+                showStatus('Biometric access configured! You can now unlock the dashboard.', 'success');
+                iconEl.classList.remove('scanning');
+
+                // Switch to authenticate mode
+                btnSetup.style.display = 'none';
+                btnAuth.style.display = 'flex';
+                updateAuthButton('Unlock with ' + support.type, false);
+            }
+        } catch (error) {
+            console.error('[Dashboard] Biometric setup failed:', error);
+            iconEl.classList.remove('scanning');
+            showStatus(error.message || 'Setup failed. Please try again.', 'error');
+            btnSetup.disabled = false;
+            btnSetup.querySelector('span').textContent = 'Set Up Biometric Access';
+        }
+    };
+
+    /**
+     * Update authenticate button state
+     */
+    function updateAuthButton(text, disabled) {
+        const btn = document.getElementById('btnAuthenticate');
+        const textEl = document.getElementById('btnAuthText');
+        if (btn) btn.disabled = disabled;
+        if (textEl) textEl.textContent = text;
+    }
+
+    /**
+     * Show status message
+     */
+    function showStatus(message, type) {
+        const statusEl = document.getElementById('biometricStatus');
+        if (!statusEl) return;
+
+        statusEl.textContent = message;
+        statusEl.className = 'biometric-status visible ' + type;
+    }
+
+    /**
+     * Hide status message
+     */
+    function hideStatus() {
+        const statusEl = document.getElementById('biometricStatus');
+        if (statusEl) {
+            statusEl.className = 'biometric-status';
+        }
+    }
+
+    /**
+     * Hide the biometric gate and show dashboard
+     */
+    function hideBiometricGate() {
+        const gate = document.getElementById('biometricGate');
+        if (gate) {
+            gate.classList.add('hidden');
+        }
+
+        // Add verified class to body
+        document.body.classList.add('biometric-verified');
+        state.biometricVerified = true;
+    }
+
+    // ============================================
     // DOM ELEMENTS
     // ============================================
 
@@ -1448,7 +1622,7 @@
     // INITIALIZE
     // ============================================
 
-    function init() {
+    function initDashboard() {
         // Update time immediately and every second
         updateTime();
         setInterval(updateTime, 1000);
@@ -1523,6 +1697,21 @@
         }, CONFIG.REFRESH_INTERVAL);
 
         console.log('FUSE Company Dashboard v2.0 initialized');
+    }
+
+    // ============================================
+    // MAIN INITIALIZATION
+    // ============================================
+
+    async function init() {
+        // Check biometric authentication first
+        const verified = await initBiometricAuth();
+
+        if (verified) {
+            // Already verified, initialize dashboard immediately
+            initDashboard();
+        }
+        // If not verified, dashboard will initialize after successful auth
     }
 
     // ============================================
