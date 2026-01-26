@@ -707,6 +707,61 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     margin-top: 0.6rem;
 }
 
+/* Pattern Interrupt Section */
+.pattern-interrupt {
+    background: linear-gradient(180deg, var(--dark-gray) 0%, var(--black) 100%);
+    padding: 6rem 5%;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.interrupt-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.interrupt-statement {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: var(--white);
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.interrupt-statement::before {
+    content: '';
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--fuse-red);
+}
+
+.interrupt-subtext {
+    font-size: 1.1rem;
+    color: var(--fuse-red);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+}
+
+/* Pricing Timer */
+.pricing-timer {
+    font-size: 0.9rem;
+    color: var(--fuse-red);
+    margin-top: 0.75rem;
+}
+
+.pricing-was {
+    color: var(--light-gray);
+    text-decoration: line-through;
+    font-size: 0.85em;
+    margin-left: 0.5rem;
+}
+
 /* Science Section */
 .science {
     background:
