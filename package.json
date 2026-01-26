@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/sergiopesch/Fuse--Creatine-#readme",
   "dependencies": {
+    "@simplewebauthn/server": "^13.2.2",
     "@vercel/blob": "^2.0.1"
   },
   "devDependencies": {

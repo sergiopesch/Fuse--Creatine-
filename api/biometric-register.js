@@ -13,6 +13,12 @@
 
 const crypto = require('crypto');
 const { put, list, del } = require('@vercel/blob');
+const { verifyRegistrationResponse } = require('@simplewebauthn/server');
+const {
+    bufferToBase64url,
+    getExpectedOrigins,
+    getExpectedRpIds
+} = require('./_lib/webauthn');
 const {
     getClientIp,
     getCorsOrigin,
@@ -269,6 +275,30 @@ function checkDeviceMatch(req, clientDeviceId, ownerCredential) {
     return { matches: false, needsMigration: false, fingerprint: currentFp };
 }
 
+/**
+ * Normalize stored credentials into a list (supports legacy single credential)
+ */
+function normalizeCredentials(ownerCredential) {
+    if (!ownerCredential) return [];
+    if (Array.isArray(ownerCredential.credentials) && ownerCredential.credentials.length) {
+        return ownerCredential.credentials;
+    }
+
+    if (ownerCredential.credentialId && ownerCredential.publicKey) {
+        return [{
+            credentialId: ownerCredential.credentialId,
+            publicKey: ownerCredential.publicKey,
+            counter: ownerCredential.counter || 0,
+            transports: ownerCredential.transports || [],
+            createdAt: ownerCredential.registeredAt || new Date().toISOString(),
+            lastUsed: ownerCredential.lastUsed || null,
+            legacy: true
+        }];
+    }
+
+    return [];
+}
+
 // ============================================================================
 // REQUEST HANDLER
 // ============================================================================
@@ -335,7 +365,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const { action, userId, credentialId, publicKey, clientDataJSON, authenticatorData } = req.body;
+        const { action, userId, credentialId, clientDataJSON } = req.body;
 
         // ====================================
         // CHECK OWNER STATUS
@@ -439,10 +469,21 @@ module.exports = async function handler(req, res) {
         // ====================================
         if (action === 'register') {
             // Validate required fields
-            if (!credentialId || !publicKey || !userId) {
+            if (!credentialId || !clientDataJSON || !req.body?.attestationObject) {
                 return res.status(400).json({
                     success: false,
                     error: 'Missing credential data'
+                });
+            }
+
+            const expectedOrigins = getExpectedOrigins(req);
+            const expectedRpIds = getExpectedRpIds(req);
+
+            if (!expectedOrigins.length || !expectedRpIds.length) {
+                console.error('[BiometricRegister] Unable to resolve expected origin/RP ID');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Registration configuration error. Please contact support.'
                 });
             }
 
@@ -498,6 +539,59 @@ module.exports = async function handler(req, res) {
                 }
             }
 
+            let verification;
+            try {
+                verification = await verifyRegistrationResponse({
+                    response: {
+                        id: sanitizeString(credentialId, 512),
+                        rawId: sanitizeString(req.body?.rawId || credentialId, 512),
+                        type: req.body?.type || 'public-key',
+                        response: {
+                            clientDataJSON: sanitizeString(clientDataJSON, 4096),
+                            attestationObject: sanitizeString(req.body?.attestationObject, 8192),
+                            transports: Array.isArray(req.body?.transports) ? req.body.transports : undefined
+                        }
+                    },
+                    expectedChallenge: challengeData.challenge,
+                    expectedOrigin: expectedOrigins,
+                    expectedRPID: expectedRpIds,
+                    requireUserVerification: true
+                });
+            } catch (error) {
+                recordRegistrationAttempt(clientIp);
+                console.error('[BiometricRegister] Registration verification failed:', error);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Registration verification failed. Please try again.'
+                });
+            }
+
+            if (!verification?.verified || !verification.registrationInfo) {
+                recordRegistrationAttempt(clientIp);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Registration verification failed. Please try again.'
+                });
+            }
+
+            const {
+                credentialPublicKey,
+                credentialID,
+                counter,
+                fmt,
+                aaguid,
+                credentialDeviceType,
+                credentialBackedUp
+            } = verification.registrationInfo;
+
+            if (!credentialPublicKey || !credentialID) {
+                recordRegistrationAttempt(clientIp);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Registration data incomplete. Please try again.'
+                });
+            }
+
             // Detect device type for naming
             const ua = req.headers['user-agent'] || '';
             let deviceName = 'Primary Device';
@@ -511,33 +605,100 @@ module.exports = async function handler(req, res) {
                 deviceName = 'Windows PC';
             }
 
-            // Create the owner credential with multi-device support
-            const ownerCredentialData = {
-                // Credential binding
-                credentialId: sanitizeString(credentialId, 256),
-                publicKey: sanitizeString(publicKey, 2048),
-                userId: sanitizeString(userId, 64),
+            const resolvedUserId = existingOwner?.userId || sanitizeString(userId, 64);
+            if (!resolvedUserId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Missing user identifier'
+                });
+            }
 
-                // Device binding (legacy for backwards compatibility)
-                deviceFingerprint,
-
-                // Multi-device support
-                authorizedDevices: [{
-                    fingerprint: deviceFingerprint,
-                    name: deviceName,
-                    addedAt: new Date().toISOString()
-                }],
-
-                // Metadata
-                registeredAt: new Date().toISOString(),
-                registeredFromIp: clientIp,
+            const newCredential = {
+                credentialId: sanitizeString(bufferToBase64url(credentialID), 512),
+                publicKey: sanitizeString(bufferToBase64url(credentialPublicKey), 2048),
+                counter: typeof counter === 'number' ? counter : 0,
+                transports: Array.isArray(req.body?.transports) ? req.body.transports : [],
+                deviceName,
+                createdAt: new Date().toISOString(),
                 lastUsed: null,
-                authCount: 0,
-
-                // Security
-                version: '2.1', // Updated version for multi-device support
-                algorithm: 'ES256'
+                fmt: fmt || 'none',
+                aaguid: typeof aaguid === 'string' ? aaguid : (aaguid ? bufferToBase64url(aaguid) : null),
+                credentialDeviceType,
+                credentialBackedUp
             };
+
+            let ownerCredentialData;
+            if (existingOwner) {
+                const credentials = normalizeCredentials(existingOwner);
+                const existingIndex = credentials.findIndex(entry => entry.credentialId === newCredential.credentialId);
+
+                if (existingIndex >= 0) {
+                    credentials[existingIndex] = {
+                        ...credentials[existingIndex],
+                        ...newCredential,
+                        updatedAt: new Date().toISOString()
+                    };
+                } else {
+                    credentials.push(newCredential);
+                }
+
+                const authorizedDevices = Array.isArray(existingOwner.authorizedDevices)
+                    ? [...existingOwner.authorizedDevices]
+                    : [];
+                if (!authorizedDevices.some(device => device.fingerprint === deviceFingerprint)) {
+                    authorizedDevices.push({
+                        fingerprint: deviceFingerprint,
+                        name: deviceName,
+                        addedAt: new Date().toISOString()
+                    });
+                }
+
+                ownerCredentialData = {
+                    ...existingOwner,
+                    userId: resolvedUserId,
+                    credentials,
+                    authorizedDevices,
+                    credentialId: newCredential.credentialId,
+                    publicKey: newCredential.publicKey,
+                    counter: newCredential.counter,
+                    transports: newCredential.transports,
+                    deviceFingerprint: existingOwner.deviceFingerprint || deviceFingerprint,
+                    version: existingOwner.version || '3.0',
+                    algorithm: existingOwner.algorithm || 'ES256',
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                ownerCredentialData = {
+                    // Credential binding
+                    credentialId: newCredential.credentialId,
+                    publicKey: newCredential.publicKey,
+                    counter: newCredential.counter,
+                    transports: newCredential.transports,
+                    userId: resolvedUserId,
+
+                    // Device binding (legacy for backwards compatibility)
+                    deviceFingerprint,
+
+                    // Multi-device support
+                    credentials: [newCredential],
+                    authorizedDevices: [{
+                        fingerprint: deviceFingerprint,
+                        name: deviceName,
+                        addedAt: new Date().toISOString()
+                    }],
+
+                    // Metadata
+                    registeredAt: new Date().toISOString(),
+                    registeredFromIp: clientIp,
+                    lastUsed: null,
+                    authCount: 0,
+                    rpId: expectedRpIds[0],
+
+                    // Security
+                    version: '3.0',
+                    algorithm: 'ES256'
+                };
+            }
 
             const stored = await storeOwnerCredential(ownerCredentialData);
 
@@ -568,7 +729,8 @@ module.exports = async function handler(req, res) {
                 success: true,
                 message: 'Dashboard secured! Only your biometric can unlock this dashboard.',
                 isOwner: true,
-                userId: ownerCredentialData.userId
+                userId: ownerCredentialData.userId,
+                credentialId: newCredential.credentialId
             });
         }
 

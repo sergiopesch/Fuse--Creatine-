@@ -42,7 +42,10 @@ const BiometricAuth = (() => {
         hasOwner: false,
         lastVerification: null,
         platformAuthenticator: false,
-        authenticatorType: 'Biometric'
+        authenticatorType: 'Biometric',
+        isApplePlatform: false,
+        conditionalMediation: false,
+        supportsPasskeys: false
     };
 
     // ============================================
@@ -125,7 +128,13 @@ const BiometricAuth = (() => {
             const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
             state.isSupported = true;
             state.platformAuthenticator = available;
+            state.isApplePlatform = isApplePlatform();
             state.authenticatorType = getPlatformAuthenticatorType();
+            state.supportsPasskeys = available && (state.isApplePlatform || isPasskeyCapable());
+
+            if (PublicKeyCredential.isConditionalMediationAvailable) {
+                state.conditionalMediation = await PublicKeyCredential.isConditionalMediationAvailable();
+            }
 
             console.log('[BiometricAuth] Platform authenticator available:', available);
 
@@ -141,13 +150,36 @@ const BiometricAuth = (() => {
     }
 
     /**
+     * Detect whether this is an Apple platform (iOS/macOS)
+     */
+    function isApplePlatform() {
+        const ua = navigator.userAgent.toLowerCase();
+        const platform = navigator.platform?.toLowerCase() || '';
+        return /iphone|ipad|ipod/.test(ua) || /mac/.test(platform) || /macintosh/.test(ua);
+    }
+
+    /**
+     * Best-effort passkey capability check
+     */
+    function isPasskeyCapable() {
+        return typeof PublicKeyCredential !== 'undefined';
+    }
+
+    /**
+     * Require resident keys on Apple to ensure passkey creation
+     */
+    function shouldRequireResidentKey() {
+        return state.isApplePlatform || isApplePlatform();
+    }
+
+    /**
      * Detect the type of platform authenticator
      */
     function getPlatformAuthenticatorType() {
         const ua = navigator.userAgent.toLowerCase();
         const platform = navigator.platform?.toLowerCase() || '';
 
-        if (/iphone|ipad/.test(ua)) {
+        if (/iphone|ipad|ipod/.test(ua)) {
             return 'Face ID';
         } else if (/mac/.test(platform) || /macintosh/.test(ua)) {
             return 'Touch ID';
@@ -303,8 +335,7 @@ const BiometricAuth = (() => {
      * Check if user has registered credentials locally
      */
     function hasRegisteredCredentials() {
-        const credentialId = localStorage.getItem(CONFIG.CREDENTIAL_STORAGE_KEY);
-        const userId = localStorage.getItem(CONFIG.USER_ID_KEY);
+        const { credentialId, userId } = readStoredCredential();
         state.isRegistered = !!(credentialId && userId);
         return state.isRegistered;
     }
@@ -350,11 +381,76 @@ const BiometricAuth = (() => {
     }
 
     /**
+     * Read stored credential information (localStorage first, fallback to sessionStorage)
+     */
+    function readStoredCredential() {
+        try {
+            const credentialId = localStorage.getItem(CONFIG.CREDENTIAL_STORAGE_KEY);
+            const userId = localStorage.getItem(CONFIG.USER_ID_KEY);
+            if (credentialId && userId) {
+                return { credentialId, userId, source: 'localStorage' };
+            }
+        } catch (error) {
+            // Ignore storage access errors
+        }
+
+        try {
+            const credentialId = sessionStorage.getItem(CONFIG.CREDENTIAL_STORAGE_KEY);
+            const userId = sessionStorage.getItem(CONFIG.USER_ID_KEY);
+            if (credentialId && userId) {
+                return { credentialId, userId, source: 'sessionStorage' };
+            }
+        } catch (error) {
+            // Ignore storage access errors
+        }
+
+        return { credentialId: null, userId: null, source: null };
+    }
+
+    /**
+     * Store credentials safely (localStorage preferred, fallback to sessionStorage)
+     */
+    function storeCredential(credentialId, userId) {
+        try {
+            localStorage.setItem(CONFIG.CREDENTIAL_STORAGE_KEY, credentialId);
+            localStorage.setItem(CONFIG.USER_ID_KEY, userId);
+            return;
+        } catch (error) {
+            // Ignore storage errors and fallback
+        }
+
+        try {
+            sessionStorage.setItem(CONFIG.CREDENTIAL_STORAGE_KEY, credentialId);
+            sessionStorage.setItem(CONFIG.USER_ID_KEY, userId);
+        } catch (error) {
+            console.warn('[BiometricAuth] Unable to persist credential locally');
+        }
+    }
+
+    /**
+     * Clear stored credentials from available storage
+     */
+    function clearStoredCredentials() {
+        try {
+            localStorage.removeItem(CONFIG.CREDENTIAL_STORAGE_KEY);
+            localStorage.removeItem(CONFIG.USER_ID_KEY);
+        } catch (error) {
+            // Ignore storage errors
+        }
+
+        try {
+            sessionStorage.removeItem(CONFIG.CREDENTIAL_STORAGE_KEY);
+            sessionStorage.removeItem(CONFIG.USER_ID_KEY);
+        } catch (error) {
+            // Ignore storage errors
+        }
+    }
+
+    /**
      * Clear stored credentials
      */
     function clearCredentials() {
-        localStorage.removeItem(CONFIG.CREDENTIAL_STORAGE_KEY);
-        localStorage.removeItem(CONFIG.USER_ID_KEY);
+        clearStoredCredentials();
         clearSession();
         state.isRegistered = false;
         state.isVerified = false;
@@ -380,14 +476,15 @@ const BiometricAuth = (() => {
             throw new Error(accessStatus.message || 'Registration not allowed');
         }
 
-        // Generate user ID
-        const userId = generateUserId();
+        // Reuse stored user ID if present (keeps owner stable across devices)
+        const storedCredential = readStoredCredential();
+        const userId = storedCredential.userId || generateUserId();
         const userIdBuffer = new TextEncoder().encode(userId);
 
         onProgress?.('Getting secure challenge...');
 
         // Get challenge from server
-        let challenge, nonce;
+        let challenge;
         try {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
                 method: 'POST',
@@ -409,7 +506,6 @@ const BiometricAuth = (() => {
             }
 
             challenge = base64URLToBuffer(data.challenge);
-            nonce = data.nonce;
         } catch (error) {
             if (error.message.includes('secured') || error.message.includes('denied')) {
                 throw error;
@@ -425,6 +521,7 @@ const BiometricAuth = (() => {
         }
 
         // Create credential options
+        const requireResidentKey = shouldRequireResidentKey();
         const publicKeyCredentialCreationOptions = {
             challenge: challenge,
             rp: {
@@ -443,10 +540,14 @@ const BiometricAuth = (() => {
             authenticatorSelection: {
                 authenticatorAttachment: 'platform',
                 userVerification: 'required',
-                residentKey: 'preferred'
+                residentKey: requireResidentKey ? 'required' : 'preferred',
+                requireResidentKey
             },
             timeout: 60000,
-            attestation: 'none'
+            attestation: 'none',
+            extensions: {
+                credProps: true
+            }
         };
 
         try {
@@ -459,8 +560,7 @@ const BiometricAuth = (() => {
 
             // Store credential locally
             const credentialId = bufferToBase64URL(credential.rawId);
-            localStorage.setItem(CONFIG.CREDENTIAL_STORAGE_KEY, credentialId);
-            localStorage.setItem(CONFIG.USER_ID_KEY, userId);
+            storeCredential(credentialId, userId);
 
             // Register with server (owner lock)
             const attestationResponse = credential.response;
@@ -468,11 +568,26 @@ const BiometricAuth = (() => {
                 action: 'register',
                 userId,
                 credentialId,
-                publicKey: bufferToBase64URL(attestationResponse.getPublicKey()),
+                rawId: credentialId,
+                type: credential.type,
                 clientDataJSON: bufferToBase64URL(attestationResponse.clientDataJSON),
-                authenticatorData: bufferToBase64URL(attestationResponse.getAuthenticatorData()),
-                deviceId: getDeviceId()
+                attestationObject: bufferToBase64URL(attestationResponse.attestationObject),
+                deviceId: getDeviceId(),
+                clientExtensions: credential.getClientExtensionResults?.() || {}
             };
+
+            const transports = attestationResponse.getTransports?.();
+            if (Array.isArray(transports) && transports.length) {
+                registerData.transports = transports;
+            }
+
+            if (attestationResponse.getAuthenticatorData) {
+                registerData.authenticatorData = bufferToBase64URL(attestationResponse.getAuthenticatorData());
+            }
+
+            if (attestationResponse.getPublicKey) {
+                registerData.publicKey = bufferToBase64URL(attestationResponse.getPublicKey());
+            }
 
             const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
                 method: 'POST',
@@ -485,6 +600,10 @@ const BiometricAuth = (() => {
             if (!data.success) {
                 clearCredentials();
                 throw new Error(data.error || 'Registration failed');
+            }
+
+            if (data.userId) {
+                storeCredential(credentialId, data.userId);
             }
 
             state.isRegistered = true;
@@ -529,24 +648,21 @@ const BiometricAuth = (() => {
             throw new Error('WebAuthn is not supported on this device');
         }
 
-        const credentialId = localStorage.getItem(CONFIG.CREDENTIAL_STORAGE_KEY);
-        const userId = localStorage.getItem(CONFIG.USER_ID_KEY);
-
-        if (!credentialId || !userId) {
-            throw new Error('No credentials found. Please set up biometric access first.');
-        }
+        const storedCredential = readStoredCredential();
+        const credentialId = storedCredential.credentialId;
 
         onProgress?.('Verifying access...');
 
         // Get challenge from server
-        let challenge, serverCredentialId;
+        let challenge, allowCredentials;
         try {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'get-challenge',
-                    deviceId: getDeviceId()
+                    deviceId: getDeviceId(),
+                    credentialId
                 })
             });
 
@@ -563,7 +679,7 @@ const BiometricAuth = (() => {
             }
 
             challenge = base64URLToBuffer(data.challenge);
-            serverCredentialId = data.credentialId;
+            allowCredentials = data.allowCredentials;
         } catch (error) {
             if (error.message.includes('denied') || error.message.includes('secured')) {
                 throw error;
@@ -578,15 +694,28 @@ const BiometricAuth = (() => {
             navigator.vibrate(50);
         }
 
+        const credentialOptions = Array.isArray(allowCredentials) ? allowCredentials : [];
+        if (!credentialOptions.length && credentialId) {
+            credentialOptions.push({
+                id: credentialId,
+                type: 'public-key',
+                transports: ['internal']
+            });
+        }
+
+        if (!credentialOptions.length) {
+            throw new Error('No credentials available. Please set up biometric access.');
+        }
+
         // Create authentication options
         const publicKeyCredentialRequestOptions = {
             challenge: challenge,
             rpId: CONFIG.RP_ID,
-            allowCredentials: [{
-                id: base64URLToBuffer(serverCredentialId || credentialId),
+            allowCredentials: credentialOptions.map(entry => ({
+                id: typeof entry.id === 'string' ? base64URLToBuffer(entry.id) : entry.id,
                 type: 'public-key',
-                transports: ['internal']
-            }],
+                transports: entry.transports || ['internal']
+            })),
             userVerification: 'required',
             timeout: 60000
         };
@@ -599,14 +728,23 @@ const BiometricAuth = (() => {
 
             onProgress?.('Verifying identity...');
 
+            const assertionId = bufferToBase64URL(assertion.rawId);
+            const userHandle = assertion.response.userHandle
+                ? bufferToBase64URL(assertion.response.userHandle)
+                : null;
+
             // Verify with server
             const verifyData = {
                 action: 'verify',
-                credentialId: bufferToBase64URL(assertion.rawId),
+                credentialId: assertionId,
+                rawId: assertionId,
+                type: assertion.type,
                 authenticatorData: bufferToBase64URL(assertion.response.authenticatorData),
                 clientDataJSON: bufferToBase64URL(assertion.response.clientDataJSON),
                 signature: bufferToBase64URL(assertion.response.signature),
-                deviceId: getDeviceId()
+                userHandle,
+                deviceId: getDeviceId(),
+                clientExtensions: assertion.getClientExtensionResults?.() || {}
             };
 
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
@@ -624,6 +762,12 @@ const BiometricAuth = (() => {
             // Store session token
             if (data.sessionToken) {
                 storeSessionToken(data.sessionToken);
+            }
+
+            if (data.userId) {
+                storeCredential(assertionId, data.userId);
+            } else if (storedCredential.userId) {
+                storeCredential(assertionId, storedCredential.userId);
             }
 
             state.isVerified = true;
