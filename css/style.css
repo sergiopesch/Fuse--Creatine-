@@ -2482,6 +2482,281 @@ body {
 }
 
 /* =================================
+   Social Proof Section
+   ================================= */
+
+.social-proof {
+    padding: 4rem 5%;
+    background: linear-gradient(180deg, var(--charcoal) 0%, var(--black) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.proof-container {
+    max-width: 900px;
+    margin: 0 auto 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+}
+
+.proof-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+}
+
+.proof-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    color: var(--white);
+    line-height: 1;
+}
+
+.proof-label {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+}
+
+.proof-divider {
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    transition: all 0.3s ease;
+}
+
+.trust-badge:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.badge-icon {
+    font-size: 1rem;
+}
+
+.badge-text {
+    font-size: 0.8rem;
+    color: var(--text-gray);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+/* Social Proof Responsive */
+@media (max-width: 768px) {
+    .social-proof {
+        padding: 3rem 1.5rem;
+    }
+
+    .proof-container {
+        gap: 2rem;
+    }
+
+    .proof-divider {
+        display: none;
+    }
+
+    .proof-item {
+        min-width: 120px;
+    }
+
+    .trust-badges {
+        gap: 1rem;
+    }
+
+    .trust-badge {
+        padding: 0.6rem 1rem;
+    }
+}
+
+/* =================================
+   Pricing Preview Section
+   ================================= */
+
+.pricing-preview {
+    padding: 6rem 5%;
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255, 59, 48, 0.12), transparent 50%),
+        radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.04), transparent 50%),
+        linear-gradient(180deg, var(--black) 0%, var(--charcoal) 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pricing-card {
+    max-width: 700px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.pricing-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 59, 48, 0.5), transparent);
+}
+
+.pricing-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fuse-red);
+    background: rgba(255, 59, 48, 0.12);
+    padding: 0.5rem 1rem;
+    border-radius: 100px;
+    margin-bottom: 2rem;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pricing-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pricing-product {
+    font-size: 1rem;
+    color: var(--text-gray);
+    font-weight: 500;
+}
+
+.pricing-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.pricing-from {
+    font-size: 0.9rem;
+    color: var(--light-gray);
+}
+
+.pricing-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 8vw, 5rem);
+    color: var(--white);
+    line-height: 1;
+}
+
+.pricing-per {
+    font-size: 0.9rem;
+    color: var(--light-gray);
+}
+
+.pricing-offer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    text-align: right;
+    padding: 1.5rem;
+    background: rgba(255, 59, 48, 0.08);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 59, 48, 0.15);
+}
+
+.pricing-offer-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-offer-discount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
+    color: var(--fuse-red);
+    line-height: 1;
+}
+
+.pricing-offer-note {
+    font-size: 0.85rem;
+    color: var(--light-gray);
+    margin-top: 0.25rem;
+}
+
+.pricing-footer {
+    text-align: center;
+}
+
+.pricing-footer p {
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.pricing-footer strong {
+    color: var(--white);
+}
+
+/* Pricing Responsive */
+@media (max-width: 768px) {
+    .pricing-preview {
+        padding: 4rem 1.5rem;
+    }
+
+    .pricing-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .pricing-offer {
+        align-items: center;
+        text-align: center;
+    }
+}
+
+/* =================================
    Footer Styles
    ================================= */
 
