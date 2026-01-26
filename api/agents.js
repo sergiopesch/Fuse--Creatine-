@@ -406,7 +406,7 @@ module.exports = async (req, res) => {
     try {
         switch (method) {
             case 'GET':
-                return handleGet(action, query, res, clientIp);
+                return await handleGet(action, query, res, clientIp);
             case 'POST':
             case 'PUT':
             case 'DELETE':
@@ -435,9 +435,9 @@ module.exports = async (req, res) => {
 // GET HANDLERS (Public with rate limiting)
 // ============================================================================
 
-function handleGet(action, query, res, clientIp) {
+async function handleGet(action, query, res, clientIp) {
     // Rate limit GET requests
-    const rateLimit = checkRateLimit(`agents:get:${clientIp}`, CONFIG.RATE_LIMIT_READ, 60000);
+    const rateLimit = await checkRateLimit(`agents:get:${clientIp}`, CONFIG.RATE_LIMIT_READ, 60000);
 
     res.setHeader('X-RateLimit-Limit', CONFIG.RATE_LIMIT_READ);
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
@@ -673,7 +673,7 @@ async function handleAuthenticatedRequest(method, action, req, res, clientIp) {
     }
 
     // Rate limit write operations more strictly
-    const rateLimit = checkRateLimit(`agents:write:${clientIp}`, CONFIG.RATE_LIMIT_WRITE, 60000);
+    const rateLimit = await checkRateLimit(`agents:write:${clientIp}`, CONFIG.RATE_LIMIT_WRITE, 60000);
 
     res.setHeader('X-RateLimit-Limit', CONFIG.RATE_LIMIT_WRITE);
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
