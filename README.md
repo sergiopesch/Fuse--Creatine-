@@ -73,7 +73,11 @@ fuse-creatine/
 │   ├── content/            # Content strategy
 │   ├── testing/            # Lab validation
 │   └── validation/         # Market validation
-├── .agents/skills/         # AI skill definitions (symlinked)
+├── docs/                   # Documentation
+│   └── DASHBOARD_AUTH_DEBUG_REPORT.md  # Biometric auth debug guide
+├── scripts/                # Utility scripts
+│   ├── test-signup-integration.js  # Integration tests
+│   └── test-orchestration.sh       # Orchestration tests
 └── assets/
     └── favicon.svg         # Brand favicon
 ```
@@ -305,7 +309,7 @@ node scripts/test-signup-integration.js
 
 ```bash
 # Test all agent teams
-./test-orchestration.sh
+./scripts/test-orchestration.sh
 ```
 
 ### Test Coverage
