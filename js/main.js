@@ -173,27 +173,27 @@
     const heroMessages = [
         {
             message:
-                'Creatine monohydrate is one of the most researched performance supplements—trusted for strength and high‑intensity output.',
+                'The first performance creatine optimised for your morning coffee. No grit. No taste. Pure power.',
             footnote:
-                'Evidence: International Society of Sports Nutrition (ISSN) position stands + peer‑reviewed trials.',
+                'Evidence: ISSN position stands + peer‑reviewed trials on creatine monohydrate efficacy.',
         },
         {
             message:
-                'Consistent daily dosing supports muscle creatine saturation over time—no “special” timing required.',
+                'Creatine monohydrate is one of the most researched supplements—trusted for strength and high‑intensity output.',
             footnote:
-                'Evidence: supplementation protocols in controlled studies show saturation with steady intake.',
+                'Evidence: International Society of Sports Nutrition position stands confirm safety and efficacy.',
         },
         {
             message:
-                'Creatine supports repeated sprint and power performance—especially when training demands short, intense efforts.',
+                'FUSE dissolves in under 3 seconds. No stirring, no sediment, no taste change—just your coffee, enhanced.',
             footnote:
-                'Evidence: meta-analyses show benefits for high‑intensity, short-duration exercise capacity.',
+                'Evidence: micro-encapsulation preserves creatine stability while enabling instant dispersion.',
         },
         {
             message:
-                'Creatine is widely studied for safety and tolerability in healthy adults at common daily intakes.',
+                'Consistent daily dosing supports muscle creatine saturation. Add FUSE to your morning routine and let it work.',
             footnote:
-                'Evidence: long-term research and position stands report good safety profiles for typical use.',
+                'Evidence: controlled studies show saturation with steady daily intake—no special timing required.',
         },
     ];
 
@@ -380,28 +380,28 @@
     function getDoseProfile(g) {
         if (g <= 7) {
             return {
-                mode: 'Muscle & Strength',
-                copy: 'Research-backed daily baseline supports strength, power, and lean mass.',
+                mode: 'Daily Maintenance',
+                copy: 'The ISSN-recommended baseline. Supports strength, power, and lean mass over time.',
                 intensity: 0.8,
             };
         }
         if (g <= 11) {
             return {
-                mode: 'Recovery & Volume',
-                copy: 'Mid-range amounts are linked to better repeat-sprint output and faster recovery.',
+                mode: 'Enhanced Support',
+                copy: 'For larger individuals or high training volumes. Maintains optimal muscle saturation.',
                 intensity: 1.05,
             };
         }
         if (g <= 16) {
             return {
-                mode: 'Cognitive & Focus',
-                copy: 'Higher saturation is associated with working-memory support and mental fatigue resistance.',
+                mode: 'Intensive Training',
+                copy: 'Higher dose for demanding training blocks. Supports recovery between sessions.',
                 intensity: 1.25,
             };
         }
         return {
-            mode: 'Saturation Boost',
-            copy: 'Short-term higher intake accelerates creatine stores for rapid performance build-up.',
+            mode: 'Loading Phase',
+            copy: 'Rapid saturation protocol. Use for 5–7 days, then reduce to maintenance dose.',
             intensity: 1.45,
         };
     }
