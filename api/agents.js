@@ -92,15 +92,17 @@ const SCHEMAS = {
 // AGENT TEAM DATA STRUCTURE
 // ============================================================================
 
+// All agents default to IDLE - orchestration must be started to activate
 const defaultAgentTeams = {
     developer: {
         id: 'developer',
         name: 'Developer Team',
         badge: 'DEV',
         color: '#3b82f6',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'architect', name: 'Architect', role: 'System Design & Architecture', status: 'working' },
-            { id: 'coder', name: 'Coder', role: 'Implementation & Debugging', status: 'working' },
+            { id: 'architect', name: 'Architect', role: 'System Design & Architecture', status: 'idle' },
+            { id: 'coder', name: 'Coder', role: 'Implementation & Debugging', status: 'idle' },
             { id: 'tester', name: 'QA Engineer', role: 'Testing & Quality Assurance', status: 'idle' }
         ]
     },
@@ -109,10 +111,11 @@ const defaultAgentTeams = {
         name: 'Design Team',
         badge: 'DSN',
         color: '#8b5cf6',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'ux-lead', name: 'UX Lead', role: 'User Experience Strategy', status: 'working' },
+            { id: 'ux-lead', name: 'UX Lead', role: 'User Experience Strategy', status: 'idle' },
             { id: 'ui-artist', name: 'Visual Designer', role: 'UI & Visual Systems', status: 'idle' },
-            { id: 'motion', name: 'Motion Designer', role: 'Animation & Interactions', status: 'working' }
+            { id: 'motion', name: 'Motion Designer', role: 'Animation & Interactions', status: 'idle' }
         ]
     },
     communications: {
@@ -120,10 +123,11 @@ const defaultAgentTeams = {
         name: 'Communications Team',
         badge: 'COM',
         color: '#06b6d4',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'content-strategist', name: 'Content Strategist', role: 'Content Planning & Voice', status: 'working' },
+            { id: 'content-strategist', name: 'Content Strategist', role: 'Content Planning & Voice', status: 'idle' },
             { id: 'copywriter', name: 'Copywriter', role: 'Persuasive Copy & Messaging', status: 'idle' },
-            { id: 'social-manager', name: 'Social Media Manager', role: 'Community & Engagement', status: 'working' }
+            { id: 'social-manager', name: 'Social Media Manager', role: 'Community & Engagement', status: 'idle' }
         ]
     },
     legal: {
@@ -131,8 +135,9 @@ const defaultAgentTeams = {
         name: 'Legal Team',
         badge: 'LGL',
         color: '#f59e0b',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'compliance-officer', name: 'Compliance Officer', role: 'Regulatory Compliance', status: 'working' },
+            { id: 'compliance-officer', name: 'Compliance Officer', role: 'Regulatory Compliance', status: 'idle' },
             { id: 'contract-analyst', name: 'Contract Analyst', role: 'Terms & Agreements', status: 'idle' },
             { id: 'ip-counsel', name: 'IP Counsel', role: 'Intellectual Property', status: 'idle' }
         ]
@@ -142,10 +147,11 @@ const defaultAgentTeams = {
         name: 'Marketing Team',
         badge: 'MKT',
         color: '#ef4444',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'growth-lead', name: 'Growth Lead', role: 'Acquisition & Retention', status: 'working' },
-            { id: 'brand-strategist', name: 'Brand Strategist', role: 'Brand Identity & Positioning', status: 'working' },
-            { id: 'analytics-expert', name: 'Analytics Expert', role: 'Data & Performance', status: 'working' }
+            { id: 'growth-lead', name: 'Growth Lead', role: 'Acquisition & Retention', status: 'idle' },
+            { id: 'brand-strategist', name: 'Brand Strategist', role: 'Brand Identity & Positioning', status: 'idle' },
+            { id: 'analytics-expert', name: 'Analytics Expert', role: 'Data & Performance', status: 'idle' }
         ]
     },
     gtm: {
@@ -153,10 +159,11 @@ const defaultAgentTeams = {
         name: 'Go-to-Market Team',
         badge: 'GTM',
         color: '#10b981',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'launch-coordinator', name: 'Launch Coordinator', role: 'Launch Planning & Execution', status: 'working' },
+            { id: 'launch-coordinator', name: 'Launch Coordinator', role: 'Launch Planning & Execution', status: 'idle' },
             { id: 'partnership-manager', name: 'Partnership Manager', role: 'Strategic Partnerships', status: 'idle' },
-            { id: 'market-researcher', name: 'Market Researcher', role: 'Market Intelligence', status: 'working' }
+            { id: 'market-researcher', name: 'Market Researcher', role: 'Market Intelligence', status: 'idle' }
         ]
     },
     sales: {
@@ -164,27 +171,38 @@ const defaultAgentTeams = {
         name: 'Sales Team',
         badge: 'SLS',
         color: '#ec4899',
+        orchestrationStatus: 'paused',
         agents: [
-            { id: 'sales-director', name: 'Sales Director', role: 'Revenue Strategy & Team Leadership', status: 'working' },
-            { id: 'account-executive', name: 'Account Executive', role: 'Enterprise Sales & Closing', status: 'working' },
-            { id: 'sdr', name: 'SDR Lead', role: 'Outbound Prospecting & Lead Qualification', status: 'working' },
+            { id: 'sales-director', name: 'Sales Director', role: 'Revenue Strategy & Team Leadership', status: 'idle' },
+            { id: 'account-executive', name: 'Account Executive', role: 'Enterprise Sales & Closing', status: 'idle' },
+            { id: 'sdr', name: 'SDR Lead', role: 'Outbound Prospecting & Lead Qualification', status: 'idle' },
             { id: 'solutions-consultant', name: 'Solutions Consultant', role: 'Technical Sales & Demos', status: 'idle' },
-            { id: 'customer-success', name: 'Customer Success Manager', role: 'Retention & Expansion', status: 'working' }
+            { id: 'customer-success', name: 'Customer Success Manager', role: 'Retention & Expansion', status: 'idle' }
         ]
     }
 };
 
 // ============================================================================
-// IN-MEMORY STATE (Consider database for production)
+// IN-MEMORY STATE
+// All teams default to PAUSED/MANUAL mode - must be explicitly started
 // ============================================================================
 
 let agentState = {
     teams: JSON.parse(JSON.stringify(defaultAgentTeams)), // Deep clone
     tasks: [],
     decisions: [],
-    activities: [],
+    activities: [],  // Only real activities from orchestration
     communications: [],
-    orchestrationMode: 'autonomous',
+    orchestrationMode: 'manual',  // DEFAULT: manual (all paused)
+    teamOrchestrationState: {
+        developer: { status: 'paused', lastRun: null },
+        design: { status: 'paused', lastRun: null },
+        communications: { status: 'paused', lastRun: null },
+        legal: { status: 'paused', lastRun: null },
+        marketing: { status: 'paused', lastRun: null },
+        gtm: { status: 'paused', lastRun: null },
+        sales: { status: 'paused', lastRun: null }
+    },
     apiKeyConfig: {
         anthropic: { configured: false, model: 'claude-3-5-haiku-latest', lastUpdated: null },
         openai: { configured: false, model: 'gpt-4-turbo', lastUpdated: null },
@@ -197,6 +215,14 @@ let agentState = {
         apiLatency: {}
     }
 };
+
+// Initialize all agents to IDLE by default (paused state)
+Object.values(agentState.teams).forEach(team => {
+    team.agents.forEach(agent => {
+        agent.status = 'idle';  // All agents start idle
+        agent.currentTask = null;
+    });
+});
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -428,6 +454,16 @@ function handleGet(action, query, res, clientIp) {
     switch (action) {
         case 'status':
             const totalAgents = countTotalAgents();
+            // Build team orchestration status
+            const teamOrchestrationStatus = {};
+            Object.entries(agentState.teams).forEach(([teamId, team]) => {
+                teamOrchestrationStatus[teamId] = {
+                    status: team.orchestrationStatus || 'paused',
+                    activeAgents: team.agents.filter(a => a.status === 'working').length,
+                    totalAgents: team.agents.length
+                };
+            });
+
             return res.status(200).json({
                 success: true,
                 data: {
@@ -437,6 +473,7 @@ function handleGet(action, query, res, clientIp) {
                     tasksInProgress: agentState.tasks.filter(t => t.status === 'in_progress').length,
                     pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length,
                     orchestrationMode: agentState.orchestrationMode,
+                    teamOrchestrationStatus,  // Per-team orchestration state
                     apiKeyConfig: getApiKeyStatus(),
                     healthMetrics: agentState.healthMetrics,
                     teamCount: Object.keys(agentState.teams).length,
