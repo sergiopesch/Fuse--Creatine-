@@ -237,7 +237,11 @@ body::before {
         justify-items: center;
     }
     .hero-visual-wrapper {
-        display: none;
+        display: flex;
+        order: -1;
+        margin-bottom: 2rem;
+        max-width: 280px;
+        height: 350px;
     }
 }
 

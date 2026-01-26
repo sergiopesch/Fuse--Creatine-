@@ -27,6 +27,12 @@ const {
 // CONFIGURATION
 // ============================================================================
 
+// Validate required environment variables at startup
+const SESSION_SECRET = process.env.ENCRYPTION_KEY;
+if (!SESSION_SECRET) {
+    console.error('[BiometricAuth] CRITICAL: ENCRYPTION_KEY environment variable is not set');
+}
+
 const CONFIG = {
     CHALLENGE_EXPIRY: 5 * 60 * 1000, // 5 minutes
     BLOB_PREFIX: 'biometric-credentials/',
@@ -36,7 +42,7 @@ const CONFIG = {
     MAX_FAILED_ATTEMPTS: 5,
     LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
     SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
-    SESSION_SECRET: process.env.ENCRYPTION_KEY || 'fuse-default-secret-key-change-me'
+    SESSION_SECRET: SESSION_SECRET
 };
 
 // In-memory stores for rate limiting only (OK if reset between invocations)
@@ -203,21 +209,29 @@ function clearFailedAttempts(key) {
 
 /**
  * Get the owner credential from Vercel Blob
+ * Returns { credential, error } to distinguish between "no owner" and "service error"
  */
 async function getOwnerCredential() {
     try {
         const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
         const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
 
-        if (!blob) return null;
+        if (!blob) {
+            // No owner registered - this is a valid state
+            return { credential: null, error: null };
+        }
 
         const response = await fetch(blob.url);
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.error('[BiometricAuth] Blob fetch failed:', response.status);
+            return { credential: null, error: 'BLOB_FETCH_FAILED' };
+        }
 
-        return await response.json();
+        const credential = await response.json();
+        return { credential, error: null };
     } catch (error) {
         console.error('[BiometricAuth] Failed to get owner credential:', error);
-        return null;
+        return { credential: null, error: 'SERVICE_ERROR' };
     }
 }
 
@@ -315,6 +329,16 @@ function checkDeviceMatch(req, clientDeviceId, storedFingerprint) {
 // ============================================================================
 
 module.exports = async function handler(req, res) {
+    // Fail early if encryption key is not configured
+    if (!CONFIG.SESSION_SECRET) {
+        console.error('[BiometricAuth] Authentication disabled: ENCRYPTION_KEY not configured');
+        return res.status(503).json({
+            success: false,
+            error: 'Authentication service temporarily unavailable',
+            code: 'CONFIG_ERROR'
+        });
+    }
+
     const clientIp = getClientIp(req);
     // Extract deviceId early for fingerprinting (will be validated later)
     const clientDeviceId = req.body?.deviceId;
@@ -384,7 +408,23 @@ module.exports = async function handler(req, res) {
             }
 
             // Verify device fingerprint matches
-            if (payload.deviceFingerprint !== deviceFingerprint) {
+            // First check: exact match with current fingerprint
+            let fingerprintValid = (payload.deviceFingerprint === deviceFingerprint);
+
+            // Second check: if client provides a deviceId, check if token's fingerprint
+            // matches what the client's deviceId would generate (handles localStorage reset)
+            if (!fingerprintValid && clientDeviceId) {
+                const clientFp = createClientFingerprint(clientDeviceId);
+                fingerprintValid = (payload.deviceFingerprint === clientFp);
+            }
+
+            // Third check: for legacy tokens, check if the header fingerprint matches
+            if (!fingerprintValid) {
+                const headerFp = createHeaderFingerprint(req);
+                fingerprintValid = (payload.deviceFingerprint === headerFp);
+            }
+
+            if (!fingerprintValid) {
                 addAuditEntry({
                     action: 'BIOMETRIC_SESSION_DEVICE_MISMATCH',
                     ip: clientIp,
@@ -410,7 +450,17 @@ module.exports = async function handler(req, res) {
         // CHECK ACCESS STATUS
         // ====================================
         if (action === 'check-access') {
-            const ownerCredential = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+
+            // Handle service errors - don't falsely report "no owner"
+            if (credentialError) {
+                console.error('[BiometricAuth] Service error during check-access:', credentialError);
+                return res.status(503).json({
+                    success: false,
+                    error: 'Unable to verify access status. Please try again.',
+                    code: credentialError
+                });
+            }
 
             if (!ownerCredential) {
                 return res.status(200).json({
@@ -457,7 +507,17 @@ module.exports = async function handler(req, res) {
             }
 
             // Verify owner exists and this is owner's device
-            const ownerCredential = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+
+            // Handle service errors
+            if (credentialError) {
+                console.error('[BiometricAuth] Service error during get-challenge:', credentialError);
+                return res.status(503).json({
+                    success: false,
+                    error: 'Authentication service temporarily unavailable. Please try again.',
+                    code: credentialError
+                });
+            }
 
             if (!ownerCredential) {
                 return res.status(403).json({
@@ -529,7 +589,17 @@ module.exports = async function handler(req, res) {
             }
 
             // Get owner credential first to determine fingerprint format
-            const ownerCredential = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+
+            // Handle service errors
+            if (credentialError) {
+                console.error('[BiometricAuth] Service error during verify:', credentialError);
+                return res.status(503).json({
+                    success: false,
+                    error: 'Authentication service temporarily unavailable. Please try again.',
+                    code: credentialError
+                });
+            }
 
             if (!ownerCredential) {
                 return res.status(403).json({

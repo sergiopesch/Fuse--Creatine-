@@ -148,21 +148,29 @@ function recordRegistrationAttempt(ip) {
 
 /**
  * Get the owner credential from Vercel Blob
+ * Returns { credential, error } to distinguish between "no owner" and "service error"
  */
 async function getOwnerCredential() {
     try {
         const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
         const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
 
-        if (!blob) return null;
+        if (!blob) {
+            // No owner registered - this is a valid state
+            return { credential: null, error: null };
+        }
 
         const response = await fetch(blob.url);
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.error('[BiometricRegister] Blob fetch failed:', response.status);
+            return { credential: null, error: 'BLOB_FETCH_FAILED' };
+        }
 
-        return await response.json();
+        const credential = await response.json();
+        return { credential, error: null };
     } catch (error) {
         console.error('[BiometricRegister] Failed to get owner credential:', error);
-        return null;
+        return { credential: null, error: 'SERVICE_ERROR' };
     }
 }
 
@@ -326,7 +334,17 @@ module.exports = async function handler(req, res) {
         // CHECK OWNER STATUS
         // ====================================
         if (action === 'check-owner') {
-            const ownerCredential = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+
+            // Handle service errors
+            if (credentialError) {
+                console.error('[BiometricRegister] Service error during check-owner:', credentialError);
+                return res.status(503).json({
+                    success: false,
+                    error: 'Unable to verify owner status. Please try again.',
+                    code: credentialError
+                });
+            }
 
             let isOwnerDevice = false;
             if (ownerCredential) {
@@ -346,7 +364,17 @@ module.exports = async function handler(req, res) {
         // ====================================
         if (action === 'get-challenge') {
             // Check if owner already exists
-            const ownerCredential = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+
+            // Handle service errors - don't allow registration when we can't verify
+            if (credentialError) {
+                console.error('[BiometricRegister] Service error during get-challenge:', credentialError);
+                return res.status(503).json({
+                    success: false,
+                    error: 'Registration service temporarily unavailable. Please try again.',
+                    code: credentialError
+                });
+            }
 
             if (ownerCredential) {
                 // Owner exists - check if this might be the owner's device
@@ -430,7 +458,17 @@ module.exports = async function handler(req, res) {
             }
 
             // Check if owner already exists
-            const existingOwner = await getOwnerCredential();
+            const { credential: existingOwner, error: existingOwnerError } = await getOwnerCredential();
+
+            // Handle service errors - don't allow registration when we can't verify
+            if (existingOwnerError) {
+                console.error('[BiometricRegister] Service error during register:', existingOwnerError);
+                return res.status(503).json({
+                    success: false,
+                    error: 'Registration service temporarily unavailable. Please try again.',
+                    code: existingOwnerError
+                });
+            }
 
             if (existingOwner) {
                 const deviceMatch = checkDeviceMatch(req, clientDeviceId, existingOwner.deviceFingerprint);
