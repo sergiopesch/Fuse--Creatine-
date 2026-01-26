@@ -4,65 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>FUSE | Company Dashboard - Digital Workforce Hub</title>
+    <title>FUSE | Command Center - Secure Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/biometric-gate.css">
 </head>
 <body class="dashboard-page">
-    <!-- Biometric Authentication Gate -->
+    <!-- Elite Biometric Authentication Gate -->
     <div class="biometric-gate" id="biometricGate">
         <div class="biometric-gate-content">
-            <div class="biometric-icon" id="biometricIcon">
-                <!-- Face ID / Fingerprint Icon -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-                    <path d="M7.5 8.5C8 7.5 9.5 6 12 6s4 1.5 4.5 2.5"/>
-                    <circle cx="8.5" cy="10.5" r="1"/>
-                    <circle cx="15.5" cy="10.5" r="1"/>
-                    <path d="M9 15c.83.67 1.83 1 3 1s2.17-.33 3-1"/>
-                </svg>
+            <!-- Premium Biometric Icon with Scanner Effects -->
+            <div class="biometric-icon-container" id="biometricIcon">
+                <div class="rotating-glow"></div>
+                <div class="biometric-ring-outer"></div>
+                <div class="biometric-ring-middle"></div>
+                <div class="biometric-icon-inner">
+                    <!-- Face ID Icon -->
+                    <svg id="iconFaceId" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 3H5a2 2 0 00-2 2v2m14-4h2a2 2 0 012 2v2M3 17v2a2 2 0 002 2h2m12 0h2a2 2 0 002-2v-2"/>
+                        <circle cx="9" cy="10" r="1.25" fill="currentColor" stroke="none"/>
+                        <circle cx="15" cy="10" r="1.25" fill="currentColor" stroke="none"/>
+                        <path d="M8 15c.5 1 1.5 2 4 2s3.5-1 4-2"/>
+                    </svg>
+                    <!-- Fingerprint Icon (hidden by default) -->
+                    <svg id="iconFingerprint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                        <path d="M12 10v4"/>
+                        <path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4c0 1.5-.5 2.8-1.5 3.7"/>
+                        <path d="M6.5 9.5C7 7 9.2 5 12 5s5 2 5.5 4.5"/>
+                        <path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8c0 2.4-1.1 4.6-2.8 6.1"/>
+                        <path d="M12 14c0 2.5-1.5 4.5-3 6"/>
+                    </svg>
+                    <!-- Lock Icon (for locked state) -->
+                    <svg id="iconLocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0110 0v4"/>
+                    </svg>
+                    <!-- Success Check Icon -->
+                    <svg id="iconSuccess" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <div class="scanning-line"></div>
             </div>
 
             <h1 class="biometric-title">SECURE ACCESS</h1>
 
             <!-- Supported state -->
             <div class="biometric-supported">
-                <p class="biometric-subtitle">
-                    Company Dashboard requires <span class="biometric-type" id="authTypeText">biometric verification</span> to access sensitive workforce data.
+                <p class="biometric-subtitle" id="gateSubtitle">
+                    Owner-locked dashboard protected by <span class="biometric-type" id="authTypeText">biometric verification</span>
                 </p>
+                <p class="biometric-message" id="gateMessage">Only authorized devices can access this dashboard</p>
 
                 <div class="biometric-actions">
-                    <button class="btn-biometric" id="btnAuthenticate" onclick="handleBiometricAuth()">
+                    <!-- Authenticate Button (for returning owner) -->
+                    <button class="btn-biometric btn-primary-bio" id="btnAuthenticate">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
-                        <span id="btnAuthText">Authenticate</span>
+                        <span id="btnAuthText">Unlock Dashboard</span>
                     </button>
 
-                    <button class="btn-biometric btn-secondary-bio" id="btnSetup" onclick="handleBiometricSetup()" style="display: none;">
+                    <!-- Setup Button (for first-time setup) -->
+                    <button class="btn-biometric btn-setup" id="btnSetup" style="display: none;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="M9 12l2 2 4-4"/>
                         </svg>
-                        <span>Set Up Biometric Access</span>
+                        <span id="btnSetupText">Secure This Dashboard</span>
                     </button>
                 </div>
 
-                <div class="biometric-status" id="biometricStatus"></div>
+                <div class="biometric-status" id="biometricStatus">
+                    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+                    <span id="statusText"></span>
+                </div>
             </div>
 
             <!-- Not supported state -->
             <div class="biometric-not-supported">
                 <p class="biometric-subtitle">
-                    Biometric authentication is not available on this device or browser.
+                    Biometric authentication is not available on this device.
                 </p>
 
                 <div class="biometric-alt-actions">
-                    <p>Please use a device with Face ID, Touch ID, or fingerprint support to access the dashboard.</p>
+                    <p>This dashboard requires Face ID, Touch ID, Windows Hello, or fingerprint authentication.</p>
                     <button class="btn-biometric btn-secondary-bio" onclick="window.location.href='/'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -73,7 +104,12 @@
             </div>
 
             <div class="biometric-footer">
-                <p>Protected by WebAuthn secure authentication</p>
+                <div class="security-badge">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                    </svg>
+                    <span>WebAuthn Secured</span>
+                </div>
             </div>
         </div>
     </div>
