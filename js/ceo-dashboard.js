@@ -833,17 +833,47 @@ function initAnalytics() {
 }
 
 async function loadSignups() {
+    if (!state.adminToken) {
+        console.warn('[Analytics] Admin token required to load signups');
+        return;
+    }
+
     try {
-        const response = await fetch('/api/signups');
+        const response = await fetch('/api/admin-signups', {
+            headers: {
+                'Authorization': `Bearer ${state.adminToken}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.warn('[Analytics] Unauthorized - check admin token');
+                return;
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
 
-        if (data.success) {
-            state.signups = data.signups || [];
+        if (data.signups) {
+            // Transform admin-signups format to expected format
+            state.signups = data.signups.map(s => ({
+                email: s.email,
+                interest: s.mainInterest,
+                consent: s.consentToContact,
+                marketingConsent: s.consentToContact,
+                timestamp: s.signupDate || s.storedAt,
+                date: s.signupDate || s.storedAt
+            }));
             renderSignupsTable();
             updateAnalyticsMetrics();
         }
     } catch (error) {
         console.error('[Analytics] Failed to load signups:', error);
+        // Show user-friendly error
+        if (error.message && !error.message.includes('JSON')) {
+            showToast('error', 'Failed to Load Signups', error.message);
+        }
     }
 }
 

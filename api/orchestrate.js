@@ -308,9 +308,9 @@ module.exports = async (req, res) => {
     try {
         switch (req.method) {
             case 'GET':
-                return handleGet(req, res, clientIp);
+                return await handleGet(req, res, clientIp);
             case 'POST':
-                return handlePost(req, res, clientIp);
+                return await handlePost(req, res, clientIp);
             default:
                 return res.status(405).json({ error: 'Method not allowed' });
         }
@@ -324,8 +324,8 @@ module.exports = async (req, res) => {
 // GET HANDLER - Status queries (public with rate limiting)
 // ============================================================================
 
-function handleGet(req, res, clientIp) {
-    const rateLimit = checkRateLimit(`orchestrate:get:${clientIp}`, CONFIG.RATE_LIMIT_READ, 60000);
+async function handleGet(req, res, clientIp) {
+    const rateLimit = await checkRateLimit(`orchestrate:get:${clientIp}`, CONFIG.RATE_LIMIT_READ, 60000);
 
     res.setHeader('X-RateLimit-Limit', CONFIG.RATE_LIMIT_READ);
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
