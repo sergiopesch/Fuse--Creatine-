@@ -23,33 +23,40 @@
     // DOM Elements (populated on init)
     let chatWidget, chatToggle, chatWindow, chatMessages, chatInput, chatForm, chatClose;
 
-    // Greeting messages (randomly selected)
-    const greetings = [
-        "Hello! I'm the FUSE Agent. How can I help you today?",
-        "Hi there! Welcome to FUSE. What would you like to know?",
-        "Good day! I'm here to answer any questions about FUSE. Fire away!",
-        "Hello! Lovely to meet you. Ask me anything about FUSE and our coffee-optimised creatine."
-    ];
+    // Time-aware greeting messages
+    function getGreeting() {
+        const hour = new Date().getHours();
+        const timeGreeting = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
+        const greetings = [
+            `${timeGreeting}! I'm the FUSE Agent. How can I help?`,
+            `${timeGreeting}! Got questions about FUSE? Fire away.`,
+            `Hey there! What can I help you with today?`
+        ];
+        return greetings[Math.floor(Math.random() * greetings.length)];
+    }
 
-    // Quick action suggestions
+    // Quick action suggestions (including escalation)
     const quickActions = [
         { label: "What is FUSE?", message: "What is FUSE?" },
-        { label: "How does it work?", message: "How does the technology work?" },
-        { label: "Dosing guide", message: "How much creatine should I take?" },
-        { label: "Is it safe?", message: "Is creatine safe to take?" }
+        { label: "How much to take?", message: "How much creatine should I take daily?" },
+        { label: "Is it safe?", message: "Is creatine safe?" },
+        { label: "Contact support", message: "I'd like to speak to someone from your team." }
     ];
 
-    // Error messages based on error codes
+    // Error messages with escalation options
     const errorMessages = {
-        'RATE_LIMITED': "You're sending messages a bit quickly. Please wait a moment and try again.",
-        'API_RATE_LIMITED': "I'm receiving a lot of questions right now. Please try again in a moment.",
-        'SERVICE_UNAVAILABLE': "I'm temporarily unavailable. Please try again shortly.",
-        'AUTH_FAILED': "I'm having technical difficulties. Please try again later.",
-        'NETWORK_ERROR': "I couldn't connect. Please check your internet and try again.",
-        'VALIDATION_ERROR': "There was an issue with your message. Please try rephrasing it.",
-        'INVALID_MESSAGE': "I couldn't understand that message. Could you try again?",
-        'default': "I'm having a bit of trouble right now. Please try again in a moment."
+        'RATE_LIMITED': "Slow down a tick! Give it a moment and try again.",
+        'API_RATE_LIMITED': "Bit busy at the moment - try again in a sec.",
+        'SERVICE_UNAVAILABLE': "I'm having a moment. Try again shortly, or email support@fusecreatine.com",
+        'AUTH_FAILED': "Technical hiccup on my end. Email support@fusecreatine.com if urgent.",
+        'NETWORK_ERROR': "Can't connect - check your internet and try again.",
+        'VALIDATION_ERROR': "Didn't quite catch that. Could you rephrase?",
+        'INVALID_MESSAGE': "Hmm, not sure what you mean. Try again?",
+        'default': "Something's gone wonky. Try again, or email support@fusecreatine.com"
     };
+
+    // Support email for escalation
+    const SUPPORT_EMAIL = 'support@fusecreatine.com';
 
     /**
      * Check API health status
@@ -133,12 +140,37 @@
     }
 
     /**
-     * Validate input length
+     * Validate input length and update character count
      */
     function validateInput() {
         const length = chatInput.value.length;
         if (length > CONFIG.maxMessageLength) {
             chatInput.value = chatInput.value.substring(0, CONFIG.maxMessageLength);
+        }
+        updateCharCount(chatInput.value.length);
+    }
+
+    /**
+     * Update character count display
+     */
+    function updateCharCount(count) {
+        let counter = document.getElementById('chatCharCount');
+        if (!counter) {
+            counter = document.createElement('span');
+            counter.id = 'chatCharCount';
+            counter.className = 'chat-char-count';
+            const inputWrapper = chatInput.parentElement;
+            if (inputWrapper) {
+                inputWrapper.appendChild(counter);
+            }
+        }
+        // Only show when approaching limit
+        if (count > CONFIG.maxMessageLength * 0.8) {
+            counter.textContent = `${count}/${CONFIG.maxMessageLength}`;
+            counter.style.display = 'block';
+            counter.classList.toggle('chat-char-count-warning', count > CONFIG.maxMessageLength * 0.95);
+        } else {
+            counter.style.display = 'none';
         }
     }
 
@@ -164,8 +196,7 @@
 
         // Add initial greeting if first time
         if (conversationHistory.length === 0) {
-            const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-            addMessage(greeting, 'assistant');
+            addMessage(getGreeting(), 'assistant');
             addQuickActions();
         }
 
@@ -307,7 +338,7 @@
     /**
      * Add message to chat
      */
-    function addMessage(content, role, isError = false) {
+    function addMessage(content, role, isError = false, showFeedback = false) {
         const messageEl = document.createElement('div');
         messageEl.className = `chat-message chat-message-${role}${isError ? ' chat-message-error' : ''}`;
 
@@ -316,6 +347,13 @@
         contentEl.textContent = content;
 
         messageEl.appendChild(contentEl);
+
+        // Add feedback buttons for assistant responses (not errors, not greetings)
+        if (role === 'assistant' && !isError && conversationHistory.length > 0) {
+            const feedbackEl = createFeedbackButtons(messageEl);
+            messageEl.appendChild(feedbackEl);
+        }
+
         chatMessages.appendChild(messageEl);
 
         // Store in history (don't store error messages or greeting)
@@ -325,6 +363,42 @@
 
         // Scroll to bottom
         scrollToBottom();
+    }
+
+    /**
+     * Create feedback buttons
+     */
+    function createFeedbackButtons(messageEl) {
+        const feedbackEl = document.createElement('div');
+        feedbackEl.className = 'chat-feedback';
+
+        const helpfulBtn = document.createElement('button');
+        helpfulBtn.className = 'chat-feedback-btn';
+        helpfulBtn.innerHTML = '👍';
+        helpfulBtn.title = 'Helpful';
+        helpfulBtn.type = 'button';
+        helpfulBtn.setAttribute('aria-label', 'Mark as helpful');
+
+        const unhelpfulBtn = document.createElement('button');
+        unhelpfulBtn.className = 'chat-feedback-btn';
+        unhelpfulBtn.innerHTML = '👎';
+        unhelpfulBtn.title = 'Not helpful';
+        unhelpfulBtn.type = 'button';
+        unhelpfulBtn.setAttribute('aria-label', 'Mark as not helpful');
+
+        const handleFeedback = (helpful) => {
+            feedbackEl.innerHTML = '<span class="chat-feedback-thanks">Thanks for the feedback!</span>';
+            // Could send to analytics here
+            console.log('[FUSE Chat] Feedback:', helpful ? 'helpful' : 'unhelpful');
+        };
+
+        helpfulBtn.addEventListener('click', () => handleFeedback(true));
+        unhelpfulBtn.addEventListener('click', () => handleFeedback(false));
+
+        feedbackEl.appendChild(helpfulBtn);
+        feedbackEl.appendChild(unhelpfulBtn);
+
+        return feedbackEl;
     }
 
     /**
