@@ -23,13 +23,32 @@
             <h1 class="command-title">Agent Command Center</h1>
         </div>
         <div class="header-right">
-            <div class="system-status">
-                <span class="status-indicator online"></span>
-                <span class="status-text">All Systems Operational</span>
+            <!-- OWNER CONTROL CENTER - Master Controls -->
+            <div class="owner-controls">
+                <div class="world-state-indicator" id="worldStateIndicator">
+                    <span class="world-state-dot"></span>
+                    <span class="world-state-text">MANUAL</span>
+                </div>
+                <div class="credit-indicator" id="creditIndicator" title="Credit Usage">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                    <span class="credit-value" id="creditValue">$0.00</span>
+                    <span class="credit-limit" id="creditLimit">/ $50</span>
+                </div>
+                <button class="master-pause-btn" id="masterPauseBtn" title="Pause All Operations">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <span>PAUSE</span>
+                </button>
+                <button class="emergency-stop-btn" id="emergencyStopBtn" title="Emergency Stop - Halt Everything">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                </button>
+            </div>
+            <div class="system-status" id="systemStatus">
+                <span class="status-indicator online" id="systemStatusIndicator"></span>
+                <span class="status-text" id="systemStatusText">All Systems Operational</span>
             </div>
             <div class="live-clock" id="liveClock">--:--:--</div>
             <div class="user-badge">
-                <span class="user-role">Commander</span>
+                <span class="user-role">OWNER</span>
                 <div class="user-avatar">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
@@ -319,10 +338,158 @@
         <!-- Right Panel - Activity & Orchestration -->
         <aside class="activity-panel">
             <div class="panel-tabs">
+                <button class="panel-tab" data-tab="worldcontrol">World Control</button>
                 <button class="panel-tab active" data-tab="activity">Activity Feed</button>
                 <button class="panel-tab" data-tab="orchestration">Orchestration</button>
                 <button class="panel-tab" data-tab="comms">Inter-Agent Comms</button>
                 <button class="panel-tab" data-tab="config">API Config</button>
+            </div>
+
+            <!-- World Control Tab - Owner Command Center -->
+            <div class="tab-content" id="worldcontrolTab">
+                <div class="world-control-panel">
+                    <!-- World State Control -->
+                    <div class="control-section world-state-section">
+                        <h3 class="section-title">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            World State
+                        </h3>
+                        <div class="world-state-controls">
+                            <div class="state-selector">
+                                <button class="state-btn" data-state="paused" id="statePausedBtn">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                    PAUSED
+                                </button>
+                                <button class="state-btn active" data-state="manual" id="stateManualBtn">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z"/></svg>
+                                    MANUAL
+                                </button>
+                                <button class="state-btn" data-state="semi_auto" id="stateSemiAutoBtn">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                                    SEMI-AUTO
+                                </button>
+                                <button class="state-btn" data-state="autonomous" id="stateAutonomousBtn">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                                    AUTONOMOUS
+                                </button>
+                            </div>
+                            <p class="state-description" id="stateDescription">Manual mode: You must trigger every action. Full control.</p>
+                        </div>
+                    </div>
+
+                    <!-- Credit Protection -->
+                    <div class="control-section credit-section">
+                        <h3 class="section-title">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                            Credit Protection
+                        </h3>
+                        <div class="credit-controls">
+                            <div class="credit-usage-display">
+                                <div class="credit-bar-container">
+                                    <div class="credit-bar" id="creditBar" style="width: 0%"></div>
+                                </div>
+                                <div class="credit-stats">
+                                    <span class="credit-spent" id="creditSpentDisplay">$0.00 spent today</span>
+                                    <span class="credit-remaining" id="creditRemainingDisplay">$50.00 remaining</span>
+                                </div>
+                            </div>
+                            <div class="credit-limits-form">
+                                <div class="limit-input-group">
+                                    <label>Daily Limit</label>
+                                    <div class="input-with-prefix">
+                                        <span>$</span>
+                                        <input type="number" id="dailyLimitInput" value="50" min="1" max="1000">
+                                    </div>
+                                </div>
+                                <div class="limit-input-group">
+                                    <label>Monthly Limit</label>
+                                    <div class="input-with-prefix">
+                                        <span>$</span>
+                                        <input type="number" id="monthlyLimitInput" value="500" min="10" max="10000">
+                                    </div>
+                                </div>
+                                <button class="btn-primary btn-sm" id="updateCreditLimitsBtn">Update Limits</button>
+                            </div>
+                            <label class="checkbox-label auto-stop-toggle">
+                                <input type="checkbox" id="autoStopOnLimit" checked>
+                                Auto-pause when limit reached
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Team Controls -->
+                    <div class="control-section team-controls-section">
+                        <h3 class="section-title">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                            Team Controls
+                        </h3>
+                        <div class="team-controls-list" id="teamControlsList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Action Queue -->
+                    <div class="control-section action-queue-section">
+                        <h3 class="section-title">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                            Pending Actions
+                            <span class="badge" id="pendingActionsBadge">0</span>
+                        </h3>
+                        <div class="pending-actions-list" id="pendingActionsList">
+                            <p class="empty-message">No pending actions</p>
+                        </div>
+                    </div>
+
+                    <!-- Manual Trigger -->
+                    <div class="control-section trigger-section">
+                        <h3 class="section-title">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M13 3v9h8V3h-8zm-2 9H3V3h8v9zm2 9h8v-9h-8v9zm-2 0H3v-9h8v9z"/></svg>
+                            Trigger Action
+                        </h3>
+                        <div class="trigger-form">
+                            <div class="form-group">
+                                <label>Team</label>
+                                <select id="triggerTeamSelect">
+                                    <option value="developer">Developer</option>
+                                    <option value="design">Design</option>
+                                    <option value="communications">Communications</option>
+                                    <option value="legal">Legal</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="gtm">Go-to-Market</option>
+                                    <option value="sales">Sales</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Action Type</label>
+                                <select id="triggerActionSelect">
+                                    <option value="think">Think / Analyze</option>
+                                    <option value="execute">Execute Task</option>
+                                    <option value="communicate">Communicate</option>
+                                    <option value="report">Generate Report</option>
+                                    <option value="sync">Sync with Teams</option>
+                                    <option value="research">Research</option>
+                                    <option value="create">Create Deliverable</option>
+                                    <option value="review">Review Work</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" id="triggerActionBtn">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+                                Trigger Action
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Control Log -->
+                    <div class="control-section log-section">
+                        <h3 class="section-title">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            Control Log
+                        </h3>
+                        <div class="control-log-list" id="controlLogList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Activity Feed -->
@@ -663,6 +830,30 @@
 
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- World Paused Overlay -->
+    <div class="world-paused-overlay" id="worldPausedOverlay">
+        <div class="paused-message">
+            <svg class="paused-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+            <h2>WORLD PAUSED</h2>
+            <p id="pauseReasonText">All agent operations are halted.</p>
+            <button class="resume-btn" id="resumeFromOverlay">Resume Operations</button>
+        </div>
+    </div>
+
+    <!-- Emergency Stop Modal -->
+    <div class="emergency-modal" id="emergencyStopModal">
+        <div class="emergency-content">
+            <h1>EMERGENCY STOP</h1>
+            <p id="emergencyReasonText">All agent operations have been immediately halted.</p>
+            <div class="emergency-reset-form">
+                <input type="text" id="emergencyResetCode" placeholder="Type CONFIRM_RESET to reset">
+                <button class="emergency-reset-btn" id="emergencyResetBtn">Reset Emergency Stop</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/agents.js"></script>
 </body>
