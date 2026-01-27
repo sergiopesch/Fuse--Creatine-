@@ -26,6 +26,9 @@ const {
 } = require('./_lib/security');
 
 const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
+const { runAgentLoop } = require('./_lib/agent-loop');
+const { buildStateContext, syncFromAgentLoop, TEAM_PROMPTS: SHARED_TEAM_PROMPTS } = require('./_lib/agent-state');
+const { checkCreditLimits } = require('./_lib/world-controller');
 
 // ============================================================================
 // CONFIGURATION
@@ -672,8 +675,9 @@ async function handlePost(req, res, clientIp) {
 
     // Actions that don't require a specific teamId
     const globalActions = [
-        'setMode', 'setWorldState', 'startAll', 'stopAll', 
-        'executeAll', 'executeMultiple', 'getWorldState'
+        'setMode', 'setWorldState', 'startAll', 'stopAll',
+        'executeAll', 'executeMultiple', 'getWorldState',
+        'execute-agentic-all'
     ];
 
     // Validate teamId for team-specific actions
@@ -771,6 +775,243 @@ async function handlePost(req, res, clientIp) {
                     details: error.message
                 });
             }
+
+        case 'execute-agentic': {
+            // ================================================================
+            // AGENTIC EXECUTION - Full tool-use loop with observe/act/evaluate
+            // This is the agent-native mode. The agent gets tools, iterates
+            // in a loop, and signals completion when done.
+            // ================================================================
+
+            // Auto-start team if not running
+            if (orchestrationState.teams[teamId].status !== 'running') {
+                orchestrationState.teams[teamId].status = 'running';
+                addTeamActivity(teamId, 'System', 'Auto-started for agentic execution', 'Auto-Start');
+            }
+
+            orchestrationState.executionInProgress = true;
+
+            try {
+                const agenticApiKey = process.env.ANTHROPIC_API_KEY?.trim();
+                if (!agenticApiKey || !agenticApiKey.startsWith('sk-ant-')) {
+                    return res.status(503).json({
+                        error: 'Anthropic API key not configured',
+                        code: 'NOT_CONFIGURED'
+                    });
+                }
+
+                // Build state context for the agent loop
+                let agenticCreditStatus = { status: 'ok', message: 'Within limits' };
+                try {
+                    agenticCreditStatus = checkCreditLimits();
+                } catch (_e) { /* credit check failure shouldn't block */ }
+
+                const stateContext = buildStateContext(agenticCreditStatus);
+
+                // Get team prompt config
+                const agenticTeamPrompt = TEAM_PROMPTS[teamId] || SHARED_TEAM_PROMPTS[teamId];
+                if (!agenticTeamPrompt) {
+                    return res.status(400).json({
+                        error: `No prompt config for team: ${teamId}`,
+                        code: 'INVALID_TEAM'
+                    });
+                }
+
+                // Run the agent loop
+                const loopResult = await runAgentLoop(
+                    teamId,
+                    task || 'Assess current priorities and take appropriate action for your team.',
+                    agenticTeamPrompt,
+                    stateContext,
+                    {
+                        apiKey: agenticApiKey,
+                        model: req.body?.model || CONFIG.MODEL,
+                        maxIterations: Math.min(req.body?.maxIterations || 6, 10),
+                        clientIp,
+                    }
+                );
+
+                // Sync agent loop results back to unified state
+                syncFromAgentLoop(loopResult, stateContext);
+
+                // Also sync activities to orchestration state for backward compat
+                for (const activity of loopResult.activities || []) {
+                    addTeamActivity(teamId, activity.agent, activity.message, activity.tag);
+                }
+
+                // Update orchestration tracking
+                orchestrationState.executionInProgress = false;
+                orchestrationState.teams[teamId].lastRun = new Date().toISOString();
+                orchestrationState.teams[teamId].runCount++;
+                orchestrationState.totalOrchestrations++;
+                orchestrationState.lastExecutionTime = new Date().toISOString();
+
+                addAuditEntry({
+                    action: 'AGENTIC_ORCHESTRATION_EXECUTED',
+                    ip: clientIp,
+                    success: loopResult.success,
+                    teamId,
+                    iterations: loopResult.iterations,
+                    toolCalls: loopResult.toolCalls.length,
+                    tasksCreated: loopResult.tasksCreated.length,
+                    decisionsCreated: loopResult.decisionsCreated.length,
+                    completed: loopResult.completed,
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        teamId,
+                        teamName: agenticTeamPrompt.name,
+                        mode: 'agentic',
+                        completed: loopResult.completed,
+                        iterations: loopResult.iterations,
+                        completionSummary: loopResult.completionSummary,
+                        activities: loopResult.activities,
+                        tasksCreated: loopResult.tasksCreated,
+                        decisionsCreated: loopResult.decisionsCreated,
+                        messagesSent: loopResult.messagesSent,
+                        toolCalls: loopResult.toolCalls.map(tc => ({
+                            tool: tc.tool,
+                            input: tc.input,
+                            success: tc.output?.success,
+                            iteration: tc.iteration,
+                        })),
+                        textResponses: loopResult.textResponses,
+                        usage: loopResult.usage,
+                    }
+                });
+
+            } catch (error) {
+                orchestrationState.executionInProgress = false;
+
+                addAuditEntry({
+                    action: 'AGENTIC_ORCHESTRATION_FAILED',
+                    ip: clientIp,
+                    success: false,
+                    teamId,
+                    error: error.message,
+                });
+
+                return res.status(500).json({
+                    error: 'Agentic orchestration failed',
+                    code: 'AGENTIC_EXECUTION_ERROR',
+                    details: error.message,
+                });
+            }
+        }
+
+        case 'execute-agentic-all': {
+            // ================================================================
+            // AGENTIC EXECUTION FOR ALL TEAMS
+            // Runs each team through the agentic loop sequentially
+            // ================================================================
+            orchestrationState.executionInProgress = true;
+
+            const agenticAllApiKey = process.env.ANTHROPIC_API_KEY?.trim();
+            if (!agenticAllApiKey || !agenticAllApiKey.startsWith('sk-ant-')) {
+                orchestrationState.executionInProgress = false;
+                return res.status(503).json({
+                    error: 'Anthropic API key not configured',
+                    code: 'NOT_CONFIGURED'
+                });
+            }
+
+            const allTeamsResults = {
+                success: true,
+                mode: 'agentic',
+                teams: [],
+                totalIterations: 0,
+                totalToolCalls: 0,
+                totalTasksCreated: 0,
+                totalDecisionsCreated: 0,
+                usage: { inputTokens: 0, outputTokens: 0, apiCalls: 0 },
+            };
+
+            const allTeamIds = Object.keys(TEAM_PROMPTS);
+
+            for (const tid of allTeamIds) {
+                // Auto-start team
+                if (orchestrationState.teams[tid] && orchestrationState.teams[tid].status !== 'running') {
+                    orchestrationState.teams[tid].status = 'running';
+                    addTeamActivity(tid, 'System', 'Auto-started for company-wide agentic execution', 'Auto-Start');
+                }
+
+                try {
+                    let tidCreditStatus = { status: 'ok', message: 'Within limits' };
+                    try { tidCreditStatus = checkCreditLimits(); } catch (_e) { /* */ }
+
+                    const tidStateContext = buildStateContext(tidCreditStatus);
+                    const tidTeamPrompt = TEAM_PROMPTS[tid] || SHARED_TEAM_PROMPTS[tid];
+
+                    if (!tidTeamPrompt) continue;
+
+                    const tidResult = await runAgentLoop(
+                        tid,
+                        task || 'Assess current priorities and take appropriate action for your team.',
+                        tidTeamPrompt,
+                        tidStateContext,
+                        {
+                            apiKey: agenticAllApiKey,
+                            model: req.body?.model || CONFIG.MODEL,
+                            maxIterations: Math.min(req.body?.maxIterations || 4, 6),
+                            clientIp,
+                        }
+                    );
+
+                    syncFromAgentLoop(tidResult, tidStateContext);
+
+                    for (const activity of tidResult.activities || []) {
+                        addTeamActivity(tid, activity.agent, activity.message, activity.tag);
+                    }
+
+                    orchestrationState.teams[tid].lastRun = new Date().toISOString();
+                    orchestrationState.teams[tid].runCount++;
+                    orchestrationState.totalOrchestrations++;
+
+                    allTeamsResults.teams.push({
+                        teamId: tid,
+                        teamName: tidTeamPrompt.name,
+                        completed: tidResult.completed,
+                        iterations: tidResult.iterations,
+                        summary: tidResult.completionSummary,
+                        toolCalls: tidResult.toolCalls.length,
+                        tasksCreated: tidResult.tasksCreated.length,
+                        decisionsCreated: tidResult.decisionsCreated.length,
+                    });
+
+                    allTeamsResults.totalIterations += tidResult.iterations;
+                    allTeamsResults.totalToolCalls += tidResult.toolCalls.length;
+                    allTeamsResults.totalTasksCreated += tidResult.tasksCreated.length;
+                    allTeamsResults.totalDecisionsCreated += tidResult.decisionsCreated.length;
+                    allTeamsResults.usage.inputTokens += tidResult.usage.inputTokens;
+                    allTeamsResults.usage.outputTokens += tidResult.usage.outputTokens;
+                    allTeamsResults.usage.apiCalls += tidResult.usage.apiCalls;
+                } catch (error) {
+                    allTeamsResults.teams.push({
+                        teamId: tid,
+                        error: error.message,
+                        completed: false,
+                    });
+                }
+            }
+
+            orchestrationState.executionInProgress = false;
+            orchestrationState.lastExecutionTime = new Date().toISOString();
+
+            addAuditEntry({
+                action: 'AGENTIC_ALL_TEAMS_EXECUTED',
+                ip: clientIp,
+                success: true,
+                teamsRun: allTeamsResults.teams.length,
+                totalToolCalls: allTeamsResults.totalToolCalls,
+            });
+
+            return res.status(200).json({
+                success: true,
+                data: allTeamsResults,
+            });
+        }
 
         case 'executeMultiple':
             // Execute multiple teams at once
@@ -977,8 +1218,8 @@ async function handlePost(req, res, clientIp) {
                 error: 'Unknown action', 
                 code: 'INVALID_ACTION',
                 validActions: [
-                    'start', 'stop', 'execute', 
-                    'executeMultiple', 'executeAll',
+                    'start', 'stop', 'execute', 'execute-agentic',
+                    'executeMultiple', 'executeAll', 'execute-agentic-all',
                     'setMode', 'setWorldState',
                     'startAll', 'stopAll', 'getWorldState'
                 ]
