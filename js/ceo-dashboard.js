@@ -219,6 +219,8 @@ function cacheElements() {
     elements.agentsTeamsContainer = document.getElementById('agentsTeamsContainer');
     elements.workspaceTitle = document.getElementById('workspaceTitle');
     elements.workspaceStatus = document.getElementById('workspaceStatus');
+    elements.workspaceModeIndicator = document.getElementById('workspaceModeIndicator');
+    elements.workspaceModeText = document.getElementById('workspaceModeText');
     elements.btnNewTask = document.getElementById('btnNewTask');
     elements.btnBroadcast = document.getElementById('btnBroadcast');
     elements.btnExecuteCycle = document.getElementById('btnExecuteCycle');
@@ -470,54 +472,231 @@ function initTeamNavigation() {
 function renderTeamNavButtons() {
     if (!elements.teamNav) return;
 
-    const existingAll = elements.teamNav.querySelector('[data-team="all"]');
-    let html = existingAll ? existingAll.outerHTML : '';
+    // "All Teams" button
+    const allSelected = state.activeTeam === 'all' && state.selectedTeams.length === 0;
+    let html = `
+        <button class="team-nav-btn ${allSelected ? 'active' : ''}" data-team="all">
+            <span class="team-badge all">ALL</span>
+            <span class="team-name">All Teams</span>
+            <span class="team-status-dot"></span>
+        </button>
+    `;
 
+    // Team buttons with checkboxes for multi-select
     Object.entries(AgentTeams).forEach(([teamId, team]) => {
         const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
+        const isSelected = state.selectedTeams.includes(teamId);
+        const isActive = state.activeTeam === teamId && state.selectedTeams.length === 0;
+        
         html += `
-            <button class="team-nav-btn ${isRunning ? 'running' : ''}" data-team="${teamId}">
-                <span class="team-badge ${team.badgeClass}">${team.badge}</span>
-                <span class="team-name">${team.name}</span>
-                <span class="team-status-dot"></span>
-            </button>
+            <div class="team-nav-item ${isSelected ? 'selected' : ''} ${isActive ? 'active' : ''}" data-team="${teamId}">
+                <label class="team-nav-checkbox" title="Select for multi-team operation">
+                    <input type="checkbox" class="team-select-input" data-team="${teamId}" ${isSelected ? 'checked' : ''}>
+                </label>
+                <button class="team-nav-btn ${isRunning ? 'running' : ''}" data-team="${teamId}">
+                    <span class="team-badge ${team.badgeClass}">${team.badge}</span>
+                    <span class="team-name">${team.name}</span>
+                    <span class="team-status-dot"></span>
+                </button>
+            </div>
         `;
     });
 
+    // Show selected count if any teams are selected
+    if (state.selectedTeams.length > 0) {
+        html += `
+            <div class="team-selection-summary">
+                <span class="selection-count">${state.selectedTeams.length} team${state.selectedTeams.length > 1 ? 's' : ''} selected</span>
+                <button class="btn-clear-selection" id="btnClearSelection">Clear</button>
+            </div>
+        `;
+    }
+
     elements.teamNav.innerHTML = html;
 
-    // Add click handlers
+    // Add click handlers for team buttons
     elements.teamNav.querySelectorAll('.team-nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const teamId = btn.dataset.team;
+            // If clicking a team button, focus on that team (single view)
             selectTeam(teamId);
         });
     });
+
+    // Add checkbox handlers for multi-select
+    elements.teamNav.querySelectorAll('.team-select-input').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const teamId = e.target.dataset.team;
+            toggleTeamSelection(teamId);
+        });
+    });
+
+    // Clear selection button
+    const btnClearSelection = document.getElementById('btnClearSelection');
+    if (btnClearSelection) {
+        btnClearSelection.addEventListener('click', () => {
+            state.selectedTeams = [];
+            renderTeamNavButtons();
+            updateWorkspaceHeader();
+        });
+    }
+}
+
+/**
+ * Toggle team selection for multi-team operations
+ */
+function toggleTeamSelection(teamId) {
+    const index = state.selectedTeams.indexOf(teamId);
+    if (index > -1) {
+        // Deselect
+        state.selectedTeams.splice(index, 1);
+    } else {
+        // Select (max 7 teams)
+        if (state.selectedTeams.length < 7) {
+            state.selectedTeams.push(teamId);
+        } else {
+            showToast('warning', 'Max Selection', 'You can select up to 7 teams');
+            return;
+        }
+    }
+    
+    renderTeamNavButtons();
+    renderAgentsTeamsGrid();
+    updateWorkspaceHeader();
 }
 
 function selectTeam(teamId) {
     state.activeTeam = teamId;
+    
+    // Only clear selection when clicking "All Teams"
+    if (teamId === 'all') {
+        state.selectedTeams = [];
+    }
 
-    // Update nav button states
-    elements.teamNav.querySelectorAll('.team-nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.team === teamId);
-    });
+    // Update nav buttons
+    renderTeamNavButtons();
 
-    // Update workspace title
+    // Update workspace title and status
+    updateWorkspaceHeader();
+
+    // Re-render teams grid
+    renderAgentsTeamsGrid();
+}
+
+/**
+ * Update workspace header based on current state
+ */
+function updateWorkspaceHeader() {
+    const teamId = state.activeTeam;
+    const hasSelection = state.selectedTeams.length > 0;
+    
     if (elements.workspaceTitle) {
-        if (teamId === 'all') {
+        if (hasSelection) {
+            // Show selected teams
+            const selectedNames = state.selectedTeams.map(id => AgentTeams[id]?.badge || id).join(' + ');
+            elements.workspaceTitle.textContent = `${state.selectedTeams.length} Team${state.selectedTeams.length > 1 ? 's' : ''} Selected`;
+            elements.workspaceStatus.textContent = selectedNames;
+            elements.workspaceStatus.className = 'workspace-status selected';
+        } else if (teamId === 'all') {
             elements.workspaceTitle.textContent = 'All Teams';
-            elements.workspaceStatus.textContent = 'All systems ready';
+            
+            // Count running teams
+            const runningCount = Object.values(state.teamOrchestrationState).filter(t => t.status === 'running').length;
+            const totalCount = Object.keys(AgentTeams).length;
+            
+            if (runningCount === 0) {
+                elements.workspaceStatus.textContent = 'All teams paused';
+                elements.workspaceStatus.className = 'workspace-status';
+            } else if (runningCount === totalCount) {
+                elements.workspaceStatus.textContent = 'All teams running';
+                elements.workspaceStatus.className = 'workspace-status running';
+            } else {
+                elements.workspaceStatus.textContent = `${runningCount}/${totalCount} teams running`;
+                elements.workspaceStatus.className = 'workspace-status';
+            }
         } else {
             const team = AgentTeams[teamId];
             elements.workspaceTitle.textContent = team.name;
             const status = state.teamOrchestrationState[teamId]?.status || 'paused';
             elements.workspaceStatus.textContent = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+            elements.workspaceStatus.className = `workspace-status ${status === 'running' ? 'running' : ''}`;
         }
     }
 
-    // Re-render teams grid
-    renderAgentsTeamsGrid();
+    // Update execute button text based on selection
+    updateExecuteButtonText();
+
+    // Update mode indicator
+    updateModeIndicator();
+}
+
+/**
+ * Update execute button text based on current selection
+ */
+function updateExecuteButtonText() {
+    const btn = elements.btnExecuteCycle;
+    if (!btn || state.executionInProgress) return;
+
+    const hasSelection = state.selectedTeams.length > 0;
+    let buttonText = 'Execute Cycle';
+    
+    if (hasSelection) {
+        buttonText = `Execute ${state.selectedTeams.length} Team${state.selectedTeams.length > 1 ? 's' : ''}`;
+    } else if (state.activeTeam === 'all') {
+        buttonText = 'Execute All Teams';
+    } else {
+        buttonText = `Execute ${AgentTeams[state.activeTeam]?.badge || 'Team'}`;
+    }
+
+    btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+        </svg>
+        ${buttonText}
+    `;
+}
+
+/**
+ * Update the workspace mode indicator
+ */
+function updateModeIndicator() {
+    const indicator = document.getElementById('workspaceModeIndicator');
+    const modeText = document.getElementById('workspaceModeText');
+    
+    if (!indicator || !modeText) return;
+
+    const modeConfig = {
+        paused: {
+            icon: '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>',
+            text: 'Paused',
+            class: 'paused'
+        },
+        manual: {
+            icon: '<path d="M13 7.83l4.59 4.58L19 11l-7-7-7 7 1.41 1.41L11 7.83V22h2V7.83z"/>',
+            text: 'Manual',
+            class: 'manual'
+        },
+        semi_auto: {
+            icon: '<path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>',
+            text: 'Semi-Auto',
+            class: 'semi_auto'
+        },
+        autonomous: {
+            icon: '<path d="M8 5v14l11-7z"/>',
+            text: 'Autonomous',
+            class: 'autonomous'
+        }
+    };
+
+    const config = modeConfig[state.worldState] || modeConfig.paused;
+    
+    indicator.className = `workspace-mode-indicator ${config.class}`;
+    indicator.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">${config.icon}</svg>
+        <span id="workspaceModeText">${config.text}</span>
+    `;
 }
 
 // ============================================
@@ -561,22 +740,42 @@ function renderTeamsMiniGrid() {
 function renderAgentsTeamsGrid() {
     if (!elements.agentsTeamsContainer) return;
 
-    const teamsToShow = state.activeTeam === 'all'
-        ? Object.entries(AgentTeams)
-        : [[state.activeTeam, AgentTeams[state.activeTeam]]];
+    // Determine which teams to show
+    let teamsToShow;
+    if (state.selectedTeams.length > 0) {
+        // Show only selected teams
+        teamsToShow = state.selectedTeams.map(id => [id, AgentTeams[id]]).filter(([id, team]) => team);
+    } else if (state.activeTeam === 'all') {
+        // Show all teams
+        teamsToShow = Object.entries(AgentTeams);
+    } else {
+        // Show single team
+        teamsToShow = [[state.activeTeam, AgentTeams[state.activeTeam]]];
+    }
 
     let html = '';
+    
     teamsToShow.forEach(([teamId, team]) => {
         if (!team) return;
         const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
+        const isSelected = state.selectedTeams.includes(teamId);
+        const lastRun = state.teamOrchestrationState[teamId]?.lastRun;
+        const lastRunText = lastRun ? formatTimeAgo(new Date(lastRun)) : 'Never';
 
         html += `
-            <div class="team-section" data-team="${teamId}">
+            <div class="team-section ${isSelected ? 'selected' : ''}" data-team="${teamId}">
                 <div class="team-header">
                     <div class="team-badge ${team.badgeClass}">${team.badge}</div>
                     <h3 class="team-name">${escapeHtml(team.name)}</h3>
                     <span class="team-count">${team.agents.length} agents</span>
+                    <span class="team-last-run" title="Last execution">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                        ${lastRunText}
+                    </span>
                     <div class="team-controls">
+                        <button class="btn-team-execute" data-team="${teamId}" title="Execute this team">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                        </button>
                         <button class="btn-team-toggle ${isRunning ? 'running' : ''}" data-team="${teamId}">
                             ${isRunning ? 'Pause' : 'Start'}
                         </button>
@@ -602,6 +801,14 @@ function renderAgentsTeamsGrid() {
         btn.addEventListener('click', async () => {
             const teamId = btn.dataset.team;
             await toggleTeamOrchestration(teamId);
+        });
+    });
+
+    // Add execute handlers for individual teams
+    elements.agentsTeamsContainer.querySelectorAll('.btn-team-execute').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const teamId = btn.dataset.team;
+            await executeTeams([teamId]);
         });
     });
 }
@@ -850,8 +1057,41 @@ async function executeOrchestrationCycle() {
     try {
         let response;
         let toastMessage;
+        const hasSelection = state.selectedTeams.length > 0;
 
-        if (state.activeTeam === 'all') {
+        if (hasSelection) {
+            // Execute selected teams (1, 2, 3, or more)
+            const teamNames = state.selectedTeams.map(id => AgentTeams[id]?.badge || id).join(' + ');
+            toastMessage = `Running ${state.selectedTeams.length} team${state.selectedTeams.length > 1 ? 's' : ''}: ${teamNames}`;
+            showToast('info', 'Executing Selected Teams', toastMessage);
+
+            if (state.selectedTeams.length === 1) {
+                // Single selected team
+                response = await fetch('/api/orchestrate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.adminToken}`
+                    },
+                    body: JSON.stringify({ teamId: state.selectedTeams[0], action: 'execute' })
+                });
+            } else {
+                // Multiple selected teams
+                response = await fetch('/api/orchestrate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.adminToken}`
+                    },
+                    body: JSON.stringify({ 
+                        action: 'executeMultiple', 
+                        teamIds: state.selectedTeams,
+                        parallel: true 
+                    })
+                });
+            }
+
+        } else if (state.activeTeam === 'all') {
             // Execute ALL teams
             toastMessage = 'Running company-wide orchestration...';
             showToast('info', 'Executing All Teams', toastMessage);
@@ -865,26 +1105,8 @@ async function executeOrchestrationCycle() {
                 body: JSON.stringify({ action: 'executeAll', parallel: true })
             });
 
-        } else if (state.selectedTeams && state.selectedTeams.length > 1) {
-            // Execute multiple selected teams
-            toastMessage = `Running ${state.selectedTeams.length} teams...`;
-            showToast('info', 'Executing Selected Teams', toastMessage);
-
-            response = await fetch('/api/orchestrate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.adminToken}`
-                },
-                body: JSON.stringify({ 
-                    action: 'executeMultiple', 
-                    teamIds: state.selectedTeams,
-                    parallel: true 
-                })
-            });
-
         } else {
-            // Execute single team
+            // Execute single focused team (from sidebar click)
             const teamId = state.activeTeam;
             toastMessage = `Running ${AgentTeams[teamId].name} orchestration...`;
             showToast('info', 'Executing Team', toastMessage);
@@ -1063,17 +1285,31 @@ async function fetchOrchestrationStatus() {
         const data = await response.json();
 
         if (data.success) {
+            // Update world state
+            state.worldState = data.data.worldState || data.data.globalMode || 'manual';
             state.orchestrationMode = data.data.globalMode || 'manual';
+            state.executionInProgress = data.data.executionInProgress || false;
+            state.lastExecutionTime = data.data.lastExecutionTime;
 
+            // Update team states
             Object.entries(data.data.teams || {}).forEach(([teamId, teamState]) => {
                 state.teamOrchestrationState[teamId] = {
                     status: teamState.status,
-                    lastRun: teamState.lastRun
+                    lastRun: teamState.lastRun,
+                    runCount: teamState.runCount
                 };
                 if (AgentTeams[teamId]) {
                     AgentTeams[teamId].orchestrationStatus = teamState.status;
                 }
             });
+
+            // Update world state buttons
+            elements.worldStateBtns?.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.state === state.worldState);
+            });
+
+            // Update execution button state
+            updateExecuteButtonState(state.executionInProgress);
 
             updateAllTeamUI();
         }
@@ -1094,6 +1330,7 @@ function updateAllTeamUI() {
     renderTeamNavButtons();
     renderAgentsTeamsGrid();
     updateStats();
+    updateWorkspaceHeader();
 }
 
 // ============================================
