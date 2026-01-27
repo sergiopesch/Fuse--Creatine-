@@ -1,21 +1,26 @@
 /* ============================================
    FUSE Elite Biometric Gate
    Premium authentication interface
-   v2.0.0
+   v3.0.0 - FUSE Brand Aligned
    ============================================ */
 
 :root {
-    --gate-bg: #050508;
-    --gate-primary: #6366f1;
-    --gate-primary-light: #818cf8;
-    --gate-accent: #22d3ee;
-    --gate-success: #10b981;
+    /* FUSE Brand Colors */
+    --gate-bg: #000000;
+    --gate-primary: #ff3b30;
+    --gate-primary-light: #ff6961;
+    --gate-primary-dark: #d70015;
+    --gate-accent: #ff3b30;
+    --gate-success: #22c55e;
     --gate-error: #ef4444;
     --gate-warning: #f59e0b;
-    --gate-glass: rgba(15, 15, 20, 0.85);
+    --gate-glass: rgba(10, 10, 10, 0.9);
     --gate-glass-light: rgba(255, 255, 255, 0.03);
     --gate-border: rgba(255, 255, 255, 0.08);
-    --gate-glow: rgba(99, 102, 241, 0.4);
+    --gate-glow: rgba(255, 59, 48, 0.4);
+    --gate-text: #ffffff;
+    --gate-text-muted: rgba(255, 255, 255, 0.6);
+    --gate-text-subtle: rgba(255, 255, 255, 0.4);
 }
 
 /* ============================================
@@ -31,46 +36,39 @@
     justify-content: center;
     background: var(--gate-bg);
     overflow: hidden;
-    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-                visibility 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+                visibility 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+                transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .biometric-gate.hidden {
     opacity: 0;
     visibility: hidden;
-    transform: scale(1.05);
+    transform: scale(1.02);
     pointer-events: none;
 }
 
-/* Background Effects */
+/* Film Grain Texture */
 .biometric-gate::before {
     content: '';
     position: absolute;
     inset: 0;
-    background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
-        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(34, 211, 238, 0.08), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(99, 102, 241, 0.08), transparent);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
     pointer-events: none;
+    z-index: 1;
 }
 
-/* Animated Grid Pattern */
+/* Ambient Orb Effects */
 .biometric-gate::after {
     content: '';
     position: absolute;
     inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 60px 60px;
-    animation: gridMove 20s linear infinite;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255, 59, 48, 0.12), transparent 50%),
+        radial-gradient(ellipse 50% 30% at 20% 90%, rgba(255, 59, 48, 0.06), transparent),
+        radial-gradient(ellipse 50% 30% at 80% 90%, rgba(255, 105, 97, 0.04), transparent);
     pointer-events: none;
-}
-
-@keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(60px, 60px); }
 }
 
 /* ============================================
@@ -79,14 +77,43 @@
 
 .biometric-gate-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 48px;
-    max-width: 440px;
-    width: 90%;
+    padding: 48px 40px;
+    max-width: 480px;
+    width: 92%;
     text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--gate-border);
+    border-radius: 32px;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: 
+        0 40px 100px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ============================================
+   FUSE LOGO BADGE
+   ============================================ */
+
+.biometric-gate-content::before {
+    content: 'FUSE';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--gate-text);
+    padding: 6px 20px;
+    background: var(--gate-bg);
+    border: 1px solid var(--gate-border);
+    border-radius: 100px;
 }
 
 /* ============================================
@@ -98,6 +125,7 @@
     width: 160px;
     height: 160px;
     margin-bottom: 32px;
+    margin-top: 12px;
 }
 
 /* Outer Ring - Pulsing */
@@ -105,13 +133,13 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    border: 2px solid rgba(99, 102, 241, 0.2);
+    border: 2px solid rgba(255, 59, 48, 0.15);
     animation: pulseRing 3s ease-in-out infinite;
 }
 
 @keyframes pulseRing {
     0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.08); opacity: 0.2; }
+    50% { transform: scale(1.1); opacity: 0.15; }
 }
 
 /* Middle Ring */
@@ -119,7 +147,7 @@
     position: absolute;
     inset: 16px;
     border-radius: 50%;
-    border: 1px solid rgba(99, 102, 241, 0.3);
+    border: 1px solid rgba(255, 59, 48, 0.25);
     animation: pulseRing 3s ease-in-out infinite;
     animation-delay: 0.5s;
 }
@@ -131,15 +159,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--gate-glass);
+    background: linear-gradient(180deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98));
     border-radius: 50%;
-    border: 1px solid var(--gate-border);
+    border: 1px solid rgba(255, 59, 48, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(255, 59, 48, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .biometric-icon-inner svg {
@@ -147,14 +176,15 @@
     height: 48px;
     color: var(--gate-primary-light);
     transition: all 0.4s ease;
+    filter: drop-shadow(0 0 12px rgba(255, 59, 48, 0.3));
 }
 
 /* Icon States */
 .biometric-icon-container.scanning .biometric-icon-inner {
     border-color: var(--gate-primary);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 40px var(--gate-glow),
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 60px var(--gate-glow),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -164,36 +194,38 @@
 
 @keyframes iconPulse {
     0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(0.92); opacity: 0.7; }
 }
 
 .biometric-icon-container.success .biometric-icon-inner {
     border-color: var(--gate-success);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 40px rgba(16, 185, 129, 0.4);
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(34, 197, 94, 0.3);
 }
 
 .biometric-icon-container.success .biometric-icon-inner svg {
     color: var(--gate-success);
+    filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.5));
 }
 
 .biometric-icon-container.error .biometric-icon-inner {
     border-color: var(--gate-error);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 40px rgba(239, 68, 68, 0.3);
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(239, 68, 68, 0.25);
     animation: shake 0.5s ease;
 }
 
 .biometric-icon-container.error .biometric-icon-inner svg {
     color: var(--gate-error);
+    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
 }
 
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-8px); }
-    40%, 80% { transform: translateX(8px); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
 }
 
 /* Scanning Line Animation */
@@ -232,12 +264,12 @@
         transparent 120deg
     );
     opacity: 0;
-    filter: blur(8px);
+    filter: blur(10px);
     animation: none;
 }
 
 .biometric-icon-container.scanning .rotating-glow {
-    opacity: 0.5;
+    opacity: 0.4;
     animation: rotateGlow 3s linear infinite;
 }
 
@@ -251,20 +283,24 @@
    ============================================ */
 
 .biometric-title {
-    font-family: 'Bebas Neue', 'Inter', sans-serif;
-    font-size: 32px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
     font-weight: 400;
-    letter-spacing: 0.2em;
-    color: #fff;
-    margin: 0 0 12px 0;
-    text-shadow: 0 2px 20px rgba(99, 102, 241, 0.3);
+    letter-spacing: 0.15em;
+    color: var(--gate-text);
+    margin: 0 0 8px 0;
+}
+
+.biometric-title span.red {
+    color: var(--gate-primary);
 }
 
 .biometric-subtitle {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.6);
-    margin: 0 0 8px 0;
+    color: var(--gate-text-muted);
+    margin: 0 0 6px 0;
     line-height: 1.6;
+    font-weight: 400;
 }
 
 .biometric-type {
@@ -274,8 +310,8 @@
 
 .biometric-message {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0 0 32px 0;
+    color: var(--gate-text-subtle);
+    margin: 0 0 24px 0;
 }
 
 /* ============================================
@@ -287,7 +323,7 @@
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    margin-top: 24px;
+    margin-top: 16px;
 }
 
 .btn-biometric {
@@ -296,15 +332,16 @@
     justify-content: center;
     gap: 12px;
     width: 100%;
-    padding: 16px 24px;
+    padding: 16px 28px;
     font-size: 15px;
     font-weight: 600;
-    border-radius: 14px;
+    border-radius: 980px;
     border: none;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     position: relative;
     overflow: hidden;
+    min-height: 56px;
 }
 
 .btn-biometric svg {
@@ -314,20 +351,21 @@
     transition: transform 0.3s ease;
 }
 
-/* Primary Button - Gradient */
+/* Primary Button - FUSE Red */
 .btn-biometric.btn-primary-bio {
-    background: linear-gradient(135deg, var(--gate-primary), #4f46e5);
+    background: var(--gate-primary);
     color: #fff;
     box-shadow:
-        0 4px 20px rgba(99, 102, 241, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 4px 24px rgba(255, 59, 48, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-biometric.btn-primary-bio:hover:not(:disabled) {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.01);
+    background: var(--gate-primary-light);
     box-shadow:
-        0 8px 30px rgba(99, 102, 241, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 12px 40px rgba(255, 59, 48, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-biometric.btn-primary-bio:hover:not(:disabled) svg {
@@ -335,42 +373,44 @@
 }
 
 .btn-biometric.btn-primary-bio:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
 }
 
 .btn-biometric.btn-primary-bio:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Secondary Button - Glass */
 .btn-biometric.btn-secondary-bio {
-    background: var(--gate-glass);
-    color: rgba(255, 255, 255, 0.9);
-    border: 1px solid var(--gate-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--gate-text);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
 .btn-biometric.btn-secondary-bio:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
 }
 
-/* Setup Button - Accent */
+/* Setup Button - FUSE Red */
 .btn-biometric.btn-setup {
-    background: linear-gradient(135deg, #0891b2, var(--gate-accent));
+    background: var(--gate-primary);
     color: #fff;
     box-shadow:
-        0 4px 20px rgba(34, 211, 238, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 4px 24px rgba(255, 59, 48, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-biometric.btn-setup:hover:not(:disabled) {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.01);
+    background: var(--gate-primary-light);
     box-shadow:
-        0 8px 30px rgba(34, 211, 238, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 12px 40px rgba(255, 59, 48, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Button Shimmer Effect */
@@ -384,10 +424,10 @@
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.12),
         transparent
     );
-    transition: left 0.5s ease;
+    transition: left 0.6s ease;
 }
 
 .btn-biometric:hover::after {
@@ -406,6 +446,7 @@
     min-height: 24px;
     margin-top: 20px;
     font-size: 14px;
+    font-weight: 500;
     opacity: 0;
     transform: translateY(10px);
     transition: all 0.3s ease;
@@ -473,6 +514,7 @@
 
 .biometric-not-supported .biometric-icon-inner svg {
     color: var(--gate-error);
+    filter: none;
 }
 
 .biometric-alt-actions {
@@ -481,7 +523,7 @@
 
 .biometric-alt-actions p {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--gate-text-subtle);
     margin-bottom: 20px;
 }
 
@@ -496,11 +538,12 @@
 
 .biometric-gate.locked .biometric-icon-inner svg {
     color: var(--gate-error);
+    filter: none;
 }
 
 .biometric-gate.locked .biometric-ring-outer,
 .biometric-gate.locked .biometric-ring-middle {
-    border-color: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.15);
 }
 
 /* ============================================
@@ -509,17 +552,17 @@
 
 /* Link Device Button */
 .btn-biometric.btn-link-device {
-    background: var(--gate-glass);
-    color: rgba(255, 255, 255, 0.9);
-    border: 1px solid var(--gate-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--gate-text);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    margin-top: 16px;
+    margin-top: 8px;
 }
 
 .btn-biometric.btn-link-device:hover:not(:disabled) {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: var(--gate-primary);
+    background: rgba(255, 59, 48, 0.1);
+    border-color: rgba(255, 59, 48, 0.3);
 }
 
 .btn-biometric.btn-link-device:hover:not(:disabled) svg {
@@ -531,9 +574,9 @@
     width: 100%;
     margin-top: 24px;
     padding: 24px;
-    background: var(--gate-glass);
+    background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--gate-border);
-    border-radius: 16px;
+    border-radius: 20px;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     animation: fadeSlideIn 0.3s ease;
@@ -552,7 +595,7 @@
 
 .link-instruction {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--gate-text-muted);
     margin: 0 0 16px 0;
     line-height: 1.5;
 }
@@ -572,40 +615,41 @@
     letter-spacing: 0.3em;
     text-align: center;
     text-transform: uppercase;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--gate-border);
-    border-radius: 12px;
+    border-radius: 14px;
     color: #fff;
     outline: none;
     transition: all 0.3s ease;
 }
 
 .link-code-container input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.25);
     letter-spacing: 0.2em;
 }
 
 .link-code-container input:focus {
     border-color: var(--gate-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
 }
 
 /* Claim Link Button */
 .btn-biometric.btn-claim-link {
     min-width: 120px;
-    padding: 14px 20px;
-    background: linear-gradient(135deg, var(--gate-primary), #4f46e5);
+    padding: 14px 24px;
+    background: var(--gate-primary);
     color: #fff;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
 }
 
 .btn-biometric.btn-claim-link:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 24px rgba(255, 59, 48, 0.4);
 }
 
 .btn-biometric.btn-claim-link:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
@@ -614,7 +658,7 @@
 .btn-text-link {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--gate-text-subtle);
     font-size: 14px;
     cursor: pointer;
     padding: 8px 16px;
@@ -622,7 +666,7 @@
 }
 
 .btn-text-link:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--gate-text-muted);
 }
 
 /* Mobile responsiveness for link input */
@@ -636,12 +680,13 @@
     }
 
     .link-code-container input {
-        font-size: 24px;
+        font-size: 22px;
         padding: 16px;
     }
 
     .btn-biometric.btn-claim-link {
         width: 100%;
+        border-radius: 980px;
     }
 }
 
@@ -650,14 +695,15 @@
    ============================================ */
 
 .biometric-footer {
-    margin-top: 40px;
-    padding-top: 20px;
+    margin-top: 32px;
+    padding-top: 24px;
     border-top: 1px solid var(--gate-border);
+    width: 100%;
 }
 
 .biometric-footer p {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--gate-text-subtle);
     margin: 0;
     display: flex;
     align-items: center;
@@ -675,19 +721,20 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    border-radius: 20px;
+    padding: 8px 14px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.15);
+    border-radius: 100px;
     font-size: 11px;
     color: var(--gate-success);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
+    font-weight: 600;
 }
 
 .security-badge svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
 /* ============================================
@@ -698,13 +745,13 @@
     display: none;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    border-radius: 20px;
+    padding: 6px 14px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.15);
+    border-radius: 100px;
     font-size: 12px;
     color: var(--gate-success);
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .biometric-verified-badge svg {
@@ -739,12 +786,21 @@
 
 @media (max-width: 599px) {
     .biometric-gate-content {
-        padding: 32px 24px;
+        padding: 40px 24px;
+        border-radius: 24px;
+        width: 94%;
+    }
+
+    .biometric-gate-content::before {
+        font-size: 12px;
+        padding: 5px 16px;
+        top: -12px;
     }
 
     .biometric-icon-container {
         width: 140px;
         height: 140px;
+        margin-bottom: 24px;
     }
 
     .biometric-icon-inner {
@@ -757,7 +813,7 @@
     }
 
     .biometric-title {
-        font-size: 26px;
+        font-size: 32px;
     }
 
     .biometric-subtitle {
@@ -765,8 +821,9 @@
     }
 
     .btn-biometric {
-        padding: 14px 20px;
+        padding: 14px 24px;
         font-size: 14px;
+        min-height: 52px;
     }
 }
 
@@ -775,7 +832,6 @@
    ============================================ */
 
 @media (prefers-reduced-motion: reduce) {
-    .biometric-gate::after,
     .biometric-ring-outer,
     .biometric-ring-middle,
     .scanning-line,

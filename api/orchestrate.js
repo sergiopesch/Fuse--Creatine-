@@ -5,10 +5,12 @@
  * Features:
  * - Per-team orchestration state (paused/running)
  * - Manual start/stop controls
+ * - Multi-team and company-wide orchestration
+ * - World state modes (manual, paused, semi_auto, autonomous)
  * - Minimal token usage for efficiency
  * - Real activity tracking
  *
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 const {
@@ -31,9 +33,22 @@ const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
 
 const CONFIG = {
     RATE_LIMIT_READ: 60,
-    RATE_LIMIT_WRITE: 10,
-    MAX_TOKENS_PER_CALL: 300,  // Minimal tokens for efficiency
-    MODEL: 'claude-3-5-haiku-latest'  // Fast and cost-effective
+    RATE_LIMIT_WRITE: 20,  // Increased for batch operations
+    MAX_TOKENS_PER_CALL: 400,  // Slightly increased for better responses
+    MODEL: 'claude-3-5-haiku-latest',  // Fast and cost-effective
+    PARALLEL_EXECUTION_LIMIT: 3,  // Max teams to execute in parallel
+    EXECUTION_DELAY_MS: 500  // Delay between sequential executions
+};
+
+// ============================================================================
+// WORLD STATES
+// ============================================================================
+
+const WORLD_STATES = {
+    MANUAL: 'manual',      // User must manually trigger each action
+    PAUSED: 'paused',      // All orchestration stopped
+    SEMI_AUTO: 'semi_auto', // Agents propose, user approves
+    AUTONOMOUS: 'autonomous' // Agents act independently
 };
 
 // ============================================================================
@@ -105,17 +120,21 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 
 const orchestrationState = {
     teams: {
-        developer: { status: 'paused', lastRun: null, runCount: 0, activities: [] },
-        design: { status: 'paused', lastRun: null, runCount: 0, activities: [] },
-        communications: { status: 'paused', lastRun: null, runCount: 0, activities: [] },
-        legal: { status: 'paused', lastRun: null, runCount: 0, activities: [] },
-        marketing: { status: 'paused', lastRun: null, runCount: 0, activities: [] },
-        gtm: { status: 'paused', lastRun: null, runCount: 0, activities: [] },
-        sales: { status: 'paused', lastRun: null, runCount: 0, activities: [] }
+        developer: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        design: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        communications: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        legal: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        marketing: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        gtm: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        sales: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] }
     },
-    globalMode: 'manual',  // manual | supervised | autonomous
+    worldState: WORLD_STATES.PAUSED,  // Current world state
+    globalMode: 'manual',  // Legacy - maps to worldState
     lastActivity: null,
-    totalOrchestrations: 0
+    totalOrchestrations: 0,
+    executionInProgress: false,
+    lastExecutionTime: null,
+    autonomousInterval: null  // For autonomous mode timer
 };
 
 // ============================================================================
@@ -188,7 +207,7 @@ function parseAgentResponses(response, teamId) {
 // ORCHESTRATION ENGINE
 // ============================================================================
 
-async function executeOrchestration(teamId, task, clientIp) {
+async function executeOrchestration(teamId, task, clientIp, context = {}) {
     const team = TEAM_PROMPTS[teamId];
     if (!team) {
         throw new Error(`Unknown team: ${teamId}`);
@@ -199,9 +218,15 @@ async function executeOrchestration(teamId, task, clientIp) {
         throw new Error('Anthropic API key not configured');
     }
 
-    const userPrompt = task
+    // Enhanced prompt with context
+    let userPrompt = task
         ? `Current task: ${task}\n\nProvide brief status updates from each agent.`
         : `Provide brief status updates from each agent on current priorities.`;
+
+    // Add collaboration context if orchestrating with other teams
+    if (context.collaboratingTeams && context.collaboratingTeams.length > 0) {
+        userPrompt += `\n\nNote: This is a coordinated orchestration with: ${context.collaboratingTeams.join(', ')}. Consider cross-team dependencies.`;
+    }
 
     const requestStartTime = Date.now();
 
@@ -253,6 +278,7 @@ async function executeOrchestration(teamId, task, clientIp) {
         orchestrationState.teams[teamId].lastRun = new Date().toISOString();
         orchestrationState.teams[teamId].runCount++;
         orchestrationState.totalOrchestrations++;
+        orchestrationState.lastExecutionTime = new Date().toISOString();
 
         return {
             success: true,
@@ -284,6 +310,199 @@ async function executeOrchestration(teamId, task, clientIp) {
 
         throw error;
     }
+}
+
+// ============================================================================
+// MULTI-TEAM ORCHESTRATION
+// ============================================================================
+
+/**
+ * Execute orchestration for multiple teams (sequential with optional parallel batching)
+ */
+async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
+    const { parallel = false } = options;
+    const results = {
+        success: true,
+        executed: [],
+        failed: [],
+        totalActivities: [],
+        usage: { inputTokens: 0, outputTokens: 0, totalLatencyMs: 0 }
+    };
+
+    // Filter to only valid, running teams
+    const validTeamIds = teamIds.filter(id => {
+        const teamState = orchestrationState.teams[id];
+        return teamState && teamState.status === 'running' && TEAM_PROMPTS[id];
+    });
+
+    if (validTeamIds.length === 0) {
+        return {
+            success: false,
+            error: 'No valid running teams to execute',
+            executed: [],
+            failed: teamIds
+        };
+    }
+
+    // Get team names for collaboration context
+    const collaboratingTeamNames = validTeamIds.map(id => TEAM_PROMPTS[id].name);
+
+    if (parallel && validTeamIds.length > 1) {
+        // Parallel execution in batches
+        const batches = [];
+        for (let i = 0; i < validTeamIds.length; i += CONFIG.PARALLEL_EXECUTION_LIMIT) {
+            batches.push(validTeamIds.slice(i, i + CONFIG.PARALLEL_EXECUTION_LIMIT));
+        }
+
+        for (const batch of batches) {
+            const batchPromises = batch.map(teamId => 
+                executeOrchestration(teamId, task, clientIp, { collaboratingTeams: collaboratingTeamNames })
+                    .then(result => ({ teamId, result, success: true }))
+                    .catch(error => ({ teamId, error: error.message, success: false }))
+            );
+
+            const batchResults = await Promise.all(batchPromises);
+
+            for (const br of batchResults) {
+                if (br.success) {
+                    results.executed.push(br.teamId);
+                    results.totalActivities.push(...br.result.activities);
+                    results.usage.inputTokens += br.result.usage?.inputTokens || 0;
+                    results.usage.outputTokens += br.result.usage?.outputTokens || 0;
+                    results.usage.totalLatencyMs += br.result.usage?.latencyMs || 0;
+                } else {
+                    results.failed.push({ teamId: br.teamId, error: br.error });
+                }
+            }
+
+            // Small delay between batches to avoid rate limiting
+            if (batches.indexOf(batch) < batches.length - 1) {
+                await sleep(CONFIG.EXECUTION_DELAY_MS);
+            }
+        }
+    } else {
+        // Sequential execution
+        for (const teamId of validTeamIds) {
+            try {
+                const result = await executeOrchestration(teamId, task, clientIp, { collaboratingTeams: collaboratingTeamNames });
+                results.executed.push(teamId);
+                results.totalActivities.push(...result.activities);
+                results.usage.inputTokens += result.usage?.inputTokens || 0;
+                results.usage.outputTokens += result.usage?.outputTokens || 0;
+                results.usage.totalLatencyMs += result.usage?.latencyMs || 0;
+
+                // Small delay between teams
+                if (validTeamIds.indexOf(teamId) < validTeamIds.length - 1) {
+                    await sleep(CONFIG.EXECUTION_DELAY_MS);
+                }
+            } catch (error) {
+                results.failed.push({ teamId, error: error.message });
+            }
+        }
+    }
+
+    results.success = results.executed.length > 0;
+    return results;
+}
+
+/**
+ * Execute orchestration for ALL teams
+ */
+async function executeAllTeams(task, clientIp, options = {}) {
+    const allTeamIds = Object.keys(TEAM_PROMPTS);
+    return executeMultipleTeams(allTeamIds, task, clientIp, options);
+}
+
+/**
+ * Helper function to sleep
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ============================================================================
+// WORLD STATE MANAGEMENT
+// ============================================================================
+
+function setWorldState(newState, source = 'api') {
+    const validStates = Object.values(WORLD_STATES);
+    if (!validStates.includes(newState)) {
+        return { success: false, error: `Invalid state. Valid states: ${validStates.join(', ')}` };
+    }
+
+    const previousState = orchestrationState.worldState;
+    orchestrationState.worldState = newState;
+    orchestrationState.globalMode = newState; // Keep legacy compatibility
+
+    // Handle state transitions
+    switch (newState) {
+        case WORLD_STATES.PAUSED:
+            // Pause all teams
+            Object.keys(orchestrationState.teams).forEach(teamId => {
+                orchestrationState.teams[teamId].status = 'paused';
+            });
+            // Clear any autonomous interval
+            if (orchestrationState.autonomousInterval) {
+                clearInterval(orchestrationState.autonomousInterval);
+                orchestrationState.autonomousInterval = null;
+            }
+            break;
+
+        case WORLD_STATES.MANUAL:
+            // Keep team states as-is, but stop autonomous execution
+            if (orchestrationState.autonomousInterval) {
+                clearInterval(orchestrationState.autonomousInterval);
+                orchestrationState.autonomousInterval = null;
+            }
+            break;
+
+        case WORLD_STATES.SEMI_AUTO:
+            // Enable all teams for semi-auto mode
+            Object.keys(orchestrationState.teams).forEach(teamId => {
+                orchestrationState.teams[teamId].status = 'running';
+            });
+            break;
+
+        case WORLD_STATES.AUTONOMOUS:
+            // Enable all teams for autonomous mode
+            Object.keys(orchestrationState.teams).forEach(teamId => {
+                orchestrationState.teams[teamId].status = 'running';
+            });
+            break;
+    }
+
+    // Add system activity
+    addTeamActivity('system', 'System', `World state changed: ${previousState} → ${newState}`, 'State Change');
+
+    return {
+        success: true,
+        previousState,
+        currentState: newState,
+        teamsAffected: Object.keys(orchestrationState.teams).length
+    };
+}
+
+function getWorldState() {
+    return {
+        worldState: orchestrationState.worldState,
+        globalMode: orchestrationState.globalMode,
+        teams: Object.fromEntries(
+            Object.entries(orchestrationState.teams).map(([id, team]) => [
+                id,
+                {
+                    name: TEAM_PROMPTS[id]?.name,
+                    status: team.status,
+                    lastRun: team.lastRun,
+                    runCount: team.runCount,
+                    recentActivityCount: team.activities.length,
+                    pendingActionsCount: team.pendingActions?.length || 0
+                }
+            ])
+        ),
+        totalOrchestrations: orchestrationState.totalOrchestrations,
+        lastExecutionTime: orchestrationState.lastExecutionTime,
+        executionInProgress: orchestrationState.executionInProgress
+    };
 }
 
 // ============================================================================
