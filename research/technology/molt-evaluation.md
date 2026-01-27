@@ -205,3 +205,23 @@ The two systems are complementary:
 - **FUSE Agent Command Center** = Corporate AI orchestration (web-based, multi-team, audited)
 
 Together, they give you both strategic oversight (Command Center) and tactical speed (Molt on your phone).
+
+---
+
+## Implementation Status
+
+**BUILT** — The following integration has been implemented:
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| CEO Briefing API | `api/ceo-briefing.js` | Aggregated endpoint for Molt to query |
+| Molt Config | `molt/moltbot.json` | Ready-to-use Molt configuration |
+| FUSE Briefing Skill | `molt/skills/fuse-briefing/` | Full CEO briefing skill |
+| FUSE Signups Skill | `molt/skills/fuse-signups/` | Waitlist data skill |
+| FUSE Costs Skill | `molt/skills/fuse-costs/` | Cost tracking skill |
+| FUSE Health Skill | `molt/skills/fuse-health/` | Health monitoring skill |
+| FUSE Agents Skill | `molt/skills/fuse-agents/` | Agent management skill |
+| FUSE Tasks Skill | `molt/skills/fuse-tasks/` | Task & decision skill |
+| Setup Guide | `molt/SETUP.md` | Step-by-step installation guide |
+
+**Next steps:** Follow `molt/SETUP.md` to install Molt and connect via WhatsApp.
