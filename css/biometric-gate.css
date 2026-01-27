@@ -35,7 +35,9 @@
     align-items: center;
     justify-content: center;
     background: var(--gate-bg);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2rem 1rem;
     transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1),
                 visibility 0.6s cubic-bezier(0.19, 1, 0.22, 1),
                 transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
@@ -84,6 +86,7 @@
     padding: 48px 40px;
     max-width: 480px;
     width: 92%;
+    margin: auto;
     text-align: center;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--gate-border);
@@ -94,6 +97,7 @@
         0 40px 100px rgba(0, 0, 0, 0.5),
         0 0 0 1px rgba(255, 255, 255, 0.03),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
 }
 
 /* ============================================
@@ -784,17 +788,14 @@
    RESPONSIVE
    ============================================ */
 
-@media (max-width: 599px) {
-    .biometric-gate-content {
-        padding: 40px 24px;
-        border-radius: 24px;
-        width: 94%;
+/* Tablet and smaller */
+@media (max-width: 768px) {
+    .biometric-gate {
+        padding: 1.5rem 1rem;
     }
 
-    .biometric-gate-content::before {
-        font-size: 12px;
-        padding: 5px 16px;
-        top: -12px;
+    .biometric-gate-content {
+        padding: 36px 32px;
     }
 
     .biometric-icon-container {
@@ -808,22 +809,180 @@
     }
 
     .biometric-icon-inner svg {
-        width: 40px;
-        height: 40px;
+        width: 42px;
+        height: 42px;
     }
 
     .biometric-title {
-        font-size: 32px;
+        font-size: 36px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 599px) {
+    .biometric-gate {
+        padding: 1rem 0.75rem;
+    }
+
+    .biometric-gate-content {
+        padding: 32px 20px;
+        border-radius: 24px;
+        width: 96%;
+    }
+
+    .biometric-gate-content::before {
+        font-size: 12px;
+        padding: 5px 16px;
+        top: -12px;
+    }
+
+    .biometric-icon-container {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 20px;
+        margin-top: 8px;
+    }
+
+    .biometric-icon-inner {
+        inset: 24px;
+    }
+
+    .biometric-icon-inner svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .biometric-title {
+        font-size: 28px;
+        margin-bottom: 6px;
     }
 
     .biometric-subtitle {
-        font-size: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .biometric-message {
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+
+    .biometric-actions {
+        margin-top: 12px;
     }
 
     .btn-biometric {
-        padding: 14px 24px;
+        padding: 14px 20px;
         font-size: 14px;
-        min-height: 52px;
+        min-height: 50px;
+    }
+
+    .biometric-footer {
+        margin-top: 24px;
+        padding-top: 20px;
+    }
+
+    .security-badge {
+        font-size: 10px;
+        padding: 6px 12px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+    .biometric-gate-content {
+        padding: 28px 16px;
+    }
+
+    .biometric-icon-container {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 16px;
+    }
+
+    .biometric-icon-inner {
+        inset: 20px;
+    }
+
+    .biometric-icon-inner svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .biometric-title {
+        font-size: 24px;
+    }
+
+    .biometric-subtitle {
+        font-size: 12px;
+    }
+
+    .btn-biometric {
+        padding: 12px 16px;
+        font-size: 13px;
+        min-height: 46px;
+    }
+}
+
+/* Landscape orientation on mobile - compact layout */
+@media (max-height: 500px) and (orientation: landscape) {
+    .biometric-gate {
+        padding: 1rem;
+    }
+
+    .biometric-gate-content {
+        padding: 24px 32px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 600px;
+    }
+
+    .biometric-icon-container {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 0;
+        margin-right: 24px;
+    }
+
+    .biometric-icon-inner {
+        inset: 16px;
+    }
+
+    .biometric-icon-inner svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .biometric-title {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+
+    .biometric-subtitle {
+        font-size: 12px;
+    }
+
+    .biometric-message {
+        font-size: 11px;
+        margin-bottom: 12px;
+    }
+
+    .biometric-actions {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .btn-biometric {
+        padding: 10px 20px;
+        min-height: 44px;
+        font-size: 13px;
+    }
+
+    .biometric-footer {
+        width: 100%;
+        margin-top: 16px;
+        padding-top: 12px;
     }
 }
 

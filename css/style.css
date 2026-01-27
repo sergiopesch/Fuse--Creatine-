@@ -256,6 +256,26 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Enhanced depth and integration */
+    position: relative;
+    z-index: 1;
+}
+
+/* Subtle ambient glow for hero product */
+.hero-visual-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -15%;
+    background: radial-gradient(ellipse at center, rgba(255, 59, 48, 0.06) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+    animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
 }
 
 .hero-orbs {
@@ -660,7 +680,15 @@ input[type="range"] {
     max-width: 360px;
     height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 24px 60px rgba(0, 0, 0, 0.45));
+    /* Enhanced shadows for transparent background integration */
+    filter: 
+        drop-shadow(0 8px 32px rgba(0, 0, 0, 0.6))
+        drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4))
+        drop-shadow(0 0 0 1px rgba(255, 59, 48, 0.08));
+    /* Smooth integration with page background */
+    mix-blend-mode: normal;
+    will-change: transform, filter;
+    transition: filter 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
 }
 
 .product-3d-container.has-webgl .product-3d-fallback {
@@ -1826,7 +1854,6 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     }
 }
 
-/* --- 3D Product Styling --- */
 /* --- 3D Product Container --- */
 .product-3d-container {
     width: 100%;
@@ -1837,16 +1864,30 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Enhanced integration with page background */
+    isolation: isolate;
 }
 
 .product-3d-container:active {
     cursor: grabbing;
 }
 
+/* Enhanced hover effect for transparent product image */
+.product-3d-container:hover .product-3d-fallback {
+    filter: 
+        drop-shadow(0 12px 40px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))
+        drop-shadow(0 0 0 1px rgba(255, 59, 48, 0.15))
+        drop-shadow(0 0 24px rgba(255, 59, 48, 0.1));
+    transform: translateY(-4px) scale(1.02);
+}
+
 .product-3d-container canvas {
     display: block;
     max-width: 100%;
     max-height: 100%;
+    /* Smooth integration */
+    filter: drop-shadow(0 4px 16px rgba(255, 59, 48, 0.15));
 }
 
 .hero-3d {
@@ -1893,6 +1934,23 @@ html.js .fade-in-right { transform: translate3d(28px, 0, 0); }
     align-items: center;
     justify-content: center;
     min-height: 500px;
+    /* Enhanced integration - subtle background glow */
+    position: relative;
+}
+
+.product-visual::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(ellipse at center, rgba(255, 59, 48, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.6s var(--ease-out-expo);
+}
+
+.product-visual:hover::before {
+    opacity: 1;
 }
 
 .showcase-content-centered {
