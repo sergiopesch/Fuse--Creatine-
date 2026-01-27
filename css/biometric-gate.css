@@ -695,6 +695,148 @@
 }
 
 /* ============================================
+   MAGIC LINK AUTHENTICATION
+   ============================================ */
+
+/* Magic Link Button */
+.btn-biometric.btn-magic-link {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--gate-text);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin-top: 4px;
+}
+
+.btn-biometric.btn-magic-link:hover:not(:disabled) {
+    background: rgba(255, 59, 48, 0.1);
+    border-color: rgba(255, 59, 48, 0.3);
+}
+
+.btn-biometric.btn-magic-link:hover:not(:disabled) svg {
+    color: var(--gate-primary-light);
+}
+
+/* Magic Link Input Container */
+.magic-link-input {
+    width: 100%;
+    margin-top: 24px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--gate-border);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    animation: fadeSlideIn 0.3s ease;
+}
+
+.magic-link-form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.magic-link-form input[type="email"] {
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--gate-border);
+    border-radius: 14px;
+    color: #fff;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.magic-link-form input[type="email"]::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.magic-link-form input[type="email"]:focus {
+    border-color: var(--gate-primary);
+    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+}
+
+/* Send Magic Link Button */
+.btn-biometric.btn-send-magic {
+    min-width: 100px;
+    padding: 14px 24px;
+    background: var(--gate-primary);
+    color: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+}
+
+.btn-biometric.btn-send-magic:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255, 59, 48, 0.4);
+}
+
+.btn-biometric.btn-send-magic:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Magic Link Sent State */
+.magic-link-sent {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.magic-link-sent svg {
+    display: block;
+}
+
+/* Or Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gate-border);
+}
+
+.auth-divider span {
+    font-size: 11px;
+    color: var(--gate-text-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+}
+
+/* Mobile responsiveness for magic link input */
+@media (max-width: 599px) {
+    .magic-link-input {
+        padding: 20px 16px;
+    }
+
+    .magic-link-form {
+        flex-direction: column;
+    }
+
+    .magic-link-form input[type="email"] {
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 16px;
+    }
+
+    .btn-biometric.btn-send-magic {
+        width: 100%;
+        border-radius: 980px;
+    }
+}
+
+/* ============================================
    FOOTER
    ============================================ */
 

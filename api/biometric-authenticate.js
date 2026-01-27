@@ -613,8 +613,111 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             return res.status(200).json(responseBody);
         }
 
-        // ... (rest of the actions: create-device-link, claim-device-link)
-        
+        // ====================================
+        // CREATE DEVICE LINK (Owner only)
+        // ====================================
+        if (action === 'create-device-link') {
+            if (!CONFIG.SESSION_SECRET) {
+                return res.status(503).json({ success: false, error: 'Session tokens unavailable' });
+            }
+
+            const { sessionToken: linkSessionToken } = validatedBody;
+            if (!linkSessionToken) {
+                return res.status(400).json({ success: false, error: 'Authentication required' });
+            }
+
+            const payload = verifySessionToken(linkSessionToken);
+            if (!payload) {
+                return res.status(401).json({ success: false, error: 'Invalid or expired session', requiresAuth: true });
+            }
+
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            if (credentialError || !ownerCredential) {
+                return res.status(503).json({ success: false, error: 'Unable to retrieve owner credential' });
+            }
+
+            const code = generateDeviceLinkCode();
+            const stored = await storeDeviceLink(code, ownerCredential.userId, payload.deviceFingerprint);
+
+            if (!stored) {
+                return res.status(500).json({ success: false, error: 'Failed to create device link' });
+            }
+
+            addAuditEntry({
+                action: 'BIOMETRIC_DEVICE_LINK_CREATED',
+                ip: clientIp,
+                success: true,
+                endpoint: '/api/biometric-authenticate',
+                userId: ownerCredential.userId.substring(0, 8) + '...'
+            });
+
+            return res.status(200).json({
+                success: true,
+                linkCode: code,
+                expiresIn: Math.ceil(BIOMETRIC_CONFIG.DEVICE_LINK_EXPIRY / 1000),
+                message: `Enter this code on your other device: ${code}`
+            });
+        }
+
+        // ====================================
+        // CLAIM DEVICE LINK (New device)
+        // ====================================
+        if (action === 'claim-device-link') {
+            const { linkCode } = validatedBody;
+            if (!linkCode || typeof linkCode !== 'string' || linkCode.length !== 6) {
+                return res.status(400).json({ success: false, error: 'Invalid link code format' });
+            }
+
+            const link = await getDeviceLink(linkCode.toUpperCase().trim());
+            if (!link) {
+                addAuditEntry({
+                    action: 'BIOMETRIC_DEVICE_LINK_INVALID',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-authenticate'
+                });
+                return res.status(400).json({ success: false, error: 'Invalid or expired link code' });
+            }
+
+            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            if (credentialError || !ownerCredential) {
+                return res.status(503).json({ success: false, error: 'Unable to retrieve owner credential' });
+            }
+
+            // Detect device name from user-agent
+            const ua = req.headers['user-agent'] || '';
+            let deviceName = 'Linked Device';
+            if (/iPhone|iPad/i.test(ua)) deviceName = 'iPhone/iPad';
+            else if (/Android/i.test(ua)) deviceName = 'Android Device';
+            else if (/Mac/i.test(ua)) deviceName = 'Mac';
+            else if (/Windows/i.test(ua)) deviceName = 'Windows PC';
+
+            const result = await addAuthorizedDevice(ownerCredential, deviceFingerprint, deviceName);
+
+            if (!result.success) {
+                return res.status(400).json({ success: false, error: result.error });
+            }
+
+            // Delete the used link code
+            await deleteDeviceLink(linkCode.toUpperCase().trim());
+
+            addAuditEntry({
+                action: 'BIOMETRIC_DEVICE_LINKED',
+                ip: clientIp,
+                success: true,
+                endpoint: '/api/biometric-authenticate',
+                deviceName,
+                deviceCount: result.deviceCount
+            });
+
+            return res.status(200).json({
+                success: true,
+                deviceName,
+                deviceCount: result.deviceCount,
+                message: `${deviceName} has been authorized. You can now register biometric access on this device.`
+            });
+        }
+
         return res.status(400).json({ success: false, error: 'Invalid action' });
 
     } catch (error) {
