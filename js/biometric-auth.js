@@ -928,11 +928,16 @@ const BiometricAuth = (() => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'send',
-                    page
+                    page: page === 'ceo-dashboard' ? 'ceo-dashboard' : 'dashboard'
                 })
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (_) {
+                throw new Error(response.ok ? 'Invalid response from server' : 'Network or server error. Please try again.');
+            }
 
             if (!data.success) {
                 throw new Error(data.error || 'Failed to send magic link');
@@ -955,21 +960,29 @@ const BiometricAuth = (() => {
      * @returns {Promise<object>}
      */
     async function verifyMagicLink(token) {
+        if (!token || typeof token !== 'string' || token.length < 32) {
+            throw new Error('Invalid or expired magic link. Please request a new one.');
+        }
         try {
             const response = await fetch(`${CONFIG.API_BASE}/magic-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'verify',
-                    token,
+                    token: token.trim(),
                     deviceId: getDeviceId()
                 })
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (_) {
+                throw new Error(response.ok ? 'Invalid response from server' : 'Network or server error. Please request a new magic link.');
+            }
 
             if (!data.success) {
-                throw new Error(data.error || 'Magic link verification failed');
+                throw new Error(data.error || 'Magic link expired or invalid. Please request a new one.');
             }
 
             // Store session token
@@ -1007,8 +1020,13 @@ const BiometricAuth = (() => {
      * @returns {string|null} - Token if present
      */
     function getMagicLinkToken() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('magic_token');
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const t = params.get('magic_token');
+            return (t && typeof t === 'string') ? t.trim() : null;
+        } catch (e) {
+            return null;
+        }
     }
 
     /**

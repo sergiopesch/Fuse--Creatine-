@@ -80,19 +80,24 @@ function generateMagicToken() {
 }
 
 /**
+ * Hash token for storage (avoid storing raw tokens)
+ * @param {string} token - Magic link token
+ * @returns {string}
+ */
+function hashMagicToken(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
  * Store magic link token in Redis
  * @param {string} token - Magic link token
- * @param {string} email - Email the link was sent to
- * @param {string} ip - Requesting IP address
  * @returns {Promise<boolean>}
  */
-async function storeMagicToken(token, email, ip) {
-    const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${token}`;
+async function storeMagicToken(token) {
+    const tokenHash = hashMagicToken(token);
+    const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${tokenHash}`;
     const data = {
-        email,
-        ip,
-        createdAt: Date.now(),
-        used: false
+        createdAt: Date.now()
     };
 
     if (redis) {
@@ -107,10 +112,7 @@ async function storeMagicToken(token, email, ip) {
 
     // Fallback: in-memory store
     cleanupMemoryStore();
-    memoryTokenStore.set(redisKey, {
-        ...data,
-        expiresAt: Date.now() + CONFIG.TOKEN_EXPIRY
-    });
+    memoryTokenStore.set(redisKey, { ...data, expiresAt: Date.now() + CONFIG.TOKEN_EXPIRY });
     console.log('[MagicLink] Token stored in memory (fallback)');
     return true;
 }
@@ -121,7 +123,8 @@ async function storeMagicToken(token, email, ip) {
  * @returns {Promise<object|null>} - Token data or null
  */
 async function verifyMagicToken(token) {
-    const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${token}`;
+    const tokenHash = hashMagicToken(token);
+    const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${tokenHash}`;
 
     // Try Redis first
     if (redis) {
@@ -129,8 +132,6 @@ async function verifyMagicToken(token) {
             const data = await redis.get(redisKey);
             if (data) {
                 const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-
-                if (parsed.used) return null;
 
                 // Mark as used and delete
                 await redis.del(redisKey);
@@ -152,8 +153,6 @@ async function verifyMagicToken(token) {
     cleanupMemoryStore();
     const memData = memoryTokenStore.get(redisKey);
     if (!memData) return null;
-
-    if (memData.used) return null;
 
     // Consume token (one-time use)
     memoryTokenStore.delete(redisKey);
@@ -200,12 +199,16 @@ function generateSessionToken(userId, deviceFingerprint) {
  */
 async function sendMagicLinkEmail(email, magicLinkUrl) {
     if (!RESEND_API_KEY) {
-        console.warn('[MagicLink] RESEND_API_KEY not set - logging magic link to console');
-        console.log('[MagicLink] ===================================');
-        console.log('[MagicLink] MAGIC LINK (copy this URL):');
-        console.log('[MagicLink]', magicLinkUrl);
-        console.log('[MagicLink] ===================================');
-        return true; // Allow flow to continue for testing
+        const isProd = process.env.NODE_ENV === 'production';
+        console.warn('[MagicLink] RESEND_API_KEY not set - email delivery disabled');
+        if (!isProd) {
+            console.log('[MagicLink] ===================================');
+            console.log('[MagicLink] MAGIC LINK (copy this URL):');
+            console.log('[MagicLink]', magicLinkUrl);
+            console.log('[MagicLink] ===================================');
+            return true; // Allow flow to continue for local testing
+        }
+        return false;
     }
 
     try {
@@ -272,7 +275,12 @@ function resolveOrigin(req) {
 // ============================================================================
 
 const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
-    const { action } = validatedBody;
+    const body = validatedBody && typeof validatedBody === 'object' ? validatedBody : {};
+    const { action } = body;
+
+    if (!action || !['send', 'verify'].includes(action)) {
+        return res.status(400).json({ success: false, error: 'Invalid action. Use "send" or "verify".' });
+    }
 
     // ====================================
     // SEND MAGIC LINK
@@ -284,16 +292,17 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
 
         // Generate token and build magic link URL
         const token = generateMagicToken();
-        const stored = await storeMagicToken(token, normalizedEmail, clientIp);
+        const stored = await storeMagicToken(token);
 
         if (!stored) {
             return res.status(500).json({ success: false, error: 'Failed to create magic link' });
         }
 
         // Determine which page the user is on to build the right return URL
-        const page = validatedBody.page || 'dashboard';
+        const page = (body.page && typeof body.page === 'string') ? body.page.replace(/[^a-z0-9-]/gi, '') : 'dashboard';
+        const safePage = ['dashboard', 'ceo-dashboard'].includes(page) ? page : 'dashboard';
         const origin = resolveOrigin(req);
-        const magicLinkUrl = `${origin}/${page}?magic_token=${token}`;
+        const magicLinkUrl = `${origin.replace(/\/$/, '')}/${safePage}?magic_token=${encodeURIComponent(token)}`;
 
         const emailSent = await sendMagicLinkEmail(normalizedEmail, magicLinkUrl);
 
@@ -301,11 +310,10 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             action: 'MAGIC_LINK_SENT',
             ip: clientIp,
             success: emailSent,
-            endpoint: '/api/magic-link',
-            email: normalizedEmail.substring(0, 3) + '***'
+            endpoint: '/api/magic-link'
         });
 
-        if (!emailSent && RESEND_API_KEY) {
+        if (!emailSent) {
             return res.status(500).json({
                 success: false,
                 error: 'Failed to send email. Please try again.'
@@ -323,9 +331,9 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
     // VERIFY MAGIC LINK TOKEN
     // ====================================
     if (action === 'verify') {
-        const { token } = validatedBody;
+        const token = typeof body.token === 'string' ? body.token.trim() : '';
 
-        if (!token || typeof token !== 'string' || token.length < 32) {
+        if (!token || token.length < 32) {
             return res.status(400).json({ success: false, error: 'Invalid token' });
         }
 
@@ -345,7 +353,8 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         }
 
         // Token is valid - authorize this device
-        const deviceFingerprint = createDeviceFingerprint(req, validatedBody.deviceId);
+        const deviceId = (body.deviceId && typeof body.deviceId === 'string') ? body.deviceId : null;
+        const deviceFingerprint = createDeviceFingerprint(req, deviceId);
 
         // Get or create owner credential
         const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
@@ -423,9 +432,17 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
     return res.status(400).json({ success: false, error: 'Invalid action' });
 };
 
+const validationSchema = {
+    action: { required: true, type: 'string', enum: ['send', 'verify'] },
+    page: { type: 'string' },
+    token: { type: 'string' },
+    deviceId: { type: 'string' }
+};
+
 module.exports = createSecuredHandler({
     requireAuth: false,
     allowedMethods: ['POST', 'OPTIONS'],
+    validationSchema,
     rateLimit: {
         limit: CONFIG.RATE_LIMIT.limit,
         windowMs: CONFIG.RATE_LIMIT.windowMs,
