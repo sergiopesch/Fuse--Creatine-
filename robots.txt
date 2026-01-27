@@ -21,7 +21,7 @@ Disallow: /css/
 Allow: /assets/*.jpg
 Allow: /assets/*.png
 Allow: /assets/*.svg
-Allow: /assets/og-image.jpg
+Allow: /assets/og-image.png
 
 # Crawl-delay for politeness (optional, respected by some bots)
 Crawl-delay: 1

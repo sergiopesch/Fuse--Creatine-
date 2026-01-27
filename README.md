@@ -57,8 +57,7 @@ fuse-creatine/
 │   ├── admin.js            # Admin portal UI
 │   ├── chat.js             # Chat widget
 │   ├── biometric-auth.js   # WebAuthn client
-│   ├── consent-manager.js  # Cookie/consent management
-│   └── three-scene.js      # 3D product visualization
+│   └── consent-manager.js  # Cookie/consent management
 ├── css/
 │   ├── style.css           # Marketing page styles
 │   ├── agents.css          # Agent Command Center styles
@@ -272,7 +271,7 @@ View costs at `/api/costs` or in the Admin portal.
 
 - Smooth scrolling with Lenis
 - GSAP animations with ScrollTrigger
-- Interactive 3D product visualization (Three.js)
+- Premium product imagery with animated CSS integration
 - Magnetic button effects
 - Custom cursor with blend mode
 - Dose configurator
