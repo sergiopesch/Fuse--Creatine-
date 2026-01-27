@@ -136,14 +136,14 @@ body::before {
     letter-spacing: 0.1em;
 }
 
-.logo-uk {
-    font-size: 0.6rem;
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    background: var(--fuse-red);
-    padding: 0.1rem 0.3rem;
-    border-radius: 2px;
-    margin-left: 0.4rem;
+.logo-fuse {
+    color: var(--fuse-red);
+}
+
+.logo-creatine {
+    color: var(--white);
+    font-size: 0.85em;
+    letter-spacing: 0.15em;
 }
 
 .nav-links {
@@ -3528,16 +3528,14 @@ body {
     color: var(--white);
 }
 
-.footer-logo .logo-uk {
-    font-size: 0.55rem;
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    background: var(--fuse-red);
+.footer-logo .logo-fuse {
+    color: var(--fuse-red);
+}
+
+.footer-logo .logo-creatine {
     color: var(--white);
-    padding: 0.1rem 0.25rem;
-    border-radius: 2px;
-    margin-left: 0.35rem;
-    vertical-align: middle;
+    font-size: 0.85em;
+    letter-spacing: 0.15em;
 }
 
 .footer-tagline {
