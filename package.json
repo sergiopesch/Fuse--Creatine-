@@ -26,6 +26,8 @@
   },
   "homepage": "https://github.com/sergiopesch/Fuse--Creatine-#readme",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/lib-dynamodb": "^3.500.0",
     "@simplewebauthn/server": "^13.2.2",
     "@upstash/redis": "^1.36.1",
     "@vercel/blob": "^2.0.1"
