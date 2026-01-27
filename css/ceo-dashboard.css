@@ -118,6 +118,45 @@
     isolation: isolate;
 }
 
+/* ============================================
+   LOGIN SCREEN - Hide Dashboard Until Authenticated
+   ============================================ */
+
+/* Hide ALL dashboard content until authenticated - clean login screen */
+.ceo-dashboard-page:not(.authenticated) .ceo-header,
+.ceo-dashboard-page:not(.authenticated) .ceo-main-layout,
+.ceo-dashboard-page:not(.authenticated) .ceo-layout,
+.ceo-dashboard-page:not(.authenticated) main,
+.ceo-dashboard-page:not(.authenticated) .sidebar,
+.ceo-dashboard-page:not(.authenticated) .workspace {
+    display: none !important;
+}
+
+/* Also hide the background effects during login for a cleaner look */
+.ceo-dashboard-page:not(.authenticated)::before,
+.ceo-dashboard-page:not(.authenticated)::after {
+    display: none;
+}
+
+/* Show dashboard content after authentication with smooth animation */
+.ceo-dashboard-page.authenticated .ceo-header,
+.ceo-dashboard-page.authenticated .ceo-main-layout,
+.ceo-dashboard-page.authenticated .ceo-layout,
+.ceo-dashboard-page.authenticated main {
+    animation: fadeInDashboard 0.6s var(--ease-out-expo);
+}
+
+@keyframes fadeInDashboard {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Hide dashboard content until authenticated */
 .ceo-dashboard-page .biometric-gate:not(.hidden) ~ .ceo-header,
 .ceo-dashboard-page .biometric-gate:not(.hidden) ~ .ceo-main {

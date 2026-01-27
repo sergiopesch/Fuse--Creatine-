@@ -2022,6 +2022,7 @@ async function initBiometricAuth() {
 
     if (!gate) {
         console.log('[CEO Dashboard] No biometric gate found, allowing access');
+        document.body.classList.add('authenticated'); // Show dashboard content
         return true; // No gate, allow access
     }
 
@@ -2452,6 +2453,8 @@ function hideBiometricGate() {
     const gate = document.getElementById('biometricGate');
     if (gate) {
         gate.classList.add('authenticated');
+        // Add authenticated class to body to reveal dashboard content
+        document.body.classList.add('authenticated');
         setTimeout(() => {
             gate.style.display = 'none';
         }, 500);
