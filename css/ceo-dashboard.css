@@ -112,8 +112,25 @@
     z-index: 2;
 }
 
+/* Biometric gate must cover everything including sticky header */
 .ceo-dashboard-page .biometric-gate {
-    z-index: 1000;
+    z-index: 10000;
+    isolation: isolate;
+}
+
+/* Hide dashboard content until authenticated */
+.ceo-dashboard-page .biometric-gate:not(.hidden) ~ .ceo-header,
+.ceo-dashboard-page .biometric-gate:not(.hidden) ~ .ceo-main {
+    visibility: hidden;
+    opacity: 0;
+}
+
+/* Show content when gate is hidden (authenticated) */
+.ceo-dashboard-page .biometric-gate.hidden ~ .ceo-header,
+.ceo-dashboard-page .biometric-gate.hidden ~ .ceo-main {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 /* Skip Link */
