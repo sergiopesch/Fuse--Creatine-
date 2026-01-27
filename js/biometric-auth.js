@@ -916,19 +916,18 @@ const BiometricAuth = (() => {
     // ============================================
 
     /**
-     * Request a magic link to be sent to the CEO/admin email
-     * @param {string} email - Email address to send to
+     * Request a magic link to be sent to the stored admin email
+     * No email input needed - the server uses the configured CEO_EMAIL
      * @param {string} page - Current page name (dashboard or ceo-dashboard)
      * @returns {Promise<object>}
      */
-    async function requestMagicLink(email, page = 'dashboard') {
+    async function requestMagicLink(page = 'dashboard') {
         try {
             const response = await fetch(`${CONFIG.API_BASE}/magic-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'send',
-                    email: email.trim(),
                     page
                 })
             });

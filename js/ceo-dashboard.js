@@ -2330,81 +2330,56 @@ async function handleBiometricSetup() {
 
 /**
  * Initialize magic link functionality
+ * Clicking the magic link button sends directly to the stored admin email - no input needed
  */
 function initMagicLink() {
     const btnMagicLink = document.getElementById('btnMagicLink');
     const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
-    const magicLinkInput = document.getElementById('magicLinkInput');
-    const magicEmailInput = document.getElementById('magicEmailInput');
-    const btnSendMagic = document.getElementById('btnSendMagic');
-    const btnCancelMagic = document.getElementById('btnCancelMagic');
 
     const pageName = 'ceo-dashboard';
 
-    function showMagicLinkForm() {
-        if (btnMagicLink) btnMagicLink.style.display = 'none';
-        if (magicLinkInput) {
-            magicLinkInput.style.display = 'block';
-            magicEmailInput?.focus();
-        }
-        hideBiometricStatus();
-    }
-
     if (btnMagicLink) {
-        btnMagicLink.addEventListener('click', showMagicLinkForm);
+        btnMagicLink.addEventListener('click', () => handleSendMagicLink(pageName));
     }
 
     if (btnMagicLinkAlt) {
-        btnMagicLinkAlt.addEventListener('click', showMagicLinkForm);
+        btnMagicLinkAlt.addEventListener('click', () => handleSendMagicLink(pageName));
     }
-
-    btnCancelMagic?.addEventListener('click', () => {
-        if (magicLinkInput) magicLinkInput.style.display = 'none';
-        if (btnMagicLink) btnMagicLink.style.display = 'flex';
-        if (magicEmailInput) magicEmailInput.value = '';
-    });
-
-    btnSendMagic?.addEventListener('click', () => handleSendMagicLink(pageName));
-
-    magicEmailInput?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleSendMagicLink(pageName);
-    });
 }
 
 /**
  * Handle sending a magic link email
+ * Sends directly to the stored admin email - no user input needed
  */
 async function handleSendMagicLink(pageName) {
-    const magicEmailInput = document.getElementById('magicEmailInput');
-    const btnSendMagic = document.getElementById('btnSendMagic');
-
-    const email = magicEmailInput?.value?.trim();
-
-    if (!email || !email.includes('@')) {
-        showBiometricStatus('Please enter a valid email address', 'error');
-        return;
-    }
+    const btnMagicLink = document.getElementById('btnMagicLink');
+    const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
 
     if (typeof BiometricAuth === 'undefined') {
         showBiometricStatus('Authentication library not loaded. Please refresh.', 'error');
         return;
     }
 
-    try {
-        if (btnSendMagic) {
-            btnSendMagic.disabled = true;
-            const btnText = btnSendMagic.querySelector('span');
-            if (btnText) btnText.textContent = 'Sending...';
-        }
-        showBiometricStatus('Sending magic link...', 'info');
+    // Disable buttons to prevent double-sends
+    const activeBtn = btnMagicLink?.style.display !== 'none' ? btnMagicLink : btnMagicLinkAlt;
+    if (activeBtn) {
+        activeBtn.disabled = true;
+        const btnText = activeBtn.querySelector('span');
+        if (btnText) btnText.textContent = 'Sending...';
+    }
 
-        const result = await BiometricAuth.requestMagicLink(email, pageName);
+    try {
+        showBiometricStatus('Sending magic link to admin email...', 'info');
+
+        const result = await BiometricAuth.requestMagicLink(pageName);
 
         if (result.success) {
             showBiometricStatus(result.message || 'Magic link sent! Check your email.', 'success');
 
+            // Show confirmation UI in place of the magic link button area
             const magicLinkInput = document.getElementById('magicLinkInput');
             if (magicLinkInput) {
+                magicLinkInput.style.display = 'block';
                 magicLinkInput.innerHTML = `
                     <div class="magic-link-sent">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
@@ -2417,15 +2392,19 @@ async function handleSendMagicLink(pageName) {
                     </div>
                 `;
             }
+
+            // Hide the button since we've shown confirmation
+            if (activeBtn) activeBtn.style.display = 'none';
         }
     } catch (error) {
         console.error('[CEO Dashboard] Magic link send failed:', error);
         showBiometricStatus(error.message || 'Failed to send magic link', 'error');
 
-        if (btnSendMagic) {
-            btnSendMagic.disabled = false;
-            const btnText = btnSendMagic.querySelector('span');
-            if (btnText) btnText.textContent = 'Send';
+        // Re-enable button for retry
+        if (activeBtn) {
+            activeBtn.disabled = false;
+            const btnText = activeBtn.querySelector('span');
+            if (btnText) btnText.textContent = 'Send Magic Link to Email';
         }
     }
 }
