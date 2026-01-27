@@ -325,7 +325,52 @@ Current coverage thresholds: 50% (branches, functions, lines, statements)
 
 **Note**: WebAuthn requires a platform authenticator (Face ID, Touch ID, Windows Hello, or fingerprint sensor).
 
+## Architecture Roadmap
+
+### Planned: AWS Migration
+
+We're planning to migrate from in-memory stores to persistent AWS storage. See [Technical Documentation](./docs/README.md) for details.
+
+| Current | Planned | Status |
+|---------|---------|--------|
+| Vercel Blob (signups) | DynamoDB | Planned |
+| In-memory (agents) | DynamoDB | Planned |
+| In-memory (costs) | DynamoDB | Planned |
+| In-memory (audit) | DynamoDB | Planned |
+| Upstash Redis | Keep / ElastiCache | Planned |
+
+### Planned: Consent Management
+
+GDPR/CCPA compliant consent and cookie preference system.
+
+| Feature | Status |
+|---------|--------|
+| Cookie consent banner | Planned |
+| Preference center | Planned |
+| Consent audit trail | Planned |
+| Data export (GDPR) | Planned |
+| Data deletion (GDPR) | Planned |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Technical Docs](./docs/README.md) | Documentation index |
+| [AWS Services](./docs/architecture/aws-services.md) | AWS migration plan |
+| [Data Model](./docs/architecture/data-model.md) | Entity schemas |
+| [DynamoDB Design](./docs/architecture/dynamodb-design.md) | Database patterns |
+| [Consent Management](./docs/architecture/consent-management.md) | Privacy compliance |
+| [Cookie Preferences](./docs/architecture/cookie-preferences.md) | Cookie consent |
+
+---
+
 ## Recent Updates
+
+### Version 2.3.0 (Planned)
+- AWS DynamoDB integration for persistent storage
+- Consent management system
+- Cookie preference center
+- GDPR/CCPA compliance features
 
 ### Version 2.2.0
 - Refactored biometric authentication to use shared utilities module
