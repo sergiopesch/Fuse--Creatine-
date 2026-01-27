@@ -42,11 +42,30 @@ const CONFIG = {
     SESSION_DURATION: 30 * 60 * 1000 // 30 minutes
 };
 
-// Initialize Redis
+// Initialize Redis (optional - falls back to in-memory store)
 const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
         ? Redis.fromEnv()
         : null;
+
+// In-memory fallback token store (used when Redis is not configured)
+const memoryTokenStore = new Map();
+
+if (!redis) {
+    console.warn('[MagicLink] Redis not configured - using in-memory token store. Tokens will not persist across serverless cold starts.');
+}
+
+/**
+ * Clean up expired entries from the in-memory store
+ */
+function cleanupMemoryStore() {
+    const now = Date.now();
+    for (const [key, value] of memoryTokenStore) {
+        if (now > value.expiresAt) {
+            memoryTokenStore.delete(key);
+        }
+    }
+}
 
 // ============================================================================
 // HELPERS
@@ -81,13 +100,19 @@ async function storeMagicToken(token, email, ip) {
             await redis.setex(redisKey, CONFIG.TOKEN_EXPIRY_SECONDS, JSON.stringify(data));
             return true;
         } catch (error) {
-            console.error('[MagicLink] Failed to store token:', error.message);
-            return false;
+            console.error('[MagicLink] Failed to store token in Redis:', error.message);
+            // Fall through to in-memory store
         }
     }
 
-    console.error('[MagicLink] Redis not available - magic links require Redis');
-    return false;
+    // Fallback: in-memory store
+    cleanupMemoryStore();
+    memoryTokenStore.set(redisKey, {
+        ...data,
+        expiresAt: Date.now() + CONFIG.TOKEN_EXPIRY
+    });
+    console.log('[MagicLink] Token stored in memory (fallback)');
+    return true;
 }
 
 /**
@@ -96,31 +121,49 @@ async function storeMagicToken(token, email, ip) {
  * @returns {Promise<object|null>} - Token data or null
  */
 async function verifyMagicToken(token) {
-    if (!redis) return null;
-
     const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${token}`;
 
-    try {
-        const data = await redis.get(redisKey);
-        if (!data) return null;
+    // Try Redis first
+    if (redis) {
+        try {
+            const data = await redis.get(redisKey);
+            if (data) {
+                const parsed = typeof data === 'string' ? JSON.parse(data) : data;
 
-        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                if (parsed.used) return null;
 
-        if (parsed.used) return null;
+                // Mark as used and delete
+                await redis.del(redisKey);
 
-        // Mark as used and delete
-        await redis.del(redisKey);
+                // Check expiry (belt and suspenders)
+                if (Date.now() - parsed.createdAt > CONFIG.TOKEN_EXPIRY) {
+                    return null;
+                }
 
-        // Check expiry (belt and suspenders)
-        if (Date.now() - parsed.createdAt > CONFIG.TOKEN_EXPIRY) {
-            return null;
+                return parsed;
+            }
+        } catch (error) {
+            console.error('[MagicLink] Redis verification failed, trying memory store:', error.message);
+            // Fall through to in-memory store
         }
+    }
 
-        return parsed;
-    } catch (error) {
-        console.error('[MagicLink] Token verification failed:', error.message);
+    // Fallback: in-memory store
+    cleanupMemoryStore();
+    const memData = memoryTokenStore.get(redisKey);
+    if (!memData) return null;
+
+    if (memData.used) return null;
+
+    // Consume token (one-time use)
+    memoryTokenStore.delete(redisKey);
+
+    // Check expiry
+    if (Date.now() - memData.createdAt > CONFIG.TOKEN_EXPIRY) {
         return null;
     }
+
+    return memData;
 }
 
 /**
@@ -256,13 +299,6 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             return res.status(403).json({
                 success: false,
                 error: 'Magic link is only available for authorized administrators'
-            });
-        }
-
-        if (!redis) {
-            return res.status(503).json({
-                success: false,
-                error: 'Magic link service requires Redis. Please configure UPSTASH_REDIS_REST_URL.'
             });
         }
 
