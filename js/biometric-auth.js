@@ -681,7 +681,12 @@ const BiometricAuth = (() => {
             }
 
             const data = await response.json();
-            console.log('[BiometricAuth] Challenge response:', { success: data.success, hasChallenge: !!data.challenge });
+            console.log('[BiometricAuth] Challenge response:', { 
+                success: data.success, 
+                hasChallenge: !!data.challenge,
+                allowCredentials: data.allowCredentials,
+                credentialCount: data.allowCredentials?.length 
+            });
 
             if (!data.success) {
                 if (data.isLocked) {
