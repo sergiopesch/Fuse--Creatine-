@@ -538,6 +538,27 @@
         }
 
         try {
+            // Check for magic link token in URL (highest priority)
+            const magicToken = BiometricAuth.getMagicLinkToken();
+            if (magicToken) {
+                showStatus('Verifying magic link...', 'info');
+                try {
+                    const magicResult = await BiometricAuth.verifyMagicLink(magicToken);
+                    BiometricAuth.clearMagicLinkToken();
+                    if (magicResult.success) {
+                        showStatus(magicResult.message || 'Access granted via magic link!', 'success');
+                        await new Promise(r => setTimeout(r, 800));
+                        hideBiometricGate();
+                        return true;
+                    }
+                } catch (magicError) {
+                    console.error('[Dashboard] Magic link verification failed:', magicError);
+                    BiometricAuth.clearMagicLinkToken();
+                    showStatus(magicError.message || 'Magic link expired or invalid', 'error');
+                    // Continue to normal auth flow
+                }
+            }
+
             // Check if already verified in this session
             const sessionVerified = await BiometricAuth.isSessionVerified();
             if (sessionVerified) {
@@ -553,7 +574,8 @@
             if (!state.biometricSupported) {
                 console.warn('[Dashboard] Platform authenticator not available:', support);
                 gate.classList.add('not-supported');
-                showStatus('Biometric authentication not available on this device', 'error');
+                showStatus('Biometric not available - use magic link to access', 'info');
+                initMagicLink();
                 return false;
             }
 
@@ -617,6 +639,13 @@
                     if (btnLinkDevice && accessStatus.canLinkDevice !== false) {
                         btnLinkDevice.style.display = 'flex';
                         initDeviceLinking();
+                    }
+
+                    // Always show magic link option for non-owner devices
+                    const btnMagicLink = document.getElementById('btnMagicLink');
+                    if (btnMagicLink) {
+                        btnMagicLink.style.display = 'flex';
+                        initMagicLink();
                     }
                     return false;
                 }
@@ -900,6 +929,119 @@
         // Add verified class to body
         document.body.classList.add('biometric-verified');
         state.biometricVerified = true;
+    }
+
+    /**
+     * Initialize magic link functionality
+     */
+    function initMagicLink() {
+        const btnMagicLink = document.getElementById('btnMagicLink');
+        const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
+        const magicLinkInput = document.getElementById('magicLinkInput');
+        const magicEmailInput = document.getElementById('magicEmailInput');
+        const btnSendMagic = document.getElementById('btnSendMagic');
+        const btnCancelMagic = document.getElementById('btnCancelMagic');
+
+        // Determine page name for return URL
+        const pageName = window.location.pathname.includes('ceo-dashboard') ? 'ceo-dashboard' : 'dashboard';
+
+        function showMagicLinkForm() {
+            if (btnMagicLink) btnMagicLink.style.display = 'none';
+            if (magicLinkInput) {
+                magicLinkInput.style.display = 'block';
+                magicEmailInput?.focus();
+            }
+            hideStatus();
+        }
+
+        // Show email input when button clicked
+        if (btnMagicLink) {
+            btnMagicLink.addEventListener('click', showMagicLinkForm);
+        }
+
+        // Also handle the alt button (in not-supported state)
+        if (btnMagicLinkAlt) {
+            btnMagicLinkAlt.addEventListener('click', showMagicLinkForm);
+        }
+
+        // Cancel magic link - go back
+        btnCancelMagic?.addEventListener('click', () => {
+            if (magicLinkInput) {
+                magicLinkInput.style.display = 'none';
+            }
+            if (btnMagicLink) btnMagicLink.style.display = 'flex';
+            if (magicEmailInput) magicEmailInput.value = '';
+        });
+
+        // Handle send button click
+        btnSendMagic?.addEventListener('click', () => handleSendMagicLink(pageName));
+
+        // Handle enter key in input
+        magicEmailInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleSendMagicLink(pageName);
+            }
+        });
+    }
+
+    /**
+     * Handle sending a magic link email
+     */
+    async function handleSendMagicLink(pageName) {
+        const magicEmailInput = document.getElementById('magicEmailInput');
+        const btnSendMagic = document.getElementById('btnSendMagic');
+
+        const email = magicEmailInput?.value?.trim();
+
+        if (!email || !email.includes('@')) {
+            showStatus('Please enter a valid email address', 'error');
+            return;
+        }
+
+        if (typeof BiometricAuth === 'undefined') {
+            showStatus('Authentication library not loaded. Please refresh.', 'error');
+            return;
+        }
+
+        try {
+            if (btnSendMagic) {
+                btnSendMagic.disabled = true;
+                const btnText = btnSendMagic.querySelector('span');
+                if (btnText) btnText.textContent = 'Sending...';
+            }
+            showStatus('Sending magic link...', 'info');
+
+            const result = await BiometricAuth.requestMagicLink(email, pageName);
+
+            if (result.success) {
+                showStatus(result.message || 'Magic link sent! Check your email.', 'success');
+
+                // Update UI to show "check email" state
+                const magicLinkInput = document.getElementById('magicLinkInput');
+                if (magicLinkInput) {
+                    magicLinkInput.innerHTML = `
+                        <div class="magic-link-sent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <p class="link-instruction" style="color:var(--gate-success);font-weight:600;">Magic link sent!</p>
+                            <p class="link-instruction">Check your email and click the link to access this dashboard from this device.</p>
+                            <p class="link-instruction" style="font-size:12px;color:var(--gate-text-subtle);">Link expires in 15 minutes.</p>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('[Dashboard] Magic link send failed:', error);
+            showStatus(error.message || 'Failed to send magic link', 'error');
+
+            if (btnSendMagic) {
+                btnSendMagic.disabled = false;
+                const btnText = btnSendMagic.querySelector('span');
+                if (btnText) btnText.textContent = 'Send';
+            }
+        }
     }
 
     /**

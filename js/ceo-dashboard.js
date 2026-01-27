@@ -2048,6 +2048,26 @@ async function initBiometricAuth() {
     }
 
     try {
+        // Check for magic link token in URL (highest priority)
+        const magicToken = BiometricAuth.getMagicLinkToken();
+        if (magicToken) {
+            showBiometricStatus('Verifying magic link...', 'info');
+            try {
+                const magicResult = await BiometricAuth.verifyMagicLink(magicToken);
+                BiometricAuth.clearMagicLinkToken();
+                if (magicResult.success) {
+                    showBiometricStatus(magicResult.message || 'Access granted via magic link!', 'success');
+                    await new Promise(r => setTimeout(r, 800));
+                    hideBiometricGate();
+                    return true;
+                }
+            } catch (magicError) {
+                console.error('[CEO Dashboard] Magic link verification failed:', magicError);
+                BiometricAuth.clearMagicLinkToken();
+                showBiometricStatus(magicError.message || 'Magic link expired or invalid', 'error');
+            }
+        }
+
         // Check if already verified in this session
         const sessionVerified = await BiometricAuth.isSessionVerified();
         if (sessionVerified) {
@@ -2064,7 +2084,8 @@ async function initBiometricAuth() {
         if (!state.biometricSupported) {
             console.warn('[CEO Dashboard] Platform authenticator not available:', support);
             gate.classList.add('not-supported');
-            showBiometricStatus('Biometric authentication not available on this device', 'error');
+            showBiometricStatus('Biometric not available - use magic link to access', 'info');
+            initMagicLink();
             return false;
         }
 
@@ -2127,6 +2148,13 @@ async function initBiometricAuth() {
                 const btnLinkDevice = document.getElementById('btnLinkDevice');
                 if (btnLinkDevice && accessStatus.canLinkDevice !== false) {
                     btnLinkDevice.style.display = 'flex';
+                }
+
+                // Always show magic link option for non-owner devices
+                const btnMagicLink = document.getElementById('btnMagicLink');
+                if (btnMagicLink) {
+                    btnMagicLink.style.display = 'flex';
+                    initMagicLink();
                 }
                 return false;
             }
@@ -2297,6 +2325,108 @@ async function handleBiometricSetup() {
             iconContainer?.classList.remove('error');
             updateBiometricIcon(state.authenticatorType);
         }, 2000);
+    }
+}
+
+/**
+ * Initialize magic link functionality
+ */
+function initMagicLink() {
+    const btnMagicLink = document.getElementById('btnMagicLink');
+    const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
+    const magicLinkInput = document.getElementById('magicLinkInput');
+    const magicEmailInput = document.getElementById('magicEmailInput');
+    const btnSendMagic = document.getElementById('btnSendMagic');
+    const btnCancelMagic = document.getElementById('btnCancelMagic');
+
+    const pageName = 'ceo-dashboard';
+
+    function showMagicLinkForm() {
+        if (btnMagicLink) btnMagicLink.style.display = 'none';
+        if (magicLinkInput) {
+            magicLinkInput.style.display = 'block';
+            magicEmailInput?.focus();
+        }
+        hideBiometricStatus();
+    }
+
+    if (btnMagicLink) {
+        btnMagicLink.addEventListener('click', showMagicLinkForm);
+    }
+
+    if (btnMagicLinkAlt) {
+        btnMagicLinkAlt.addEventListener('click', showMagicLinkForm);
+    }
+
+    btnCancelMagic?.addEventListener('click', () => {
+        if (magicLinkInput) magicLinkInput.style.display = 'none';
+        if (btnMagicLink) btnMagicLink.style.display = 'flex';
+        if (magicEmailInput) magicEmailInput.value = '';
+    });
+
+    btnSendMagic?.addEventListener('click', () => handleSendMagicLink(pageName));
+
+    magicEmailInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSendMagicLink(pageName);
+    });
+}
+
+/**
+ * Handle sending a magic link email
+ */
+async function handleSendMagicLink(pageName) {
+    const magicEmailInput = document.getElementById('magicEmailInput');
+    const btnSendMagic = document.getElementById('btnSendMagic');
+
+    const email = magicEmailInput?.value?.trim();
+
+    if (!email || !email.includes('@')) {
+        showBiometricStatus('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (typeof BiometricAuth === 'undefined') {
+        showBiometricStatus('Authentication library not loaded. Please refresh.', 'error');
+        return;
+    }
+
+    try {
+        if (btnSendMagic) {
+            btnSendMagic.disabled = true;
+            const btnText = btnSendMagic.querySelector('span');
+            if (btnText) btnText.textContent = 'Sending...';
+        }
+        showBiometricStatus('Sending magic link...', 'info');
+
+        const result = await BiometricAuth.requestMagicLink(email, pageName);
+
+        if (result.success) {
+            showBiometricStatus(result.message || 'Magic link sent! Check your email.', 'success');
+
+            const magicLinkInput = document.getElementById('magicLinkInput');
+            if (magicLinkInput) {
+                magicLinkInput.innerHTML = `
+                    <div class="magic-link-sent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        <p class="link-instruction" style="color:var(--gate-success);font-weight:600;">Magic link sent!</p>
+                        <p class="link-instruction">Check your email and click the link to access this dashboard from this device.</p>
+                        <p class="link-instruction" style="font-size:12px;color:var(--gate-text-subtle);">Link expires in 15 minutes.</p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('[CEO Dashboard] Magic link send failed:', error);
+        showBiometricStatus(error.message || 'Failed to send magic link', 'error');
+
+        if (btnSendMagic) {
+            btnSendMagic.disabled = false;
+            const btnText = btnSendMagic.querySelector('span');
+            if (btnText) btnText.textContent = 'Send';
+        }
     }
 }
 

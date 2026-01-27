@@ -912,6 +912,116 @@ const BiometricAuth = (() => {
     }
 
     // ============================================
+    // MAGIC LINK AUTHENTICATION
+    // ============================================
+
+    /**
+     * Request a magic link to be sent to the CEO/admin email
+     * @param {string} email - Email address to send to
+     * @param {string} page - Current page name (dashboard or ceo-dashboard)
+     * @returns {Promise<object>}
+     */
+    async function requestMagicLink(email, page = 'dashboard') {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/magic-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'send',
+                    email: email.trim(),
+                    page
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to send magic link');
+            }
+
+            return {
+                success: true,
+                message: data.message,
+                expiresIn: data.expiresIn
+            };
+        } catch (error) {
+            console.error('[BiometricAuth] Magic link request failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Verify a magic link token and authorize this device
+     * @param {string} token - Magic link token from URL
+     * @returns {Promise<object>}
+     */
+    async function verifyMagicLink(token) {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE}/magic-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'verify',
+                    token,
+                    deviceId: getDeviceId()
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Magic link verification failed');
+            }
+
+            // Store session token
+            if (data.sessionToken) {
+                storeSessionToken(data.sessionToken);
+            }
+
+            // Store userId
+            if (data.userId) {
+                try {
+                    localStorage.setItem(CONFIG.USER_ID_KEY, data.userId);
+                } catch (e) {
+                    try { sessionStorage.setItem(CONFIG.USER_ID_KEY, data.userId); } catch (e2) { /* ignore */ }
+                }
+            }
+
+            state.isVerified = true;
+            state.isOwner = true;
+            state.hasOwner = true;
+            state.lastVerification = Date.now();
+
+            return {
+                success: true,
+                verified: true,
+                message: data.message || 'Device authorized via magic link!'
+            };
+        } catch (error) {
+            console.error('[BiometricAuth] Magic link verification failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check if current URL has a magic link token
+     * @returns {string|null} - Token if present
+     */
+    function getMagicLinkToken() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('magic_token');
+    }
+
+    /**
+     * Clean magic link token from URL without page reload
+     */
+    function clearMagicLinkToken() {
+        const url = new URL(window.location);
+        url.searchParams.delete('magic_token');
+        window.history.replaceState({}, '', url.toString());
+    }
+
+    // ============================================
     // PUBLIC API
     // ============================================
 
@@ -934,6 +1044,12 @@ const BiometricAuth = (() => {
         // Device linking
         createDeviceLink,
         claimDeviceLink,
+
+        // Magic link authentication
+        requestMagicLink,
+        verifyMagicLink,
+        getMagicLinkToken,
+        clearMagicLinkToken,
 
         // Session management
         isSessionVerified,
