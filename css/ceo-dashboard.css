@@ -122,13 +122,9 @@
    LOGIN SCREEN - Hide Dashboard Until Authenticated
    ============================================ */
 
-/* Hide ALL dashboard content until authenticated - clean login screen */
-.ceo-dashboard-page:not(.authenticated) .ceo-header,
-.ceo-dashboard-page:not(.authenticated) .ceo-main-layout,
-.ceo-dashboard-page:not(.authenticated) .ceo-layout,
-.ceo-dashboard-page:not(.authenticated) main,
-.ceo-dashboard-page:not(.authenticated) .sidebar,
-.ceo-dashboard-page:not(.authenticated) .workspace {
+/* Hide dashboard content until authenticated - clean login screen */
+.ceo-dashboard-page:not(.authenticated) > .ceo-header,
+.ceo-dashboard-page:not(.authenticated) > .ceo-main {
     display: none !important;
 }
 
@@ -139,10 +135,8 @@
 }
 
 /* Show dashboard content after authentication with smooth animation */
-.ceo-dashboard-page.authenticated .ceo-header,
-.ceo-dashboard-page.authenticated .ceo-main-layout,
-.ceo-dashboard-page.authenticated .ceo-layout,
-.ceo-dashboard-page.authenticated main {
+.ceo-dashboard-page.authenticated > .ceo-header,
+.ceo-dashboard-page.authenticated > .ceo-main {
     animation: fadeInDashboard 0.6s var(--ease-out-expo);
 }
 
@@ -157,20 +151,6 @@
     }
 }
 
-/* Hide dashboard content until authenticated */
-.ceo-dashboard-page .biometric-gate:not(.hidden) ~ .ceo-header,
-.ceo-dashboard-page .biometric-gate:not(.hidden) ~ .ceo-main {
-    visibility: hidden;
-    opacity: 0;
-}
-
-/* Show content when gate is hidden (authenticated) */
-.ceo-dashboard-page .biometric-gate.hidden ~ .ceo-header,
-.ceo-dashboard-page .biometric-gate.hidden ~ .ceo-main {
-    visibility: visible;
-    opacity: 1;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-}
 
 /* Skip Link */
 .skip-link {
