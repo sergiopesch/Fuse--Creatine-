@@ -1,11 +1,13 @@
-# FUSE - Performance Coffee Creatine + AI Agent Command Center
+# FUSE Creatine - Coffee-Optimised Creatine + AI Agent Command Center
 
-Britain's first coffee-optimized creatine with Instant Fusion Technology, powered by an AI-driven corporate agent orchestration system.
+Britain's first coffee-optimised creatine with Instant Fusion Technology, powered by an AI-driven corporate agent orchestration system.
+
+> **Note:** FUSE Creatine is currently a concept/idea stage product. Statistics shown on the site (e.g. potential cities) represent aspirational targets, not real metrics. No pricing has been finalised.
 
 ## Overview
 
-FUSE is a dual-purpose platform:
-1. **Product Website** - Premium marketing site for FUSE creatine supplement
+FUSE Creatine is a dual-purpose platform:
+1. **Product Website** - Marketing site for FUSE Creatine supplement concept
 2. **AI Agent Command Center** - Corporate simulation with orchestratable AI agent teams
 
 ## Architecture
@@ -277,6 +279,13 @@ View costs at `/api/costs` or in the Admin portal.
 - Dose configurator
 - Waitlist signup modal
 
+### Branding
+
+- **Logo:** "FUSE CREATINE" — "FUSE" in brand red (#ff3b30), "CREATINE" in white
+- **Hero headline:** "FUSE CREATINE" — same colour treatment as logo
+- **Messaging:** Science-grounded, evidence-based claims backed by peer-reviewed research
+- **No pricing displayed** — product is at idea/concept stage
+
 ### FUSE Agent Chat
 
 AI-powered customer service assistant:
@@ -369,6 +378,18 @@ GDPR/CCPA compliant consent and cookie preference system.
 
 ## Recent Updates
 
+### Version 2.4.0
+- Rebranded from "FUSE UK" to "FUSE Creatine" across all touchpoints
+- Updated hero headline from "POUR. FUSE." to "FUSE CREATINE" (red + white styling)
+- Replaced specific member/athlete counts with science-backed stats
+- Marked city reach as "Potential UK Cities" (concept stage)
+- Replaced "18 months" messaging with grounded creatine science messaging
+- Removed pricing section (product is at idea stage)
+- Removed "Elite" references for more grounded tone
+- Updated all CTAs from pricing-focused to "Get Early Access"
+- Updated social share text and waitlist modal messaging
+- Updated documentation to reflect concept stage status
+
 ### Version 2.3.0 (Planned)
 - AWS DynamoDB integration for persistent storage
 - Consent management system
@@ -393,4 +414,4 @@ This project is proprietary. All rights reserved.
 
 ---
 
-**Engineered in Britain** | FUSE Performance
+**Engineered in Britain** | FUSE Creatine

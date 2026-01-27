@@ -239,7 +239,7 @@
             message:
                 'Your morning coffee has been missing something. Until now.',
             footnote:
-                'The first creatine engineered to vanish into hot coffee — discover what 1,200+ athletes already know.',
+                'The first creatine engineered to vanish into hot coffee — backed by 500+ peer-reviewed studies.',
         },
         {
             message:
@@ -255,9 +255,9 @@
         },
         {
             message:
-                'The founders\' batch ships in 6 weeks. 247 spots left at the founding price. Then it\'s gone.',
+                'Creatine is the most researched supplement in history. We just made it work in your coffee.',
             footnote:
-                'Join 1,200+ athletes who\'ve already secured their place. Will you be one of them?',
+                'Same proven creatine monohydrate. Engineered for heat. Designed for your routine.',
         },
     ];
 
@@ -624,13 +624,6 @@
                 onComplete: () => {
                     waitlistForm.style.display = 'none';
                     successMessage.classList.add('active');
-
-                    // Set position number (randomized for now, would come from API in production)
-                    const positionEl = document.getElementById('positionNumber');
-                    if (positionEl) {
-                        const position = 1247 + Math.floor(Math.random() * 50) + 1;
-                        positionEl.textContent = position.toLocaleString();
-                    }
 
                     gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
 

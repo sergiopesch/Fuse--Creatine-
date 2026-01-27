@@ -1,6 +1,8 @@
-# FUSE Technical Documentation
+# FUSE Creatine — Technical Documentation
 
-> Technical documentation for the FUSE platform architecture, data models, and planned infrastructure.
+> Technical documentation for the FUSE Creatine platform architecture, data models, and planned infrastructure.
+>
+> **Note:** FUSE Creatine is at the idea/concept stage. All statistics on the marketing site represent aspirational targets. No pricing has been finalised.
 
 ## Documentation Index
 
@@ -129,4 +131,4 @@ To review:
 
 ---
 
-*Last updated: January 2026*
+*Last updated: January 2026 — v2.4.0 branding update*
