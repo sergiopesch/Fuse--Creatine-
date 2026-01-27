@@ -1,313 +1,415 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-GB">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://*.vercel-insights.com; object-src 'none';">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#000000">
-    <title>FUSE Admin | Analytics Dashboard</title>
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
-    <link rel="stylesheet" href="css/consent.css">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://*.vercel-insights.com; object-src 'none';"
+        />
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="theme-color" content="#000000" />
+        <title>FUSE Admin | Analytics Dashboard</title>
+        <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+        <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="css/style.css" />
+        <link rel="stylesheet" href="css/admin.css" />
+        <link rel="stylesheet" href="css/consent.css" />
 
-    <!-- Cookie Consent Manager -->
-    <script defer src="js/consent-manager.js"></script>
-</head>
-<body class="admin-page">
-    <!-- Skip link for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+        <!-- Cookie Consent Manager -->
+        <script defer src="js/consent-manager.js"></script>
+    </head>
+    <body class="admin-page">
+        <!-- Skip link for accessibility -->
+        <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <main class="admin" id="main-content">
-        <header class="admin-header">
-            <div class="admin-header-left">
-                <a href="index.html" class="logo-link" aria-label="FUSE home">
-                    <span class="logo-text">FUSE</span>
-                </a>
-                <span class="header-divider" aria-hidden="true"></span>
-                <div>
-                    <span class="admin-eyebrow">Admin Console</span>
-                    <h1 class="admin-title">Analytics Dashboard</h1>
-                </div>
-            </div>
-            <div class="admin-header-right">
-                <nav class="admin-nav" aria-label="Admin navigation">
-                    <a class="admin-nav-link" href="ceo-dashboard.html">CEO Dashboard</a>
-                    <a class="admin-nav-link" href="dashboard.html">Dashboard</a>
-                    <a class="admin-nav-link" href="agents.html">Agents</a>
-                    <a class="admin-nav-link" href="index.html">Home</a>
-                </nav>
-                <div class="admin-actions">
-                    <button class="btn ghost" id="refreshBtn" type="button" disabled>Refresh</button>
-                    <button class="btn ghost" id="signOutBtn" type="button" disabled>Sign out</button>
-                </div>
-            </div>
-        </header>
-
-        <section class="card" id="loginCard">
-            <h2>Admin Access</h2>
-            <p class="muted">Enter the admin token to view analytics and signups.</p>
-            <form id="adminLogin" class="form">
-                <label for="adminToken">Admin token</label>
-                <input id="adminToken" name="adminToken" type="password" autocomplete="current-password" required>
-                <button class="btn primary" type="submit">Access</button>
-            </form>
-            <p class="status" id="loginStatus" role="alert" aria-live="polite"></p>
-        </section>
-
-        <!-- Tab Navigation -->
-        <nav class="tabs hidden" id="tabNav">
-            <button class="tab active" data-tab="analytics" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 20V10M12 20V4M6 20v-6"/>
-                </svg>
-                Analytics
-            </button>
-            <button class="tab" data-tab="signups" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                Signups Data
-            </button>
-        </nav>
-
-        <!-- Analytics Dashboard -->
-        <section class="card hidden" id="analyticsCard">
-            <!-- Key Metrics Row -->
-            <div class="metrics-grid">
-                <div class="metric-card highlight">
-                    <div class="metric-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">Total Signups</span>
-                        <span class="metric-value" id="metricTotal">0</span>
-                        <span class="metric-trend positive" id="metricTotalTrend">--</span>
+        <main class="admin" id="main-content">
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <a href="index.html" class="logo-link" aria-label="FUSE home">
+                        <span class="logo-text">FUSE</span>
+                    </a>
+                    <span class="header-divider" aria-hidden="true"></span>
+                    <div>
+                        <span class="admin-eyebrow">Admin Console</span>
+                        <h1 class="admin-title">Analytics Dashboard</h1>
                     </div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-icon blue">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">Today</span>
-                        <span class="metric-value" id="metricToday">0</span>
-                        <span class="metric-trend" id="metricTodayTrend">--</span>
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-icon purple">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                            <polyline points="17 6 23 6 23 12"/>
-                        </svg>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">This Week</span>
-                        <span class="metric-value" id="metricWeek">0</span>
-                        <span class="metric-trend" id="metricWeekTrend">--</span>
+                <div class="admin-header-right">
+                    <nav class="admin-nav" aria-label="Admin navigation">
+                        <a class="admin-nav-link" href="ceo-dashboard.html">CEO Dashboard</a>
+                        <a class="admin-nav-link" href="dashboard.html">Dashboard</a>
+                        <a class="admin-nav-link" href="agents.html">Agents</a>
+                        <a class="admin-nav-link" href="index.html">Home</a>
+                    </nav>
+                    <div class="admin-actions">
+                        <button class="btn ghost" id="refreshBtn" type="button" disabled>
+                            Refresh
+                        </button>
+                        <button class="btn ghost" id="signOutBtn" type="button" disabled>
+                            Sign out
+                        </button>
                     </div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-icon green">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                            <polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                    </div>
-                    <div class="metric-content">
-                        <span class="metric-label">Consent Rate</span>
-                        <span class="metric-value" id="metricConsent">0%</span>
-                        <span class="metric-trend positive" id="metricConsentTrend">--</span>
-                    </div>
-                </div>
-            </div>
+            </header>
 
-            <!-- Charts Row -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Signup Trends</h3>
-                        <div class="chart-controls">
-                            <button class="chart-range-btn active" data-range="7">7D</button>
-                            <button class="chart-range-btn" data-range="14">14D</button>
-                            <button class="chart-range-btn" data-range="30">30D</button>
-                            <button class="chart-range-btn" data-range="all">All</button>
+            <section class="card" id="loginCard">
+                <h2>Admin Access</h2>
+                <p class="muted">Enter the admin token to view analytics and signups.</p>
+                <form id="adminLogin" class="form">
+                    <label for="adminToken">Admin token</label>
+                    <input
+                        id="adminToken"
+                        name="adminToken"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    />
+                    <button class="btn primary" type="submit">Access</button>
+                </form>
+                <p class="status" id="loginStatus" role="alert" aria-live="polite"></p>
+            </section>
+
+            <!-- Tab Navigation -->
+            <nav class="tabs hidden" id="tabNav">
+                <button class="tab active" data-tab="analytics" type="button">
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                    Analytics
+                </button>
+                <button class="tab" data-tab="signups" type="button">
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Signups Data
+                </button>
+            </nav>
+
+            <!-- Analytics Dashboard -->
+            <section class="card hidden" id="analyticsCard">
+                <!-- Key Metrics Row -->
+                <div class="metrics-grid">
+                    <div class="metric-card highlight">
+                        <div class="metric-icon">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </div>
+                        <div class="metric-content">
+                            <span class="metric-label">Total Signups</span>
+                            <span class="metric-value" id="metricTotal">0</span>
+                            <span class="metric-trend positive" id="metricTotalTrend">--</span>
                         </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="trendChart"></canvas>
+                    <div class="metric-card">
+                        <div class="metric-icon blue">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                        </div>
+                        <div class="metric-content">
+                            <span class="metric-label">Today</span>
+                            <span class="metric-value" id="metricToday">0</span>
+                            <span class="metric-trend" id="metricTodayTrend">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon purple">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                <polyline points="17 6 23 6 23 12" />
+                            </svg>
+                        </div>
+                        <div class="metric-content">
+                            <span class="metric-label">This Week</span>
+                            <span class="metric-value" id="metricWeek">0</span>
+                            <span class="metric-trend" id="metricWeekTrend">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon green">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                        </div>
+                        <div class="metric-content">
+                            <span class="metric-label">Consent Rate</span>
+                            <span class="metric-value" id="metricConsent">0%</span>
+                            <span class="metric-trend positive" id="metricConsentTrend">--</span>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-card small">
+
+                <!-- Charts Row -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Signup Trends</h3>
+                            <div class="chart-controls">
+                                <button class="chart-range-btn active" data-range="7">7D</button>
+                                <button class="chart-range-btn" data-range="14">14D</button>
+                                <button class="chart-range-btn" data-range="30">30D</button>
+                                <button class="chart-range-btn" data-range="all">All</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card small">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Interest Distribution</h3>
+                        </div>
+                        <div class="chart-container doughnut">
+                            <canvas id="interestChart"></canvas>
+                        </div>
+                        <div class="chart-legend" id="interestLegend"></div>
+                    </div>
+                </div>
+
+                <!-- Secondary Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Daily Average</span>
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <line x1="12" y1="20" x2="12" y2="10" />
+                                <line x1="18" y1="20" x2="18" y2="4" />
+                                <line x1="6" y1="20" x2="6" y2="16" />
+                            </svg>
+                        </div>
+                        <span class="stat-value" id="statDailyAvg">0</span>
+                        <span class="stat-subtext">signups per day</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Peak Day</span>
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                                />
+                            </svg>
+                        </div>
+                        <span class="stat-value" id="statPeakDay">--</span>
+                        <span class="stat-subtext" id="statPeakCount">0 signups</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">This Month</span>
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                        </div>
+                        <span class="stat-value" id="statMonth">0</span>
+                        <span class="stat-subtext" id="statMonthGrowth">vs last month</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">First Signup</span>
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <span class="stat-value" id="statFirstDate">--</span>
+                        <span class="stat-subtext" id="statDaysActive">0 days active</span>
+                    </div>
+                </div>
+
+                <!-- Hourly Activity Heatmap -->
+                <div class="activity-section">
                     <div class="chart-header">
-                        <h3 class="chart-title">Interest Distribution</h3>
+                        <h3 class="chart-title">Signup Activity by Hour</h3>
+                        <span class="chart-subtitle">When users are most active</span>
                     </div>
-                    <div class="chart-container doughnut">
-                        <canvas id="interestChart"></canvas>
-                    </div>
-                    <div class="chart-legend" id="interestLegend"></div>
-                </div>
-            </div>
-
-            <!-- Secondary Stats Row -->
-            <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-label">Daily Average</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="20" x2="12" y2="10"/>
-                            <line x1="18" y1="20" x2="18" y2="4"/>
-                            <line x1="6" y1="20" x2="6" y2="16"/>
-                        </svg>
-                    </div>
-                    <span class="stat-value" id="statDailyAvg">0</span>
-                    <span class="stat-subtext">signups per day</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-label">Peak Day</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                        </svg>
-                    </div>
-                    <span class="stat-value" id="statPeakDay">--</span>
-                    <span class="stat-subtext" id="statPeakCount">0 signups</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-label">This Month</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                    </div>
-                    <span class="stat-value" id="statMonth">0</span>
-                    <span class="stat-subtext" id="statMonthGrowth">vs last month</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-label">First Signup</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                    </div>
-                    <span class="stat-value" id="statFirstDate">--</span>
-                    <span class="stat-subtext" id="statDaysActive">0 days active</span>
-                </div>
-            </div>
-
-            <!-- Hourly Activity Heatmap -->
-            <div class="activity-section">
-                <div class="chart-header">
-                    <h3 class="chart-title">Signup Activity by Hour</h3>
-                    <span class="chart-subtitle">When users are most active</span>
-                </div>
-                <div class="heatmap-container">
-                    <div class="heatmap" id="hourlyHeatmap"></div>
-                    <div class="heatmap-labels">
-                        <span>12am</span>
-                        <span>6am</span>
-                        <span>12pm</span>
-                        <span>6pm</span>
-                        <span>11pm</span>
+                    <div class="heatmap-container">
+                        <div class="heatmap" id="hourlyHeatmap"></div>
+                        <div class="heatmap-labels">
+                            <span>12am</span>
+                            <span>6am</span>
+                            <span>12pm</span>
+                            <span>6pm</span>
+                            <span>11pm</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Signups Data Table -->
-        <section class="card hidden" id="dataCard">
-            <div class="summary">
-                <div>
-                    <div class="label">Total loaded</div>
-                    <div class="value" id="signupCount">0</div>
+            <!-- Signups Data Table -->
+            <section class="card hidden" id="dataCard">
+                <div class="summary">
+                    <div>
+                        <div class="label">Total loaded</div>
+                        <div class="value" id="signupCount">0</div>
+                    </div>
+                    <div>
+                        <div class="label">Last updated</div>
+                        <div class="value" id="lastUpdated">--</div>
+                    </div>
+                    <div>
+                        <div class="label">Showing</div>
+                        <div class="value" id="showingCount">0</div>
+                    </div>
+                    <div>
+                        <div class="label">Filter</div>
+                        <div class="value" id="filterValue">All</div>
+                    </div>
                 </div>
-                <div>
-                    <div class="label">Last updated</div>
-                    <div class="value" id="lastUpdated">--</div>
-                </div>
-                <div>
-                    <div class="label">Showing</div>
-                    <div class="value" id="showingCount">0</div>
-                </div>
-                <div>
-                    <div class="label">Filter</div>
-                    <div class="value" id="filterValue">All</div>
-                </div>
-            </div>
 
-            <div class="toolbar">
-                <div class="toolbar-group">
-                    <label class="toolbar-label" for="emailFilter">Filter by email</label>
-                    <input id="emailFilter" type="email" placeholder="flex@gainmail.com">
-                    <button class="btn ghost" id="applyFilterBtn" type="button" disabled>Search</button>
-                    <button class="btn ghost" id="clearFilterBtn" type="button" disabled>Clear</button>
+                <div class="toolbar">
+                    <div class="toolbar-group">
+                        <label class="toolbar-label" for="emailFilter">Filter by email</label>
+                        <input id="emailFilter" type="email" placeholder="flex@gainmail.com" />
+                        <button class="btn ghost" id="applyFilterBtn" type="button" disabled>
+                            Search
+                        </button>
+                        <button class="btn ghost" id="clearFilterBtn" type="button" disabled>
+                            Clear
+                        </button>
+                    </div>
+                    <div class="toolbar-group">
+                        <label class="toolbar-label" for="interestFilter">Interest keyword</label>
+                        <input id="interestFilter" type="text" placeholder="powerlifting" />
+                        <label class="toolbar-label" for="fromDate">From</label>
+                        <input id="fromDate" type="date" />
+                        <label class="toolbar-label" for="toDate">To</label>
+                        <input id="toDate" type="date" />
+                        <button class="btn ghost" id="applyLocalFiltersBtn" type="button" disabled>
+                            Apply
+                        </button>
+                        <button class="btn ghost" id="clearLocalFiltersBtn" type="button" disabled>
+                            Reset
+                        </button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="btn ghost" id="copyEmailsBtn" type="button" disabled>
+                            Copy emails
+                        </button>
+                        <button class="btn ghost" id="exportCsvBtn" type="button" disabled>
+                            Export CSV
+                        </button>
+                    </div>
                 </div>
-                <div class="toolbar-group">
-                    <label class="toolbar-label" for="interestFilter">Interest keyword</label>
-                    <input id="interestFilter" type="text" placeholder="powerlifting">
-                    <label class="toolbar-label" for="fromDate">From</label>
-                    <input id="fromDate" type="date">
-                    <label class="toolbar-label" for="toDate">To</label>
-                    <input id="toDate" type="date">
-                    <button class="btn ghost" id="applyLocalFiltersBtn" type="button" disabled>Apply</button>
-                    <button class="btn ghost" id="clearLocalFiltersBtn" type="button" disabled>Reset</button>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Full name</th>
+                                <th>Email</th>
+                                <th>Main interest</th>
+                                <th>Consent</th>
+                                <th>Consent date</th>
+                                <th>Signup date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="signupRows"></tbody>
+                    </table>
+                    <div class="empty-state hidden" id="emptyState">No signups yet.</div>
                 </div>
-                <div class="toolbar-group">
-                    <button class="btn ghost" id="copyEmailsBtn" type="button" disabled>Copy emails</button>
-                    <button class="btn ghost" id="exportCsvBtn" type="button" disabled>Export CSV</button>
+
+                <div class="table-actions">
+                    <button class="btn ghost hidden" id="loadMoreBtn" type="button">
+                        Load more
+                    </button>
                 </div>
-            </div>
 
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Full name</th>
-                            <th>Email</th>
-                            <th>Main interest</th>
-                            <th>Consent</th>
-                            <th>Consent date</th>
-                            <th>Signup date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="signupRows"></tbody>
-                </table>
-                <div class="empty-state hidden" id="emptyState">No signups yet.</div>
-            </div>
+                <p class="status" id="dataStatus" role="status" aria-live="polite"></p>
+            </section>
+        </main>
 
-            <div class="table-actions">
-                <button class="btn ghost hidden" id="loadMoreBtn" type="button">Load more</button>
-            </div>
-
-            <p class="status" id="dataStatus" role="status" aria-live="polite"></p>
-        </section>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script defer src="js/admin.js"></script>
-</body>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script defer src="js/admin.js"></script>
+    </body>
 </html>

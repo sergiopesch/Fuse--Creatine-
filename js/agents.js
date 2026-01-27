@@ -26,7 +26,7 @@ function escapeHtml(str) {
  * @param {object} attrs - Optional attributes
  * @returns {HTMLElement}
  */
-function safeElement(tag, text, attrs = {}) {
+function _safeElement(tag, text, attrs = {}) {
     const el = document.createElement(tag);
     if (text) el.textContent = text;
     Object.entries(attrs).forEach(([key, value]) => {
@@ -62,7 +62,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'shield'
+                avatar: 'shield',
             },
             {
                 id: 'coder',
@@ -73,7 +73,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'code'
+                avatar: 'code',
             },
             {
                 id: 'tester',
@@ -84,9 +84,9 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'test'
-            }
-        ]
+                avatar: 'test',
+            },
+        ],
     },
     design: {
         id: 'design',
@@ -107,7 +107,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'palette'
+                avatar: 'palette',
             },
             {
                 id: 'ui-artist',
@@ -118,7 +118,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'brush'
+                avatar: 'brush',
             },
             {
                 id: 'motion',
@@ -129,9 +129,9 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'motion'
-            }
-        ]
+                avatar: 'motion',
+            },
+        ],
     },
     communications: {
         id: 'communications',
@@ -152,7 +152,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'document'
+                avatar: 'document',
             },
             {
                 id: 'copywriter',
@@ -163,20 +163,25 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'pen'
+                avatar: 'pen',
             },
             {
                 id: 'social-manager',
                 name: 'Social Media Manager',
                 role: 'Community & Engagement',
                 status: 'idle',
-                skills: ['Social Media', 'Community Management', 'Influencer Outreach', 'Analytics'],
+                skills: [
+                    'Social Media',
+                    'Community Management',
+                    'Influencer Outreach',
+                    'Analytics',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'share'
-            }
-        ]
+                avatar: 'share',
+            },
+        ],
     },
     legal: {
         id: 'legal',
@@ -197,7 +202,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'shield'
+                avatar: 'shield',
             },
             {
                 id: 'contract-analyst',
@@ -208,7 +213,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'document'
+                avatar: 'document',
             },
             {
                 id: 'ip-counsel',
@@ -219,9 +224,9 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'lock'
-            }
-        ]
+                avatar: 'lock',
+            },
+        ],
     },
     marketing: {
         id: 'marketing',
@@ -242,7 +247,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'chart'
+                avatar: 'chart',
             },
             {
                 id: 'brand-strategist',
@@ -253,7 +258,7 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'star'
+                avatar: 'star',
             },
             {
                 id: 'analytics-expert',
@@ -264,9 +269,9 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'analytics'
-            }
-        ]
+                avatar: 'analytics',
+            },
+        ],
     },
     gtm: {
         id: 'gtm',
@@ -283,35 +288,50 @@ const AgentTeams = {
                 name: 'Launch Coordinator',
                 role: 'Launch Planning & Execution',
                 status: 'idle',
-                skills: ['Launch Strategy', 'Project Management', 'Timeline Planning', 'Stakeholder Management'],
+                skills: [
+                    'Launch Strategy',
+                    'Project Management',
+                    'Timeline Planning',
+                    'Stakeholder Management',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'rocket'
+                avatar: 'rocket',
             },
             {
                 id: 'partnership-manager',
                 name: 'Partnership Manager',
                 role: 'Strategic Partnerships',
                 status: 'idle',
-                skills: ['Business Development', 'Negotiations', 'Partner Relations', 'Co-marketing'],
+                skills: [
+                    'Business Development',
+                    'Negotiations',
+                    'Partner Relations',
+                    'Co-marketing',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'handshake'
+                avatar: 'handshake',
             },
             {
                 id: 'market-researcher',
                 name: 'Market Researcher',
                 role: 'Market Intelligence',
                 status: 'idle',
-                skills: ['Market Research', 'Competitive Intelligence', 'Trend Analysis', 'Surveys'],
+                skills: [
+                    'Market Research',
+                    'Competitive Intelligence',
+                    'Trend Analysis',
+                    'Surveys',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'search'
-            }
-        ]
+                avatar: 'search',
+            },
+        ],
     },
     sales: {
         id: 'sales',
@@ -328,22 +348,32 @@ const AgentTeams = {
                 name: 'Sales Director',
                 role: 'Revenue Strategy & Team Leadership',
                 status: 'idle',
-                skills: ['Sales Strategy', 'Revenue Operations', 'Team Leadership', 'Pipeline Management'],
+                skills: [
+                    'Sales Strategy',
+                    'Revenue Operations',
+                    'Team Leadership',
+                    'Pipeline Management',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'user'
+                avatar: 'user',
             },
             {
                 id: 'account-executive',
                 name: 'Account Executive',
                 role: 'Enterprise Sales & Closing',
                 status: 'idle',
-                skills: ['Enterprise Sales', 'Contract Negotiation', 'Relationship Building', 'Closing Techniques'],
+                skills: [
+                    'Enterprise Sales',
+                    'Contract Negotiation',
+                    'Relationship Building',
+                    'Closing Techniques',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'briefcase'
+                avatar: 'briefcase',
             },
             {
                 id: 'sdr',
@@ -354,18 +384,23 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'email'
+                avatar: 'email',
             },
             {
                 id: 'solutions-consultant',
                 name: 'Solutions Consultant',
                 role: 'Technical Sales & Demos',
                 status: 'idle',
-                skills: ['Technical Demos', 'Solution Architecture', 'Requirements Analysis', 'POC Management'],
+                skills: [
+                    'Technical Demos',
+                    'Solution Architecture',
+                    'Requirements Analysis',
+                    'POC Management',
+                ],
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'monitor'
+                avatar: 'monitor',
             },
             {
                 id: 'customer-success',
@@ -376,10 +411,10 @@ const AgentTeams = {
                 tasksCompleted: 0,
                 currentTask: null,
                 efficiency: 0,
-                avatar: 'check'
-            }
-        ]
-    }
+                avatar: 'check',
+            },
+        ],
+    },
 };
 
 // ============================================
@@ -390,7 +425,7 @@ const AgentTeams = {
 const state = {
     activeTeam: 'all',
     currentWorkspaceTeam: null,
-    orchestrationMode: 'manual',  // DEFAULT: manual (all paused)
+    orchestrationMode: 'manual', // DEFAULT: manual (all paused)
     teamOrchestrationState: {
         developer: { status: 'paused', lastRun: null },
         design: { status: 'paused', lastRun: null },
@@ -398,27 +433,27 @@ const state = {
         legal: { status: 'paused', lastRun: null },
         marketing: { status: 'paused', lastRun: null },
         gtm: { status: 'paused', lastRun: null },
-        sales: { status: 'paused', lastRun: null }
+        sales: { status: 'paused', lastRun: null },
     },
     decisions: [],
-    activities: [],  // Only real activities from orchestration
+    activities: [], // Only real activities from orchestration
     communications: [],
     tasks: [],
     priorities: [],
     projects: [],
-    liveFeed: [],  // Only real orchestration events
+    liveFeed: [], // Only real orchestration events
     liveFeedFilter: 'all',
     apiKeyConfig: {
         anthropic: { configured: false, model: 'claude-3-5-sonnet-latest' },
         openai: { configured: false, model: 'gpt-4o' },
-        gemini: { configured: false, model: 'gemini-pro' }
+        gemini: { configured: false, model: 'gemini-pro' },
     },
     healthMetrics: {
         lastCheck: null,
-        systemStatus: 'idle'  // All teams paused by default
+        systemStatus: 'idle', // All teams paused by default
     },
     teamSettings: {},
-    adminToken: null  // Set via API config for orchestration
+    adminToken: null, // Set via API config for orchestration
 };
 
 // Initialize team settings
@@ -426,7 +461,7 @@ Object.keys(AgentTeams).forEach(teamId => {
     state.teamSettings[teamId] = {
         model: AgentTeams[teamId].model,
         provider: AgentTeams[teamId].provider,
-        apiKeyConfigured: false
+        apiKeyConfigured: false,
     };
 });
 
@@ -446,18 +481,17 @@ state.projects = [];
 // Fetch real activities from orchestration API
 async function fetchRealActivities(teamId) {
     try {
-        const url = teamId && teamId !== 'all'
-            ? `/api/orchestrate?teamId=${teamId}`
-            : '/api/orchestrate?action=activities&limit=20';
+        const url =
+            teamId && teamId !== 'all'
+                ? `/api/orchestrate?teamId=${teamId}`
+                : '/api/orchestrate?action=activities&limit=20';
 
         const response = await fetch(url);
         if (!response.ok) return [];
 
         const data = await response.json();
         if (data.success) {
-            return teamId && teamId !== 'all'
-                ? data.data.activities || []
-                : data.data || [];
+            return teamId && teamId !== 'all' ? data.data.activities || [] : data.data || [];
         }
         return [];
     } catch (error) {
@@ -470,8 +504,12 @@ async function fetchRealActivities(teamId) {
 function activityToFeedItem(activity) {
     return {
         id: activity.id,
-        type: activity.tag?.toLowerCase() === 'started' ? 'action' :
-              activity.tag?.toLowerCase() === 'paused' ? 'insight' : 'action',
+        type:
+            activity.tag?.toLowerCase() === 'started'
+                ? 'action'
+                : activity.tag?.toLowerCase() === 'paused'
+                  ? 'insight'
+                  : 'action',
         agent: activity.agent,
         agentId: activity.agentId || activity.agent.toLowerCase().replace(/\s+/g, '-'),
         team: activity.teamId,
@@ -479,7 +517,7 @@ function activityToFeedItem(activity) {
         highlights: [],
         timestamp: new Date(activity.timestamp),
         processed: true,
-        isReal: true  // Flag indicating this is real data
+        isReal: true, // Flag indicating this is real data
     };
 }
 
@@ -491,14 +529,14 @@ const WORLD_STATES = {
     PAUSED: 'paused',
     MANUAL: 'manual',
     SEMI_AUTO: 'semi_auto',
-    AUTONOMOUS: 'autonomous'
+    AUTONOMOUS: 'autonomous',
 };
 
 const AUTOMATION_LEVELS = {
     STOPPED: 'stopped',
     MANUAL: 'manual',
     SUPERVISED: 'supervised',
-    AUTONOMOUS: 'autonomous'
+    AUTONOMOUS: 'autonomous',
 };
 
 const ACTION_TYPES = {
@@ -509,7 +547,7 @@ const ACTION_TYPES = {
     SYNC: 'sync',
     RESEARCH: 'research',
     CREATE: 'create',
-    REVIEW: 'review'
+    REVIEW: 'review',
 };
 
 // World Controller Functions
@@ -535,7 +573,7 @@ function pauseWorld(reason = 'Manual pause by owner') {
         team: 'system',
         message: `WORLD PAUSED: ${reason}`,
         tag: 'Emergency',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
     renderActivityFeed();
 }
@@ -566,7 +604,7 @@ function resumeWorld(targetState = WORLD_STATES.MANUAL) {
         team: 'system',
         message: `World resumed in ${targetState} mode`,
         tag: 'System',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
     renderActivityFeed();
     return true;
@@ -598,7 +636,7 @@ function triggerEmergencyStop(reason = 'Emergency stop by owner') {
     state.worldController.emergencyStop = {
         triggered: true,
         triggeredAt: new Date().toISOString(),
-        reason
+        reason,
     };
 
     pauseWorld(reason);
@@ -622,7 +660,7 @@ function resetEmergencyStop(confirmationCode) {
     state.worldController.emergencyStop = {
         triggered: false,
         triggeredAt: null,
-        reason: null
+        reason: null,
     };
 
     addControlLog('EMERGENCY_RESET', {});
@@ -710,7 +748,7 @@ function triggerTeamAction(teamId, actionType, parameters = {}) {
         actionType,
         parameters,
         triggeredAt: new Date().toISOString(),
-        status: 'triggered'
+        status: 'triggered',
     };
 
     addControlLog('ACTION_TRIGGERED', action);
@@ -723,7 +761,7 @@ function triggerTeamAction(teamId, actionType, parameters = {}) {
         team: teamId,
         message: `Triggered action: ${actionType}`,
         tag: 'Manual',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
     renderActivityFeed();
 
@@ -740,13 +778,13 @@ function setCreditLimits(daily, monthly) {
 
     addControlLog('CREDIT_LIMITS_UPDATED', {
         dailyLimit: state.worldController.creditProtection.dailyLimit,
-        monthlyLimit: state.worldController.creditProtection.monthlyLimit
+        monthlyLimit: state.worldController.creditProtection.monthlyLimit,
     });
     updateCreditUI();
     showToast('Credit limits updated', 'success');
 }
 
-function recordSpend(amount, source = 'agent_action') {
+function recordSpend(amount, _source = 'agent_action') {
     state.worldController.creditProtection.currentDailySpend += amount;
     state.worldController.creditProtection.currentMonthlySpend += amount;
 
@@ -796,7 +834,7 @@ function checkCreditLimits() {
         monthlySpent: cp.currentMonthlySpend,
         monthlyLimit: cp.monthlyLimit,
         monthlyRemaining: cp.monthlyLimit - cp.currentMonthlySpend,
-        monthlyPercent: Math.round(monthlyUsageRatio * 100)
+        monthlyPercent: Math.round(monthlyUsageRatio * 100),
     };
 }
 
@@ -804,7 +842,7 @@ function addControlLog(action, details) {
     state.worldController.controlLog.unshift({
         timestamp: new Date().toISOString(),
         action,
-        details
+        details,
     });
 
     // Keep log size manageable
@@ -842,13 +880,24 @@ function canExecuteAction(teamId, actionType) {
         case WORLD_STATES.PAUSED:
             return { allowed: false, reason: 'World is paused', code: 'WORLD_PAUSED' };
         case WORLD_STATES.MANUAL:
-            return { allowed: false, reason: 'Manual mode - requires trigger', code: 'REQUIRES_TRIGGER', requiresApproval: true };
-        case WORLD_STATES.SEMI_AUTO:
+            return {
+                allowed: false,
+                reason: 'Manual mode - requires trigger',
+                code: 'REQUIRES_TRIGGER',
+                requiresApproval: true,
+            };
+        case WORLD_STATES.SEMI_AUTO: {
             const teamControl = state.worldController.teamControls[teamId];
             if (teamControl?.allowedActions?.includes(actionType)) {
                 return { allowed: true, reason: 'Action allowed in semi-auto' };
             }
-            return { allowed: false, reason: 'Action not in allowed list', code: 'REQUIRES_APPROVAL', requiresApproval: true };
+            return {
+                allowed: false,
+                reason: 'Action not in allowed list',
+                code: 'REQUIRES_APPROVAL',
+                requiresApproval: true,
+            };
+        }
         case WORLD_STATES.AUTONOMOUS:
             return { allowed: true, reason: 'Autonomous mode' };
         default:
@@ -895,7 +944,8 @@ function updateWorldControlUI() {
         if (wc.emergencyStop.triggered) {
             emergencyModal.classList.add('active');
             if (emergencyReasonText) {
-                emergencyReasonText.textContent = wc.emergencyStop.reason || 'All agent operations have been immediately halted.';
+                emergencyReasonText.textContent =
+                    wc.emergencyStop.reason || 'All agent operations have been immediately halted.';
             }
         } else {
             emergencyModal.classList.remove('active');
@@ -955,8 +1005,9 @@ function updateWorldControlUI() {
         const descriptions = {
             paused: 'World is PAUSED. All agent operations are halted.',
             manual: 'Manual mode: You must trigger every action. Full control.',
-            semi_auto: 'Semi-auto mode: Agents can perform allowed actions. Major decisions require approval.',
-            autonomous: 'Autonomous mode: Agents operate independently. Use with caution.'
+            semi_auto:
+                'Semi-auto mode: Agents can perform allowed actions. Major decisions require approval.',
+            autonomous: 'Autonomous mode: Agents operate independently. Use with caution.',
         };
         stateDesc.textContent = descriptions[wc.worldStatus] || '';
     }
@@ -1028,7 +1079,7 @@ function updateTeamControlsUI() {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     const teamNames = {
@@ -1038,16 +1089,17 @@ function updateTeamControlsUI() {
         legal: 'Legal',
         marketing: 'Marketing',
         gtm: 'GTM',
-        sales: 'Sales'
+        sales: 'Sales',
     };
 
-    container.innerHTML = Object.entries(state.worldController.teamControls).map(([teamId, control]) => {
-        const isPaused = control.paused;
-        const color = teamColors[teamId] || '#888';
-        const name = teamNames[teamId] || teamId;
-        const badge = AgentTeams[teamId]?.badge || teamId.substring(0, 3).toUpperCase();
+    container.innerHTML = Object.entries(state.worldController.teamControls)
+        .map(([teamId, control]) => {
+            const isPaused = control.paused;
+            const color = teamColors[teamId] || '#888';
+            const name = teamNames[teamId] || teamId;
+            const badge = AgentTeams[teamId]?.badge || teamId.substring(0, 3).toUpperCase();
 
-        return `
+            return `
             <div class="team-control-item ${isPaused ? 'paused' : ''}" data-team="${teamId}">
                 <div class="team-control-badge" style="background: ${color}">${badge}</div>
                 <div class="team-control-info">
@@ -1060,11 +1112,12 @@ function updateTeamControlsUI() {
                     <option value="autonomous" ${control.automationLevel === 'autonomous' ? 'selected' : ''}>Autonomous</option>
                 </select>
                 <div class="team-control-actions">
-                    ${isPaused ?
-                        `<button class="team-control-btn play-btn" data-action="resume" data-team="${teamId}" title="Resume Team">
+                    ${
+                        isPaused
+                            ? `<button class="team-control-btn play-btn" data-action="resume" data-team="${teamId}" title="Resume Team">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>` :
-                        `<button class="team-control-btn pause-btn" data-action="pause" data-team="${teamId}" title="Pause Team">
+                        </button>`
+                            : `<button class="team-control-btn pause-btn" data-action="pause" data-team="${teamId}" title="Pause Team">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         </button>`
                     }
@@ -1074,11 +1127,12 @@ function updateTeamControlsUI() {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 
     // Add event listeners
     container.querySelectorAll('.team-control-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', _e => {
             const action = btn.dataset.action;
             const teamId = btn.dataset.team;
             if (action === 'pause') pauseTeam(teamId);
@@ -1092,7 +1146,7 @@ function updateTeamControlsUI() {
     });
 
     container.querySelectorAll('.team-automation-select').forEach(select => {
-        select.addEventListener('change', (e) => {
+        select.addEventListener('change', _e => {
             const teamId = select.dataset.team;
             setTeamAutomationLevel(teamId, select.value);
         });
@@ -1111,20 +1165,29 @@ function renderControlLog() {
     }
 
     // Use escapeHtml to prevent XSS from log content
-    container.innerHTML = recentLogs.map(log => {
-        const time = new Date(log.timestamp);
-        const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const detailsStr = typeof log.details === 'object' ?
-            Object.entries(log.details).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(', ') : '';
+    container.innerHTML = recentLogs
+        .map(log => {
+            const time = new Date(log.timestamp);
+            const timeStr = time.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+            const detailsStr =
+                typeof log.details === 'object'
+                    ? Object.entries(log.details)
+                          .map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`)
+                          .join(', ')
+                    : '';
 
-        return `
+            return `
             <div class="control-log-item">
                 <span class="log-time">${escapeHtml(timeStr)}</span>
                 <span class="log-action">${escapeHtml(log.action)}</span>
                 <span class="log-details">${detailsStr}</span>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function renderPendingActions() {
@@ -1143,12 +1206,13 @@ function renderPendingActions() {
     }
 
     // Use escapeHtml to prevent XSS from action content
-    container.innerHTML = pending.map(action => {
-        const safeId = escapeHtml(action.id);
-        const safeActionType = escapeHtml(action.actionType);
-        const safeTeamId = escapeHtml(action.teamId);
+    container.innerHTML = pending
+        .map(action => {
+            const safeId = escapeHtml(action.id);
+            const safeActionType = escapeHtml(action.actionType);
+            const safeTeamId = escapeHtml(action.teamId);
 
-        return `
+            return `
             <div class="pending-action-item" data-id="${safeId}">
                 <div class="pending-action-info">
                     <div class="pending-action-type">${safeActionType}</div>
@@ -1160,7 +1224,8 @@ function renderPendingActions() {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 // ============================================
@@ -1207,7 +1272,7 @@ const elements = {
     completedToday: document.getElementById('completedToday'),
     sidebarActiveAgents: document.getElementById('sidebarActiveAgents'),
     sidebarTasksCount: document.getElementById('sidebarTasksCount'),
-    sidebarEfficiency: document.getElementById('sidebarEfficiency')
+    sidebarEfficiency: document.getElementById('sidebarEfficiency'),
 };
 
 // ============================================
@@ -1224,15 +1289,18 @@ function renderTeamsGrid() {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
-    elements.teamsGrid.innerHTML = Object.entries(AgentTeams).map(([teamId, team]) => {
-        const workingCount = team.agents.filter(a => a.status === 'working').length;
-        const totalTasks = team.agents.reduce((sum, a) => sum + a.tasksCompleted, 0);
-        const avgEfficiency = Math.round(team.agents.reduce((sum, a) => sum + a.efficiency, 0) / team.agents.length);
+    elements.teamsGrid.innerHTML = Object.entries(AgentTeams)
+        .map(([teamId, team]) => {
+            const workingCount = team.agents.filter(a => a.status === 'working').length;
+            const totalTasks = team.agents.reduce((sum, a) => sum + a.tasksCompleted, 0);
+            const avgEfficiency = Math.round(
+                team.agents.reduce((sum, a) => sum + a.efficiency, 0) / team.agents.length
+            );
 
-        return `
+            return `
             <div class="team-overview-card" data-team="${teamId}" onclick="openTeamWorkspace('${teamId}')">
                 <div class="team-overview-header">
                     <div class="team-overview-badge" style="background: ${teamColors[teamId]}20; color: ${teamColors[teamId]}">${team.badge}</div>
@@ -1245,14 +1313,18 @@ function renderTeamsGrid() {
                     </div>
                 </div>
                 <div class="team-overview-agents">
-                    ${team.agents.map(agent => `
+                    ${team.agents
+                        .map(
+                            agent => `
                         <div class="mini-agent ${agent.status}" title="${agent.name} - ${agent.status}">
                             <div class="mini-agent-avatar" style="background: ${teamColors[teamId]}30; border-color: ${teamColors[teamId]}">
                                 ${agent.name.charAt(0)}
                             </div>
                             ${agent.status === 'working' ? '<span class="mini-agent-pulse"></span>' : ''}
                         </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
                 <div class="team-overview-stats">
                     <div class="team-mini-stat">
@@ -1273,21 +1345,23 @@ function renderTeamsGrid() {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function renderDecisionQueue() {
     if (!elements.decisionQueue) return;
 
     // Use escapeHtml to prevent XSS from decision content
-    elements.decisionQueue.innerHTML = state.decisions.map(decision => {
-        const safeId = escapeHtml(decision.id);
-        const safeTitle = escapeHtml(decision.title);
-        const safeRequestedBy = escapeHtml(decision.requestedBy);
-        const safeTime = escapeHtml(getRelativeTime(decision.timestamp));
-        const safePriority = escapeHtml(decision.priority);
+    elements.decisionQueue.innerHTML = state.decisions
+        .map(decision => {
+            const safeId = escapeHtml(decision.id);
+            const safeTitle = escapeHtml(decision.title);
+            const safeRequestedBy = escapeHtml(decision.requestedBy);
+            const safeTime = escapeHtml(getRelativeTime(decision.timestamp));
+            const safePriority = escapeHtml(decision.priority);
 
-        return `
+            return `
             <div class="decision-item" data-decision-id="${safeId}">
                 <div class="decision-priority ${safePriority}"></div>
                 <div class="decision-info">
@@ -1300,7 +1374,8 @@ function renderDecisionQueue() {
                 <button class="decision-action" onclick="openDecisionModal('${safeId}')">Review</button>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function renderActivityFeed() {
@@ -1313,18 +1388,19 @@ function renderActivityFeed() {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     // Use escapeHtml to prevent XSS from activity content
-    elements.activityFeed.innerHTML = state.activities.map(activity => {
-        const safeAgent = escapeHtml(activity.agent);
-        const safeMessage = escapeHtml(activity.message);
-        const safeTag = escapeHtml(activity.tag);
-        const safeTime = escapeHtml(getRelativeTime(activity.timestamp));
-        const teamColor = teamColors[activity.team] || '#888';
+    elements.activityFeed.innerHTML = state.activities
+        .map(activity => {
+            const safeAgent = escapeHtml(activity.agent);
+            const safeMessage = escapeHtml(activity.message);
+            const safeTag = escapeHtml(activity.tag);
+            const safeTime = escapeHtml(getRelativeTime(activity.timestamp));
+            const teamColor = teamColors[activity.team] || '#888';
 
-        return `
+            return `
             <div class="activity-item fade-in">
                 <div class="activity-avatar" style="background: ${teamColor}20">
                     <svg viewBox="0 0 24 24" fill="${teamColor}">
@@ -1341,19 +1417,21 @@ function renderActivityFeed() {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function renderPriorityQueue() {
     if (!elements.priorityQueue) return;
 
     // Use escapeHtml to prevent XSS from priority content
-    elements.priorityQueue.innerHTML = state.priorities.map((priority, index) => {
-        const safeId = escapeHtml(priority.id);
-        const safeName = escapeHtml(priority.name);
-        const safeTeam = escapeHtml(priority.team);
+    elements.priorityQueue.innerHTML = state.priorities
+        .map((priority, index) => {
+            const safeId = escapeHtml(priority.id);
+            const safeName = escapeHtml(priority.name);
+            const safeTeam = escapeHtml(priority.team);
 
-        return `
+            return `
             <div class="priority-item" draggable="true" data-priority-id="${safeId}">
                 <span class="priority-rank">${index + 1}</span>
                 <div class="priority-info">
@@ -1365,19 +1443,21 @@ function renderPriorityQueue() {
                 </span>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function renderProjectList() {
     if (!elements.projectList) return;
 
     // Use escapeHtml to prevent XSS from project content
-    elements.projectList.innerHTML = state.projects.map(project => {
-        const safeId = escapeHtml(project.id);
-        const safeName = escapeHtml(project.name);
-        const safeTeams = project.teams.map(t => escapeHtml(t)).join(', ');
+    elements.projectList.innerHTML = state.projects
+        .map(project => {
+            const safeId = escapeHtml(project.id);
+            const safeName = escapeHtml(project.name);
+            const safeTeams = project.teams.map(t => escapeHtml(t)).join(', ');
 
-        return `
+            return `
             <div class="project-item" data-project-id="${safeId}">
                 <div class="project-info">
                     <span class="project-name">${safeName}</span>
@@ -1385,7 +1465,8 @@ function renderProjectList() {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function renderCommsLog(filter = 'all') {
@@ -1398,23 +1479,25 @@ function renderCommsLog(filter = 'all') {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
-    const filtered = filter === 'all'
-        ? state.communications
-        : state.communications.filter(c => c.from.team === filter || c.to.team === filter);
+    const filtered =
+        filter === 'all'
+            ? state.communications
+            : state.communications.filter(c => c.from.team === filter || c.to.team === filter);
 
     // Use escapeHtml to prevent XSS from communication content
-    elements.commsLog.innerHTML = filtered.map(comm => {
-        const safeFromAgent = escapeHtml(comm.from?.agent);
-        const safeToAgent = escapeHtml(comm.to?.agent);
-        const safeMessage = escapeHtml(comm.message);
-        const safeTime = escapeHtml(getRelativeTime(comm.timestamp));
-        const fromColor = teamColors[comm.from?.team] || '#888';
-        const toColor = teamColors[comm.to?.team] || '#888';
+    elements.commsLog.innerHTML = filtered
+        .map(comm => {
+            const safeFromAgent = escapeHtml(comm.from?.agent);
+            const safeToAgent = escapeHtml(comm.to?.agent);
+            const safeMessage = escapeHtml(comm.message);
+            const safeTime = escapeHtml(getRelativeTime(comm.timestamp));
+            const fromColor = teamColors[comm.from?.team] || '#888';
+            const toColor = teamColors[comm.to?.team] || '#888';
 
-        return `
+            return `
             <div class="comms-item fade-in">
                 <div class="comms-header">
                     <div class="comms-participants">
@@ -1427,7 +1510,8 @@ function renderCommsLog(filter = 'all') {
                 <div class="comms-message">${safeMessage}</div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 function updateStats() {
@@ -1491,7 +1575,7 @@ function openTeamWorkspace(teamId) {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     if (elements.workspaceBadge) {
@@ -1512,14 +1596,20 @@ function openTeamWorkspace(teamId) {
 
     // Update team stats
     const totalTasks = team.agents.reduce((sum, a) => sum + a.tasksCompleted, 0);
-    const avgEfficiency = Math.round(team.agents.reduce((sum, a) => sum + a.efficiency, 0) / team.agents.length);
+    const avgEfficiency = Math.round(
+        team.agents.reduce((sum, a) => sum + a.efficiency, 0) / team.agents.length
+    );
 
     if (elements.teamAgentCount) elements.teamAgentCount.textContent = team.agents.length;
     if (elements.teamWorkingCount) elements.teamWorkingCount.textContent = workingCount;
     if (elements.teamTasksCompleted) elements.teamTasksCompleted.textContent = totalTasks;
     if (elements.teamEfficiency) elements.teamEfficiency.textContent = `${avgEfficiency}%`;
     if (elements.teamModelName) {
-        const modelShort = team.model.split('-').slice(0, 2).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+        const modelShort = team.model
+            .split('-')
+            .slice(0, 2)
+            .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+            .join(' ');
         elements.teamModelName.textContent = modelShort;
     }
 
@@ -1558,12 +1648,14 @@ function renderAgentWorld(teamId) {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     const color = teamColors[teamId];
 
-    elements.agentsWorldGrid.innerHTML = team.agents.map((agent, index) => `
+    elements.agentsWorldGrid.innerHTML = team.agents
+        .map(
+            (agent, index) => `
         <div class="agent-world-node ${agent.status}" data-agent="${agent.id}" onclick="openAgentModal('${teamId}', '${agent.id}')" style="--agent-color: ${color}; --agent-index: ${index}">
             <div class="agent-node-glow"></div>
             <div class="agent-node-avatar">
@@ -1579,12 +1671,16 @@ function renderAgentWorld(teamId) {
                     ${agent.status === 'working' ? 'Working' : 'Standby'}
                 </span>
             </div>
-            ${agent.currentTask ? `
+            ${
+                agent.currentTask
+                    ? `
                 <div class="agent-node-task">
                     <span class="task-indicator"></span>
                     <span class="task-text">${agent.currentTask}</span>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
             <div class="agent-node-metrics">
                 <div class="metric">
                     <span class="metric-value">${agent.tasksCompleted}</span>
@@ -1596,7 +1692,9 @@ function renderAgentWorld(teamId) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 
     // Draw connections
     setTimeout(() => drawAgentConnections(teamId), 100);
@@ -1625,7 +1723,7 @@ function drawAgentConnections(teamId) {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     const color = teamColors[teamId] || '#ffffff';
@@ -1705,15 +1803,16 @@ async function startTeamLiveFeed(teamId) {
                 }
             }
         }
-    }, 5000);  // Poll every 5 seconds
+    }, 5000); // Poll every 5 seconds
 }
 
 function renderLiveFeed() {
     if (!elements.liveFeedContainer) return;
 
-    const filteredFeed = state.liveFeedFilter === 'all'
-        ? state.liveFeed
-        : state.liveFeed.filter(item => item.type === state.liveFeedFilter);
+    const filteredFeed =
+        state.liveFeedFilter === 'all'
+            ? state.liveFeed
+            : state.liveFeed.filter(item => item.type === state.liveFeedFilter);
 
     const teamColors = {
         developer: '#3b82f6',
@@ -1722,23 +1821,27 @@ function renderLiveFeed() {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     const typeIcons = {
         thinking: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
         action: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>`,
         comms: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>`,
-        insight: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>`
+        insight: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>`,
     };
 
-    elements.liveFeedContainer.innerHTML = filteredFeed.map(item => {
-        const color = teamColors[item.team] || '#ffffff';
-        const highlightedContent = item.highlights.reduce((content, highlight) => {
-            return content.replace(new RegExp(`(${highlight})`, 'gi'), `<span class="feed-highlight">$1</span>`);
-        }, item.content);
+    elements.liveFeedContainer.innerHTML = filteredFeed
+        .map(item => {
+            const color = teamColors[item.team] || '#ffffff';
+            const highlightedContent = item.highlights.reduce((content, highlight) => {
+                return content.replace(
+                    new RegExp(`(${highlight})`, 'gi'),
+                    `<span class="feed-highlight">$1</span>`
+                );
+            }, item.content);
 
-        return `
+            return `
             <div class="live-feed-item ${item.type} fade-in" style="--feed-color: ${color}">
                 <div class="feed-item-indicator">
                     <span class="feed-type-icon">${typeIcons[item.type]}</span>
@@ -1754,7 +1857,8 @@ function renderLiveFeed() {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 
 // ============================================
@@ -1799,12 +1903,16 @@ function openDecisionModal(decisionId) {
                 <p>${decision.description}</p>
             </div>
             <div class="decision-details">
-                ${Object.entries(decision.details).map(([key, value]) => `
+                ${Object.entries(decision.details)
+                    .map(
+                        ([key, value]) => `
                     <div class="decision-detail-row">
                         <span class="decision-detail-label">${key}</span>
                         <span class="decision-detail-value">${value}</span>
                     </div>
-                `).join('')}
+                `
+                    )
+                    .join('')}
             </div>
             <div class="decision-impact">
                 <h4>Impact Analysis</h4>
@@ -1831,7 +1939,7 @@ function openAgentModal(teamId, agentId) {
         legal: '#f59e0b',
         marketing: '#ef4444',
         gtm: '#10b981',
-        sales: '#ec4899'
+        sales: '#ec4899',
     };
 
     const title = document.getElementById('agentModalTitle');
@@ -1879,7 +1987,9 @@ function openAgentModal(teamId, agentId) {
                     <span class="model-name">${team.model}</span>
                 </div>
             </div>
-            ${agent.currentTask ? `
+            ${
+                agent.currentTask
+                    ? `
                 <div class="agent-tasks-section">
                     <h4>Current Task</h4>
                     <div class="agent-task-list">
@@ -1890,7 +2000,9 @@ function openAgentModal(teamId, agentId) {
                         </div>
                     </div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         `;
     }
 
@@ -1963,26 +2075,29 @@ function getModelOptions(provider, selectedModel) {
         anthropic: [
             { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku (Fast)' },
             { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet (Balanced)' },
-            { value: 'claude-3-opus-latest', label: 'Claude 3 Opus (Powerful)' }
+            { value: 'claude-3-opus-latest', label: 'Claude 3 Opus (Powerful)' },
         ],
         openai: [
             { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast)' },
             { value: 'gpt-4o', label: 'GPT-4o (Balanced)' },
-            { value: 'gpt-4-turbo', label: 'GPT-4 Turbo (Powerful)' }
+            { value: 'gpt-4-turbo', label: 'GPT-4 Turbo (Powerful)' },
         ],
         gemini: [
             { value: 'gemini-pro', label: 'Gemini Pro' },
             { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-            { value: 'gemini-pro-vision', label: 'Gemini Pro Vision' }
-        ]
+            { value: 'gemini-pro-vision', label: 'Gemini Pro Vision' },
+        ],
     };
 
-    return models[provider].map(m =>
-        `<option value="${m.value}" ${m.value === selectedModel ? 'selected' : ''}>${m.label}</option>`
-    ).join('');
+    return models[provider]
+        .map(
+            m =>
+                `<option value="${m.value}" ${m.value === selectedModel ? 'selected' : ''}>${m.label}</option>`
+        )
+        .join('');
 }
 
-function updateTeamModelOptions(teamId) {
+function updateTeamModelOptions(_teamId) {
     const providerSelect = document.getElementById('teamProvider');
     const modelSelect = document.getElementById('teamModel');
     if (!providerSelect || !modelSelect) return;
@@ -1998,7 +2113,7 @@ function saveTeamSettings(teamId) {
         state.teamSettings[teamId] = {
             provider: providerSelect.value,
             model: modelSelect.value,
-            apiKeyConfigured: state.apiKeyConfig[providerSelect.value].configured
+            apiKeyConfigured: state.apiKeyConfig[providerSelect.value].configured,
         };
 
         AgentTeams[teamId].provider = providerSelect.value;
@@ -2006,11 +2121,19 @@ function saveTeamSettings(teamId) {
 
         // Update the display
         if (state.currentWorkspaceTeam === teamId && elements.teamModelName) {
-            const modelShort = modelSelect.value.split('-').slice(0, 2).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+            const modelShort = modelSelect.value
+                .split('-')
+                .slice(0, 2)
+                .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+                .join(' ');
             elements.teamModelName.textContent = modelShort;
         }
 
-        showToast('success', 'Settings Saved', `${AgentTeams[teamId].name} configuration updated successfully.`);
+        showToast(
+            'success',
+            'Settings Saved',
+            `${AgentTeams[teamId].name} configuration updated successfully.`
+        );
     }
 
     closeModal(elements.teamSettingsModal);
@@ -2032,7 +2155,7 @@ function approveDecision() {
             team: decision.team,
             message: `Approved: ${decision.title}`,
             tag: 'Approved',
-            timestamp: new Date()
+            timestamp: new Date(),
         });
 
         state.decisions = state.decisions.filter(d => d.id !== decisionId);
@@ -2040,7 +2163,11 @@ function approveDecision() {
         renderDecisionQueue();
         renderActivityFeed();
         updateStats();
-        showToast('success', 'Decision Approved', `${decision.title} has been approved and teams notified.`);
+        showToast(
+            'success',
+            'Decision Approved',
+            `${decision.title} has been approved and teams notified.`
+        );
     }
 
     closeModal(elements.decisionModal);
@@ -2058,7 +2185,7 @@ function rejectDecision() {
             team: decision.team,
             message: `Rejected: ${decision.title}`,
             tag: 'Rejected',
-            timestamp: new Date()
+            timestamp: new Date(),
         });
 
         state.decisions = state.decisions.filter(d => d.id !== decisionId);
@@ -2078,7 +2205,11 @@ function deferDecision() {
 
     const decision = state.decisions.find(d => d.id === decisionId);
     if (decision) {
-        showToast('info', 'Decision Deferred', `${decision.title} has been deferred for later review.`);
+        showToast(
+            'info',
+            'Decision Deferred',
+            `${decision.title} has been deferred for later review.`
+        );
     }
 
     closeModal(elements.decisionModal);
@@ -2092,8 +2223,8 @@ function handleTaskSubmit(e) {
     e.preventDefault();
 
     const title = document.getElementById('taskTitle')?.value;
-    const description = document.getElementById('taskDescription')?.value;
-    const priority = document.getElementById('taskPriority')?.value;
+    const _description = document.getElementById('taskDescription')?.value;
+    const _priority = document.getElementById('taskPriority')?.value;
     const team = document.getElementById('taskTeam')?.value;
 
     if (!title || !team) return;
@@ -2104,11 +2235,15 @@ function handleTaskSubmit(e) {
         team: team,
         message: `Created new task: ${title}`,
         tag: 'Task Created',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
 
     renderActivityFeed();
-    showToast('success', 'Task Created', `"${title}" has been assigned to ${AgentTeams[team]?.name || team}.`);
+    showToast(
+        'success',
+        'Task Created',
+        `"${title}" has been assigned to ${AgentTeams[team]?.name || team}.`
+    );
     closeModal(elements.taskModal);
 
     e.target.reset();
@@ -2132,7 +2267,7 @@ function handleBroadcastSubmit(e) {
         team: 'all',
         message: `Broadcast: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
         tag: priority === 'urgent' ? 'Urgent' : priority === 'important' ? 'Important' : 'Info',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
 
     renderActivityFeed();
@@ -2156,7 +2291,7 @@ function setOrchestrationMode(mode) {
     const modeDescriptions = {
         autonomous: 'Agents operate independently with periodic check-ins',
         supervised: 'Major decisions require your approval before execution',
-        manual: 'All agent actions require explicit approval'
+        manual: 'All agent actions require explicit approval',
     };
 
     showToast('info', 'Mode Changed', modeDescriptions[mode]);
@@ -2169,14 +2304,16 @@ function setOrchestrationMode(mode) {
 function syncAll() {
     showToast('info', 'Syncing...', 'Synchronizing all agent states and tasks.');
 
-    document.querySelectorAll('.team-card, .team-overview-card, .agent-world-node').forEach((card, index) => {
-        setTimeout(() => {
-            card.style.transform = 'scale(0.98)';
+    document
+        .querySelectorAll('.team-card, .team-overview-card, .agent-world-node')
+        .forEach((card, index) => {
             setTimeout(() => {
-                card.style.transform = '';
-            }, 150);
-        }, index * 50);
-    });
+                card.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 150);
+            }, index * 50);
+        });
 
     setTimeout(() => {
         showToast('success', 'Sync Complete', 'All agents and tasks are synchronized.');
@@ -2195,7 +2332,7 @@ function showToast(type, title, message) {
         success: '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
         error: '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>',
         info: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>',
-        warning: '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>'
+        warning: '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
     };
 
     toast.innerHTML = `
@@ -2242,11 +2379,15 @@ function updateAgentCheckboxes(teamId) {
     const team = AgentTeams[teamId];
     if (!team) return;
 
-    container.innerHTML = team.agents.map(agent => `
+    container.innerHTML = team.agents
+        .map(
+            agent => `
         <label class="checkbox-label">
             <input type="checkbox" value="${agent.id}" checked> ${agent.name}
         </label>
-    `).join('');
+    `
+        )
+        .join('');
 }
 
 function updateClock() {
@@ -2256,7 +2397,7 @@ function updateClock() {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
-            hour12: false
+            hour12: false,
         });
     }
 }
@@ -2282,17 +2423,21 @@ function saveApiConfig(provider) {
     const keyPatterns = {
         anthropic: /^sk-ant-/,
         openai: /^sk-/,
-        gemini: /^AI/
+        gemini: /^AI/,
     };
 
     if (!keyPatterns[provider].test(apiKey)) {
-        showToast('error', 'Invalid Format', `API key doesn't match expected format for ${provider}`);
+        showToast(
+            'error',
+            'Invalid Format',
+            `API key doesn't match expected format for ${provider}`
+        );
         return;
     }
 
     state.apiKeyConfig[provider] = {
         configured: true,
-        model: model
+        model: model,
     };
 
     const statusEl = document.getElementById(`${provider}Status`);
@@ -2309,11 +2454,15 @@ function saveApiConfig(provider) {
         team: 'system',
         message: `Updated ${provider} API configuration to ${model}`,
         tag: 'Config',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
     renderActivityFeed();
 
-    showToast('success', 'Configuration Saved', `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured successfully`);
+    showToast(
+        'success',
+        'Configuration Saved',
+        `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured successfully`
+    );
 }
 
 function runHealthCheck() {
@@ -2344,7 +2493,7 @@ function runHealthCheck() {
             team: 'system',
             message: `Health check completed - All systems operational (${latency}ms latency)`,
             tag: 'Health',
-            timestamp: new Date()
+            timestamp: new Date(),
         });
         renderActivityFeed();
 
@@ -2384,7 +2533,11 @@ function initApiConfigPanel() {
  */
 async function startTeamOrchestration(teamId) {
     if (!state.adminToken) {
-        showToast('error', 'Admin Token Required', 'Configure admin token in API Settings to orchestrate teams.');
+        showToast(
+            'error',
+            'Admin Token Required',
+            'Configure admin token in API Settings to orchestrate teams.'
+        );
         return false;
     }
 
@@ -2393,17 +2546,24 @@ async function startTeamOrchestration(teamId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ teamId, action: 'start' })
+            body: JSON.stringify({ teamId, action: 'start' }),
         });
 
         const data = await response.json();
 
         if (data.success) {
-            state.teamOrchestrationState[teamId] = { status: 'running', lastRun: new Date().toISOString() };
+            state.teamOrchestrationState[teamId] = {
+                status: 'running',
+                lastRun: new Date().toISOString(),
+            };
             AgentTeams[teamId].orchestrationStatus = 'running';
-            showToast('success', 'Orchestration Started', `${AgentTeams[teamId].name} is now running`);
+            showToast(
+                'success',
+                'Orchestration Started',
+                `${AgentTeams[teamId].name} is now running`
+            );
             updateTeamOrchestrationUI(teamId);
             return true;
         } else {
@@ -2431,15 +2591,18 @@ async function stopTeamOrchestration(teamId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ teamId, action: 'stop' })
+            body: JSON.stringify({ teamId, action: 'stop' }),
         });
 
         const data = await response.json();
 
         if (data.success) {
-            state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: new Date().toISOString() };
+            state.teamOrchestrationState[teamId] = {
+                status: 'paused',
+                lastRun: new Date().toISOString(),
+            };
             AgentTeams[teamId].orchestrationStatus = 'paused';
 
             // Set all agents to idle
@@ -2465,7 +2628,7 @@ async function stopTeamOrchestration(teamId) {
 /**
  * Execute one orchestration cycle for a team
  */
-async function executeTeamOrchestration(teamId, task = null) {
+async function _executeTeamOrchestration(teamId, task = null) {
     if (!state.adminToken) {
         showToast('error', 'Admin Token Required', 'Configure admin token in API Settings');
         return null;
@@ -2484,9 +2647,9 @@ async function executeTeamOrchestration(teamId, task = null) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ teamId, action: 'execute', task })
+            body: JSON.stringify({ teamId, action: 'execute', task }),
         });
 
         const data = await response.json();
@@ -2497,15 +2660,18 @@ async function executeTeamOrchestration(teamId, task = null) {
             // Update activities
             if (result.activities && result.activities.length > 0) {
                 state.activities = [...result.activities, ...state.activities].slice(0, 50);
-                state.liveFeed = result.activities.map(activityToFeedItem).concat(state.liveFeed).slice(0, 20);
+                state.liveFeed = result.activities
+                    .map(activityToFeedItem)
+                    .concat(state.liveFeed)
+                    .slice(0, 20);
                 renderLiveFeed();
                 renderActivityFeed();
             }
 
             // Update agent statuses based on activities
             result.activities?.forEach(activity => {
-                const agent = AgentTeams[teamId].agents.find(a =>
-                    a.name.toLowerCase() === activity.agent.toLowerCase()
+                const agent = AgentTeams[teamId].agents.find(
+                    a => a.name.toLowerCase() === activity.agent.toLowerCase()
                 );
                 if (agent) {
                     agent.status = 'working';
@@ -2514,7 +2680,11 @@ async function executeTeamOrchestration(teamId, task = null) {
                 }
             });
 
-            showToast('success', 'Orchestration Complete', `Used ${result.usage?.outputTokens || 0} tokens`);
+            showToast(
+                'success',
+                'Orchestration Complete',
+                `Used ${result.usage?.outputTokens || 0} tokens`
+            );
             updateTeamOrchestrationUI(teamId);
             renderTeamsGrid();
             return result;
@@ -2532,7 +2702,7 @@ async function executeTeamOrchestration(teamId, task = null) {
 /**
  * Toggle orchestration for a team (start/stop)
  */
-async function toggleTeamOrchestration(teamId) {
+async function _toggleTeamOrchestration(teamId) {
     const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
     if (isRunning) {
         await stopTeamOrchestration(teamId);
@@ -2555,7 +2725,7 @@ async function fetchOrchestrationStatus() {
             Object.entries(data.data.teams || {}).forEach(([teamId, teamState]) => {
                 state.teamOrchestrationState[teamId] = {
                     status: teamState.status,
-                    lastRun: teamState.lastRun
+                    lastRun: teamState.lastRun,
                 };
                 if (AgentTeams[teamId]) {
                     AgentTeams[teamId].orchestrationStatus = teamState.status;
@@ -2612,7 +2782,7 @@ function updateTeamOrchestrationUI(teamId) {
  * Uses sessionStorage for security - token doesn't persist across browser sessions
  * This prevents token theft via XSS attacks persisting beyond the session
  */
-function saveAdminToken(token) {
+function _saveAdminToken(token) {
     if (token && token.length >= 32) {
         state.adminToken = token;
         // Use sessionStorage instead of localStorage for better security
@@ -2700,7 +2870,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const code = prompt('Enter confirmation code to reset emergency stop:');
             if (code) resetEmergencyStop(code);
         } else {
-            if (confirm('EMERGENCY STOP: This will immediately halt ALL agent operations. Continue?')) {
+            if (
+                confirm(
+                    'EMERGENCY STOP: This will immediately halt ALL agent operations. Continue?'
+                )
+            ) {
                 triggerEmergencyStop('Emergency stop triggered by owner');
             }
         }
@@ -2730,7 +2904,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Auto-stop toggle
-    document.getElementById('autoStopOnLimit')?.addEventListener('change', (e) => {
+    document.getElementById('autoStopOnLimit')?.addEventListener('change', e => {
         state.worldController.creditProtection.autoStopOnLimit = e.target.checked;
         showToast(`Auto-pause on limit ${e.target.checked ? 'enabled' : 'disabled'}`, 'info');
     });
@@ -2828,13 +3002,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('syncAllBtn')?.addEventListener('click', syncAll);
 
     // Modal close buttons
-    document.getElementById('closeTaskModal')?.addEventListener('click', () => closeModal(elements.taskModal));
-    document.getElementById('closeAgentModal')?.addEventListener('click', () => closeModal(elements.agentModal));
-    document.getElementById('closeDecisionModal')?.addEventListener('click', () => closeModal(elements.decisionModal));
-    document.getElementById('closeBroadcastModal')?.addEventListener('click', () => closeModal(elements.broadcastModal));
-    document.getElementById('closeTeamSettingsModal')?.addEventListener('click', () => closeModal(elements.teamSettingsModal));
-    document.getElementById('cancelTask')?.addEventListener('click', () => closeModal(elements.taskModal));
-    document.getElementById('cancelBroadcast')?.addEventListener('click', () => closeModal(elements.broadcastModal));
+    document
+        .getElementById('closeTaskModal')
+        ?.addEventListener('click', () => closeModal(elements.taskModal));
+    document
+        .getElementById('closeAgentModal')
+        ?.addEventListener('click', () => closeModal(elements.agentModal));
+    document
+        .getElementById('closeDecisionModal')
+        ?.addEventListener('click', () => closeModal(elements.decisionModal));
+    document
+        .getElementById('closeBroadcastModal')
+        ?.addEventListener('click', () => closeModal(elements.broadcastModal));
+    document
+        .getElementById('closeTeamSettingsModal')
+        ?.addEventListener('click', () => closeModal(elements.teamSettingsModal));
+    document
+        .getElementById('cancelTask')
+        ?.addEventListener('click', () => closeModal(elements.taskModal));
+    document
+        .getElementById('cancelBroadcast')
+        ?.addEventListener('click', () => closeModal(elements.broadcastModal));
 
     // Decision actions
     document.getElementById('approveDecision')?.addEventListener('click', approveDecision);
@@ -2846,18 +3034,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('broadcastForm')?.addEventListener('submit', handleBroadcastSubmit);
 
     // Team selector for task form
-    document.getElementById('taskTeam')?.addEventListener('change', (e) => {
+    document.getElementById('taskTeam')?.addEventListener('change', e => {
         updateAgentCheckboxes(e.target.value);
     });
 
     // Communications filter
-    document.getElementById('commsTeamFilter')?.addEventListener('change', (e) => {
+    document.getElementById('commsTeamFilter')?.addEventListener('change', e => {
         renderCommsLog(e.target.value);
     });
 
     // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
+        overlay.addEventListener('click', e => {
             if (e.target === overlay) {
                 closeModal(overlay);
             }
@@ -2865,7 +3053,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Close modals on Escape key
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.modal-overlay.active').forEach(modal => {
                 closeModal(modal);
@@ -2897,21 +3085,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let draggedItem = null;
 
-document.addEventListener('dragstart', (e) => {
+document.addEventListener('dragstart', e => {
     if (e.target.classList.contains('priority-item')) {
         draggedItem = e.target;
         e.target.style.opacity = '0.5';
     }
 });
 
-document.addEventListener('dragend', (e) => {
+document.addEventListener('dragend', e => {
     if (e.target.classList.contains('priority-item')) {
         e.target.style.opacity = '';
         draggedItem = null;
     }
 });
 
-document.addEventListener('dragover', (e) => {
+document.addEventListener('dragover', e => {
     e.preventDefault();
     const target = e.target.closest('.priority-item');
     if (target && draggedItem && target !== draggedItem) {
@@ -2963,5 +3151,5 @@ window.AgentCommander = {
     recordSpend,
     checkCreditLimits,
     canExecuteAction,
-    updateWorldControlUI
+    updateWorldControlUI,
 };

@@ -30,10 +30,28 @@ const AgentTeams = {
         description: 'Building and architecting the core platform',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'architect', name: 'Architect', role: 'System Design & Architecture', status: 'idle', tasksCompleted: 0 },
-            { id: 'coder', name: 'Coder', role: 'Implementation & Debugging', status: 'idle', tasksCompleted: 0 },
-            { id: 'tester', name: 'QA Engineer', role: 'Testing & Quality Assurance', status: 'idle', tasksCompleted: 0 }
-        ]
+            {
+                id: 'architect',
+                name: 'Architect',
+                role: 'System Design & Architecture',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'coder',
+                name: 'Coder',
+                role: 'Implementation & Debugging',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'tester',
+                name: 'QA Engineer',
+                role: 'Testing & Quality Assurance',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
     },
     design: {
         id: 'design',
@@ -46,10 +64,28 @@ const AgentTeams = {
         description: 'Crafting beautiful user experiences',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'ux-lead', name: 'UX Lead', role: 'User Experience Strategy', status: 'idle', tasksCompleted: 0 },
-            { id: 'ui-artist', name: 'Visual Designer', role: 'UI & Visual Systems', status: 'idle', tasksCompleted: 0 },
-            { id: 'motion', name: 'Motion Designer', role: 'Animation & Interactions', status: 'idle', tasksCompleted: 0 }
-        ]
+            {
+                id: 'ux-lead',
+                name: 'UX Lead',
+                role: 'User Experience Strategy',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'ui-artist',
+                name: 'Visual Designer',
+                role: 'UI & Visual Systems',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'motion',
+                name: 'Motion Designer',
+                role: 'Animation & Interactions',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
     },
     communications: {
         id: 'communications',
@@ -62,10 +98,28 @@ const AgentTeams = {
         description: 'Managing content and brand voice',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'content-strategist', name: 'Content Strategist', role: 'Content Planning & Voice', status: 'idle', tasksCompleted: 0 },
-            { id: 'copywriter', name: 'Copywriter', role: 'Persuasive Copy & Messaging', status: 'idle', tasksCompleted: 0 },
-            { id: 'social-manager', name: 'Social Manager', role: 'Community & Engagement', status: 'idle', tasksCompleted: 0 }
-        ]
+            {
+                id: 'content-strategist',
+                name: 'Content Strategist',
+                role: 'Content Planning & Voice',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'copywriter',
+                name: 'Copywriter',
+                role: 'Persuasive Copy & Messaging',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'social-manager',
+                name: 'Social Manager',
+                role: 'Community & Engagement',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
     },
     legal: {
         id: 'legal',
@@ -78,10 +132,28 @@ const AgentTeams = {
         description: 'Ensuring compliance and protecting IP',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'compliance-officer', name: 'Compliance Officer', role: 'Regulatory Compliance', status: 'idle', tasksCompleted: 0 },
-            { id: 'contract-analyst', name: 'Contract Analyst', role: 'Terms & Agreements', status: 'idle', tasksCompleted: 0 },
-            { id: 'ip-counsel', name: 'IP Counsel', role: 'Intellectual Property', status: 'idle', tasksCompleted: 0 }
-        ]
+            {
+                id: 'compliance-officer',
+                name: 'Compliance Officer',
+                role: 'Regulatory Compliance',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'contract-analyst',
+                name: 'Contract Analyst',
+                role: 'Terms & Agreements',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'ip-counsel',
+                name: 'IP Counsel',
+                role: 'Intellectual Property',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
     },
     marketing: {
         id: 'marketing',
@@ -94,10 +166,28 @@ const AgentTeams = {
         description: 'Driving growth and brand awareness',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'growth-lead', name: 'Growth Lead', role: 'Acquisition & Retention', status: 'idle', tasksCompleted: 0 },
-            { id: 'brand-strategist', name: 'Brand Strategist', role: 'Brand Identity & Positioning', status: 'idle', tasksCompleted: 0 },
-            { id: 'analytics-expert', name: 'Analytics Expert', role: 'Data & Performance', status: 'idle', tasksCompleted: 0 }
-        ]
+            {
+                id: 'growth-lead',
+                name: 'Growth Lead',
+                role: 'Acquisition & Retention',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'brand-strategist',
+                name: 'Brand Strategist',
+                role: 'Brand Identity & Positioning',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'analytics-expert',
+                name: 'Analytics Expert',
+                role: 'Data & Performance',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
     },
     gtm: {
         id: 'gtm',
@@ -110,10 +200,28 @@ const AgentTeams = {
         description: 'Planning and executing product launches',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'launch-coordinator', name: 'Launch Coordinator', role: 'Launch Planning & Execution', status: 'idle', tasksCompleted: 0 },
-            { id: 'partnership-manager', name: 'Partnership Manager', role: 'Strategic Partnerships', status: 'idle', tasksCompleted: 0 },
-            { id: 'market-researcher', name: 'Market Researcher', role: 'Market Intelligence', status: 'idle', tasksCompleted: 0 }
-        ]
+            {
+                id: 'launch-coordinator',
+                name: 'Launch Coordinator',
+                role: 'Launch Planning & Execution',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'partnership-manager',
+                name: 'Partnership Manager',
+                role: 'Strategic Partnerships',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'market-researcher',
+                name: 'Market Researcher',
+                role: 'Market Intelligence',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
     },
     sales: {
         id: 'sales',
@@ -126,13 +234,43 @@ const AgentTeams = {
         description: 'Driving revenue and customer relationships',
         orchestrationStatus: 'paused',
         agents: [
-            { id: 'sales-director', name: 'Sales Director', role: 'Revenue Strategy & Team Leadership', status: 'idle', tasksCompleted: 0 },
-            { id: 'account-executive', name: 'Account Executive', role: 'Enterprise Sales & Closing', status: 'idle', tasksCompleted: 0 },
-            { id: 'sdr', name: 'SDR Lead', role: 'Outbound Prospecting', status: 'idle', tasksCompleted: 0 },
-            { id: 'solutions-consultant', name: 'Solutions Consultant', role: 'Technical Sales & Demos', status: 'idle', tasksCompleted: 0 },
-            { id: 'customer-success', name: 'Customer Success', role: 'Retention & Expansion', status: 'idle', tasksCompleted: 0 }
-        ]
-    }
+            {
+                id: 'sales-director',
+                name: 'Sales Director',
+                role: 'Revenue Strategy & Team Leadership',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'account-executive',
+                name: 'Account Executive',
+                role: 'Enterprise Sales & Closing',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'sdr',
+                name: 'SDR Lead',
+                role: 'Outbound Prospecting',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'solutions-consultant',
+                name: 'Solutions Consultant',
+                role: 'Technical Sales & Demos',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+            {
+                id: 'customer-success',
+                name: 'Customer Success',
+                role: 'Retention & Expansion',
+                status: 'idle',
+                tasksCompleted: 0,
+            },
+        ],
+    },
 };
 
 // ============================================
@@ -142,9 +280,9 @@ const AgentTeams = {
 const state = {
     activeTab: 'overview',
     activeTeam: 'all',
-    selectedTeams: [],  // For multi-team selection
+    selectedTeams: [], // For multi-team selection
     orchestrationMode: 'paused',
-    worldState: 'paused',  // Current world state
+    worldState: 'paused', // Current world state
     teamOrchestrationState: {},
     activities: [],
     decisions: [],
@@ -154,12 +292,12 @@ const state = {
         openai: 0,
         gemini: 0,
         daily: 0,
-        monthly: 0
+        monthly: 0,
     },
     apiKeyConfig: {
         anthropic: { configured: false, model: 'claude-3-5-sonnet-latest' },
         openai: { configured: false, model: 'gpt-4o' },
-        gemini: { configured: false, model: 'gemini-pro' }
+        gemini: { configured: false, model: 'gemini-pro' },
     },
     adminToken: null,
     charts: {},
@@ -170,7 +308,7 @@ const state = {
     // Biometric state
     biometricSupported: false,
     biometricVerified: false,
-    authenticatorType: 'Biometric'
+    authenticatorType: 'Biometric',
 };
 
 // Initialize team orchestration state
@@ -275,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize biometric authentication gate
     const biometricResult = await initBiometricAuth();
-    
+
     // Only start periodic updates if authenticated or no gate
     if (biometricResult) {
         setInterval(fetchOrchestrationStatus, 30000);
@@ -343,7 +481,7 @@ function updateClock() {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
-            hour12: false
+            hour12: false,
         });
     }
 }
@@ -380,15 +518,19 @@ async function setWorldState(newState) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.adminToken}`
+                    Authorization: `Bearer ${state.adminToken}`,
                 },
-                body: JSON.stringify({ action: 'setWorldState', state: newState })
+                body: JSON.stringify({ action: 'setWorldState', state: newState }),
             });
 
             const data = await response.json();
-            
+
             if (!data.success) {
-                showToast('error', 'State Change Failed', data.error || 'Failed to set world state');
+                showToast(
+                    'error',
+                    'State Change Failed',
+                    data.error || 'Failed to set world state'
+                );
                 return;
             }
 
@@ -396,7 +538,6 @@ async function setWorldState(newState) {
             if (data.data.teamsAffected) {
                 updateAllTeamUI();
             }
-
         } catch (error) {
             console.error('[WorldState] Error:', error);
             // Continue with local state update even if API fails
@@ -408,31 +549,40 @@ async function setWorldState(newState) {
         case 'paused':
             // Local state update - teams paused via API
             Object.keys(AgentTeams).forEach(teamId => {
-                state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                state.teamOrchestrationState[teamId] = {
+                    status: 'paused',
+                    lastRun: state.teamOrchestrationState[teamId]?.lastRun,
+                };
                 AgentTeams[teamId].orchestrationStatus = 'paused';
             });
             updateAllTeamUI();
             break;
-            
+
         case 'manual':
             // Manual mode - keep current team states
             showToast('info', 'Manual Mode', 'You can manually start/stop individual teams');
             break;
-            
+
         case 'semi_auto':
             // Semi-auto - start all teams but require approval for actions
             Object.keys(AgentTeams).forEach(teamId => {
-                state.teamOrchestrationState[teamId] = { status: 'running', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                state.teamOrchestrationState[teamId] = {
+                    status: 'running',
+                    lastRun: state.teamOrchestrationState[teamId]?.lastRun,
+                };
                 AgentTeams[teamId].orchestrationStatus = 'running';
             });
             updateAllTeamUI();
             showToast('info', 'Semi-Auto Mode', 'Teams active - actions require your approval');
             break;
-            
+
         case 'autonomous':
             // Autonomous - start all teams
             Object.keys(AgentTeams).forEach(teamId => {
-                state.teamOrchestrationState[teamId] = { status: 'running', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                state.teamOrchestrationState[teamId] = {
+                    status: 'running',
+                    lastRun: state.teamOrchestrationState[teamId]?.lastRun,
+                };
                 AgentTeams[teamId].orchestrationStatus = 'running';
             });
             updateAllTeamUI();
@@ -487,7 +637,7 @@ function renderTeamNavButtons() {
         const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
         const isSelected = state.selectedTeams.includes(teamId);
         const isActive = state.activeTeam === teamId && state.selectedTeams.length === 0;
-        
+
         html += `
             <div class="team-nav-item ${isSelected ? 'selected' : ''} ${isActive ? 'active' : ''}" data-team="${teamId}">
                 <label class="team-nav-checkbox" title="Select for multi-team operation">
@@ -516,7 +666,7 @@ function renderTeamNavButtons() {
 
     // Add click handlers for team buttons
     elements.teamNav.querySelectorAll('.team-nav-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', e => {
             e.stopPropagation();
             const teamId = btn.dataset.team;
             // If clicking a team button, focus on that team (single view)
@@ -526,7 +676,7 @@ function renderTeamNavButtons() {
 
     // Add checkbox handlers for multi-select
     elements.teamNav.querySelectorAll('.team-select-input').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
+        checkbox.addEventListener('change', e => {
             e.stopPropagation();
             const teamId = e.target.dataset.team;
             toggleTeamSelection(teamId);
@@ -561,7 +711,7 @@ function toggleTeamSelection(teamId) {
             return;
         }
     }
-    
+
     renderTeamNavButtons();
     renderAgentsTeamsGrid();
     updateWorkspaceHeader();
@@ -569,7 +719,7 @@ function toggleTeamSelection(teamId) {
 
 function selectTeam(teamId) {
     state.activeTeam = teamId;
-    
+
     // Only clear selection when clicking "All Teams"
     if (teamId === 'all') {
         state.selectedTeams = [];
@@ -591,21 +741,25 @@ function selectTeam(teamId) {
 function updateWorkspaceHeader() {
     const teamId = state.activeTeam;
     const hasSelection = state.selectedTeams.length > 0;
-    
+
     if (elements.workspaceTitle) {
         if (hasSelection) {
             // Show selected teams
-            const selectedNames = state.selectedTeams.map(id => AgentTeams[id]?.badge || id).join(' + ');
+            const selectedNames = state.selectedTeams
+                .map(id => AgentTeams[id]?.badge || id)
+                .join(' + ');
             elements.workspaceTitle.textContent = `${state.selectedTeams.length} Team${state.selectedTeams.length > 1 ? 's' : ''} Selected`;
             elements.workspaceStatus.textContent = selectedNames;
             elements.workspaceStatus.className = 'workspace-status selected';
         } else if (teamId === 'all') {
             elements.workspaceTitle.textContent = 'All Teams';
-            
+
             // Count running teams
-            const runningCount = Object.values(state.teamOrchestrationState).filter(t => t.status === 'running').length;
+            const runningCount = Object.values(state.teamOrchestrationState).filter(
+                t => t.status === 'running'
+            ).length;
             const totalCount = Object.keys(AgentTeams).length;
-            
+
             if (runningCount === 0) {
                 elements.workspaceStatus.textContent = 'All teams paused';
                 elements.workspaceStatus.className = 'workspace-status';
@@ -641,7 +795,7 @@ function updateExecuteButtonText() {
 
     const hasSelection = state.selectedTeams.length > 0;
     let buttonText = 'Execute Cycle';
-    
+
     if (hasSelection) {
         buttonText = `Execute ${state.selectedTeams.length} Team${state.selectedTeams.length > 1 ? 's' : ''}`;
     } else if (state.activeTeam === 'all') {
@@ -664,34 +818,34 @@ function updateExecuteButtonText() {
 function updateModeIndicator() {
     const indicator = document.getElementById('workspaceModeIndicator');
     const modeText = document.getElementById('workspaceModeText');
-    
+
     if (!indicator || !modeText) return;
 
     const modeConfig = {
         paused: {
             icon: '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>',
             text: 'Paused',
-            class: 'paused'
+            class: 'paused',
         },
         manual: {
             icon: '<path d="M13 7.83l4.59 4.58L19 11l-7-7-7 7 1.41 1.41L11 7.83V22h2V7.83z"/>',
             text: 'Manual',
-            class: 'manual'
+            class: 'manual',
         },
         semi_auto: {
             icon: '<path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>',
             text: 'Semi-Auto',
-            class: 'semi_auto'
+            class: 'semi_auto',
         },
         autonomous: {
             icon: '<path d="M8 5v14l11-7z"/>',
             text: 'Autonomous',
-            class: 'autonomous'
-        }
+            class: 'autonomous',
+        },
     };
 
     const config = modeConfig[state.worldState] || modeConfig.paused;
-    
+
     indicator.className = `workspace-mode-indicator ${config.class}`;
     indicator.innerHTML = `
         <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">${config.icon}</svg>
@@ -744,7 +898,9 @@ function renderAgentsTeamsGrid() {
     let teamsToShow;
     if (state.selectedTeams.length > 0) {
         // Show only selected teams
-        teamsToShow = state.selectedTeams.map(id => [id, AgentTeams[id]]).filter(([id, team]) => team);
+        teamsToShow = state.selectedTeams
+            .map(id => [id, AgentTeams[id]])
+            .filter(([_id, team]) => team);
     } else if (state.activeTeam === 'all') {
         // Show all teams
         teamsToShow = Object.entries(AgentTeams);
@@ -754,7 +910,7 @@ function renderAgentsTeamsGrid() {
     }
 
     let html = '';
-    
+
     teamsToShow.forEach(([teamId, team]) => {
         if (!team) return;
         const isRunning = state.teamOrchestrationState[teamId]?.status === 'running';
@@ -782,13 +938,17 @@ function renderAgentsTeamsGrid() {
                     </div>
                 </div>
                 <div class="agents-grid">
-                    ${team.agents.map(agent => `
+                    ${team.agents
+                        .map(
+                            agent => `
                         <div class="agent-mini-card ${agent.status}" data-agent="${agent.id}">
                             <div class="agent-status-dot"></div>
                             <span class="agent-name">${escapeHtml(agent.name)}</span>
                             <span class="agent-task">${agent.currentTask || agent.role}</span>
                         </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
             </div>
         `;
@@ -819,7 +979,11 @@ function renderAgentsTeamsGrid() {
 
 async function startTeamOrchestration(teamId) {
     if (!state.adminToken) {
-        showToast('error', 'Admin Token Required', 'Configure admin token in Settings to orchestrate teams.');
+        showToast(
+            'error',
+            'Admin Token Required',
+            'Configure admin token in Settings to orchestrate teams.'
+        );
         return false;
     }
 
@@ -828,17 +992,24 @@ async function startTeamOrchestration(teamId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ teamId, action: 'start' })
+            body: JSON.stringify({ teamId, action: 'start' }),
         });
 
         const data = await response.json();
 
         if (data.success) {
-            state.teamOrchestrationState[teamId] = { status: 'running', lastRun: new Date().toISOString() };
+            state.teamOrchestrationState[teamId] = {
+                status: 'running',
+                lastRun: new Date().toISOString(),
+            };
             AgentTeams[teamId].orchestrationStatus = 'running';
-            showToast('success', 'Orchestration Started', `${AgentTeams[teamId].name} is now running`);
+            showToast(
+                'success',
+                'Orchestration Started',
+                `${AgentTeams[teamId].name} is now running`
+            );
             updateTeamUI(teamId);
             return true;
         } else {
@@ -863,15 +1034,18 @@ async function stopTeamOrchestration(teamId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ teamId, action: 'stop' })
+            body: JSON.stringify({ teamId, action: 'stop' }),
         });
 
         const data = await response.json();
 
         if (data.success) {
-            state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: new Date().toISOString() };
+            state.teamOrchestrationState[teamId] = {
+                status: 'paused',
+                lastRun: new Date().toISOString(),
+            };
             AgentTeams[teamId].orchestrationStatus = 'paused';
             AgentTeams[teamId].agents.forEach(agent => {
                 agent.status = 'idle';
@@ -913,9 +1087,9 @@ async function startAllTeams() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ action: 'startAll' })
+            body: JSON.stringify({ action: 'startAll' }),
         });
 
         const data = await response.json();
@@ -923,10 +1097,13 @@ async function startAllTeams() {
         if (data.success) {
             // Update local state
             Object.keys(AgentTeams).forEach(teamId => {
-                state.teamOrchestrationState[teamId] = { status: 'running', lastRun: new Date().toISOString() };
+                state.teamOrchestrationState[teamId] = {
+                    status: 'running',
+                    lastRun: new Date().toISOString(),
+                };
                 AgentTeams[teamId].orchestrationStatus = 'running';
             });
-            
+
             // Update world state if returned
             if (data.data.worldState) {
                 state.worldState = data.data.worldState;
@@ -934,7 +1111,11 @@ async function startAllTeams() {
             }
 
             updateAllTeamUI();
-            showToast('success', 'All Teams Started', `${data.data.teamsStarted || Object.keys(AgentTeams).length} teams now active`);
+            showToast(
+                'success',
+                'All Teams Started',
+                `${data.data.teamsStarted || Object.keys(AgentTeams).length} teams now active`
+            );
         } else {
             showToast('error', 'Start Failed', data.error || 'Failed to start all teams');
         }
@@ -957,9 +1138,9 @@ async function pauseAllTeams() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ action: 'stopAll' })
+            body: JSON.stringify({ action: 'stopAll' }),
         });
 
         const data = await response.json();
@@ -967,25 +1148,32 @@ async function pauseAllTeams() {
         if (data.success) {
             // Update local state
             Object.keys(AgentTeams).forEach(teamId => {
-                state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                state.teamOrchestrationState[teamId] = {
+                    status: 'paused',
+                    lastRun: state.teamOrchestrationState[teamId]?.lastRun,
+                };
                 AgentTeams[teamId].orchestrationStatus = 'paused';
                 AgentTeams[teamId].agents.forEach(agent => {
                     agent.status = 'idle';
                     agent.currentTask = null;
                 });
             });
-            
+
             // Update world state
             state.worldState = 'paused';
             state.orchestrationMode = 'paused';
-            
+
             // Update world state buttons
             elements.worldStateBtns?.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.state === 'paused');
             });
 
             updateAllTeamUI();
-            showToast('info', 'All Teams Paused', `${data.data.teamsPaused || Object.keys(AgentTeams).length} teams paused`);
+            showToast(
+                'info',
+                'All Teams Paused',
+                `${data.data.teamsPaused || Object.keys(AgentTeams).length} teams paused`
+            );
         } else {
             showToast('error', 'Pause Failed', data.error || 'Failed to pause all teams');
         }
@@ -998,14 +1186,14 @@ async function pauseAllTeams() {
 /**
  * Start selected teams (multi-team operation)
  */
-async function startSelectedTeams() {
+async function _startSelectedTeams() {
     if (!state.adminToken) {
         showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
         return;
     }
 
     const teamIds = state.selectedTeams.length > 0 ? state.selectedTeams : [state.activeTeam];
-    
+
     if (teamIds.includes('all')) {
         return startAllTeams();
     }
@@ -1020,14 +1208,14 @@ async function startSelectedTeams() {
 /**
  * Pause selected teams (multi-team operation)
  */
-async function pauseSelectedTeams() {
+async function _pauseSelectedTeams() {
     if (!state.adminToken) {
         showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
         return;
     }
 
     const teamIds = state.selectedTeams.length > 0 ? state.selectedTeams : [state.activeTeam];
-    
+
     if (teamIds.includes('all')) {
         return pauseAllTeams();
     }
@@ -1047,7 +1235,11 @@ async function executeOrchestrationCycle() {
 
     // Prevent double execution
     if (state.executionInProgress) {
-        showToast('warning', 'Execution In Progress', 'Please wait for current execution to complete');
+        showToast(
+            'warning',
+            'Execution In Progress',
+            'Please wait for current execution to complete'
+        );
         return;
     }
 
@@ -1061,7 +1253,9 @@ async function executeOrchestrationCycle() {
 
         if (hasSelection) {
             // Execute selected teams (1, 2, 3, or more)
-            const teamNames = state.selectedTeams.map(id => AgentTeams[id]?.badge || id).join(' + ');
+            const teamNames = state.selectedTeams
+                .map(id => AgentTeams[id]?.badge || id)
+                .join(' + ');
             toastMessage = `Running ${state.selectedTeams.length} team${state.selectedTeams.length > 1 ? 's' : ''}: ${teamNames}`;
             showToast('info', 'Executing Selected Teams', toastMessage);
 
@@ -1071,9 +1265,9 @@ async function executeOrchestrationCycle() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.adminToken}`
+                        Authorization: `Bearer ${state.adminToken}`,
                     },
-                    body: JSON.stringify({ teamId: state.selectedTeams[0], action: 'execute' })
+                    body: JSON.stringify({ teamId: state.selectedTeams[0], action: 'execute' }),
                 });
             } else {
                 // Multiple selected teams
@@ -1081,16 +1275,15 @@ async function executeOrchestrationCycle() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.adminToken}`
+                        Authorization: `Bearer ${state.adminToken}`,
                     },
-                    body: JSON.stringify({ 
-                        action: 'executeMultiple', 
+                    body: JSON.stringify({
+                        action: 'executeMultiple',
                         teamIds: state.selectedTeams,
-                        parallel: true 
-                    })
+                        parallel: true,
+                    }),
                 });
             }
-
         } else if (state.activeTeam === 'all') {
             // Execute ALL teams
             toastMessage = 'Running company-wide orchestration...';
@@ -1100,11 +1293,10 @@ async function executeOrchestrationCycle() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.adminToken}`
+                    Authorization: `Bearer ${state.adminToken}`,
                 },
-                body: JSON.stringify({ action: 'executeAll', parallel: true })
+                body: JSON.stringify({ action: 'executeAll', parallel: true }),
             });
-
         } else {
             // Execute single focused team (from sidebar click)
             const teamId = state.activeTeam;
@@ -1115,9 +1307,9 @@ async function executeOrchestrationCycle() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.adminToken}`
+                    Authorization: `Bearer ${state.adminToken}`,
                 },
-                body: JSON.stringify({ teamId, action: 'execute' })
+                body: JSON.stringify({ teamId, action: 'execute' }),
             });
         }
 
@@ -1152,9 +1344,9 @@ async function executeOrchestrationCycle() {
             // Update team states
             if (result.executed) {
                 result.executed.forEach(teamId => {
-                    state.teamOrchestrationState[teamId] = { 
-                        status: 'running', 
-                        lastRun: new Date().toISOString() 
+                    state.teamOrchestrationState[teamId] = {
+                        status: 'running',
+                        lastRun: new Date().toISOString(),
                     };
                     if (AgentTeams[teamId]) {
                         AgentTeams[teamId].orchestrationStatus = 'running';
@@ -1167,9 +1359,17 @@ async function executeOrchestrationCycle() {
 
             // Success message
             if (teamsExecuted > 1) {
-                showToast('success', 'Orchestration Complete', `Executed ${teamsExecuted} teams • ${tokensUsed} tokens used`);
+                showToast(
+                    'success',
+                    'Orchestration Complete',
+                    `Executed ${teamsExecuted} teams • ${tokensUsed} tokens used`
+                );
             } else {
-                showToast('success', 'Orchestration Complete', `${activities.length} activities • ${tokensUsed} tokens used`);
+                showToast(
+                    'success',
+                    'Orchestration Complete',
+                    `${activities.length} activities • ${tokensUsed} tokens used`
+                );
             }
 
             // Show failed teams if any
@@ -1177,9 +1377,12 @@ async function executeOrchestrationCycle() {
                 const failedNames = result.failed.map(f => f.teamId).join(', ');
                 showToast('warning', 'Some Teams Failed', `Failed: ${failedNames}`);
             }
-
         } else {
-            showToast('error', 'Execution Failed', data.error || data.details || 'Orchestration failed');
+            showToast(
+                'error',
+                'Execution Failed',
+                data.error || data.details || 'Orchestration failed'
+            );
         }
     } catch (error) {
         console.error('[Orchestration] Execute error:', error);
@@ -1215,14 +1418,14 @@ async function executeTeams(teamIds) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.adminToken}`
+                Authorization: `Bearer ${state.adminToken}`,
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 action: teamIds.length === 1 ? 'execute' : 'executeMultiple',
                 teamId: teamIds.length === 1 ? teamIds[0] : undefined,
                 teamIds: teamIds.length > 1 ? teamIds : undefined,
-                parallel: true
-            })
+                parallel: true,
+            }),
         });
 
         const data = await response.json();
@@ -1230,7 +1433,7 @@ async function executeTeams(teamIds) {
         if (data.success) {
             const result = data.data;
             const activities = result.totalActivities || result.activities || [];
-            
+
             if (activities.length > 0) {
                 state.activities = [...activities, ...state.activities].slice(0, 50);
                 renderActivityFeed();
@@ -1296,7 +1499,7 @@ async function fetchOrchestrationStatus() {
                 state.teamOrchestrationState[teamId] = {
                     status: teamState.status,
                     lastRun: teamState.lastRun,
-                    runCount: teamState.runCount
+                    runCount: teamState.runCount,
                 };
                 if (AgentTeams[teamId]) {
                     AgentTeams[teamId].orchestrationStatus = teamState.status;
@@ -1318,7 +1521,7 @@ async function fetchOrchestrationStatus() {
     }
 }
 
-function updateTeamUI(teamId) {
+function updateTeamUI(_teamId) {
     renderTeamsMiniGrid();
     renderTeamNavButtons();
     renderAgentsTeamsGrid();
@@ -1416,9 +1619,14 @@ function formatTimeAgo(date) {
 // ============================================
 
 function updateStats() {
-    const totalAgents = Object.values(AgentTeams).reduce((sum, team) => sum + team.agents.length, 0);
-    const activeAgents = Object.values(AgentTeams).reduce((sum, team) =>
-        sum + team.agents.filter(a => a.status === 'working').length, 0);
+    const totalAgents = Object.values(AgentTeams).reduce(
+        (sum, team) => sum + team.agents.length,
+        0
+    );
+    const activeAgents = Object.values(AgentTeams).reduce(
+        (sum, team) => sum + team.agents.filter(a => a.status === 'working').length,
+        0
+    );
     const utilization = totalAgents > 0 ? Math.round((activeAgents / totalAgents) * 100) : 0;
 
     if (elements.totalAgents) elements.totalAgents.textContent = totalAgents;
@@ -1455,8 +1663,8 @@ async function loadSignups() {
     try {
         const response = await fetch('/api/admin-signups', {
             headers: {
-                'Authorization': `Bearer ${state.adminToken}`
-            }
+                Authorization: `Bearer ${state.adminToken}`,
+            },
         });
 
         if (!response.ok) {
@@ -1477,7 +1685,7 @@ async function loadSignups() {
                 consent: s.consentToContact,
                 marketingConsent: s.consentToContact,
                 timestamp: s.signupDate || s.storedAt,
-                date: s.signupDate || s.storedAt
+                date: s.signupDate || s.storedAt,
             }));
             renderSignupsTable();
             updateAnalyticsMetrics();
@@ -1539,9 +1747,10 @@ function updateAnalyticsMetrics() {
 
 function filterSignups() {
     const query = elements.signupSearch.value.toLowerCase();
-    const filtered = state.signups.filter(s =>
-        s.email.toLowerCase().includes(query) ||
-        (s.interest && s.interest.toLowerCase().includes(query))
+    const filtered = state.signups.filter(
+        s =>
+            s.email.toLowerCase().includes(query) ||
+            (s.interest && s.interest.toLowerCase().includes(query))
     );
 
     // Temporarily update state for rendering
@@ -1562,7 +1771,7 @@ function exportSignupsCSV() {
         s.email,
         s.interest || '',
         s.consent || s.marketingConsent ? 'Yes' : 'No',
-        new Date(s.timestamp || s.date).toISOString()
+        new Date(s.timestamp || s.date).toISOString(),
     ]);
 
     const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
@@ -1590,14 +1799,16 @@ function initCharts() {
             type: 'line',
             data: {
                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Signups',
-                    data: [3, 5, 2, 8, 4, 6, 7],
-                    borderColor: '#818cf8',
-                    backgroundColor: 'rgba(129, 140, 248, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: [
+                    {
+                        label: 'Signups',
+                        data: [3, 5, 2, 8, 4, 6, 7],
+                        borderColor: '#818cf8',
+                        backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -1605,9 +1816,9 @@ function initCharts() {
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { display: false },
-                    y: { display: false }
-                }
-            }
+                    y: { display: false },
+                },
+            },
         });
     }
 
@@ -1618,32 +1829,34 @@ function initCharts() {
             type: 'line',
             data: {
                 labels: generateLastNDays(7),
-                datasets: [{
-                    label: 'Signups',
-                    data: generateRandomData(7, 0, 15),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: [
+                    {
+                        label: 'Signups',
+                        data: generateRandomData(7, 0, 15),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                    },
+                ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
                 },
                 scales: {
                     x: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: 'rgba(255,255,255,0.5)' }
+                        ticks: { color: 'rgba(255,255,255,0.5)' },
                     },
                     y: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: 'rgba(255,255,255,0.5)' }
-                    }
-                }
-            }
+                        ticks: { color: 'rgba(255,255,255,0.5)' },
+                    },
+                },
+            },
         });
     }
 
@@ -1654,16 +1867,12 @@ function initCharts() {
             type: 'doughnut',
             data: {
                 labels: ['Productivity', 'Health', 'Finance', 'Education', 'Other'],
-                datasets: [{
-                    data: [35, 25, 20, 15, 5],
-                    backgroundColor: [
-                        '#3b82f6',
-                        '#22c55e',
-                        '#f59e0b',
-                        '#8b5cf6',
-                        '#6b7280'
-                    ]
-                }]
+                datasets: [
+                    {
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#6b7280'],
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -1671,10 +1880,10 @@ function initCharts() {
                 plugins: {
                     legend: {
                         position: 'right',
-                        labels: { color: 'rgba(255,255,255,0.7)' }
-                    }
-                }
-            }
+                        labels: { color: 'rgba(255,255,255,0.7)' },
+                    },
+                },
+            },
         });
     }
 }
@@ -1708,7 +1917,9 @@ function initSettings() {
 
     // API key save buttons
     ['anthropic', 'openai', 'gemini'].forEach(provider => {
-        const btn = document.getElementById(`btnSave${provider.charAt(0).toUpperCase() + provider.slice(1)}Key`);
+        const btn = document.getElementById(
+            `btnSave${provider.charAt(0).toUpperCase() + provider.slice(1)}Key`
+        );
         if (btn) {
             btn.addEventListener('click', () => saveApiKey(provider));
         }
@@ -1777,17 +1988,21 @@ function saveApiKey(provider) {
     const keyPatterns = {
         anthropic: /^sk-ant-/,
         openai: /^sk-/,
-        gemini: /^AI/
+        gemini: /^AI/,
     };
 
     if (!keyPatterns[provider].test(apiKey)) {
-        showToast('error', 'Invalid Format', `API key doesn't match expected format for ${provider}`);
+        showToast(
+            'error',
+            'Invalid Format',
+            `API key doesn't match expected format for ${provider}`
+        );
         return;
     }
 
     state.apiKeyConfig[provider] = {
         configured: true,
-        model: model || state.apiKeyConfig[provider].model
+        model: model || state.apiKeyConfig[provider].model,
     };
 
     if (statusEl) {
@@ -1796,7 +2011,11 @@ function saveApiKey(provider) {
     }
 
     keyInput.value = '';
-    showToast('success', 'Configuration Saved', `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured`);
+    showToast(
+        'success',
+        'Configuration Saved',
+        `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key configured`
+    );
 }
 
 function runHealthCheck() {
@@ -1899,9 +2118,9 @@ async function emergencyStopAll() {
 
 function submitNewTask() {
     const title = document.getElementById('taskTitle')?.value;
-    const description = document.getElementById('taskDescription')?.value;
+    const _description = document.getElementById('taskDescription')?.value;
     const team = document.getElementById('taskTeam')?.value;
-    const priority = document.getElementById('taskPriority')?.value;
+    const _priority = document.getElementById('taskPriority')?.value;
 
     if (!title || !team) {
         showToast('error', 'Validation Error', 'Please fill in required fields');
@@ -1915,13 +2134,17 @@ function submitNewTask() {
         teamId: team,
         message: `New task created: ${title}`,
         tag: 'Task',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
 
     renderActivityFeed();
     renderOverviewActivity();
     closeAllModals();
-    showToast('success', 'Task Created', `Task "${title}" assigned to ${AgentTeams[team]?.name || team}`);
+    showToast(
+        'success',
+        'Task Created',
+        `Task "${title}" assigned to ${AgentTeams[team]?.name || team}`
+    );
 
     // Clear form
     document.getElementById('taskTitle').value = '';
@@ -1930,7 +2153,7 @@ function submitNewTask() {
 
 function sendBroadcast() {
     const message = document.getElementById('broadcastMessage')?.value;
-    const priority = document.getElementById('broadcastPriority')?.value;
+    const _priority = document.getElementById('broadcastPriority')?.value;
 
     if (!message) {
         showToast('error', 'Validation Error', 'Please enter a message');
@@ -1944,7 +2167,7 @@ function sendBroadcast() {
         teamId: 'system',
         message: `Broadcast: ${message}`,
         tag: 'Broadcast',
-        timestamp: new Date()
+        timestamp: new Date(),
     });
 
     renderActivityFeed();
@@ -1984,7 +2207,7 @@ function showToast(type, title, message) {
         success: '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
         error: '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>',
         warning: '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
-        info: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>'
+        info: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>',
     };
 
     toast.innerHTML = `
@@ -2018,7 +2241,7 @@ async function initBiometricAuth() {
     const authTypeText = document.getElementById('authTypeText');
     const gateSubtitle = document.getElementById('gateSubtitle');
     const gateMessage = document.getElementById('gateMessage');
-    const iconContainer = document.getElementById('biometricIcon');
+    const _iconContainer = document.getElementById('biometricIcon');
 
     if (!gate) {
         console.log('[CEO Dashboard] No biometric gate found, allowing access');
@@ -2056,7 +2279,10 @@ async function initBiometricAuth() {
                 const magicResult = await BiometricAuth.verifyMagicLink(magicToken);
                 BiometricAuth.clearMagicLinkToken();
                 if (magicResult.success) {
-                    showBiometricStatus(magicResult.message || 'Access granted via magic link!', 'success');
+                    showBiometricStatus(
+                        magicResult.message || 'Access granted via magic link!',
+                        'success'
+                    );
                     await new Promise(r => setTimeout(r, 800));
                     hideBiometricGate();
                     return true;
@@ -2105,16 +2331,24 @@ async function initBiometricAuth() {
 
         // Handle service errors (e.g., missing BLOB_READ_WRITE_TOKEN)
         if (accessStatus.serviceError) {
-            console.error('[CEO Dashboard] Service error during access check:', accessStatus.message);
+            console.error(
+                '[CEO Dashboard] Service error during access check:',
+                accessStatus.message
+            );
             if (btnAuth) btnAuth.style.display = 'none';
             if (btnSetup) btnSetup.style.display = 'none';
             if (gateSubtitle) {
                 gateSubtitle.textContent = 'Service Unavailable';
             }
             if (gateMessage) {
-                gateMessage.textContent = accessStatus.message || 'Authentication service is temporarily unavailable. Please try again later.';
+                gateMessage.textContent =
+                    accessStatus.message ||
+                    'Authentication service is temporarily unavailable. Please try again later.';
             }
-            showBiometricStatus('Authentication service error. Please check server configuration.', 'error');
+            showBiometricStatus(
+                'Authentication service error. Please check server configuration.',
+                'error'
+            );
             return false;
         }
 
@@ -2140,9 +2374,10 @@ async function initBiometricAuth() {
                     gateSubtitle.textContent = 'Access Denied';
                 }
                 if (gateMessage) {
-                    gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
+                    gateMessage.textContent =
+                        'This dashboard is secured by another device. Only the owner can access it.';
                 }
-                showBiometricStatus('This dashboard is locked to its owner\'s device', 'error');
+                showBiometricStatus("This dashboard is locked to its owner's device", 'error');
 
                 // Show link device option if available
                 const btnLinkDevice = document.getElementById('btnLinkDevice');
@@ -2166,12 +2401,12 @@ async function initBiometricAuth() {
                 gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${escapeHtml(state.authenticatorType)}</span>`;
             }
             if (gateMessage) {
-                gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+                gateMessage.textContent =
+                    'First-time setup: Your biometric will become the only key to this dashboard';
             }
         }
 
         return false; // Don't allow access until verified
-
     } catch (error) {
         console.error('[CEO Dashboard] Biometric initialization error:', error);
         showBiometricStatus(`Initialization failed: ${error.message}`, 'error');
@@ -2209,7 +2444,7 @@ async function handleBiometricAuth() {
         iconContainer?.classList.remove('error', 'success');
         hideBiometricStatus();
 
-        const result = await BiometricAuth.authenticate((progress) => {
+        const result = await BiometricAuth.authenticate(progress => {
             console.log('[CEO Dashboard] Auth progress:', progress);
             showBiometricStatus(progress, 'info');
         });
@@ -2253,7 +2488,10 @@ async function handleBiometricAuth() {
 
         let errorMessage = error.message || 'Authentication failed';
 
-        if (errorMessage.includes('temporarily unavailable') || errorMessage.includes('CONFIG_ERROR')) {
+        if (
+            errorMessage.includes('temporarily unavailable') ||
+            errorMessage.includes('CONFIG_ERROR')
+        ) {
             errorMessage = 'Server configuration error. Please contact administrator.';
         } else if (errorMessage.includes('Unable to connect')) {
             errorMessage = 'Cannot connect to server. Please check your internet connection.';
@@ -2289,7 +2527,7 @@ async function handleBiometricSetup() {
         iconContainer?.classList.remove('error', 'success');
         hideBiometricStatus();
 
-        const result = await BiometricAuth.register((progress) => {
+        const result = await BiometricAuth.register(progress => {
             showBiometricStatus(progress, 'info');
         });
 
@@ -2366,7 +2604,7 @@ function initMagicLink() {
 
     btnSendMagic?.addEventListener('click', () => handleSendMagicLink(pageName));
 
-    magicEmailInput?.addEventListener('keydown', (e) => {
+    magicEmailInput?.addEventListener('keydown', e => {
         if (e.key === 'Enter') handleSendMagicLink(pageName);
     });
 }
@@ -2470,7 +2708,10 @@ function initDeviceLinking() {
                 const result = await BiometricAuth.claimDeviceLink(code);
 
                 if (result.success) {
-                    showBiometricStatus('Device linked! You can now register your biometric.', 'success');
+                    showBiometricStatus(
+                        'Device linked! You can now register your biometric.',
+                        'success'
+                    );
                     if (deviceLinkInput) deviceLinkInput.style.display = 'none';
 
                     // Show setup button for newly linked device
@@ -2558,11 +2799,12 @@ function showBiometricStatus(message, type) {
     statusEl.className = 'biometric-status visible ' + type;
 
     if (statusIcon) {
-        statusIcon.innerHTML = type === 'success'
-            ? '<polyline points="20 6 9 17 4 12"/>'
-            : type === 'error'
-            ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
-            : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
+        statusIcon.innerHTML =
+            type === 'success'
+                ? '<polyline points="20 6 9 17 4 12"/>'
+                : type === 'error'
+                  ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+                  : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
     }
 }
 
@@ -2582,16 +2824,19 @@ function hideBiometricStatus() {
 function hideBiometricGate() {
     const gate = document.getElementById('biometricGate');
     console.log('[CEO Dashboard] hideBiometricGate called, gate element:', !!gate);
-    
+
     if (gate) {
         gate.classList.add('authenticated');
         gate.classList.add('hidden');
-        
+
         // Add authenticated class to body to reveal dashboard content
         document.body.classList.add('authenticated');
-        console.log('[CEO Dashboard] Added authenticated class to body:', document.body.classList.contains('authenticated'));
+        console.log(
+            '[CEO Dashboard] Added authenticated class to body:',
+            document.body.classList.contains('authenticated')
+        );
         console.log('[CEO Dashboard] Body classes:', document.body.className);
-        
+
         setTimeout(() => {
             gate.style.display = 'none';
             console.log('[CEO Dashboard] Gate hidden via display:none');
@@ -2612,5 +2857,5 @@ window.addEventListener('biometric-authenticated', () => {
 // Export for biometric-auth.js integration
 window.CEODashboard = {
     showToast,
-    state
+    state,
 };

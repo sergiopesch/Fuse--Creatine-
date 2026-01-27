@@ -13,16 +13,12 @@
 
 const crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
+const { createSecuredHandler, addAuditEntry } = require('./_lib/security');
 const {
-    createSecuredHandler,
-    addAuditEntry
-} = require('./_lib/security');
-const {
-    CONFIG: BIOMETRIC_CONFIG,
     createDeviceFingerprint,
     getOwnerCredential,
     storeOwnerCredential,
-    addAuthorizedDevice
+    addAuthorizedDevice,
 } = require('./_lib/biometric-utils');
 
 // ============================================================================
@@ -39,7 +35,7 @@ const CONFIG = {
     TOKEN_LENGTH: 48, // bytes
     MAGIC_LINK_PREFIX: 'magic:token:',
     RATE_LIMIT: { limit: 5, windowMs: 300000 }, // 5 requests per 5 minutes
-    SESSION_DURATION: 30 * 60 * 1000 // 30 minutes
+    SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
 };
 
 // Initialize Redis
@@ -73,7 +69,7 @@ async function storeMagicToken(token, email, ip) {
         email,
         ip,
         createdAt: Date.now(),
-        used: false
+        used: false,
     };
 
     if (redis) {
@@ -138,13 +134,11 @@ function generateSessionToken(userId, deviceFingerprint) {
         issuedAt: Date.now(),
         expiresAt: Date.now() + CONFIG.SESSION_DURATION,
         nonce: crypto.randomBytes(16).toString('hex'),
-        authMethod: 'magic-link'
+        authMethod: 'magic-link',
     };
 
     const data = JSON.stringify(payload);
-    const hmac = crypto.createHmac('sha256', SESSION_SECRET)
-        .update(data)
-        .digest('base64url');
+    const hmac = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url');
 
     return Buffer.from(data).toString('base64url') + '.' + hmac;
 }
@@ -169,8 +163,8 @@ async function sendMagicLinkEmail(email, magicLinkUrl) {
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 from: process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>',
@@ -189,8 +183,8 @@ async function sendMagicLinkEmail(email, magicLinkUrl) {
                         </div>
                         <p style="color: #999; font-size: 11px; text-align: center; margin-top: 24px;">If you didn't request this, you can safely ignore this email.</p>
                     </div>
-                `
-            })
+                `,
+            }),
         });
 
         if (!response.ok) {
@@ -217,7 +211,9 @@ function resolveOrigin(req) {
     if (origin) return origin;
 
     const forwardedProto = req.headers['x-forwarded-proto'] || 'https';
-    const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto.split(',')[0].trim();
+    const proto = Array.isArray(forwardedProto)
+        ? forwardedProto[0]
+        : forwardedProto.split(',')[0].trim();
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
     const resolvedHost = Array.isArray(host) ? host[0] : host;
 
@@ -251,18 +247,18 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
                 ip: clientIp,
                 success: false,
                 endpoint: '/api/magic-link',
-                note: 'Non-CEO email attempted magic link'
+                note: 'Non-CEO email attempted magic link',
             });
             return res.status(403).json({
                 success: false,
-                error: 'Magic link is only available for authorized administrators'
+                error: 'Magic link is only available for authorized administrators',
             });
         }
 
         if (!redis) {
             return res.status(503).json({
                 success: false,
-                error: 'Magic link service requires Redis. Please configure UPSTASH_REDIS_REST_URL.'
+                error: 'Magic link service requires Redis. Please configure UPSTASH_REDIS_REST_URL.',
             });
         }
 
@@ -286,20 +282,20 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             ip: clientIp,
             success: emailSent,
             endpoint: '/api/magic-link',
-            email: normalizedEmail.substring(0, 3) + '***'
+            email: normalizedEmail.substring(0, 3) + '***',
         });
 
         if (!emailSent && RESEND_API_KEY) {
             return res.status(500).json({
                 success: false,
-                error: 'Failed to send email. Please try again.'
+                error: 'Failed to send email. Please try again.',
             });
         }
 
         return res.status(200).json({
             success: true,
             message: 'Magic link sent! Check your email inbox.',
-            expiresIn: CONFIG.TOKEN_EXPIRY_SECONDS
+            expiresIn: CONFIG.TOKEN_EXPIRY_SECONDS,
         });
     }
 
@@ -320,11 +316,11 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
                 action: 'MAGIC_LINK_INVALID_TOKEN',
                 ip: clientIp,
                 success: false,
-                endpoint: '/api/magic-link'
+                endpoint: '/api/magic-link',
             });
             return res.status(401).json({
                 success: false,
-                error: 'Invalid or expired magic link. Please request a new one.'
+                error: 'Invalid or expired magic link. Please request a new one.',
             });
         }
 
@@ -335,7 +331,9 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
 
         if (credentialError) {
-            return res.status(503).json({ success: false, error: 'Service temporarily unavailable' });
+            return res
+                .status(503)
+                .json({ success: false, error: 'Service temporarily unavailable' });
         }
 
         let userId;
@@ -349,11 +347,17 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             else if (/Mac/i.test(ua)) deviceName = 'Mac (Magic Link)';
             else if (/Windows/i.test(ua)) deviceName = 'Windows PC (Magic Link)';
 
-            const addResult = await addAuthorizedDevice(ownerCredential, deviceFingerprint, deviceName);
+            const addResult = await addAuthorizedDevice(
+                ownerCredential,
+                deviceFingerprint,
+                deviceName
+            );
 
             if (!addResult.success && addResult.error !== 'Device already authorized') {
                 console.error('[MagicLink] Failed to authorize device:', addResult.error);
-                return res.status(500).json({ success: false, error: 'Failed to authorize device' });
+                return res
+                    .status(500)
+                    .json({ success: false, error: 'Failed to authorize device' });
             }
 
             userId = ownerCredential.userId;
@@ -363,17 +367,25 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             const ownerData = {
                 userId,
                 deviceFingerprint,
-                authorizedDevices: [{ fingerprint: deviceFingerprint, name: 'CEO (Magic Link)', addedAt: new Date().toISOString() }],
+                authorizedDevices: [
+                    {
+                        fingerprint: deviceFingerprint,
+                        name: 'CEO (Magic Link)',
+                        addedAt: new Date().toISOString(),
+                    },
+                ],
                 registeredAt: new Date().toISOString(),
                 registeredFromIp: clientIp,
                 authCount: 0,
                 version: '3.0',
-                magicLinkSetup: true
+                magicLinkSetup: true,
             };
 
             const stored = await storeOwnerCredential(ownerData);
             if (!stored) {
-                return res.status(500).json({ success: false, error: 'Failed to initialize dashboard' });
+                return res
+                    .status(500)
+                    .json({ success: false, error: 'Failed to initialize dashboard' });
             }
         }
 
@@ -386,14 +398,14 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             success: true,
             endpoint: '/api/magic-link',
             userId: userId.substring(0, 8) + '...',
-            authMethod: 'magic-link'
+            authMethod: 'magic-link',
         });
 
         const responseBody = {
             success: true,
             verified: true,
             userId,
-            message: 'Magic link verified. Welcome to your dashboard!'
+            message: 'Magic link verified. Welcome to your dashboard!',
         };
 
         if (sessionToken) {
@@ -407,12 +419,15 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
     return res.status(400).json({ success: false, error: 'Invalid action' });
 };
 
-module.exports = createSecuredHandler({
-    requireAuth: false,
-    allowedMethods: ['POST', 'OPTIONS'],
-    rateLimit: {
-        limit: CONFIG.RATE_LIMIT.limit,
-        windowMs: CONFIG.RATE_LIMIT.windowMs,
-        keyPrefix: 'magic-link'
-    }
-}, magicLinkHandler);
+module.exports = createSecuredHandler(
+    {
+        requireAuth: false,
+        allowedMethods: ['POST', 'OPTIONS'],
+        rateLimit: {
+            limit: CONFIG.RATE_LIMIT.limit,
+            windowMs: CONFIG.RATE_LIMIT.windowMs,
+            keyPrefix: 'magic-link',
+        },
+    },
+    magicLinkHandler
+);

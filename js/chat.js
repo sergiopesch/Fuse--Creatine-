@@ -4,7 +4,7 @@
  * intelligent email capture, and conversion-focused design
  */
 
-(function() {
+(function () {
     'use strict';
 
     // Configuration
@@ -14,11 +14,11 @@
         retryDelay: 1000,
         typingIndicatorDelay: 300,
         messagesBeforeEmailPrompt: 3, // Prompt for email after this many exchanges
-        emailCaptureDelay: 500
+        emailCaptureDelay: 500,
     };
 
     // Chat state
-    let state = {
+    const state = {
         isOpen: false,
         isLoading: false,
         showWelcome: true,
@@ -29,40 +29,46 @@
         retryCount: 0,
         sessionTerminated: false, // Security: track if session was terminated
         userScrolledUp: false, // Track if user has scrolled up
-        unreadCount: 0 // Track unread messages when scrolled up
+        unreadCount: 0, // Track unread messages when scrolled up
     };
 
     // DOM Elements
-    let elements = {};
+    const elements = {};
 
     // Welcome messages - make a great first impression
     const welcomeConfig = {
         title: "Hey! I'm the FUSE Agent",
-        subtitle: "Your personal guide to optimized creatine supplementation. Ask me anything!",
+        subtitle: 'Your personal guide to optimized creatine supplementation. Ask me anything!',
         features: [
-            { icon: "zap", text: "Instant answers about FUSE" },
-            { icon: "shield", text: "Science-backed information" },
-            { icon: "clock", text: "Available 24/7" }
-        ]
+            { icon: 'zap', text: 'Instant answers about FUSE' },
+            { icon: 'shield', text: 'Science-backed information' },
+            { icon: 'clock', text: 'Available 24/7' },
+        ],
     };
 
     // Quick action suggestions
     const quickActions = [
-        { label: "What makes FUSE different?", message: "What makes FUSE different from regular creatine?" },
-        { label: "How do I take it?", message: "How should I take FUSE for best results?" },
-        { label: "Is it safe?", message: "Is creatine safe? Any side effects?" },
-        { label: "When is it launching?", message: "When is FUSE launching? How can I get early access?" }
+        {
+            label: 'What makes FUSE different?',
+            message: 'What makes FUSE different from regular creatine?',
+        },
+        { label: 'How do I take it?', message: 'How should I take FUSE for best results?' },
+        { label: 'Is it safe?', message: 'Is creatine safe? Any side effects?' },
+        {
+            label: 'When is it launching?',
+            message: 'When is FUSE launching? How can I get early access?',
+        },
     ];
 
     // Error messages
     const errorMessages = {
-        'RATE_LIMITED': "Easy there! Give it a moment and try again.",
-        'API_RATE_LIMITED': "High demand right now - try again in a sec.",
-        'SERVICE_UNAVAILABLE': "Having a moment here. Try again shortly!",
-        'AUTH_FAILED': "Technical hiccup on our end. Please try again.",
-        'NETWORK_ERROR': "Can't connect - check your internet and retry.",
-        'VALIDATION_ERROR': "Didn't quite catch that. Could you rephrase?",
-        'default': "Something went wrong. Please try again!"
+        RATE_LIMITED: 'Easy there! Give it a moment and try again.',
+        API_RATE_LIMITED: 'High demand right now - try again in a sec.',
+        SERVICE_UNAVAILABLE: 'Having a moment here. Try again shortly!',
+        AUTH_FAILED: 'Technical hiccup on our end. Please try again.',
+        NETWORK_ERROR: "Can't connect - check your internet and retry.",
+        VALIDATION_ERROR: "Didn't quite catch that. Could you rephrase?",
+        default: 'Something went wrong. Please try again!',
     };
 
     // SVG Icons
@@ -76,7 +82,7 @@
         check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
         sparkle: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>`,
         mail: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>`,
-        arrowRight: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`
+        arrowRight: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`,
     };
 
     /**
@@ -111,7 +117,7 @@
         elements.chatMessages.addEventListener('scroll', handleScroll);
 
         // Close on click outside
-        elements.chatWidget.addEventListener('click', (e) => {
+        elements.chatWidget.addEventListener('click', e => {
             if (e.target === elements.chatWidget && state.isOpen) {
                 closeChat();
             }
@@ -232,22 +238,30 @@
                 </div>
 
                 <div class="chat-welcome-features">
-                    ${welcomeConfig.features.map(f => `
+                    ${welcomeConfig.features
+                        .map(
+                            f => `
                         <div class="chat-welcome-feature">
                             <span class="chat-welcome-feature-icon">${icons[f.icon]}</span>
                             <span>${f.text}</span>
                         </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
 
                 <div class="chat-welcome-actions">
                     <p class="chat-welcome-prompt">Popular questions:</p>
-                    ${quickActions.map((action, i) => `
+                    ${quickActions
+                        .map(
+                            (action, i) => `
                         <button class="chat-welcome-btn" data-message="${action.message}" style="animation-delay: ${i * 0.05}s">
                             ${action.label}
                             <span class="chat-welcome-btn-arrow">${icons.arrowRight}</span>
                         </button>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
 
                 <div class="chat-welcome-footer">
@@ -293,7 +307,10 @@
                 // Add greeting
                 const hour = new Date().getHours();
                 const timeGreeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-                addMessage(`Good ${timeGreeting}! I'm here to help you learn about FUSE. What would you like to know?`, 'assistant');
+                addMessage(
+                    `Good ${timeGreeting}! I'm here to help you learn about FUSE. What would you like to know?`,
+                    'assistant'
+                );
 
                 // If there's an initial message, send it
                 if (initialMessage) {
@@ -318,7 +335,11 @@
         if (!message || state.isLoading) return;
 
         if (message.length > CONFIG.maxMessageLength) {
-            addMessage(`Please keep your message under ${CONFIG.maxMessageLength} characters.`, 'assistant', true);
+            addMessage(
+                `Please keep your message under ${CONFIG.maxMessageLength} characters.`,
+                'assistant',
+                true
+            );
             return;
         }
 
@@ -349,7 +370,11 @@
     async function sendMessage(message, isRetry = false) {
         // Security: Don't allow messages if session was terminated
         if (state.sessionTerminated) {
-            addMessage("This chat session has ended. Please refresh the page to start a new conversation.", 'assistant', true);
+            addMessage(
+                'This chat session has ended. Please refresh the page to start a new conversation.',
+                'assistant',
+                true
+            );
             return;
         }
 
@@ -365,8 +390,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [{ role: 'user', content: message }],
-                    conversationHistory: state.conversationHistory.slice(-10)
-                })
+                    conversationHistory: state.conversationHistory.slice(-10),
+                }),
             });
 
             const data = await response.json();
@@ -400,7 +425,8 @@
      * Handle API errors
      */
     function handleError(status, errorCode, originalMessage) {
-        const shouldRetry = status >= 500 &&
+        const shouldRetry =
+            status >= 500 &&
             errorCode !== 'RATE_LIMITED' &&
             errorCode !== 'API_RATE_LIMITED' &&
             state.retryCount < CONFIG.maxRetries;
@@ -408,7 +434,10 @@
         if (shouldRetry) {
             state.retryCount++;
             showTypingIndicator();
-            setTimeout(() => sendMessage(originalMessage, true), CONFIG.retryDelay * state.retryCount);
+            setTimeout(
+                () => sendMessage(originalMessage, true),
+                CONFIG.retryDelay * state.retryCount
+            );
             return;
         }
 
@@ -423,11 +452,18 @@
         if (state.retryCount < CONFIG.maxRetries) {
             state.retryCount++;
             showTypingIndicator();
-            setTimeout(() => sendMessage(originalMessage, true), CONFIG.retryDelay * state.retryCount);
+            setTimeout(
+                () => sendMessage(originalMessage, true),
+                CONFIG.retryDelay * state.retryCount
+            );
             return;
         }
 
-        addMessage("Can't connect right now. Please check your internet and try again.", 'assistant', true);
+        addMessage(
+            "Can't connect right now. Please check your internet and try again.",
+            'assistant',
+            true
+        );
     }
 
     /**
@@ -587,8 +623,8 @@
                     email: email,
                     mainInterest: 'Chat widget signup',
                     consentToContact: true,
-                    policyVersion: '1.0'
-                })
+                    policyVersion: '1.0',
+                }),
             });
 
             const captureEl = document.getElementById('chatEmailCapture');
@@ -613,7 +649,10 @@
 
                 // Add a message
                 setTimeout(() => {
-                    addMessage("Thanks for joining! You'll be among the first to know when FUSE launches. Is there anything else you'd like to know?", 'assistant');
+                    addMessage(
+                        "Thanks for joining! You'll be among the first to know when FUSE launches. Is there anything else you'd like to know?",
+                        'assistant'
+                    );
                 }, 500);
             } else {
                 const data = await response.json();
@@ -694,7 +733,7 @@
                 if ('scrollBehavior' in document.documentElement.style) {
                     container.scrollTo({
                         top: maxScroll,
-                        behavior: 'smooth'
+                        behavior: 'smooth',
                     });
                 } else {
                     // Fallback: custom animation for older browsers
@@ -722,7 +761,7 @@
 
             // Ease out cubic for smooth deceleration
             const easeOut = 1 - Math.pow(1 - progress, 3);
-            container.scrollTop = startScroll + (distance * easeOut);
+            container.scrollTop = startScroll + distance * easeOut;
 
             if (progress < 1) {
                 requestAnimationFrame(step);
@@ -810,7 +849,10 @@
 
         if (length > CONFIG.maxMessageLength * 0.8) {
             counter.textContent = `${length}/${CONFIG.maxMessageLength}`;
-            counter.classList.toggle('chat-char-count-warning', length > CONFIG.maxMessageLength * 0.95);
+            counter.classList.toggle(
+                'chat-char-count-warning',
+                length > CONFIG.maxMessageLength * 0.95
+            );
             counter.style.opacity = '1';
         } else {
             counter.style.opacity = '0';
@@ -880,7 +922,6 @@
                 elements.chatMessages.innerHTML = '';
             }
         },
-        checkHealth: checkApiHealth
+        checkHealth: checkApiHealth,
     };
-
 })();

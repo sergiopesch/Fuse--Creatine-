@@ -12,55 +12,55 @@
 const PRICING = {
     anthropic: {
         'claude-3-5-haiku-latest': {
-            inputPer1K: 0.00080,   // $0.80 per 1M input tokens
-            outputPer1K: 0.00400,  // $4.00 per 1M output tokens
-            name: 'Claude 3.5 Haiku'
+            inputPer1K: 0.0008, // $0.80 per 1M input tokens
+            outputPer1K: 0.004, // $4.00 per 1M output tokens
+            name: 'Claude 3.5 Haiku',
         },
         'claude-3-5-sonnet-latest': {
-            inputPer1K: 0.00300,   // $3.00 per 1M input tokens
-            outputPer1K: 0.01500,  // $15.00 per 1M output tokens
-            name: 'Claude 3.5 Sonnet'
+            inputPer1K: 0.003, // $3.00 per 1M input tokens
+            outputPer1K: 0.015, // $15.00 per 1M output tokens
+            name: 'Claude 3.5 Sonnet',
         },
         'claude-3-opus-latest': {
-            inputPer1K: 0.01500,   // $15.00 per 1M input tokens
-            outputPer1K: 0.07500,  // $75.00 per 1M output tokens
-            name: 'Claude 3 Opus'
-        }
+            inputPer1K: 0.015, // $15.00 per 1M input tokens
+            outputPer1K: 0.075, // $75.00 per 1M output tokens
+            name: 'Claude 3 Opus',
+        },
     },
     openai: {
         'gpt-4-turbo': {
-            inputPer1K: 0.01000,
-            outputPer1K: 0.03000,
-            name: 'GPT-4 Turbo'
+            inputPer1K: 0.01,
+            outputPer1K: 0.03,
+            name: 'GPT-4 Turbo',
         },
         'gpt-4o': {
-            inputPer1K: 0.00500,
-            outputPer1K: 0.01500,
-            name: 'GPT-4o'
+            inputPer1K: 0.005,
+            outputPer1K: 0.015,
+            name: 'GPT-4o',
         },
         'gpt-4o-mini': {
             inputPer1K: 0.00015,
-            outputPer1K: 0.00060,
-            name: 'GPT-4o Mini'
+            outputPer1K: 0.0006,
+            name: 'GPT-4o Mini',
         },
         'gpt-3.5-turbo': {
-            inputPer1K: 0.00050,
-            outputPer1K: 0.00150,
-            name: 'GPT-3.5 Turbo'
-        }
+            inputPer1K: 0.0005,
+            outputPer1K: 0.0015,
+            name: 'GPT-3.5 Turbo',
+        },
     },
     gemini: {
         'gemini-pro': {
             inputPer1K: 0.00025,
-            outputPer1K: 0.00050,
-            name: 'Gemini Pro'
+            outputPer1K: 0.0005,
+            name: 'Gemini Pro',
         },
         'gemini-1.5-pro': {
             inputPer1K: 0.00125,
-            outputPer1K: 0.00500,
-            name: 'Gemini 1.5 Pro'
-        }
-    }
+            outputPer1K: 0.005,
+            name: 'Gemini 1.5 Pro',
+        },
+    },
 };
 
 // ============================================================================
@@ -69,8 +69,8 @@ const PRICING = {
 
 const CONFIG = {
     // Default budget limits (can be overridden via env vars)
-    DEFAULT_DAILY_BUDGET: 50.00,    // $50/day
-    DEFAULT_MONTHLY_BUDGET: 500.00, // $500/month
+    DEFAULT_DAILY_BUDGET: 50.0, // $50/day
+    DEFAULT_MONTHLY_BUDGET: 500.0, // $500/month
 
     // Alert thresholds (percentage of budget)
     ALERT_THRESHOLDS: [50, 75, 90, 100],
@@ -87,11 +87,11 @@ const CONFIG = {
 // ============================================================================
 
 let usageStore = {
-    requests: [],       // Individual request records
-    dailyTotals: {},    // Aggregated daily totals
-    monthlyTotals: {},  // Aggregated monthly totals
-    alerts: [],         // Budget alerts
-    lastReset: new Date().toISOString()
+    requests: [], // Individual request records
+    dailyTotals: {}, // Aggregated daily totals
+    monthlyTotals: {}, // Aggregated monthly totals
+    alerts: [], // Budget alerts
+    lastReset: new Date().toISOString(),
 };
 
 // ============================================================================
@@ -105,8 +105,8 @@ function getDateKeys() {
     const now = new Date();
     return {
         day: now.toISOString().split('T')[0], // YYYY-MM-DD
-        month: now.toISOString().slice(0, 7),  // YYYY-MM
-        timestamp: now.toISOString()
+        month: now.toISOString().slice(0, 7), // YYYY-MM
+        timestamp: now.toISOString(),
     };
 }
 
@@ -139,8 +139,8 @@ function calculateCost(provider, model, inputTokens, outputTokens) {
                 inputCost: 0,
                 outputCost: 0,
                 model: 'Unknown',
-                warning: `Pricing not found for ${provider}/${model}`
-            }
+                warning: `Pricing not found for ${provider}/${model}`,
+            },
         };
     }
 
@@ -156,8 +156,8 @@ function calculateCost(provider, model, inputTokens, outputTokens) {
             outputCost,
             model: pricing.name,
             inputPer1K: pricing.inputPer1K,
-            outputPer1K: pricing.outputPer1K
-        }
+            outputPer1K: pricing.outputPer1K,
+        },
     };
 }
 
@@ -187,7 +187,7 @@ function recordUsage({
     endpoint = 'unknown',
     clientIp = 'unknown',
     success = true,
-    latencyMs = 0
+    latencyMs = 0,
 }) {
     const { day, month, timestamp } = getDateKeys();
 
@@ -215,7 +215,7 @@ function recordUsage({
         endpoint,
         clientIp: clientIp.substring(0, clientIp.indexOf('.') + 4) + 'xxx', // Partial IP for privacy
         success,
-        latencyMs
+        latencyMs,
     };
 
     // Add to usage store
@@ -234,7 +234,7 @@ function recordUsage({
             outputTokens: 0,
             cost: 0,
             successCount: 0,
-            errorCount: 0
+            errorCount: 0,
         };
     }
     usageStore.dailyTotals[day].requests++;
@@ -255,7 +255,7 @@ function recordUsage({
             outputTokens: 0,
             cost: 0,
             successCount: 0,
-            errorCount: 0
+            errorCount: 0,
         };
     }
     usageStore.monthlyTotals[month].requests++;
@@ -284,7 +284,7 @@ function recordUsage({
 function getBudgetLimits() {
     return {
         daily: parseFloat(process.env.DAILY_BUDGET_LIMIT) || CONFIG.DEFAULT_DAILY_BUDGET,
-        monthly: parseFloat(process.env.MONTHLY_BUDGET_LIMIT) || CONFIG.DEFAULT_MONTHLY_BUDGET
+        monthly: parseFloat(process.env.MONTHLY_BUDGET_LIMIT) || CONFIG.DEFAULT_MONTHLY_BUDGET,
     };
 }
 
@@ -312,7 +312,7 @@ function checkBudgetAlerts(day, month) {
                     currentCost: dailyUsage,
                     limit: limits.daily,
                     timestamp: new Date().toISOString(),
-                    message: `Daily budget ${threshold}% threshold reached: ${formatCurrency(dailyUsage)} of ${formatCurrency(limits.daily)}`
+                    message: `Daily budget ${threshold}% threshold reached: ${formatCurrency(dailyUsage)} of ${formatCurrency(limits.daily)}`,
                 });
             }
         }
@@ -331,7 +331,7 @@ function checkBudgetAlerts(day, month) {
                     currentCost: monthlyUsage,
                     limit: limits.monthly,
                     timestamp: new Date().toISOString(),
-                    message: `Monthly budget ${threshold}% threshold reached: ${formatCurrency(monthlyUsage)} of ${formatCurrency(limits.monthly)}`
+                    message: `Monthly budget ${threshold}% threshold reached: ${formatCurrency(monthlyUsage)} of ${formatCurrency(limits.monthly)}`,
                 });
             }
         }
@@ -360,14 +360,14 @@ function checkBudgetStatus() {
             used: dailyUsage,
             limit: limits.daily,
             remaining: Math.max(0, limits.daily - dailyUsage),
-            percentage: Math.round((dailyUsage / limits.daily) * 100)
+            percentage: Math.round((dailyUsage / limits.daily) * 100),
         },
         monthly: {
             used: monthlyUsage,
             limit: limits.monthly,
             remaining: Math.max(0, limits.monthly - monthlyUsage),
-            percentage: Math.round((monthlyUsage / limits.monthly) * 100)
-        }
+            percentage: Math.round((monthlyUsage / limits.monthly) * 100),
+        },
     };
 }
 
@@ -387,20 +387,25 @@ function getUsageSummary(period = 'today') {
         period,
         generatedAt: new Date().toISOString(),
         budgetStatus: checkBudgetStatus(),
-        pricing: PRICING
+        pricing: PRICING,
     };
 
     switch (period) {
         case 'today':
             summary.usage = usageStore.dailyTotals[day] || {
-                requests: 0, inputTokens: 0, outputTokens: 0, cost: 0, successCount: 0, errorCount: 0
+                requests: 0,
+                inputTokens: 0,
+                outputTokens: 0,
+                cost: 0,
+                successCount: 0,
+                errorCount: 0,
             };
             summary.recentRequests = usageStore.requests
                 .filter(r => r.timestamp.startsWith(day))
                 .slice(0, 50);
             break;
 
-        case 'week':
+        case 'week': {
             const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             const weekDays = [];
             for (let d = new Date(weekAgo); d <= new Date(); d.setDate(d.getDate() + 1)) {
@@ -408,19 +413,31 @@ function getUsageSummary(period = 'today') {
             }
             summary.dailyBreakdown = weekDays.map(d => ({
                 date: d,
-                ...usageStore.dailyTotals[d] || { requests: 0, cost: 0 }
+                ...(usageStore.dailyTotals[d] || { requests: 0, cost: 0 }),
             }));
             summary.usage = {
                 requests: summary.dailyBreakdown.reduce((sum, d) => sum + d.requests, 0),
                 cost: summary.dailyBreakdown.reduce((sum, d) => sum + d.cost, 0),
-                inputTokens: summary.dailyBreakdown.reduce((sum, d) => sum + (d.inputTokens || 0), 0),
-                outputTokens: summary.dailyBreakdown.reduce((sum, d) => sum + (d.outputTokens || 0), 0)
+                inputTokens: summary.dailyBreakdown.reduce(
+                    (sum, d) => sum + (d.inputTokens || 0),
+                    0
+                ),
+                outputTokens: summary.dailyBreakdown.reduce(
+                    (sum, d) => sum + (d.outputTokens || 0),
+                    0
+                ),
             };
             break;
+        }
 
-        case 'month':
+        case 'month': {
             summary.usage = usageStore.monthlyTotals[month] || {
-                requests: 0, inputTokens: 0, outputTokens: 0, cost: 0, successCount: 0, errorCount: 0
+                requests: 0,
+                inputTokens: 0,
+                outputTokens: 0,
+                cost: 0,
+                successCount: 0,
+                errorCount: 0,
             };
             // Get daily breakdown for current month
             const monthDays = Object.entries(usageStore.dailyTotals)
@@ -429,6 +446,7 @@ function getUsageSummary(period = 'today') {
                 .sort((a, b) => a.date.localeCompare(b.date));
             summary.dailyBreakdown = monthDays;
             break;
+        }
 
         case 'all':
             summary.monthlyBreakdown = Object.entries(usageStore.monthlyTotals)
@@ -437,8 +455,14 @@ function getUsageSummary(period = 'today') {
             summary.usage = {
                 requests: summary.monthlyBreakdown.reduce((sum, m) => sum + m.requests, 0),
                 cost: summary.monthlyBreakdown.reduce((sum, m) => sum + m.cost, 0),
-                inputTokens: summary.monthlyBreakdown.reduce((sum, m) => sum + (m.inputTokens || 0), 0),
-                outputTokens: summary.monthlyBreakdown.reduce((sum, m) => sum + (m.outputTokens || 0), 0)
+                inputTokens: summary.monthlyBreakdown.reduce(
+                    (sum, m) => sum + (m.inputTokens || 0),
+                    0
+                ),
+                outputTokens: summary.monthlyBreakdown.reduce(
+                    (sum, m) => sum + (m.outputTokens || 0),
+                    0
+                ),
             };
             break;
     }
@@ -454,7 +478,7 @@ function getUsageSummary(period = 'today') {
                 requests: 0,
                 cost: 0,
                 inputTokens: 0,
-                outputTokens: 0
+                outputTokens: 0,
             };
         }
         providerBreakdown[key].requests++;
@@ -479,7 +503,12 @@ function getUsageSummary(period = 'today') {
  * @returns {object} Cost estimate
  */
 function getEstimate(provider, model, estimatedInputTokens, estimatedOutputTokens) {
-    const { cost, breakdown } = calculateCost(provider, model, estimatedInputTokens, estimatedOutputTokens);
+    const { cost, breakdown } = calculateCost(
+        provider,
+        model,
+        estimatedInputTokens,
+        estimatedOutputTokens
+    );
 
     return {
         provider,
@@ -489,7 +518,7 @@ function getEstimate(provider, model, estimatedInputTokens, estimatedOutputToken
         estimatedCost: cost,
         formattedCost: formatCurrency(cost),
         breakdown,
-        note: 'Actual costs may vary based on token counting differences between systems'
+        note: 'Actual costs may vary based on token counting differences between systems',
     };
 }
 
@@ -506,7 +535,7 @@ function resetUsageStore() {
         dailyTotals: {},
         monthlyTotals: {},
         alerts: [],
-        lastReset: new Date().toISOString()
+        lastReset: new Date().toISOString(),
     };
 }
 
@@ -544,5 +573,5 @@ module.exports = {
     // Maintenance
     resetUsageStore,
     getRawUsageStore,
-    usageStore // Exposed for testing
+    usageStore, // Exposed for testing
 };

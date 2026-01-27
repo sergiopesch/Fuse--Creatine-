@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = [
     'https://fusecreatine.com',
     'http://localhost:3000',
     'http://localhost:5500',
-    'http://127.0.0.1:5500'
+    'http://127.0.0.1:5500',
 ];
 
 /**
@@ -28,7 +28,12 @@ function getCorsOrigin(requestOrigin, requestHost = '') {
         return null;
     }
 
-    if (originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname === '::1' || originHostname === '0.0.0.0') {
+    if (
+        originHostname === 'localhost' ||
+        originHostname === '127.0.0.1' ||
+        originHostname === '::1' ||
+        originHostname === '0.0.0.0'
+    ) {
         return requestOrigin;
     }
 
@@ -60,7 +65,7 @@ function setSecurityHeaders(res, origin) {
 module.exports = async (req, res) => {
     const requestHost = Array.isArray(req.headers['x-forwarded-host'])
         ? req.headers['x-forwarded-host'][0]
-        : (req.headers['x-forwarded-host'] || req.headers.host || '');
+        : req.headers['x-forwarded-host'] || req.headers.host || '';
     const origin = getCorsOrigin(req.headers.origin, requestHost);
     setSecurityHeaders(res, origin);
 
@@ -73,7 +78,7 @@ module.exports = async (req, res) => {
     if (req.method !== 'GET') {
         return res.status(405).json({
             error: 'Method not allowed',
-            code: 'METHOD_NOT_ALLOWED'
+            code: 'METHOD_NOT_ALLOWED',
         });
     }
 
@@ -87,31 +92,33 @@ module.exports = async (req, res) => {
         service: {
             name: 'FUSE Chat Agent',
             version: '1.0.0',
-            model: 'claude-3-5-haiku-latest'
+            model: 'claude-3-5-haiku-latest',
         },
         apiKey: {
             exists: 'ANTHROPIC_API_KEY' in process.env,
             hasValue: !!apiKey,
             hasTrimmedValue: !!trimmedKey,
-            validFormat: trimmedKey?.startsWith('sk-ant-') || false
+            validFormat: trimmedKey?.startsWith('sk-ant-') || false,
         },
         blobStorage: {
-            configured: 'BLOB_READ_WRITE_TOKEN' in process.env
+            configured: 'BLOB_READ_WRITE_TOKEN' in process.env,
         },
         encryption: {
-            configured: 'ENCRYPTION_KEY' in process.env
+            configured: 'ENCRYPTION_KEY' in process.env,
         },
         runtime: {
             nodeVersion: process.version,
-            platform: process.platform
-        }
+            platform: process.platform,
+        },
     };
 
     // Determine overall health status
     if (!diagnostics.apiKey.exists || !diagnostics.apiKey.hasTrimmedValue) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];
-        diagnostics.issues.push('ANTHROPIC_API_KEY is not configured - set it in Vercel Environment Variables');
+        diagnostics.issues.push(
+            'ANTHROPIC_API_KEY is not configured - set it in Vercel Environment Variables'
+        );
     }
 
     if (diagnostics.apiKey.hasTrimmedValue && !diagnostics.apiKey.validFormat) {
@@ -123,13 +130,17 @@ module.exports = async (req, res) => {
     if (!diagnostics.blobStorage.configured) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];
-        diagnostics.issues.push('BLOB_READ_WRITE_TOKEN is not configured - biometric authentication will not work');
+        diagnostics.issues.push(
+            'BLOB_READ_WRITE_TOKEN is not configured - biometric authentication will not work'
+        );
     }
 
     if (!diagnostics.encryption.configured) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];
-        diagnostics.issues.push('ENCRYPTION_KEY is not configured - biometric session tokens will not work');
+        diagnostics.issues.push(
+            'ENCRYPTION_KEY is not configured - biometric session tokens will not work'
+        );
     }
 
     return res.status(200).json(diagnostics);

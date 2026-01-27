@@ -22,7 +22,6 @@ const {
     getRequestHost,
     addAuditEntry,
     sanitizeString,
-    ALLOWED_ORIGINS
 } = require('./_lib/security');
 
 const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
@@ -33,11 +32,11 @@ const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
 
 const CONFIG = {
     RATE_LIMIT_READ: 60,
-    RATE_LIMIT_WRITE: 20,  // Increased for batch operations
-    MAX_TOKENS_PER_CALL: 400,  // Slightly increased for better responses
-    MODEL: 'claude-3-5-haiku-latest',  // Fast and cost-effective
-    PARALLEL_EXECUTION_LIMIT: 3,  // Max teams to execute in parallel
-    EXECUTION_DELAY_MS: 500  // Delay between sequential executions
+    RATE_LIMIT_WRITE: 20, // Increased for batch operations
+    MAX_TOKENS_PER_CALL: 400, // Slightly increased for better responses
+    MODEL: 'claude-3-5-haiku-latest', // Fast and cost-effective
+    PARALLEL_EXECUTION_LIMIT: 3, // Max teams to execute in parallel
+    EXECUTION_DELAY_MS: 500, // Delay between sequential executions
 };
 
 // ============================================================================
@@ -45,10 +44,10 @@ const CONFIG = {
 // ============================================================================
 
 const WORLD_STATES = {
-    MANUAL: 'manual',      // User must manually trigger each action
-    PAUSED: 'paused',      // All orchestration stopped
+    MANUAL: 'manual', // User must manually trigger each action
+    PAUSED: 'paused', // All orchestration stopped
     SEMI_AUTO: 'semi_auto', // Agents propose, user approves
-    AUTONOMOUS: 'autonomous' // Agents act independently
+    AUTONOMOUS: 'autonomous', // Agents act independently
 };
 
 // ============================================================================
@@ -62,7 +61,7 @@ const TEAM_PROMPTS = {
 Your focus: platform development, code quality, system architecture.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Architect', 'Coder', 'QA Engineer']
+        agents: ['Architect', 'Coder', 'QA Engineer'],
     },
     design: {
         name: 'Design Team',
@@ -70,7 +69,7 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 Your focus: user experience, visual design, animations, brand consistency.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['UX Lead', 'Visual Designer', 'Motion Designer']
+        agents: ['UX Lead', 'Visual Designer', 'Motion Designer'],
     },
     communications: {
         name: 'Communications Team',
@@ -78,7 +77,7 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 Your focus: content strategy, brand voice, social media engagement.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Content Strategist', 'Copywriter', 'Social Manager']
+        agents: ['Content Strategist', 'Copywriter', 'Social Manager'],
     },
     legal: {
         name: 'Legal Team',
@@ -86,7 +85,7 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 Your focus: regulatory compliance, contracts, intellectual property protection.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Compliance Officer', 'Contract Analyst', 'IP Counsel']
+        agents: ['Compliance Officer', 'Contract Analyst', 'IP Counsel'],
     },
     marketing: {
         name: 'Marketing Team',
@@ -94,7 +93,7 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 Your focus: user acquisition, brand positioning, growth metrics.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Growth Lead', 'Brand Strategist', 'Analytics Expert']
+        agents: ['Growth Lead', 'Brand Strategist', 'Analytics Expert'],
     },
     gtm: {
         name: 'Go-to-Market Team',
@@ -102,7 +101,7 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 Your focus: product launch, strategic partnerships, market intelligence.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Launch Coordinator', 'Partnership Manager', 'Market Researcher']
+        agents: ['Launch Coordinator', 'Partnership Manager', 'Market Researcher'],
     },
     sales: {
         name: 'Sales Team',
@@ -110,8 +109,14 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 Your focus: revenue growth, pipeline management, customer relationships.
 Respond with brief, actionable status updates (2-3 sentences max).
 Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Sales Director', 'Account Executive', 'SDR Lead', 'Solutions Consultant', 'Customer Success']
-    }
+        agents: [
+            'Sales Director',
+            'Account Executive',
+            'SDR Lead',
+            'Solutions Consultant',
+            'Customer Success',
+        ],
+    },
 };
 
 // ============================================================================
@@ -120,21 +125,45 @@ Format: [AGENT_NAME]: [Brief status/action]`,
 
 const orchestrationState = {
     teams: {
-        developer: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-        design: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-        communications: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        developer: {
+            status: 'paused',
+            lastRun: null,
+            runCount: 0,
+            activities: [],
+            pendingActions: [],
+        },
+        design: {
+            status: 'paused',
+            lastRun: null,
+            runCount: 0,
+            activities: [],
+            pendingActions: [],
+        },
+        communications: {
+            status: 'paused',
+            lastRun: null,
+            runCount: 0,
+            activities: [],
+            pendingActions: [],
+        },
         legal: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-        marketing: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
+        marketing: {
+            status: 'paused',
+            lastRun: null,
+            runCount: 0,
+            activities: [],
+            pendingActions: [],
+        },
         gtm: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-        sales: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] }
+        sales: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
     },
-    worldState: WORLD_STATES.PAUSED,  // Current world state
-    globalMode: 'manual',  // Legacy - maps to worldState
+    worldState: WORLD_STATES.PAUSED, // Current world state
+    globalMode: 'manual', // Legacy - maps to worldState
     lastActivity: null,
     totalOrchestrations: 0,
     executionInProgress: false,
     lastExecutionTime: null,
-    autonomousInterval: null  // For autonomous mode timer
+    autonomousInterval: null, // For autonomous mode timer
 };
 
 // ============================================================================
@@ -149,11 +178,16 @@ function addTeamActivity(teamId, agent, message, tag) {
         message: sanitizeString(message, 500),
         tag: sanitizeString(tag, 50),
         timestamp: new Date().toISOString(),
-        isReal: true  // Flag to indicate this is from actual orchestration
+        isReal: true, // Flag to indicate this is from actual orchestration
     };
 
     if (!orchestrationState.teams[teamId]) {
-        orchestrationState.teams[teamId] = { status: 'paused', lastRun: null, runCount: 0, activities: [] };
+        orchestrationState.teams[teamId] = {
+            status: 'paused',
+            lastRun: null,
+            runCount: 0,
+            activities: [],
+        };
     }
 
     orchestrationState.teams[teamId].activities.unshift(activity);
@@ -182,9 +216,10 @@ function parseAgentResponses(response, teamId) {
             const message = match[2].trim();
 
             // Verify agent belongs to team
-            const isValidAgent = team.agents.some(a =>
-                a.toLowerCase() === agentName.toLowerCase() ||
-                agentName.toLowerCase().includes(a.toLowerCase().split(' ')[0])
+            const isValidAgent = team.agents.some(
+                a =>
+                    a.toLowerCase() === agentName.toLowerCase() ||
+                    agentName.toLowerCase().includes(a.toLowerCase().split(' ')[0])
             );
 
             if (isValidAgent && message.length > 5) {
@@ -236,14 +271,14 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
             headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01'
+                'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
                 model: CONFIG.MODEL,
                 max_tokens: CONFIG.MAX_TOKENS_PER_CALL,
                 system: team.systemPrompt,
-                messages: [{ role: 'user', content: userPrompt }]
-            })
+                messages: [{ role: 'user', content: userPrompt }],
+            }),
         });
 
         if (!response.ok) {
@@ -256,7 +291,8 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
         const latencyMs = Date.now() - requestStartTime;
 
         // Record usage
-        const inputTokens = data.usage?.input_tokens || estimateTokens(team.systemPrompt + userPrompt);
+        const inputTokens =
+            data.usage?.input_tokens || estimateTokens(team.systemPrompt + userPrompt);
         const outputTokens = data.usage?.output_tokens || 50;
 
         recordUsage({
@@ -267,7 +303,7 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
             endpoint: '/api/orchestrate',
             clientIp,
             success: true,
-            latencyMs
+            latencyMs,
         });
 
         // Parse response
@@ -289,10 +325,9 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
             usage: {
                 inputTokens,
                 outputTokens,
-                latencyMs
-            }
+                latencyMs,
+            },
         };
-
     } catch (error) {
         console.error('[Orchestrate] Execution error:', error);
 
@@ -305,7 +340,7 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
             endpoint: '/api/orchestrate',
             clientIp,
             success: false,
-            latencyMs: Date.now() - requestStartTime
+            latencyMs: Date.now() - requestStartTime,
         });
 
         throw error;
@@ -326,7 +361,7 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
         executed: [],
         failed: [],
         totalActivities: [],
-        usage: { inputTokens: 0, outputTokens: 0, totalLatencyMs: 0 }
+        usage: { inputTokens: 0, outputTokens: 0, totalLatencyMs: 0 },
     };
 
     // Filter to only valid, running teams
@@ -340,7 +375,7 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
             success: false,
             error: 'No valid running teams to execute',
             executed: [],
-            failed: teamIds
+            failed: teamIds,
         };
     }
 
@@ -355,8 +390,10 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
         }
 
         for (const batch of batches) {
-            const batchPromises = batch.map(teamId => 
-                executeOrchestration(teamId, task, clientIp, { collaboratingTeams: collaboratingTeamNames })
+            const batchPromises = batch.map(teamId =>
+                executeOrchestration(teamId, task, clientIp, {
+                    collaboratingTeams: collaboratingTeamNames,
+                })
                     .then(result => ({ teamId, result, success: true }))
                     .catch(error => ({ teamId, error: error.message, success: false }))
             );
@@ -384,7 +421,9 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
         // Sequential execution
         for (const teamId of validTeamIds) {
             try {
-                const result = await executeOrchestration(teamId, task, clientIp, { collaboratingTeams: collaboratingTeamNames });
+                const result = await executeOrchestration(teamId, task, clientIp, {
+                    collaboratingTeams: collaboratingTeamNames,
+                });
                 results.executed.push(teamId);
                 results.totalActivities.push(...result.activities);
                 results.usage.inputTokens += result.usage?.inputTokens || 0;
@@ -424,7 +463,7 @@ function sleep(ms) {
 // WORLD STATE MANAGEMENT
 // ============================================================================
 
-function setWorldState(newState, source = 'api') {
+function setWorldState(newState, _source = 'api') {
     const validStates = Object.values(WORLD_STATES);
     if (!validStates.includes(newState)) {
         return { success: false, error: `Invalid state. Valid states: ${validStates.join(', ')}` };
@@ -472,13 +511,18 @@ function setWorldState(newState, source = 'api') {
     }
 
     // Add system activity
-    addTeamActivity('system', 'System', `World state changed: ${previousState} → ${newState}`, 'State Change');
+    addTeamActivity(
+        'system',
+        'System',
+        `World state changed: ${previousState} → ${newState}`,
+        'State Change'
+    );
 
     return {
         success: true,
         previousState,
         currentState: newState,
-        teamsAffected: Object.keys(orchestrationState.teams).length
+        teamsAffected: Object.keys(orchestrationState.teams).length,
     };
 }
 
@@ -495,13 +539,13 @@ function getWorldState() {
                     lastRun: team.lastRun,
                     runCount: team.runCount,
                     recentActivityCount: team.activities.length,
-                    pendingActionsCount: team.pendingActions?.length || 0
-                }
+                    pendingActionsCount: team.pendingActions?.length || 0,
+                },
             ])
         ),
         totalOrchestrations: orchestrationState.totalOrchestrations,
         lastExecutionTime: orchestrationState.lastExecutionTime,
-        executionInProgress: orchestrationState.executionInProgress
+        executionInProgress: orchestrationState.executionInProgress,
     };
 }
 
@@ -544,7 +588,11 @@ module.exports = async (req, res) => {
 // ============================================================================
 
 async function handleGet(req, res, clientIp) {
-    const rateLimit = await checkRateLimit(`orchestrate:get:${clientIp}`, CONFIG.RATE_LIMIT_READ, 60000);
+    const rateLimit = await checkRateLimit(
+        `orchestrate:get:${clientIp}`,
+        CONFIG.RATE_LIMIT_READ,
+        60000
+    );
 
     res.setHeader('X-RateLimit-Limit', CONFIG.RATE_LIMIT_READ);
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
@@ -553,7 +601,7 @@ async function handleGet(req, res, clientIp) {
         return res.status(429).json({
             error: 'Too many requests',
             code: 'RATE_LIMITED',
-            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000)
+            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000),
         });
     }
 
@@ -572,8 +620,8 @@ async function handleGet(req, res, clientIp) {
                 teamId,
                 teamName: TEAM_PROMPTS[teamId]?.name || teamId,
                 ...teamState,
-                agents: TEAM_PROMPTS[teamId]?.agents || []
-            }
+                agents: TEAM_PROMPTS[teamId]?.agents || [],
+            },
         });
     }
 
@@ -587,7 +635,7 @@ async function handleGet(req, res, clientIp) {
                 lastRun: state.lastRun,
                 runCount: state.runCount,
                 recentActivities: state.activities.slice(0, 5),
-                pendingActionsCount: state.pendingActions?.length || 0
+                pendingActionsCount: state.pendingActions?.length || 0,
             };
         });
 
@@ -600,8 +648,8 @@ async function handleGet(req, res, clientIp) {
                 lastActivity: orchestrationState.lastActivity,
                 lastExecutionTime: orchestrationState.lastExecutionTime,
                 executionInProgress: orchestrationState.executionInProgress,
-                teams: teamsStatus
-            }
+                teams: teamsStatus,
+            },
         });
     }
 
@@ -609,7 +657,7 @@ async function handleGet(req, res, clientIp) {
     if (action === 'worldState') {
         return res.status(200).json({
             success: true,
-            data: getWorldState()
+            data: getWorldState(),
         });
     }
 
@@ -629,7 +677,7 @@ async function handleGet(req, res, clientIp) {
 
         return res.status(200).json({
             success: true,
-            data: allActivities.slice(0, limit)
+            data: allActivities.slice(0, limit),
         });
     }
 
@@ -644,7 +692,9 @@ async function handlePost(req, res, clientIp) {
     // Authenticate
     const adminToken = process.env.ADMIN_TOKEN;
     if (!adminToken) {
-        return res.status(503).json({ error: 'Orchestration not configured', code: 'NOT_CONFIGURED' });
+        return res
+            .status(503)
+            .json({ error: 'Orchestration not configured', code: 'NOT_CONFIGURED' });
     }
 
     const authResult = authenticate(req, adminToken);
@@ -653,18 +703,22 @@ async function handlePost(req, res, clientIp) {
             action: 'ORCHESTRATE_AUTH_FAILED',
             ip: clientIp,
             success: false,
-            reason: authResult.error
+            reason: authResult.error,
         });
         return res.status(401).json({ error: authResult.error, code: 'UNAUTHORIZED' });
     }
 
     // Rate limit
-    const rateLimit = checkRateLimit(`orchestrate:post:${clientIp}`, CONFIG.RATE_LIMIT_WRITE, 60000);
+    const rateLimit = checkRateLimit(
+        `orchestrate:post:${clientIp}`,
+        CONFIG.RATE_LIMIT_WRITE,
+        60000
+    );
     if (rateLimit.limited) {
         return res.status(429).json({
             error: 'Too many requests',
             code: 'RATE_LIMITED',
-            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000)
+            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000),
         });
     }
 
@@ -672,16 +726,21 @@ async function handlePost(req, res, clientIp) {
 
     // Actions that don't require a specific teamId
     const globalActions = [
-        'setMode', 'setWorldState', 'startAll', 'stopAll', 
-        'executeAll', 'executeMultiple', 'getWorldState'
+        'setMode',
+        'setWorldState',
+        'startAll',
+        'stopAll',
+        'executeAll',
+        'executeMultiple',
+        'getWorldState',
     ];
 
     // Validate teamId for team-specific actions
     if (!globalActions.includes(action)) {
         if (!teamId || !TEAM_PROMPTS[teamId]) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Invalid or missing teamId',
-                validTeams: Object.keys(TEAM_PROMPTS)
+                validTeams: Object.keys(TEAM_PROMPTS),
             });
         }
     }
@@ -690,13 +749,18 @@ async function handlePost(req, res, clientIp) {
         case 'start':
             // Start team orchestration
             orchestrationState.teams[teamId].status = 'running';
-            addTeamActivity(teamId, 'System', `Orchestration started for ${TEAM_PROMPTS[teamId].name}`, 'Started');
+            addTeamActivity(
+                teamId,
+                'System',
+                `Orchestration started for ${TEAM_PROMPTS[teamId].name}`,
+                'Started'
+            );
 
             addAuditEntry({
                 action: 'ORCHESTRATION_STARTED',
                 ip: clientIp,
                 success: true,
-                teamId
+                teamId,
             });
 
             return res.status(200).json({
@@ -704,20 +768,25 @@ async function handlePost(req, res, clientIp) {
                 data: {
                     teamId,
                     status: 'running',
-                    message: `${TEAM_PROMPTS[teamId].name} orchestration started`
-                }
+                    message: `${TEAM_PROMPTS[teamId].name} orchestration started`,
+                },
             });
 
         case 'stop':
             // Stop team orchestration
             orchestrationState.teams[teamId].status = 'paused';
-            addTeamActivity(teamId, 'System', `Orchestration paused for ${TEAM_PROMPTS[teamId].name}`, 'Paused');
+            addTeamActivity(
+                teamId,
+                'System',
+                `Orchestration paused for ${TEAM_PROMPTS[teamId].name}`,
+                'Paused'
+            );
 
             addAuditEntry({
                 action: 'ORCHESTRATION_STOPPED',
                 ip: clientIp,
                 success: true,
-                teamId
+                teamId,
             });
 
             return res.status(200).json({
@@ -725,8 +794,8 @@ async function handlePost(req, res, clientIp) {
                 data: {
                     teamId,
                     status: 'paused',
-                    message: `${TEAM_PROMPTS[teamId].name} orchestration paused`
-                }
+                    message: `${TEAM_PROMPTS[teamId].name} orchestration paused`,
+                },
             });
 
         case 'execute':
@@ -747,14 +816,13 @@ async function handlePost(req, res, clientIp) {
                     ip: clientIp,
                     success: true,
                     teamId,
-                    activitiesGenerated: result.activities.length
+                    activitiesGenerated: result.activities.length,
                 });
 
                 return res.status(200).json({
                     success: true,
-                    data: result
+                    data: result,
                 });
-
             } catch (error) {
                 orchestrationState.executionInProgress = false;
                 addAuditEntry({
@@ -762,38 +830,48 @@ async function handlePost(req, res, clientIp) {
                     ip: clientIp,
                     success: false,
                     teamId,
-                    error: error.message
+                    error: error.message,
                 });
 
                 return res.status(500).json({
                     error: 'Orchestration failed',
                     code: 'EXECUTION_ERROR',
-                    details: error.message
+                    details: error.message,
                 });
             }
 
-        case 'executeMultiple':
+        case 'executeMultiple': {
             // Execute multiple teams at once
             const { teamIds: multiTeamIds, parallel } = req.body || {};
-            
+
             if (!multiTeamIds || !Array.isArray(multiTeamIds) || multiTeamIds.length === 0) {
-                return res.status(400).json({ 
-                    error: 'teamIds array is required', 
-                    code: 'VALIDATION_ERROR' 
+                return res.status(400).json({
+                    error: 'teamIds array is required',
+                    code: 'VALIDATION_ERROR',
                 });
             }
 
             // Auto-start all specified teams
             multiTeamIds.forEach(tid => {
-                if (orchestrationState.teams[tid] && orchestrationState.teams[tid].status !== 'running') {
+                if (
+                    orchestrationState.teams[tid] &&
+                    orchestrationState.teams[tid].status !== 'running'
+                ) {
                     orchestrationState.teams[tid].status = 'running';
-                    addTeamActivity(tid, 'System', 'Auto-started for multi-team execution', 'Auto-Start');
+                    addTeamActivity(
+                        tid,
+                        'System',
+                        'Auto-started for multi-team execution',
+                        'Auto-Start'
+                    );
                 }
             });
 
             orchestrationState.executionInProgress = true;
             try {
-                const multiResult = await executeMultipleTeams(multiTeamIds, task, clientIp, { parallel: !!parallel });
+                const multiResult = await executeMultipleTeams(multiTeamIds, task, clientIp, {
+                    parallel: !!parallel,
+                });
                 orchestrationState.executionInProgress = false;
 
                 addAuditEntry({
@@ -801,22 +879,22 @@ async function handlePost(req, res, clientIp) {
                     ip: clientIp,
                     success: multiResult.success,
                     teamsExecuted: multiResult.executed.length,
-                    teamsFailed: multiResult.failed.length
+                    teamsFailed: multiResult.failed.length,
                 });
 
                 return res.status(200).json({
                     success: true,
-                    data: multiResult
+                    data: multiResult,
                 });
-
             } catch (error) {
                 orchestrationState.executionInProgress = false;
                 return res.status(500).json({
                     error: 'Multi-team orchestration failed',
                     code: 'EXECUTION_ERROR',
-                    details: error.message
+                    details: error.message,
                 });
             }
+        }
 
         case 'executeAll':
             // Execute ALL teams (company-wide orchestration)
@@ -826,12 +904,19 @@ async function handlePost(req, res, clientIp) {
             Object.keys(orchestrationState.teams).forEach(tid => {
                 if (orchestrationState.teams[tid].status !== 'running') {
                     orchestrationState.teams[tid].status = 'running';
-                    addTeamActivity(tid, 'System', 'Auto-started for company-wide execution', 'Auto-Start');
+                    addTeamActivity(
+                        tid,
+                        'System',
+                        'Auto-started for company-wide execution',
+                        'Auto-Start'
+                    );
                 }
             });
 
             try {
-                const allResult = await executeAllTeams(task, clientIp, { parallel: req.body?.parallel });
+                const allResult = await executeAllTeams(task, clientIp, {
+                    parallel: req.body?.parallel,
+                });
                 orchestrationState.executionInProgress = false;
 
                 addAuditEntry({
@@ -840,31 +925,30 @@ async function handlePost(req, res, clientIp) {
                     success: allResult.success,
                     teamsExecuted: allResult.executed.length,
                     teamsFailed: allResult.failed.length,
-                    totalActivities: allResult.totalActivities.length
+                    totalActivities: allResult.totalActivities.length,
                 });
 
                 return res.status(200).json({
                     success: true,
-                    data: allResult
+                    data: allResult,
                 });
-
             } catch (error) {
                 orchestrationState.executionInProgress = false;
                 return res.status(500).json({
                     error: 'Company-wide orchestration failed',
                     code: 'EXECUTION_ERROR',
-                    details: error.message
+                    details: error.message,
                 });
             }
 
-        case 'setWorldState':
+        case 'setWorldState': {
             // Set world state (paused, manual, semi_auto, autonomous)
             const newWorldState = req.body?.state;
             if (!newWorldState) {
-                return res.status(400).json({ 
-                    error: 'state is required', 
+                return res.status(400).json({
+                    error: 'state is required',
                     code: 'VALIDATION_ERROR',
-                    validStates: Object.values(WORLD_STATES)
+                    validStates: Object.values(WORLD_STATES),
                 });
             }
 
@@ -875,33 +959,33 @@ async function handlePost(req, res, clientIp) {
                 ip: clientIp,
                 success: worldStateResult.success,
                 previousState: worldStateResult.previousState,
-                newState: newWorldState
+                newState: newWorldState,
             });
 
             if (!worldStateResult.success) {
                 return res.status(400).json({
                     error: worldStateResult.error,
-                    code: 'INVALID_STATE'
+                    code: 'INVALID_STATE',
                 });
             }
 
             return res.status(200).json({
                 success: true,
-                data: worldStateResult
+                data: worldStateResult,
             });
+        }
 
-        case 'setMode':
+        case 'setMode': {
             // Legacy: Set global orchestration mode (maps to world state)
-            const validModes = ['manual', 'paused', 'semi_auto', 'autonomous', 'supervised'];
             let mappedMode = mode;
-            
+
             // Map legacy 'supervised' to 'semi_auto'
             if (mode === 'supervised') mappedMode = 'semi_auto';
-            
+
             if (!mappedMode || !Object.values(WORLD_STATES).includes(mappedMode)) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     error: `Invalid mode. Use: ${Object.values(WORLD_STATES).join(', ')}`,
-                    code: 'VALIDATION_ERROR'
+                    code: 'VALIDATION_ERROR',
                 });
             }
 
@@ -911,7 +995,7 @@ async function handlePost(req, res, clientIp) {
                 action: 'ORCHESTRATION_MODE_CHANGED',
                 ip: clientIp,
                 success: modeResult.success,
-                mode: mappedMode
+                mode: mappedMode,
             });
 
             return res.status(200).json({
@@ -919,9 +1003,10 @@ async function handlePost(req, res, clientIp) {
                 data: {
                     globalMode: mappedMode,
                     worldState: orchestrationState.worldState,
-                    message: `Orchestration mode set to ${mappedMode}`
-                }
+                    message: `Orchestration mode set to ${mappedMode}`,
+                },
             });
+        }
 
         case 'startAll':
             // Start all teams
@@ -929,7 +1014,7 @@ async function handlePost(req, res, clientIp) {
                 orchestrationState.teams[id].status = 'running';
                 addTeamActivity(id, 'System', 'Orchestration started (batch)', 'Started');
             });
-            
+
             // Update world state if it was paused
             if (orchestrationState.worldState === WORLD_STATES.PAUSED) {
                 orchestrationState.worldState = WORLD_STATES.MANUAL;
@@ -938,11 +1023,11 @@ async function handlePost(req, res, clientIp) {
 
             return res.status(200).json({
                 success: true,
-                data: { 
+                data: {
                     message: 'All teams started',
                     worldState: orchestrationState.worldState,
-                    teamsStarted: Object.keys(orchestrationState.teams).length
-                }
+                    teamsStarted: Object.keys(orchestrationState.teams).length,
+                },
             });
 
         case 'stopAll':
@@ -958,30 +1043,36 @@ async function handlePost(req, res, clientIp) {
 
             return res.status(200).json({
                 success: true,
-                data: { 
+                data: {
                     message: 'All teams paused',
                     worldState: orchestrationState.worldState,
-                    teamsPaused: Object.keys(orchestrationState.teams).length
-                }
+                    teamsPaused: Object.keys(orchestrationState.teams).length,
+                },
             });
 
         case 'getWorldState':
             // Get current world state (also available via GET)
             return res.status(200).json({
                 success: true,
-                data: getWorldState()
+                data: getWorldState(),
             });
 
         default:
-            return res.status(400).json({ 
-                error: 'Unknown action', 
+            return res.status(400).json({
+                error: 'Unknown action',
                 code: 'INVALID_ACTION',
                 validActions: [
-                    'start', 'stop', 'execute', 
-                    'executeMultiple', 'executeAll',
-                    'setMode', 'setWorldState',
-                    'startAll', 'stopAll', 'getWorldState'
-                ]
+                    'start',
+                    'stop',
+                    'execute',
+                    'executeMultiple',
+                    'executeAll',
+                    'setMode',
+                    'setWorldState',
+                    'startAll',
+                    'stopAll',
+                    'getWorldState',
+                ],
             });
     }
 }

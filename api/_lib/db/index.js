@@ -26,20 +26,20 @@ const audit = require('./repositories/audit');
 const costs = require('./repositories/costs');
 
 module.exports = {
-  // Re-export client functions directly for convenience
-  ...client,
+    // Re-export client functions directly for convenience
+    ...client,
 
-  // Repositories
-  consent,
-  cookies,
-  agents,
-  audit,
-  costs,
+    // Repositories
+    consent,
+    cookies,
+    agents,
+    audit,
+    costs,
 
-  // Repository aliases
-  ConsentRepository: consent,
-  CookieRepository: cookies,
-  AgentRepository: agents,
-  AuditRepository: audit,
-  CostRepository: costs,
+    // Repository aliases
+    ConsentRepository: consent,
+    CookieRepository: cookies,
+    AgentRepository: agents,
+    AuditRepository: audit,
+    CostRepository: costs,
 };

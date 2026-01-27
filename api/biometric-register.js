@@ -13,16 +13,8 @@
 
 const { Redis } = require('@upstash/redis');
 const { verifyRegistrationResponse } = require('@simplewebauthn/server');
-const {
-    bufferToBase64url,
-    getExpectedOrigins,
-    getExpectedRpIds
-} = require('./_lib/webauthn');
-const {
-    createSecuredHandler,
-    addAuditEntry,
-    sanitizeString
-} = require('./_lib/security');
+const { bufferToBase64url, getExpectedOrigins, getExpectedRpIds } = require('./_lib/webauthn');
+const { createSecuredHandler, addAuditEntry, sanitizeString } = require('./_lib/security');
 const {
     CONFIG: BIOMETRIC_CONFIG,
     createDeviceFingerprint,
@@ -33,7 +25,7 @@ const {
     generateChallenge,
     generateNonce,
     storeChallenge,
-    verifyChallenge
+    verifyChallenge,
 } = require('./_lib/biometric-utils');
 
 // ============================================================================
@@ -44,15 +36,14 @@ const CONFIG = {
     ...BIOMETRIC_CONFIG,
     RATE_LIMIT: { limit: 5, windowMs: 60000 }, // 5 requests per minute (stricter)
     MAX_REGISTRATION_ATTEMPTS: 3,
-    LOCKOUT_DURATION: 60 * 60 * 1000 // 1 hour lockout for registration abuse
+    LOCKOUT_DURATION: 60 * 60 * 1000, // 1 hour lockout for registration abuse
 };
 
 // Initialize Redis client if configuration is available
 const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? Redis.fromEnv()
-    : null;
-
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+        ? Redis.fromEnv()
+        : null;
 
 // ============================================================================
 // LOCKOUT FUNCTIONS (Registration-specific, not in shared module)
@@ -115,13 +106,13 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
             action: 'BIOMETRIC_REGISTER_LOCKED_OUT',
             ip: clientIp,
             success: false,
-            endpoint: '/api/biometric-register'
+            endpoint: '/api/biometric-register',
         });
 
         return res.status(403).json({
             success: false,
             error: 'Registration temporarily blocked due to too many attempts.',
-            retryAfter: Math.ceil(CONFIG.LOCKOUT_DURATION / 1000)
+            retryAfter: Math.ceil(CONFIG.LOCKOUT_DURATION / 1000),
         });
     }
 
@@ -132,15 +123,19 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
         // CHECK OWNER STATUS
         // ====================================
         if (action === 'check-owner') {
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
 
             // Handle service errors
             if (credentialError) {
-                console.error('[BiometricRegister] Service error during check-owner:', credentialError);
+                console.error(
+                    '[BiometricRegister] Service error during check-owner:',
+                    credentialError
+                );
                 return res.status(503).json({
                     success: false,
                     error: 'Unable to verify owner status. Please try again.',
-                    code: credentialError
+                    code: credentialError,
                 });
             }
 
@@ -153,7 +148,7 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
             return res.status(200).json({
                 success: true,
                 hasOwner: !!ownerCredential,
-                isOwnerDevice
+                isOwnerDevice,
             });
         }
 
@@ -161,14 +156,18 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
         // GET CHALLENGE
         // ====================================
         if (action === 'get-challenge') {
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
 
             if (credentialError) {
-                console.error('[BiometricRegister] Service error during get-challenge:', credentialError);
+                console.error(
+                    '[BiometricRegister] Service error during get-challenge:',
+                    credentialError
+                );
                 return res.status(503).json({
                     success: false,
                     error: 'Registration service temporarily unavailable. Please try again.',
-                    code: credentialError
+                    code: credentialError,
                 });
             }
 
@@ -181,22 +180,22 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                         ip: clientIp,
                         success: false,
                         endpoint: '/api/biometric-register',
-                        note: 'Attempted registration on locked dashboard'
+                        note: 'Attempted registration on locked dashboard',
                     });
 
                     return res.status(403).json({
                         success: false,
                         error: 'Dashboard is already secured. Only the owner can access this dashboard.',
-                        isLocked: true
+                        isLocked: true,
                     });
                 }
-                
+
                 addAuditEntry({
                     action: 'BIOMETRIC_REGISTER_OWNER_REAUTH',
                     ip: clientIp,
                     success: true,
                     endpoint: '/api/biometric-register',
-                    note: 'Owner device requesting re-registration'
+                    note: 'Owner device requesting re-registration',
                 });
             }
 
@@ -205,18 +204,21 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
             const challengeStored = await storeRegChallenge(deviceFingerprint, challenge, nonce);
 
             if (!challengeStored) {
-                console.error('[BiometricRegister] Failed to store challenge for fingerprint:', deviceFingerprint.substring(0, 8) + '...');
+                console.error(
+                    '[BiometricRegister] Failed to store challenge for fingerprint:',
+                    deviceFingerprint.substring(0, 8) + '...'
+                );
                 addAuditEntry({
                     action: 'BIOMETRIC_CHALLENGE_STORE_FAILED',
                     ip: clientIp,
                     success: false,
                     endpoint: '/api/biometric-register',
-                    deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
+                    deviceFingerprint: deviceFingerprint.substring(0, 8) + '...',
                 });
                 return res.status(503).json({
                     success: false,
                     error: 'Failed to initialize registration. Please check server configuration (BLOB_READ_WRITE_TOKEN).',
-                    code: 'CHALLENGE_STORE_FAILED'
+                    code: 'CHALLENGE_STORE_FAILED',
                 });
             }
 
@@ -225,14 +227,14 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 ip: clientIp,
                 success: true,
                 endpoint: '/api/biometric-register',
-                deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
+                deviceFingerprint: deviceFingerprint.substring(0, 8) + '...',
             });
 
             return res.status(200).json({
                 success: true,
                 challenge,
                 nonce,
-                isFirstRegistration: !ownerCredential
+                isFirstRegistration: !ownerCredential,
             });
         }
 
@@ -243,7 +245,7 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
             if (!credentialId || !clientDataJSON || !validatedBody?.attestationObject) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Missing credential data'
+                    error: 'Missing credential data',
                 });
             }
 
@@ -254,14 +256,20 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 console.error('[BiometricRegister] Unable to resolve expected origin/RP ID');
                 return res.status(500).json({
                     success: false,
-                    error: 'Registration configuration error. Please contact support.'
+                    error: 'Registration configuration error. Please contact support.',
                 });
             }
 
-            console.log('[BiometricRegister] Verifying challenge for fingerprint:', deviceFingerprint.substring(0, 8) + '...');
+            console.log(
+                '[BiometricRegister] Verifying challenge for fingerprint:',
+                deviceFingerprint.substring(0, 8) + '...'
+            );
             const challengeData = await verifyRegChallenge(deviceFingerprint);
-            console.log('[BiometricRegister] Challenge data:', challengeData ? 'found' : 'NOT FOUND');
-            
+            console.log(
+                '[BiometricRegister] Challenge data:',
+                challengeData ? 'found' : 'NOT FOUND'
+            );
+
             if (!challengeData) {
                 await recordRegistrationAttempt(clientIp);
                 addAuditEntry({
@@ -269,23 +277,27 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                     ip: clientIp,
                     success: false,
                     endpoint: '/api/biometric-register',
-                    deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
+                    deviceFingerprint: deviceFingerprint.substring(0, 8) + '...',
                 });
                 return res.status(400).json({
                     success: false,
                     error: 'Invalid or expired challenge. Please try again.',
-                    hint: 'Challenge verification failed. This can happen if storage is not configured correctly.'
+                    hint: 'Challenge verification failed. This can happen if storage is not configured correctly.',
                 });
             }
 
-            const { credential: existingOwner, error: existingOwnerError } = await getOwnerCredential();
+            const { credential: existingOwner, error: existingOwnerError } =
+                await getOwnerCredential();
 
             if (existingOwnerError) {
-                console.error('[BiometricRegister] Service error during register:', existingOwnerError);
+                console.error(
+                    '[BiometricRegister] Service error during register:',
+                    existingOwnerError
+                );
                 return res.status(503).json({
                     success: false,
                     error: 'Registration service temporarily unavailable. Please try again.',
-                    code: existingOwnerError
+                    code: existingOwnerError,
                 });
             }
 
@@ -298,12 +310,12 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                         action: 'BIOMETRIC_REGISTER_BLOCKED_EXISTING_OWNER',
                         ip: clientIp,
                         success: false,
-                        endpoint: '/api/biometric-register'
+                        endpoint: '/api/biometric-register',
                     });
                     return res.status(403).json({
                         success: false,
                         error: 'Dashboard is already secured by another device.',
-                        isLocked: true
+                        isLocked: true,
                     });
                 }
             }
@@ -317,21 +329,26 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                         type: validatedBody?.type || 'public-key',
                         response: {
                             clientDataJSON: sanitizeString(clientDataJSON, 4096),
-                            attestationObject: sanitizeString(validatedBody?.attestationObject, 8192),
-                            transports: Array.isArray(validatedBody?.transports) ? validatedBody.transports : undefined
-                        }
+                            attestationObject: sanitizeString(
+                                validatedBody?.attestationObject,
+                                8192
+                            ),
+                            transports: Array.isArray(validatedBody?.transports)
+                                ? validatedBody.transports
+                                : undefined,
+                        },
                     },
                     expectedChallenge: challengeData.challenge,
                     expectedOrigin: expectedOrigins,
                     expectedRPID: expectedRpIds,
-                    requireUserVerification: true
+                    requireUserVerification: true,
                 });
             } catch (error) {
                 await recordRegistrationAttempt(clientIp);
                 console.error('[BiometricRegister] Registration verification failed:', error);
                 return res.status(400).json({
                     success: false,
-                    error: 'Registration verification failed. Please try again.'
+                    error: 'Registration verification failed. Please try again.',
                 });
             }
 
@@ -339,13 +356,14 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 await recordRegistrationAttempt(clientIp);
                 return res.status(400).json({
                     success: false,
-                    error: 'Registration verification failed. Please try again.'
+                    error: 'Registration verification failed. Please try again.',
                 });
             }
 
             // Handle both old and new simplewebauthn API (v9+ uses nested credential object)
             const regInfo = verification.registrationInfo;
-            const credentialPublicKey = regInfo.credential?.publicKey || regInfo.credentialPublicKey;
+            const credentialPublicKey =
+                regInfo.credential?.publicKey || regInfo.credentialPublicKey;
             const credentialID = regInfo.credential?.id || regInfo.credentialID;
             const counter = regInfo.credential?.counter ?? regInfo.counter ?? 0;
             const fmt = regInfo.fmt;
@@ -358,18 +376,18 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 hasCredentialID: !!credentialID,
                 counter,
                 fmt,
-                credentialDeviceType
+                credentialDeviceType,
             });
 
             if (!credentialPublicKey || !credentialID) {
                 await recordRegistrationAttempt(clientIp);
                 console.error('[BiometricRegister] Missing credential data from verification:', {
                     regInfoKeys: Object.keys(regInfo),
-                    hasCredential: !!regInfo.credential
+                    hasCredential: !!regInfo.credential,
                 });
                 return res.status(400).json({
                     success: false,
-                    error: 'Registration data incomplete. Please try again.'
+                    error: 'Registration data incomplete. Please try again.',
                 });
             }
 
@@ -386,44 +404,57 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
             }
 
             // Convert credential data to base64url strings (handle both Buffer and Uint8Array)
-            const credIdString = typeof credentialID === 'string' 
-                ? credentialID 
-                : bufferToBase64url(credentialID);
-            const pubKeyString = typeof credentialPublicKey === 'string'
-                ? credentialPublicKey
-                : bufferToBase64url(credentialPublicKey);
-            const aaguidString = typeof aaguid === 'string' 
-                ? aaguid 
-                : (aaguid ? bufferToBase64url(aaguid) : null);
+            const credIdString =
+                typeof credentialID === 'string' ? credentialID : bufferToBase64url(credentialID);
+            const pubKeyString =
+                typeof credentialPublicKey === 'string'
+                    ? credentialPublicKey
+                    : bufferToBase64url(credentialPublicKey);
+            const aaguidString =
+                typeof aaguid === 'string' ? aaguid : aaguid ? bufferToBase64url(aaguid) : null;
 
             const newCredential = {
                 credentialId: sanitizeString(credIdString, 512),
                 publicKey: sanitizeString(pubKeyString, 2048),
                 counter: typeof counter === 'number' ? counter : 0,
-                transports: Array.isArray(validatedBody?.transports) ? validatedBody.transports : [],
+                transports: Array.isArray(validatedBody?.transports)
+                    ? validatedBody.transports
+                    : [],
                 deviceName,
                 createdAt: new Date().toISOString(),
                 lastUsed: null,
                 fmt: fmt || 'none',
                 aaguid: aaguidString,
                 credentialDeviceType,
-                credentialBackedUp
+                credentialBackedUp,
             };
 
             let ownerCredentialData;
             if (existingOwner) {
                 const credentials = normalizeCredentials(existingOwner);
-                const existingIndex = credentials.findIndex(entry => entry.credentialId === newCredential.credentialId);
+                const existingIndex = credentials.findIndex(
+                    entry => entry.credentialId === newCredential.credentialId
+                );
 
                 if (existingIndex >= 0) {
-                    credentials[existingIndex] = { ...credentials[existingIndex], ...newCredential, updatedAt: new Date().toISOString() };
+                    credentials[existingIndex] = {
+                        ...credentials[existingIndex],
+                        ...newCredential,
+                        updatedAt: new Date().toISOString(),
+                    };
                 } else {
                     credentials.push(newCredential);
                 }
 
-                const authorizedDevices = Array.isArray(existingOwner.authorizedDevices) ? [...existingOwner.authorizedDevices] : [];
+                const authorizedDevices = Array.isArray(existingOwner.authorizedDevices)
+                    ? [...existingOwner.authorizedDevices]
+                    : [];
                 if (!authorizedDevices.some(device => device.fingerprint === deviceFingerprint)) {
-                    authorizedDevices.push({ fingerprint: deviceFingerprint, name: deviceName, addedAt: new Date().toISOString() });
+                    authorizedDevices.push({
+                        fingerprint: deviceFingerprint,
+                        name: deviceName,
+                        addedAt: new Date().toISOString(),
+                    });
                 }
 
                 ownerCredentialData = {
@@ -438,7 +469,7 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                     deviceFingerprint: existingOwner.deviceFingerprint || deviceFingerprint,
                     version: existingOwner.version || '3.0',
                     algorithm: existingOwner.algorithm || 'ES256',
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
                 };
             } else {
                 ownerCredentialData = {
@@ -449,22 +480,36 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                     userId: resolvedUserId,
                     deviceFingerprint,
                     credentials: [newCredential],
-                    authorizedDevices: [{ fingerprint: deviceFingerprint, name: deviceName, addedAt: new Date().toISOString() }],
+                    authorizedDevices: [
+                        {
+                            fingerprint: deviceFingerprint,
+                            name: deviceName,
+                            addedAt: new Date().toISOString(),
+                        },
+                    ],
                     registeredAt: new Date().toISOString(),
                     registeredFromIp: clientIp,
                     lastUsed: null,
                     authCount: 0,
                     rpId: expectedRpIds[0],
                     version: '3.0',
-                    algorithm: 'ES256'
+                    algorithm: 'ES256',
                 };
             }
 
             const stored = await storeOwnerCredential(ownerCredentialData);
 
             if (!stored) {
-                addAuditEntry({ action: 'BIOMETRIC_REGISTER_STORAGE_FAILED', ip: clientIp, success: false, endpoint: '/api/biometric-register' });
-                return res.status(500).json({ success: false, error: 'Failed to secure dashboard. Please try again.' });
+                addAuditEntry({
+                    action: 'BIOMETRIC_REGISTER_STORAGE_FAILED',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-register',
+                });
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to secure dashboard. Please try again.',
+                });
             }
 
             addAuditEntry({
@@ -473,7 +518,7 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 success: true,
                 endpoint: '/api/biometric-register',
                 userId: ownerCredentialData.userId.substring(0, 8) + '...',
-                note: existingOwner ? 'Owner credential updated' : 'New owner registered'
+                note: existingOwner ? 'Owner credential updated' : 'New owner registered',
             });
 
             return res.status(200).json({
@@ -481,12 +526,11 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
                 message: 'Dashboard secured! Only your biometric can unlock this dashboard.',
                 isOwner: true,
                 userId: ownerCredentialData.userId,
-                credentialId: newCredential.credentialId
+                credentialId: newCredential.credentialId,
             });
         }
 
         return res.status(400).json({ success: false, error: 'Invalid action' });
-
     } catch (error) {
         console.error('[BiometricRegister] Error:', error);
         addAuditEntry({
@@ -494,18 +538,21 @@ const biometricRegisterHandler = async (req, res, { clientIp, validatedBody }) =
             ip: clientIp,
             success: false,
             endpoint: '/api/biometric-register',
-            error: error.message
+            error: error.message,
         });
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
-}
+};
 
-module.exports = createSecuredHandler({
-  requireAuth: false,
-  allowedMethods: ['POST', 'OPTIONS'],
-  rateLimit: {
-      limit: CONFIG.RATE_LIMIT.limit,
-      windowMs: CONFIG.RATE_LIMIT.windowMs,
-      keyPrefix: 'biometric-register'
-  },
-}, biometricRegisterHandler);
+module.exports = createSecuredHandler(
+    {
+        requireAuth: false,
+        allowedMethods: ['POST', 'OPTIONS'],
+        rateLimit: {
+            limit: CONFIG.RATE_LIMIT.limit,
+            windowMs: CONFIG.RATE_LIMIT.windowMs,
+            keyPrefix: 'biometric-register',
+        },
+    },
+    biometricRegisterHandler
+);

@@ -45,7 +45,7 @@ const BiometricAuth = (() => {
         authenticatorType: 'Biometric',
         isApplePlatform: false,
         conditionalMediation: false,
-        supportsPasskeys: false
+        supportsPasskeys: false,
     };
 
     // ============================================
@@ -95,14 +95,18 @@ const BiometricAuth = (() => {
                 deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
                 sessionStorage.setItem(CONFIG.DEVICE_ID_KEY, deviceId);
             }
-            console.warn('[BiometricAuth] Using sessionStorage for device ID (private mode detected)');
+            console.warn(
+                '[BiometricAuth] Using sessionStorage for device ID (private mode detected)'
+            );
             return deviceId;
         } catch (e) {
             // Last resort: in-memory (will not persist across page reloads)
             if (!memoryDeviceId) {
                 const array = new Uint8Array(16);
                 crypto.getRandomValues(array);
-                memoryDeviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+                memoryDeviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+                    ''
+                );
                 console.warn('[BiometricAuth] Using in-memory device ID (storage unavailable)');
             }
             return memoryDeviceId;
@@ -125,7 +129,8 @@ const BiometricAuth = (() => {
 
         // Check for platform authenticator
         try {
-            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            const available =
+                await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
             state.isSupported = true;
             state.platformAuthenticator = available;
             state.isApplePlatform = isApplePlatform();
@@ -133,7 +138,8 @@ const BiometricAuth = (() => {
             state.supportsPasskeys = available && (state.isApplePlatform || isPasskeyCapable());
 
             if (PublicKeyCredential.isConditionalMediationAvailable) {
-                state.conditionalMediation = await PublicKeyCredential.isConditionalMediationAvailable();
+                state.conditionalMediation =
+                    await PublicKeyCredential.isConditionalMediationAvailable();
             }
 
             console.log('[BiometricAuth] Platform authenticator available:', available);
@@ -141,7 +147,7 @@ const BiometricAuth = (() => {
             return {
                 supported: true,
                 platformAuthenticator: available,
-                type: state.authenticatorType
+                type: state.authenticatorType,
             };
         } catch (error) {
             console.error('[BiometricAuth] Error checking support:', error);
@@ -234,8 +240,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'verify-session',
                     sessionToken: token,
-                    deviceId: getDeviceId()
-                })
+                    deviceId: getDeviceId(),
+                }),
             });
 
             const data = await response.json();
@@ -282,8 +288,8 @@ const BiometricAuth = (() => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'check-access',
-                    deviceId: getDeviceId()
-                })
+                    deviceId: getDeviceId(),
+                }),
             });
 
             const data = await response.json();
@@ -297,7 +303,7 @@ const BiometricAuth = (() => {
                     canRegister: false, // Don't allow registration on service error
                     canAuthenticate: false,
                     message: data.error || 'Service temporarily unavailable',
-                    serviceError: true
+                    serviceError: true,
                 };
             }
 
@@ -311,7 +317,7 @@ const BiometricAuth = (() => {
                 canRegister: !data.hasOwner || data.isOwnerDevice,
                 canAuthenticate: data.canAuthenticate,
                 message: data.message,
-                serviceError: false
+                serviceError: false,
             };
         } catch (error) {
             console.error('[BiometricAuth] Access check failed:', error);
@@ -322,7 +328,7 @@ const BiometricAuth = (() => {
                 canRegister: false,
                 canAuthenticate: false,
                 message: 'Unable to connect to authentication server',
-                serviceError: true
+                serviceError: true,
             };
         }
     }
@@ -358,20 +364,15 @@ const BiometricAuth = (() => {
         for (let i = 0; i < bytes.byteLength; i++) {
             binary += String.fromCharCode(bytes[i]);
         }
-        return btoa(binary)
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
 
     /**
      * Convert Base64URL to ArrayBuffer
      */
     function base64URLToBuffer(base64url) {
-        const base64 = base64url
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-        const padding = '='.repeat((4 - base64.length % 4) % 4);
+        const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+        const padding = '='.repeat((4 - (base64.length % 4)) % 4);
         const binary = atob(base64 + padding);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) {
@@ -492,8 +493,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'get-challenge',
                     userId,
-                    deviceId: getDeviceId()
-                })
+                    deviceId: getDeviceId(),
+                }),
             });
 
             const data = await response.json();
@@ -526,34 +527,34 @@ const BiometricAuth = (() => {
             challenge: challenge,
             rp: {
                 name: CONFIG.RP_NAME,
-                id: CONFIG.RP_ID
+                id: CONFIG.RP_ID,
             },
             user: {
                 id: userIdBuffer,
                 name: 'FUSE Owner',
-                displayName: 'Dashboard Owner'
+                displayName: 'Dashboard Owner',
             },
             pubKeyCredParams: [
-                { alg: -7, type: 'public-key' },   // ES256 (preferred)
-                { alg: -257, type: 'public-key' }  // RS256 (fallback)
+                { alg: -7, type: 'public-key' }, // ES256 (preferred)
+                { alg: -257, type: 'public-key' }, // RS256 (fallback)
             ],
             authenticatorSelection: {
                 authenticatorAttachment: 'platform',
                 userVerification: 'required',
                 residentKey: requireResidentKey ? 'required' : 'preferred',
-                requireResidentKey
+                requireResidentKey,
             },
             timeout: 60000,
             attestation: 'none',
             extensions: {
-                credProps: true
-            }
+                credProps: true,
+            },
         };
 
         try {
             // Prompt for biometric registration
             const credential = await navigator.credentials.create({
-                publicKey: publicKeyCredentialCreationOptions
+                publicKey: publicKeyCredentialCreationOptions,
             });
 
             onProgress?.('Securing dashboard...');
@@ -573,7 +574,7 @@ const BiometricAuth = (() => {
                 clientDataJSON: bufferToBase64URL(attestationResponse.clientDataJSON),
                 attestationObject: bufferToBase64URL(attestationResponse.attestationObject),
                 deviceId: getDeviceId(),
-                clientExtensions: credential.getClientExtensionResults?.() || {}
+                clientExtensions: credential.getClientExtensionResults?.() || {},
             };
 
             const transports = attestationResponse.getTransports?.();
@@ -582,7 +583,9 @@ const BiometricAuth = (() => {
             }
 
             if (attestationResponse.getAuthenticatorData) {
-                registerData.authenticatorData = bufferToBase64URL(attestationResponse.getAuthenticatorData());
+                registerData.authenticatorData = bufferToBase64URL(
+                    attestationResponse.getAuthenticatorData()
+                );
             }
 
             if (attestationResponse.getPublicKey) {
@@ -592,7 +595,7 @@ const BiometricAuth = (() => {
             const response = await fetch(`${CONFIG.API_BASE}/biometric-register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(registerData)
+                body: JSON.stringify(registerData),
             });
 
             const data = await response.json();
@@ -620,9 +623,8 @@ const BiometricAuth = (() => {
             return {
                 success: true,
                 isOwner: true,
-                message: data.message || 'Dashboard secured! Only your biometric can unlock it.'
+                message: data.message || 'Dashboard secured! Only your biometric can unlock it.',
             };
-
         } catch (error) {
             console.error('[BiometricAuth] Registration failed:', error);
 
@@ -663,8 +665,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'get-challenge',
                     deviceId: getDeviceId(),
-                    credentialId
-                })
+                    credentialId,
+                }),
             });
 
             console.log('[BiometricAuth] Server response status:', response.status);
@@ -675,17 +677,20 @@ const BiometricAuth = (() => {
                 console.error('[BiometricAuth] Server error:', response.status, errorData);
 
                 if (response.status === 503) {
-                    throw new Error(errorData.error || 'Authentication service temporarily unavailable. Server may be misconfigured.');
+                    throw new Error(
+                        errorData.error ||
+                            'Authentication service temporarily unavailable. Server may be misconfigured.'
+                    );
                 }
                 throw new Error(errorData.error || `Server error: ${response.status}`);
             }
 
             const data = await response.json();
-            console.log('[BiometricAuth] Challenge response:', { 
-                success: data.success, 
+            console.log('[BiometricAuth] Challenge response:', {
+                success: data.success,
                 hasChallenge: !!data.challenge,
                 allowCredentials: data.allowCredentials,
-                credentialCount: data.allowCredentials?.length 
+                credentialCount: data.allowCredentials?.length,
             });
 
             if (!data.success) {
@@ -705,9 +710,13 @@ const BiometricAuth = (() => {
             allowCredentials = data.allowCredentials;
         } catch (error) {
             console.error('[BiometricAuth] Challenge request failed:', error);
-            if (error.message.includes('denied') || error.message.includes('secured') ||
-                error.message.includes('temporarily unavailable') || error.message.includes('CONFIG_ERROR') ||
-                error.message.includes('configuration error')) {
+            if (
+                error.message.includes('denied') ||
+                error.message.includes('secured') ||
+                error.message.includes('temporarily unavailable') ||
+                error.message.includes('CONFIG_ERROR') ||
+                error.message.includes('configuration error')
+            ) {
                 throw error;
             }
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
@@ -728,7 +737,7 @@ const BiometricAuth = (() => {
             credentialOptions.push({
                 id: credentialId,
                 type: 'public-key',
-                transports: ['internal']
+                transports: ['internal'],
             });
         }
 
@@ -743,16 +752,16 @@ const BiometricAuth = (() => {
             allowCredentials: credentialOptions.map(entry => ({
                 id: typeof entry.id === 'string' ? base64URLToBuffer(entry.id) : entry.id,
                 type: 'public-key',
-                transports: entry.transports || ['internal']
+                transports: entry.transports || ['internal'],
             })),
             userVerification: 'required',
-            timeout: 60000
+            timeout: 60000,
         };
 
         try {
             // Prompt for biometric verification
             const assertion = await navigator.credentials.get({
-                publicKey: publicKeyCredentialRequestOptions
+                publicKey: publicKeyCredentialRequestOptions,
             });
 
             onProgress?.('Verifying identity...');
@@ -773,13 +782,13 @@ const BiometricAuth = (() => {
                 signature: bufferToBase64URL(assertion.response.signature),
                 userHandle,
                 deviceId: getDeviceId(),
-                clientExtensions: assertion.getClientExtensionResults?.() || {}
+                clientExtensions: assertion.getClientExtensionResults?.() || {},
             };
 
             const response = await fetch(`${CONFIG.API_BASE}/biometric-authenticate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(verifyData)
+                body: JSON.stringify(verifyData),
             });
 
             const data = await response.json();
@@ -812,9 +821,8 @@ const BiometricAuth = (() => {
             return {
                 success: true,
                 verified: true,
-                message: data.message || 'Welcome back! Dashboard unlocked.'
+                message: data.message || 'Welcome back! Dashboard unlocked.',
             };
-
         } catch (error) {
             console.error('[BiometricAuth] Authentication failed:', error);
 
@@ -849,8 +857,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'create-device-link',
                     sessionToken,
-                    deviceId: getDeviceId()
-                })
+                    deviceId: getDeviceId(),
+                }),
             });
 
             const data = await response.json();
@@ -863,7 +871,7 @@ const BiometricAuth = (() => {
                 success: true,
                 linkCode: data.linkCode,
                 expiresIn: data.expiresIn,
-                message: data.message
+                message: data.message,
             };
         } catch (error) {
             console.error('[BiometricAuth] Create device link failed:', error);
@@ -886,8 +894,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'claim-device-link',
                     linkCode: linkCode.toUpperCase().trim(),
-                    deviceId: getDeviceId()
-                })
+                    deviceId: getDeviceId(),
+                }),
             });
 
             const data = await response.json();
@@ -903,7 +911,7 @@ const BiometricAuth = (() => {
             return {
                 success: true,
                 deviceName: data.deviceName,
-                message: data.message
+                message: data.message,
             };
         } catch (error) {
             console.error('[BiometricAuth] Claim device link failed:', error);
@@ -929,8 +937,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'send',
                     email: email.trim(),
-                    page
-                })
+                    page,
+                }),
             });
 
             const data = await response.json();
@@ -942,7 +950,7 @@ const BiometricAuth = (() => {
             return {
                 success: true,
                 message: data.message,
-                expiresIn: data.expiresIn
+                expiresIn: data.expiresIn,
             };
         } catch (error) {
             console.error('[BiometricAuth] Magic link request failed:', error);
@@ -963,8 +971,8 @@ const BiometricAuth = (() => {
                 body: JSON.stringify({
                     action: 'verify',
                     token,
-                    deviceId: getDeviceId()
-                })
+                    deviceId: getDeviceId(),
+                }),
             });
 
             const data = await response.json();
@@ -983,7 +991,11 @@ const BiometricAuth = (() => {
                 try {
                     localStorage.setItem(CONFIG.USER_ID_KEY, data.userId);
                 } catch (e) {
-                    try { sessionStorage.setItem(CONFIG.USER_ID_KEY, data.userId); } catch (e2) { /* ignore */ }
+                    try {
+                        sessionStorage.setItem(CONFIG.USER_ID_KEY, data.userId);
+                    } catch (e2) {
+                        /* ignore */
+                    }
                 }
             }
 
@@ -995,7 +1007,7 @@ const BiometricAuth = (() => {
             return {
                 success: true,
                 verified: true,
-                message: data.message || 'Device authorized via magic link!'
+                message: data.message || 'Device authorized via magic link!',
             };
         } catch (error) {
             console.error('[BiometricAuth] Magic link verification failed:', error);
@@ -1061,7 +1073,7 @@ const BiometricAuth = (() => {
         getState: () => ({ ...state }),
 
         // Configuration
-        CONFIG
+        CONFIG,
     };
 })();
 

@@ -16,7 +16,7 @@ const {
     getClientIp,
     checkRateLimit,
     addAuditEntry,
-    validateRequestBody
+    validateRequestBody,
 } = require('./_lib/security');
 
 const {
@@ -25,7 +25,7 @@ const {
     getEstimate,
     getBudgetLimits,
     PRICING,
-    recordUsage
+    recordUsage,
 } = require('./_lib/cost-tracker');
 
 const { getAllCircuitsStatus } = require('./_lib/circuit-breaker');
@@ -35,8 +35,8 @@ const { getAllCircuitsStatus } = require('./_lib/circuit-breaker');
 // ============================================================================
 
 const CONFIG = {
-    RATE_LIMIT_REQUESTS: 30,  // 30 requests per minute
-    RATE_LIMIT_WINDOW_MS: 60000
+    RATE_LIMIT_REQUESTS: 30, // 30 requests per minute
+    RATE_LIMIT_WINDOW_MS: 60000,
 };
 
 // ============================================================================
@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
     if (req.headers.origin && !origin) {
         return res.status(403).json({
             error: 'Origin not allowed',
-            code: 'CORS_ERROR'
+            code: 'CORS_ERROR',
         });
     }
 
@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
         return res.status(429).json({
             error: 'Too many requests',
             code: 'RATE_LIMITED',
-            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000)
+            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000),
         });
     }
 
@@ -102,11 +102,11 @@ module.exports = async (req, res) => {
                             pricing: PRICING,
                             note: 'Prices are per 1,000 tokens. Input and output tokens are priced separately.',
                             lastUpdated: '2025-01-01',
-                            currency: 'USD'
-                        }
+                            currency: 'USD',
+                        },
                     });
 
-                case 'estimate':
+                case 'estimate': {
                     // Cost estimate (public)
                     const provider = query.provider || 'anthropic';
                     const model = query.model || 'claude-3-5-haiku-latest';
@@ -117,8 +117,9 @@ module.exports = async (req, res) => {
 
                     return res.status(200).json({
                         success: true,
-                        data: estimate
+                        data: estimate,
                     });
+                }
 
                 case 'health':
                     // System health including circuit breakers (public)
@@ -127,8 +128,8 @@ module.exports = async (req, res) => {
                         data: {
                             status: 'operational',
                             circuits: getAllCircuitsStatus(),
-                            timestamp: new Date().toISOString()
-                        }
+                            timestamp: new Date().toISOString(),
+                        },
                     });
 
                 case 'summary':
@@ -141,7 +142,7 @@ module.exports = async (req, res) => {
                     return res.status(400).json({
                         error: 'Unknown action',
                         code: 'INVALID_ACTION',
-                        availableActions: ['pricing', 'estimate', 'health', 'summary', 'usage']
+                        availableActions: ['pricing', 'estimate', 'health', 'summary', 'usage'],
                     });
             }
         }
@@ -153,7 +154,7 @@ module.exports = async (req, res) => {
             return res.status(503).json({
                 error: 'Cost tracking not configured',
                 code: 'NOT_CONFIGURED',
-                hint: 'Set ADMIN_TOKEN environment variable'
+                hint: 'Set ADMIN_TOKEN environment variable',
             });
         }
 
@@ -163,11 +164,11 @@ module.exports = async (req, res) => {
                 action: 'COSTS_AUTH_FAILED',
                 ip: clientIp,
                 success: false,
-                reason: authResult.error
+                reason: authResult.error,
             });
             return res.status(401).json({
                 error: authResult.error,
-                code: 'UNAUTHORIZED'
+                code: 'UNAUTHORIZED',
             });
         }
 
@@ -175,7 +176,7 @@ module.exports = async (req, res) => {
         if (req.method === 'GET') {
             switch (action) {
                 case 'summary':
-                case 'usage':
+                case 'usage': {
                     const period = query.period || 'today';
                     const validPeriods = ['today', 'week', 'month', 'all'];
 
@@ -183,7 +184,7 @@ module.exports = async (req, res) => {
                         return res.status(400).json({
                             error: 'Invalid period',
                             code: 'VALIDATION_ERROR',
-                            validPeriods
+                            validPeriods,
                         });
                     }
 
@@ -193,15 +194,16 @@ module.exports = async (req, res) => {
                         action: 'COSTS_VIEWED',
                         ip: clientIp,
                         success: true,
-                        period
+                        period,
                     });
 
                     return res.status(200).json({
                         success: true,
-                        data: summary
+                        data: summary,
                     });
+                }
 
-                case 'budget':
+                case 'budget': {
                     const budgetStatus = checkBudgetStatus();
                     const limits = getBudgetLimits();
 
@@ -210,19 +212,23 @@ module.exports = async (req, res) => {
                         data: {
                             ...budgetStatus,
                             limits,
-                            alerts: budgetStatus.exceeded ? [
-                                {
-                                    level: 'critical',
-                                    message: 'Budget exceeded! Consider reviewing usage or increasing limits.'
-                                }
-                            ] : []
-                        }
+                            alerts: budgetStatus.exceeded
+                                ? [
+                                      {
+                                          level: 'critical',
+                                          message:
+                                              'Budget exceeded! Consider reviewing usage or increasing limits.',
+                                      },
+                                  ]
+                                : [],
+                        },
                     });
+                }
 
                 default:
                     return res.status(400).json({
                         error: 'Unknown action',
-                        code: 'INVALID_ACTION'
+                        code: 'INVALID_ACTION',
                     });
             }
         }
@@ -230,21 +236,25 @@ module.exports = async (req, res) => {
         // Authenticated POST endpoints
         if (req.method === 'POST') {
             switch (action) {
-                case 'record':
+                case 'record': {
                     // Manually record usage (for external integrations)
                     const validation = validateRequestBody(req.body, {
-                        provider: { type: 'string', required: true, enum: ['anthropic', 'openai', 'gemini'] },
+                        provider: {
+                            type: 'string',
+                            required: true,
+                            enum: ['anthropic', 'openai', 'gemini'],
+                        },
                         model: { type: 'string', required: true, maxLength: 100 },
                         inputTokens: { type: 'number' },
                         outputTokens: { type: 'number' },
                         endpoint: { type: 'string', maxLength: 200 },
-                        success: { type: 'boolean' }
+                        success: { type: 'boolean' },
                     });
 
                     if (!validation.valid) {
                         return res.status(400).json({
                             error: validation.error,
-                            code: 'VALIDATION_ERROR'
+                            code: 'VALIDATION_ERROR',
                         });
                     }
 
@@ -255,40 +265,40 @@ module.exports = async (req, res) => {
                         outputTokens: req.body.outputTokens || 0,
                         endpoint: validation.sanitized.endpoint || 'manual',
                         clientIp,
-                        success: req.body.success !== false
+                        success: req.body.success !== false,
                     });
 
                     addAuditEntry({
                         action: 'USAGE_RECORDED',
                         ip: clientIp,
                         success: true,
-                        recordId: record.id
+                        recordId: record.id,
                     });
 
                     return res.status(201).json({
                         success: true,
-                        data: record
+                        data: record,
                     });
+                }
 
                 default:
                     return res.status(400).json({
                         error: 'Unknown action',
-                        code: 'INVALID_ACTION'
+                        code: 'INVALID_ACTION',
                     });
             }
         }
-
     } catch (error) {
         console.error('[Costs API] Error:', error);
         addAuditEntry({
             action: 'COSTS_ERROR',
             ip: clientIp,
             success: false,
-            error: error.message
+            error: error.message,
         });
         return res.status(500).json({
             error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
         });
     }
 };
