@@ -1891,6 +1891,7 @@ function closeModal(modalElement) {
     }
 }
 
+// eslint-disable-next-line no-unused-vars -- called via onclick in dynamic HTML
 function openDecisionModal(decisionId) {
     const decision = state.decisions.find(d => d.id === decisionId);
     if (!decision) return;
@@ -2097,6 +2098,7 @@ function getModelOptions(provider, selectedModel) {
         .join('');
 }
 
+// eslint-disable-next-line no-unused-vars -- called via onchange in dynamic HTML
 function updateTeamModelOptions(_teamId) {
     const providerSelect = document.getElementById('teamProvider');
     const modelSelect = document.getElementById('teamModel');
@@ -2105,6 +2107,7 @@ function updateTeamModelOptions(_teamId) {
     modelSelect.innerHTML = getModelOptions(providerSelect.value, '');
 }
 
+// eslint-disable-next-line no-unused-vars -- called via onclick in dynamic HTML
 function saveTeamSettings(teamId) {
     const providerSelect = document.getElementById('teamProvider');
     const modelSelect = document.getElementById('teamModel');
