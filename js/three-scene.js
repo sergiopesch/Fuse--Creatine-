@@ -1,7 +1,7 @@
 /**
- * FUSE Premium 3D Product
- * Highest quality fitness supplement packaging visualization
- * Static display with hover-only interaction
+ * FUSE Premium 3D Product - Honeycomb Capsule
+ * White dodecahedron capsule with honeycomb texture
+ * Elegant, high-end supplement visualization
  */
 
 (function() {
@@ -10,7 +10,7 @@
     function isWebGLAvailable() {
         try {
             const canvas = document.createElement('canvas');
-            return !!(window.WebGLRenderingContext && 
+            return !!(window.WebGLRenderingContext &&
                 (canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
         } catch (e) {
             return false;
@@ -35,12 +35,14 @@
             this.mouse = { x: 0, y: 0 };
             this.targetRotation = { x: 0, y: 0 };
             this.currentRotation = { x: 0, y: 0 };
-            this.baseRotationY = Math.PI; // Front-facing
+            this.baseRotationY = Math.PI * 0.15;
+            this.baseRotationX = Math.PI * 0.08;
             this.isHovering = false;
+            this.time = 0;
 
-            // Interaction limits (radians)
-            this.maxRotationX = 0.15;  // ~8.5 degrees up/down
-            this.maxRotationY = 0.4;   // ~23 degrees left/right
+            // Interaction limits
+            this.maxRotationX = 0.25;
+            this.maxRotationY = 0.5;
 
             this.init();
         }
@@ -52,9 +54,9 @@
             // Scene
             this.scene = new THREE.Scene();
 
-            // Camera - optimal viewing distance
-            this.camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 1000);
-            this.camera.position.set(0, 0.3, 7.5);
+            // Camera
+            this.camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
+            this.camera.position.set(0, 0.5, 5.5);
             this.camera.lookAt(0, 0, 0);
 
             // High-quality renderer
@@ -65,16 +67,15 @@
                 precision: 'highp'
             });
             this.renderer.setSize(width, height);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3)); // Higher quality
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
             this.renderer.setClearColor(0x000000, 0);
-            
-            // Premium color management
+
             if (THREE.SRGBColorSpace) {
                 this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             }
             if (THREE.ACESFilmicToneMapping) {
                 this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.renderer.toneMappingExposure = 1.15;
+                this.renderer.toneMappingExposure = 1.3;
             }
             this.renderer.shadowMap.enabled = true;
             this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -83,7 +84,7 @@
             this.container.classList.add('has-webgl');
 
             this.setupLighting();
-            this.createProduct();
+            this.createCapsule();
             this.setupInteractions();
             this.animate();
 
@@ -91,278 +92,309 @@
         }
 
         setupLighting() {
-            // Soft ambient fill
-            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            // Soft ambient
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
             this.scene.add(ambient);
 
-            // Key light (main)
-            const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
-            keyLight.position.set(3, 5, 4);
+            // Key light - warm white from top right
+            const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.8);
+            keyLight.position.set(4, 6, 5);
             keyLight.castShadow = true;
             keyLight.shadow.mapSize.width = 2048;
             keyLight.shadow.mapSize.height = 2048;
             keyLight.shadow.camera.near = 0.5;
-            keyLight.shadow.camera.far = 20;
+            keyLight.shadow.camera.far = 25;
             keyLight.shadow.bias = -0.0001;
             this.scene.add(keyLight);
 
-            // Fill light (softer, opposite side)
-            const fillLight = new THREE.DirectionalLight(0xffffff, 0.7);
-            fillLight.position.set(-3, 2, 3);
+            // Fill light - cooler from left
+            const fillLight = new THREE.DirectionalLight(0xf0f5ff, 0.9);
+            fillLight.position.set(-4, 3, 4);
             this.scene.add(fillLight);
 
-            // Rim light (red accent for brand)
-            const rimLight = new THREE.PointLight(0xff3b30, 2.5, 12);
-            rimLight.position.set(-2.5, 0, -3);
+            // Red rim light - brand accent
+            const rimLight = new THREE.PointLight(0xff3b30, 3.5, 15);
+            rimLight.position.set(-3, -1, -4);
             this.scene.add(rimLight);
 
-            // Top spotlight for lid highlight
-            const topSpot = new THREE.SpotLight(0xffffff, 1.2, 12, Math.PI / 6, 0.4);
-            topSpot.position.set(0, 6, 2);
-            topSpot.castShadow = true;
-            this.scene.add(topSpot);
+            // Secondary red accent
+            const rimLight2 = new THREE.PointLight(0xff3b30, 2.0, 12);
+            rimLight2.position.set(3, 2, -3);
+            this.scene.add(rimLight2);
 
-            // Subtle bottom fill
-            const bottomFill = new THREE.PointLight(0xffffff, 0.4, 6);
-            bottomFill.position.set(0, -2, 3);
+            // Top highlight
+            const topLight = new THREE.SpotLight(0xffffff, 1.5, 15, Math.PI / 5, 0.5);
+            topLight.position.set(0, 8, 3);
+            topLight.castShadow = true;
+            this.scene.add(topLight);
+
+            // Bottom fill for dimension
+            const bottomFill = new THREE.PointLight(0xffffff, 0.5, 8);
+            bottomFill.position.set(0, -4, 3);
             this.scene.add(bottomFill);
+
+            // Front soft light
+            const frontLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            frontLight.position.set(0, 0, 6);
+            this.scene.add(frontLight);
         }
 
-        createProduct() {
+        createHoneycombTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // Base white
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // Honeycomb parameters
+            const hexRadius = 28;
+            const hexHeight = hexRadius * Math.sqrt(3);
+            const hexWidth = hexRadius * 2;
+
+            // Draw honeycomb pattern
+            ctx.strokeStyle = 'rgba(220, 220, 225, 0.7)';
+            ctx.lineWidth = 1.5;
+
+            for (let row = -2; row < 40; row++) {
+                for (let col = -2; col < 30; col++) {
+                    const x = col * hexWidth * 0.75 + (row % 2) * hexWidth * 0.375;
+                    const y = row * hexHeight * 0.5;
+                    this.drawHexagon(ctx, x, y, hexRadius * 0.92);
+                }
+            }
+
+            // Add subtle depth shading to hexagons
+            ctx.fillStyle = 'rgba(240, 240, 245, 0.3)';
+            for (let row = -2; row < 40; row++) {
+                for (let col = -2; col < 30; col++) {
+                    const x = col * hexWidth * 0.75 + (row % 2) * hexWidth * 0.375;
+                    const y = row * hexHeight * 0.5;
+                    this.fillHexagon(ctx, x, y, hexRadius * 0.85);
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            texture.anisotropy = 16;
+            return texture;
+        }
+
+        drawHexagon(ctx, x, y, radius) {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const hx = x + radius * Math.cos(angle);
+                const hy = y + radius * Math.sin(angle);
+                if (i === 0) {
+                    ctx.moveTo(hx, hy);
+                } else {
+                    ctx.lineTo(hx, hy);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        fillHexagon(ctx, x, y, radius) {
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const hx = x + radius * Math.cos(angle);
+                const hy = y + radius * Math.sin(angle);
+                if (i === 0) {
+                    ctx.moveTo(hx, hy);
+                } else {
+                    ctx.lineTo(hx, hy);
+                }
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        createNormalMap() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // Neutral normal map base (pointing up)
+            ctx.fillStyle = 'rgb(128, 128, 255)';
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // Honeycomb depth effect
+            const hexRadius = 28;
+            const hexHeight = hexRadius * Math.sqrt(3);
+            const hexWidth = hexRadius * 2;
+
+            for (let row = -2; row < 40; row++) {
+                for (let col = -2; col < 30; col++) {
+                    const x = col * hexWidth * 0.75 + (row % 2) * hexWidth * 0.375;
+                    const y = row * hexHeight * 0.5;
+
+                    // Create depth illusion with gradient
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, hexRadius * 0.9);
+                    gradient.addColorStop(0, 'rgb(128, 128, 240)'); // Center - slightly recessed
+                    gradient.addColorStop(0.7, 'rgb(128, 128, 255)'); // Mid - neutral
+                    gradient.addColorStop(1, 'rgb(140, 140, 255)'); // Edge - slight bevel
+
+                    ctx.fillStyle = gradient;
+                    this.fillHexagon(ctx, x, y, hexRadius * 0.9);
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            texture.anisotropy = 16;
+            return texture;
+        }
+
+        createFuseLogoTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // Transparent background
+            ctx.clearRect(0, 0, 512, 512);
+
+            // FUSE text - debossed style
+            ctx.fillStyle = 'rgba(180, 180, 185, 0.9)';
+            ctx.font = 'bold 120px "Bebas Neue", Impact, Arial Black, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Shadow for debossed effect
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.shadowBlur = 0;
+            ctx.fillText('FUSE', 256, 240);
+
+            // Inner shadow
+            ctx.shadowColor = 'rgba(150, 150, 155, 0.5)';
+            ctx.shadowOffsetX = -1;
+            ctx.shadowOffsetY = -1;
+            ctx.shadowBlur = 2;
+            ctx.fillStyle = 'rgba(200, 200, 205, 0.4)';
+            ctx.fillText('FUSE', 256, 240);
+
+            // Red accent dot
+            ctx.shadowColor = 'transparent';
+            ctx.fillStyle = '#ff3b30';
+            ctx.beginPath();
+            ctx.arc(365, 195, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.anisotropy = 16;
+            return texture;
+        }
+
+        createCapsule() {
             this.productGroup = new THREE.Group();
             this.scene.add(this.productGroup);
 
-            const segments = 256; // Ultra-high quality geometry
+            // Create textures
+            const honeycombTexture = this.createHoneycombTexture();
+            const normalMap = this.createNormalMap();
+            const logoTexture = this.createFuseLogoTexture();
 
-            // ===== PREMIUM MATERIALS =====
-            
-            // Matte black body with subtle sheen
-            const bodyMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0x080808,
-                roughness: 0.32,
-                metalness: 0.15,
-                clearcoat: 0.9,
-                clearcoatRoughness: 0.2,
-                reflectivity: 0.5,
-                envMapIntensity: 0.8
-            });
-
-            // Premium metallic red
-            const redMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0xff3b30,
-                roughness: 0.18,
-                metalness: 0.95,
-                clearcoat: 1.0,
-                clearcoatRoughness: 0.08,
-                reflectivity: 1.0,
-                envMapIntensity: 1.2
-            });
-
-            // Premium lid with subtle texture
-            const lidMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0x0a0a0a,
-                roughness: 0.22,
-                metalness: 0.35,
-                clearcoat: 0.95,
-                clearcoatRoughness: 0.12,
-                reflectivity: 0.7,
-                envMapIntensity: 0.9
-            });
-
-            // ===== MAIN BODY =====
-            const bodyRadius = 1.0;
-            const bodyHeight = 2.6;
-
-            const bodyGeometry = new THREE.CylinderGeometry(
-                bodyRadius, bodyRadius * 0.98, bodyHeight, segments, 1, false
-            );
-            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-            body.castShadow = true;
-            body.receiveShadow = true;
-            this.productGroup.add(body);
-
-            // Bottom cap
-            const bottomCap = new THREE.Mesh(
-                new THREE.CircleGeometry(bodyRadius * 0.98, segments),
-                bodyMaterial
-            );
-            bottomCap.rotation.x = Math.PI / 2;
-            bottomCap.position.y = -bodyHeight / 2;
-            this.productGroup.add(bottomCap);
-
-            // ===== RED ACCENT BAND =====
-            const bandGeometry = new THREE.CylinderGeometry(
-                bodyRadius + 0.008, bodyRadius + 0.008, 0.14, segments
-            );
-            const band = new THREE.Mesh(bandGeometry, redMaterial);
-            band.position.y = bodyHeight / 2 - 0.18;
-            band.castShadow = true;
-            this.productGroup.add(band);
-
-            // Red lip ring
-            const lipGeometry = new THREE.TorusGeometry(bodyRadius + 0.015, 0.045, 48, segments);
-            const lip = new THREE.Mesh(lipGeometry, redMaterial);
-            lip.rotation.x = Math.PI / 2;
-            lip.position.y = bodyHeight / 2 - 0.08;
-            lip.castShadow = true;
-            this.productGroup.add(lip);
-
-            // ===== LID =====
-            const lidRadius = bodyRadius + 0.025;
-            const lidHeight = 0.38;
-            
-            const lidGeometry = new THREE.CylinderGeometry(
-                lidRadius, lidRadius, lidHeight, segments
-            );
-            const lid = new THREE.Mesh(lidGeometry, lidMaterial);
-            lid.position.y = bodyHeight / 2 + lidHeight / 2 - 0.03;
-            lid.castShadow = true;
-            this.productGroup.add(lid);
-
-            // Lid top
-            const lidTop = new THREE.Mesh(
-                new THREE.CircleGeometry(lidRadius, segments),
-                lidMaterial
-            );
-            lidTop.rotation.x = -Math.PI / 2;
-            lidTop.position.y = bodyHeight / 2 + lidHeight - 0.03;
-            this.productGroup.add(lidTop);
-
-            // Lid grip ridges (premium detail)
-            for (let i = 0; i < 64; i++) {
-                const angle = (i / 64) * Math.PI * 2;
-                const ridge = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.006, lidHeight * 0.65, 0.025),
-                    lidMaterial
-                );
-                ridge.position.x = Math.cos(angle) * (lidRadius + 0.012);
-                ridge.position.z = Math.sin(angle) * (lidRadius + 0.012);
-                ridge.position.y = bodyHeight / 2 + lidHeight / 2 - 0.03;
-                ridge.rotation.y = -angle;
-                this.productGroup.add(ridge);
-            }
-
-            // ===== HIGH-RES LABEL =====
-            this.createLabel(bodyRadius, bodyHeight, segments);
-
-            // ===== FINAL POSITIONING =====
-            this.productGroup.scale.set(0.85, 0.85, 0.85);
-            this.productGroup.position.y = -0.1;
-            this.productGroup.rotation.y = this.baseRotationY;
-        }
-
-        createLabel(radius, height, segments) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 2048;
-            canvas.height = 2048;
-            const ctx = canvas.getContext('2d');
-
-            // Premium black background
-            ctx.fillStyle = '#080808';
-            ctx.fillRect(0, 0, 2048, 2048);
-
-            // Subtle gradient overlay
-            const gradient = ctx.createLinearGradient(0, 0, 0, 2048);
-            gradient.addColorStop(0, 'rgba(255,255,255,0.025)');
-            gradient.addColorStop(0.5, 'rgba(0,0,0,0)');
-            gradient.addColorStop(1, 'rgba(255,255,255,0.015)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 2048, 2048);
-
-            // Top red accent line
-            ctx.fillStyle = '#ff3b30';
-            ctx.fillRect(0, 180, 2048, 5);
-
-            // FUSE Logo
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 400px "Bebas Neue", Impact, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('FUSE', 1024, 520);
-
-            // Red dot accent
-            ctx.fillStyle = '#ff3b30';
-            ctx.beginPath();
-            ctx.arc(1360, 420, 45, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Tagline
-            ctx.fillStyle = '#86868b';
-            ctx.font = '700 52px "Inter", "Helvetica Neue", sans-serif';
-            ctx.fillText('PERFORMANCE FUSION', 1024, 720);
-
-            // Elegant divider
-            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(624, 820);
-            ctx.lineTo(1424, 820);
-            ctx.stroke();
-
-            // Product type
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '600 46px "Inter", "Helvetica Neue", sans-serif';
-            ctx.fillText('CREATINE MONOHYDRATE', 1024, 920);
-
-            // Dose - prominent
-            ctx.fillStyle = '#ff3b30';
-            ctx.font = '800 68px "Inter", "Helvetica Neue", sans-serif';
-            ctx.fillText('5000MG', 1024, 1040);
-
-            // Per serving
-            ctx.fillStyle = '#86868b';
-            ctx.font = '500 34px "Inter", "Helvetica Neue", sans-serif';
-            ctx.fillText('PER SERVING', 1024, 1110);
-
-            // UK Badge
-            ctx.fillStyle = 'rgba(255,255,255,0.06)';
-            ctx.beginPath();
-            ctx.roundRect(824, 1220, 400, 75, 38);
-            ctx.fill();
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '700 30px "Inter", "Helvetica Neue", sans-serif';
-            ctx.fillText('🇬🇧 ENGINEERED IN BRITAIN', 1024, 1262);
-
-            // Bottom specs
-            ctx.fillStyle = 'rgba(255,255,255,0.55)';
-            ctx.font = '500 30px "Inter", "Helvetica Neue", sans-serif';
-            ctx.fillText('60 SERVINGS  •  300G NET WT.', 1024, 1400);
-
-            // Formula code
-            ctx.fillStyle = 'rgba(255,255,255,0.35)';
-            ctx.font = '600 26px "Inter", monospace';
-            ctx.fillText('FORMULA MT-01', 1024, 1470);
-
-            // Bottom red accent
-            ctx.fillStyle = '#ff3b30';
-            ctx.fillRect(0, 1780, 2048, 5);
-
-            // High-quality texture
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.anisotropy = 16;
-            texture.generateMipmaps = true;
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-
-            const labelMaterial = new THREE.MeshStandardMaterial({
-                map: texture,
-                transparent: true,
-                roughness: 0.45,
+            // Premium white matte material with honeycomb
+            const capsuleMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                map: honeycombTexture,
+                normalMap: normalMap,
+                normalScale: new THREE.Vector2(0.15, 0.15),
+                roughness: 0.35,
                 metalness: 0.02,
-                side: THREE.FrontSide
+                clearcoat: 0.4,
+                clearcoatRoughness: 0.25,
+                reflectivity: 0.5,
+                envMapIntensity: 0.6,
+                sheen: 0.3,
+                sheenRoughness: 0.4,
+                sheenColor: new THREE.Color(0xffffff)
             });
 
-            const labelGeometry = new THREE.CylinderGeometry(
-                radius + 0.004, radius + 0.004, height * 0.82, segments, 1, true
+            // Dodecahedron geometry (12-sided)
+            const dodecahedronGeometry = new THREE.DodecahedronGeometry(1.3, 0);
+
+            // Main capsule
+            const capsule = new THREE.Mesh(dodecahedronGeometry, capsuleMaterial);
+            capsule.castShadow = true;
+            capsule.receiveShadow = true;
+            this.productGroup.add(capsule);
+
+            // Edge highlight material
+            const edgeMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                roughness: 0.2,
+                metalness: 0.1,
+                clearcoat: 0.8,
+                clearcoatRoughness: 0.1,
+                transparent: true,
+                opacity: 0.9
+            });
+
+            // Create subtle edge glow using EdgesGeometry
+            const edges = new THREE.EdgesGeometry(dodecahedronGeometry, 1);
+            const edgeLines = new THREE.LineSegments(
+                edges,
+                new THREE.LineBasicMaterial({
+                    color: 0xeeeeee,
+                    linewidth: 1,
+                    transparent: true,
+                    opacity: 0.4
+                })
             );
-            const label = new THREE.Mesh(labelGeometry, labelMaterial);
-            label.position.y = -0.12;
-            this.productGroup.add(label);
+            edgeLines.scale.set(1.002, 1.002, 1.002);
+            this.productGroup.add(edgeLines);
+
+            // FUSE logo decal on front face
+            const logoGeometry = new THREE.PlaneGeometry(1.2, 1.2);
+            const logoMaterial = new THREE.MeshBasicMaterial({
+                map: logoTexture,
+                transparent: true,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+            const logoMesh = new THREE.Mesh(logoGeometry, logoMaterial);
+
+            // Position on front face of dodecahedron
+            logoMesh.position.set(0, 0, 1.08);
+            logoMesh.scale.set(0.9, 0.9, 1);
+            this.productGroup.add(logoMesh);
+
+            // Red accent glow sphere (behind)
+            const glowGeometry = new THREE.SphereGeometry(1.8, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff3b30,
+                transparent: true,
+                opacity: 0.03,
+                side: THREE.BackSide
+            });
+            const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+            this.productGroup.add(glowSphere);
+
+            // Subtle floating animation reference
+            this.capsule = capsule;
+            this.logoMesh = logoMesh;
+            this.glowSphere = glowSphere;
+
+            // Initial rotation to show the capsule elegantly
+            this.productGroup.rotation.x = this.baseRotationX;
+            this.productGroup.rotation.y = this.baseRotationY;
+            this.productGroup.position.y = 0.1;
         }
 
         setupInteractions() {
-            // Mouse interaction - limited range of motion
             this.container.addEventListener('mouseenter', () => {
                 this.isHovering = true;
             });
@@ -380,12 +412,11 @@
                 const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
                 const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-                // Limited rotation range
                 this.targetRotation.y = x * this.maxRotationY;
                 this.targetRotation.x = y * this.maxRotationX;
             });
 
-            // Touch interaction
+            // Touch support
             let touchStartX = 0;
             let touchStartY = 0;
 
@@ -396,8 +427,8 @@
             }, { passive: true });
 
             this.container.addEventListener('touchmove', (e) => {
-                const deltaX = (e.touches[0].clientX - touchStartX) * 0.003;
-                const deltaY = (e.touches[0].clientY - touchStartY) * 0.002;
+                const deltaX = (e.touches[0].clientX - touchStartX) * 0.004;
+                const deltaY = (e.touches[0].clientY - touchStartY) * 0.003;
 
                 this.targetRotation.y = Math.max(-this.maxRotationY, Math.min(this.maxRotationY, deltaX));
                 this.targetRotation.x = Math.max(-this.maxRotationX, Math.min(this.maxRotationX, -deltaY));
@@ -421,15 +452,25 @@
         animate() {
             requestAnimationFrame(() => this.animate());
 
-            // Smooth easing for interactions
-            const easing = this.isHovering ? 0.08 : 0.05;
-            
+            this.time += 0.01;
+
+            // Smooth easing
+            const easing = this.isHovering ? 0.08 : 0.04;
+
             this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * easing;
             this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * easing;
 
-            // Apply rotation - base rotation + interaction offset
-            this.productGroup.rotation.x = this.currentRotation.x;
+            // Apply rotation
+            this.productGroup.rotation.x = this.baseRotationX + this.currentRotation.x;
             this.productGroup.rotation.y = this.baseRotationY + this.currentRotation.y;
+
+            // Subtle floating animation
+            this.productGroup.position.y = 0.1 + Math.sin(this.time * 0.8) * 0.03;
+
+            // Subtle glow pulse
+            if (this.glowSphere) {
+                this.glowSphere.material.opacity = 0.03 + Math.sin(this.time * 1.2) * 0.015;
+            }
 
             this.renderer.render(this.scene, this.camera);
         }
