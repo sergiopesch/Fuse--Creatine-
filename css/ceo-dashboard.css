@@ -126,6 +126,7 @@
 .ceo-dashboard-page:not(.authenticated) > .ceo-header,
 .ceo-dashboard-page:not(.authenticated) > .ceo-main {
     display: none !important;
+    visibility: hidden;
 }
 
 /* Also hide the background effects during login for a cleaner look */
@@ -134,10 +135,29 @@
     display: none;
 }
 
-/* Show dashboard content after authentication with smooth animation */
-.ceo-dashboard-page.authenticated > .ceo-header,
-.ceo-dashboard-page.authenticated > .ceo-main {
+/* Hide the biometric gate when authenticated */
+.ceo-dashboard-page.authenticated > .biometric-gate {
+    display: none !important;
+    visibility: hidden;
+}
+
+/* Show dashboard content after authentication - EXPLICIT display values */
+.ceo-dashboard-page.authenticated > .ceo-header {
+    display: flex !important;
+    visibility: visible;
     animation: fadeInDashboard 0.6s var(--ease-out-expo);
+}
+
+.ceo-dashboard-page.authenticated > .ceo-main {
+    display: block !important;
+    visibility: visible;
+    animation: fadeInDashboard 0.6s var(--ease-out-expo);
+}
+
+/* Re-enable background effects after authentication */
+.ceo-dashboard-page.authenticated::before,
+.ceo-dashboard-page.authenticated::after {
+    display: block;
 }
 
 @keyframes fadeInDashboard {

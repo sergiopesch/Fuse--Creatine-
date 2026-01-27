@@ -2451,12 +2451,20 @@ function hideBiometricStatus() {
  */
 function hideBiometricGate() {
     const gate = document.getElementById('biometricGate');
+    console.log('[CEO Dashboard] hideBiometricGate called, gate element:', !!gate);
+    
     if (gate) {
         gate.classList.add('authenticated');
+        gate.classList.add('hidden');
+        
         // Add authenticated class to body to reveal dashboard content
         document.body.classList.add('authenticated');
+        console.log('[CEO Dashboard] Added authenticated class to body:', document.body.classList.contains('authenticated'));
+        console.log('[CEO Dashboard] Body classes:', document.body.className);
+        
         setTimeout(() => {
             gate.style.display = 'none';
+            console.log('[CEO Dashboard] Gate hidden via display:none');
         }, 500);
     }
 }
