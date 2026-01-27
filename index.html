@@ -14,7 +14,7 @@
     <meta name="googlebot" content="index, follow">
     <meta name="theme-color" content="#000000">
     <meta name="color-scheme" content="dark">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://*.vercel-insights.com; object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https://*.vercel-insights.com; object-src 'none';">
 
     <!-- Canonical URL -->
     <link rel="canonical" href="https://fusecreatine.com/">
@@ -329,13 +329,16 @@
                 </div>
             </div>
             <div class="hero-visual-wrapper" aria-hidden="true">
-                <div class="product-3d-container hero-3d" id="hero3D">
+                <div class="product-image-container hero-product" id="heroProduct">
+                    <div class="product-glow"></div>
                     <img
-                        class="product-3d-fallback"
-                        src="assets/og-image.png"
-                        alt="FUSE premium white honeycomb capsule - elegant geometric creatine supplement"
-                        loading="lazy"
+                        class="product-image"
+                        src="assets/product-hero.png"
+                        alt="FUSE premium creatine tablet with embossed branding and signature red underglow"
+                        loading="eager"
                         decoding="async"
+                        width="800"
+                        height="1000"
                     />
                 </div>
             </div>
@@ -609,13 +612,16 @@
         <div class="container">
             <div class="product-showcase fade-in">
                 <div class="product-visual">
-                    <div class="product-3d-container showcase-3d" id="product3D">
+                    <div class="product-image-container showcase-product" id="showcaseProduct">
+                        <div class="product-glow"></div>
                         <img
-                            class="product-3d-fallback"
-                            src="assets/og-image.png"
-                            alt="FUSE premium white honeycomb capsule - elegant geometric creatine supplement"
+                            class="product-image"
+                            src="assets/product-showcase.png"
+                            alt="FUSE creatine tablet - precision engineered for coffee, featuring signature red underglow"
                             loading="lazy"
                             decoding="async"
+                            width="900"
+                            height="900"
                         />
                     </div>
                 </div>
@@ -895,7 +901,6 @@
     </div>
 
     <!-- Scripts -->
-    <script defer src="js/three-scene.js"></script>
     <script defer src="js/main.js"></script>
     <script defer src="js/chat.js"></script>
 
