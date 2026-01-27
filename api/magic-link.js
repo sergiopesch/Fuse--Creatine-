@@ -278,29 +278,9 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
     // SEND MAGIC LINK
     // ====================================
     if (action === 'send') {
-        const { email } = validatedBody;
-
-        if (!email || typeof email !== 'string') {
-            return res.status(400).json({ success: false, error: 'Email address required' });
-        }
-
-        // Normalize and validate email
-        const normalizedEmail = email.trim().toLowerCase();
+        // Use the stored CEO email directly - no email input needed from the client
         const ceoEmail = CEO_EMAIL.trim().toLowerCase();
-
-        if (normalizedEmail !== ceoEmail) {
-            addAuditEntry({
-                action: 'MAGIC_LINK_UNAUTHORIZED_EMAIL',
-                ip: clientIp,
-                success: false,
-                endpoint: '/api/magic-link',
-                note: 'Non-CEO email attempted magic link'
-            });
-            return res.status(403).json({
-                success: false,
-                error: 'Magic link is only available for authorized administrators'
-            });
-        }
+        const normalizedEmail = ceoEmail;
 
         // Generate token and build magic link URL
         const token = generateMagicToken();

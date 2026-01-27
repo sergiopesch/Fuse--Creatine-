@@ -110,20 +110,9 @@
                     </button>
                 </div>
 
-                <!-- Magic Link Email Input (hidden by default) -->
+                <!-- Magic Link Confirmation (shown after sending) -->
                 <div class="magic-link-input" id="magicLinkInput" style="display: none;">
-                    <p class="link-instruction">Enter your admin email to receive a secure access link:</p>
-                    <div class="magic-link-form">
-                        <input type="email" id="magicEmailInput" placeholder="your@email.com" autocomplete="email" autocapitalize="none">
-                        <button class="btn-biometric btn-send-magic" id="btnSendMagic">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="22" y1="2" x2="11" y2="13"/>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                            </svg>
-                            <span>Send</span>
-                        </button>
-                    </div>
-                    <button class="btn-text-link" id="btnCancelMagic">Cancel</button>
+                    <!-- Populated dynamically after magic link is sent -->
                 </div>
 
                 <!-- Device Link Input (hidden by default) -->

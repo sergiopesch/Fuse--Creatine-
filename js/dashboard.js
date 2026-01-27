@@ -933,92 +933,57 @@
 
     /**
      * Initialize magic link functionality
+     * Clicking the magic link button sends directly to the stored admin email - no input needed
      */
     function initMagicLink() {
         const btnMagicLink = document.getElementById('btnMagicLink');
         const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
-        const magicLinkInput = document.getElementById('magicLinkInput');
-        const magicEmailInput = document.getElementById('magicEmailInput');
-        const btnSendMagic = document.getElementById('btnSendMagic');
-        const btnCancelMagic = document.getElementById('btnCancelMagic');
 
         // Determine page name for return URL
         const pageName = window.location.pathname.includes('ceo-dashboard') ? 'ceo-dashboard' : 'dashboard';
 
-        function showMagicLinkForm() {
-            if (btnMagicLink) btnMagicLink.style.display = 'none';
-            if (magicLinkInput) {
-                magicLinkInput.style.display = 'block';
-                magicEmailInput?.focus();
-            }
-            hideStatus();
-        }
-
-        // Show email input when button clicked
         if (btnMagicLink) {
-            btnMagicLink.addEventListener('click', showMagicLinkForm);
+            btnMagicLink.addEventListener('click', () => handleSendMagicLink(pageName));
         }
 
-        // Also handle the alt button (in not-supported state)
         if (btnMagicLinkAlt) {
-            btnMagicLinkAlt.addEventListener('click', showMagicLinkForm);
+            btnMagicLinkAlt.addEventListener('click', () => handleSendMagicLink(pageName));
         }
-
-        // Cancel magic link - go back
-        btnCancelMagic?.addEventListener('click', () => {
-            if (magicLinkInput) {
-                magicLinkInput.style.display = 'none';
-            }
-            if (btnMagicLink) btnMagicLink.style.display = 'flex';
-            if (magicEmailInput) magicEmailInput.value = '';
-        });
-
-        // Handle send button click
-        btnSendMagic?.addEventListener('click', () => handleSendMagicLink(pageName));
-
-        // Handle enter key in input
-        magicEmailInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleSendMagicLink(pageName);
-            }
-        });
     }
 
     /**
      * Handle sending a magic link email
+     * Sends directly to the stored admin email - no user input needed
      */
     async function handleSendMagicLink(pageName) {
-        const magicEmailInput = document.getElementById('magicEmailInput');
-        const btnSendMagic = document.getElementById('btnSendMagic');
-
-        const email = magicEmailInput?.value?.trim();
-
-        if (!email || !email.includes('@')) {
-            showStatus('Please enter a valid email address', 'error');
-            return;
-        }
+        const btnMagicLink = document.getElementById('btnMagicLink');
+        const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
 
         if (typeof BiometricAuth === 'undefined') {
             showStatus('Authentication library not loaded. Please refresh.', 'error');
             return;
         }
 
-        try {
-            if (btnSendMagic) {
-                btnSendMagic.disabled = true;
-                const btnText = btnSendMagic.querySelector('span');
-                if (btnText) btnText.textContent = 'Sending...';
-            }
-            showStatus('Sending magic link...', 'info');
+        // Disable buttons to prevent double-sends
+        const activeBtn = btnMagicLink?.style.display !== 'none' ? btnMagicLink : btnMagicLinkAlt;
+        if (activeBtn) {
+            activeBtn.disabled = true;
+            const btnText = activeBtn.querySelector('span');
+            if (btnText) btnText.textContent = 'Sending...';
+        }
 
-            const result = await BiometricAuth.requestMagicLink(email, pageName);
+        try {
+            showStatus('Sending magic link to admin email...', 'info');
+
+            const result = await BiometricAuth.requestMagicLink(pageName);
 
             if (result.success) {
                 showStatus(result.message || 'Magic link sent! Check your email.', 'success');
 
-                // Update UI to show "check email" state
+                // Show confirmation UI
                 const magicLinkInput = document.getElementById('magicLinkInput');
                 if (magicLinkInput) {
+                    magicLinkInput.style.display = 'block';
                     magicLinkInput.innerHTML = `
                         <div class="magic-link-sent">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
@@ -1031,15 +996,19 @@
                         </div>
                     `;
                 }
+
+                // Hide the button since we've shown confirmation
+                if (activeBtn) activeBtn.style.display = 'none';
             }
         } catch (error) {
             console.error('[Dashboard] Magic link send failed:', error);
             showStatus(error.message || 'Failed to send magic link', 'error');
 
-            if (btnSendMagic) {
-                btnSendMagic.disabled = false;
-                const btnText = btnSendMagic.querySelector('span');
-                if (btnText) btnText.textContent = 'Send';
+            // Re-enable button for retry
+            if (activeBtn) {
+                activeBtn.disabled = false;
+                const btnText = activeBtn.querySelector('span');
+                if (btnText) btnText.textContent = 'Send Magic Link to Email';
             }
         }
     }
