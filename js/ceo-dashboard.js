@@ -694,15 +694,140 @@ async function toggleTeamOrchestration(teamId) {
 }
 
 async function startAllTeams() {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
+        return;
+    }
+
     showToast('info', 'Starting All Teams', 'Initiating orchestration for all teams...');
-    for (const teamId of Object.keys(AgentTeams)) {
-        await startTeamOrchestration(teamId);
+
+    try {
+        const response = await fetch('/api/orchestrate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.adminToken}`
+            },
+            body: JSON.stringify({ action: 'startAll' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update local state
+            Object.keys(AgentTeams).forEach(teamId => {
+                state.teamOrchestrationState[teamId] = { status: 'running', lastRun: new Date().toISOString() };
+                AgentTeams[teamId].orchestrationStatus = 'running';
+            });
+            
+            // Update world state if returned
+            if (data.data.worldState) {
+                state.worldState = data.data.worldState;
+                state.orchestrationMode = data.data.worldState;
+            }
+
+            updateAllTeamUI();
+            showToast('success', 'All Teams Started', `${data.data.teamsStarted || Object.keys(AgentTeams).length} teams now active`);
+        } else {
+            showToast('error', 'Start Failed', data.error || 'Failed to start all teams');
+        }
+    } catch (error) {
+        console.error('[Orchestration] Start all error:', error);
+        showToast('error', 'Connection Error', 'Failed to start all teams');
     }
 }
 
 async function pauseAllTeams() {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
+        return;
+    }
+
     showToast('info', 'Pausing All Teams', 'Stopping orchestration for all teams...');
-    for (const teamId of Object.keys(AgentTeams)) {
+
+    try {
+        const response = await fetch('/api/orchestrate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.adminToken}`
+            },
+            body: JSON.stringify({ action: 'stopAll' })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update local state
+            Object.keys(AgentTeams).forEach(teamId => {
+                state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                AgentTeams[teamId].orchestrationStatus = 'paused';
+                AgentTeams[teamId].agents.forEach(agent => {
+                    agent.status = 'idle';
+                    agent.currentTask = null;
+                });
+            });
+            
+            // Update world state
+            state.worldState = 'paused';
+            state.orchestrationMode = 'paused';
+            
+            // Update world state buttons
+            elements.worldStateBtns?.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.state === 'paused');
+            });
+
+            updateAllTeamUI();
+            showToast('info', 'All Teams Paused', `${data.data.teamsPaused || Object.keys(AgentTeams).length} teams paused`);
+        } else {
+            showToast('error', 'Pause Failed', data.error || 'Failed to pause all teams');
+        }
+    } catch (error) {
+        console.error('[Orchestration] Pause all error:', error);
+        showToast('error', 'Connection Error', 'Failed to pause all teams');
+    }
+}
+
+/**
+ * Start selected teams (multi-team operation)
+ */
+async function startSelectedTeams() {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
+        return;
+    }
+
+    const teamIds = state.selectedTeams.length > 0 ? state.selectedTeams : [state.activeTeam];
+    
+    if (teamIds.includes('all')) {
+        return startAllTeams();
+    }
+
+    showToast('info', 'Starting Teams', `Starting ${teamIds.length} team(s)...`);
+
+    for (const teamId of teamIds) {
+        await startTeamOrchestration(teamId);
+    }
+}
+
+/**
+ * Pause selected teams (multi-team operation)
+ */
+async function pauseSelectedTeams() {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
+        return;
+    }
+
+    const teamIds = state.selectedTeams.length > 0 ? state.selectedTeams : [state.activeTeam];
+    
+    if (teamIds.includes('all')) {
+        return pauseAllTeams();
+    }
+
+    showToast('info', 'Pausing Teams', `Pausing ${teamIds.length} team(s)...`);
+
+    for (const teamId of teamIds) {
         await stopTeamOrchestration(teamId);
     }
 }
@@ -713,15 +838,156 @@ async function executeOrchestrationCycle() {
         return;
     }
 
-    const teamId = state.activeTeam === 'all' ? Object.keys(AgentTeams)[0] : state.activeTeam;
-
-    if (state.teamOrchestrationState[teamId]?.status !== 'running') {
-        showToast('warning', 'Not Running', 'Start team orchestration first');
+    // Prevent double execution
+    if (state.executionInProgress) {
+        showToast('warning', 'Execution In Progress', 'Please wait for current execution to complete');
         return;
     }
 
+    state.executionInProgress = true;
+    updateExecuteButtonState(true);
+
     try {
-        showToast('info', 'Executing...', `Running ${AgentTeams[teamId].name} orchestration cycle`);
+        let response;
+        let toastMessage;
+
+        if (state.activeTeam === 'all') {
+            // Execute ALL teams
+            toastMessage = 'Running company-wide orchestration...';
+            showToast('info', 'Executing All Teams', toastMessage);
+
+            response = await fetch('/api/orchestrate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.adminToken}`
+                },
+                body: JSON.stringify({ action: 'executeAll', parallel: true })
+            });
+
+        } else if (state.selectedTeams && state.selectedTeams.length > 1) {
+            // Execute multiple selected teams
+            toastMessage = `Running ${state.selectedTeams.length} teams...`;
+            showToast('info', 'Executing Selected Teams', toastMessage);
+
+            response = await fetch('/api/orchestrate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.adminToken}`
+                },
+                body: JSON.stringify({ 
+                    action: 'executeMultiple', 
+                    teamIds: state.selectedTeams,
+                    parallel: true 
+                })
+            });
+
+        } else {
+            // Execute single team
+            const teamId = state.activeTeam;
+            toastMessage = `Running ${AgentTeams[teamId].name} orchestration...`;
+            showToast('info', 'Executing Team', toastMessage);
+
+            response = await fetch('/api/orchestrate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.adminToken}`
+                },
+                body: JSON.stringify({ teamId, action: 'execute' })
+            });
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            const result = data.data;
+
+            // Handle different response structures
+            let activities = [];
+            let tokensUsed = 0;
+            let teamsExecuted = 1;
+
+            if (result.totalActivities) {
+                // Multi-team execution response
+                activities = result.totalActivities;
+                tokensUsed = result.usage?.outputTokens || 0;
+                teamsExecuted = result.executed?.length || 0;
+            } else if (result.activities) {
+                // Single team execution response
+                activities = result.activities;
+                tokensUsed = result.usage?.outputTokens || 0;
+            }
+
+            // Update activities
+            if (activities.length > 0) {
+                state.activities = [...activities, ...state.activities].slice(0, 50);
+                renderActivityFeed();
+                renderOverviewActivity();
+            }
+
+            // Update team states
+            if (result.executed) {
+                result.executed.forEach(teamId => {
+                    state.teamOrchestrationState[teamId] = { 
+                        status: 'running', 
+                        lastRun: new Date().toISOString() 
+                    };
+                    if (AgentTeams[teamId]) {
+                        AgentTeams[teamId].orchestrationStatus = 'running';
+                    }
+                });
+            }
+
+            state.lastExecutionTime = new Date().toISOString();
+            updateAllTeamUI();
+
+            // Success message
+            if (teamsExecuted > 1) {
+                showToast('success', 'Orchestration Complete', `Executed ${teamsExecuted} teams • ${tokensUsed} tokens used`);
+            } else {
+                showToast('success', 'Orchestration Complete', `${activities.length} activities • ${tokensUsed} tokens used`);
+            }
+
+            // Show failed teams if any
+            if (result.failed && result.failed.length > 0) {
+                const failedNames = result.failed.map(f => f.teamId).join(', ');
+                showToast('warning', 'Some Teams Failed', `Failed: ${failedNames}`);
+            }
+
+        } else {
+            showToast('error', 'Execution Failed', data.error || data.details || 'Orchestration failed');
+        }
+    } catch (error) {
+        console.error('[Orchestration] Execute error:', error);
+        showToast('error', 'Execution Error', 'Orchestration execution failed');
+    } finally {
+        state.executionInProgress = false;
+        updateExecuteButtonState(false);
+    }
+}
+
+/**
+ * Execute orchestration for specific teams
+ */
+async function executeTeams(teamIds) {
+    if (!state.adminToken) {
+        showToast('error', 'Admin Token Required', 'Configure admin token in Settings');
+        return;
+    }
+
+    if (!teamIds || teamIds.length === 0) {
+        showToast('warning', 'No Teams Selected', 'Select teams to execute');
+        return;
+    }
+
+    state.executionInProgress = true;
+    updateExecuteButtonState(true);
+
+    try {
+        const teamNames = teamIds.map(id => AgentTeams[id]?.name || id).join(', ');
+        showToast('info', 'Executing Teams', `Running: ${teamNames}`);
 
         const response = await fetch('/api/orchestrate', {
             method: 'POST',
@@ -729,29 +995,65 @@ async function executeOrchestrationCycle() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${state.adminToken}`
             },
-            body: JSON.stringify({ teamId, action: 'execute' })
+            body: JSON.stringify({ 
+                action: teamIds.length === 1 ? 'execute' : 'executeMultiple',
+                teamId: teamIds.length === 1 ? teamIds[0] : undefined,
+                teamIds: teamIds.length > 1 ? teamIds : undefined,
+                parallel: true
+            })
         });
 
         const data = await response.json();
 
         if (data.success) {
             const result = data.data;
-
-            // Update activities
-            if (result.activities && result.activities.length > 0) {
-                state.activities = [...result.activities, ...state.activities].slice(0, 50);
+            const activities = result.totalActivities || result.activities || [];
+            
+            if (activities.length > 0) {
+                state.activities = [...activities, ...state.activities].slice(0, 50);
                 renderActivityFeed();
                 renderOverviewActivity();
             }
 
-            showToast('success', 'Orchestration Complete', `Used ${result.usage?.outputTokens || 0} tokens`);
-            updateTeamUI(teamId);
+            updateAllTeamUI();
+            showToast('success', 'Execution Complete', `${activities.length} activities generated`);
         } else {
-            showToast('error', 'Execution Failed', data.error || 'Orchestration failed');
+            showToast('error', 'Execution Failed', data.error || 'Failed to execute teams');
         }
     } catch (error) {
-        console.error('[Orchestration] Execute error:', error);
-        showToast('error', 'Execution Error', 'Orchestration execution failed');
+        console.error('[Orchestration] Execute teams error:', error);
+        showToast('error', 'Execution Error', 'Failed to execute teams');
+    } finally {
+        state.executionInProgress = false;
+        updateExecuteButtonState(false);
+    }
+}
+
+/**
+ * Update execute button state during execution
+ */
+function updateExecuteButtonState(isExecuting) {
+    const btn = elements.btnExecuteCycle;
+    if (!btn) return;
+
+    if (isExecuting) {
+        btn.disabled = true;
+        btn.classList.add('executing');
+        btn.innerHTML = `
+            <svg class="spin" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+            </svg>
+            Executing...
+        `;
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('executing');
+        btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+            </svg>
+            Execute Cycle
+        `;
     }
 }
 
