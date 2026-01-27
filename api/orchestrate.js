@@ -586,18 +586,30 @@ async function handleGet(req, res, clientIp) {
                 status: state.status,
                 lastRun: state.lastRun,
                 runCount: state.runCount,
-                recentActivities: state.activities.slice(0, 5)
+                recentActivities: state.activities.slice(0, 5),
+                pendingActionsCount: state.pendingActions?.length || 0
             };
         });
 
         return res.status(200).json({
             success: true,
             data: {
+                worldState: orchestrationState.worldState,
                 globalMode: orchestrationState.globalMode,
                 totalOrchestrations: orchestrationState.totalOrchestrations,
                 lastActivity: orchestrationState.lastActivity,
+                lastExecutionTime: orchestrationState.lastExecutionTime,
+                executionInProgress: orchestrationState.executionInProgress,
                 teams: teamsStatus
             }
+        });
+    }
+
+    // Get full world state
+    if (action === 'worldState') {
+        return res.status(200).json({
+            success: true,
+            data: getWorldState()
         });
     }
 
@@ -658,10 +670,19 @@ async function handlePost(req, res, clientIp) {
 
     const { teamId, action, task, mode } = req.body || {};
 
+    // Actions that don't require a specific teamId
+    const globalActions = [
+        'setMode', 'setWorldState', 'startAll', 'stopAll', 
+        'executeAll', 'executeMultiple', 'getWorldState'
+    ];
+
     // Validate teamId for team-specific actions
-    if (action !== 'setMode' && action !== 'startAll' && action !== 'stopAll') {
+    if (!globalActions.includes(action)) {
         if (!teamId || !TEAM_PROMPTS[teamId]) {
-            return res.status(400).json({ error: 'Invalid or missing teamId' });
+            return res.status(400).json({ 
+                error: 'Invalid or missing teamId',
+                validTeams: Object.keys(TEAM_PROMPTS)
+            });
         }
     }
 
@@ -710,15 +731,16 @@ async function handlePost(req, res, clientIp) {
 
         case 'execute':
             // Execute single orchestration cycle (uses Claude API)
+            // Auto-start team if not running (improved UX)
             if (orchestrationState.teams[teamId].status !== 'running') {
-                return res.status(400).json({
-                    error: 'Team orchestration is not running. Start it first.',
-                    code: 'NOT_RUNNING'
-                });
+                orchestrationState.teams[teamId].status = 'running';
+                addTeamActivity(teamId, 'System', `Auto-started for execution`, 'Auto-Start');
             }
 
+            orchestrationState.executionInProgress = true;
             try {
                 const result = await executeOrchestration(teamId, task, clientIp);
+                orchestrationState.executionInProgress = false;
 
                 addAuditEntry({
                     action: 'ORCHESTRATION_EXECUTED',
@@ -734,6 +756,7 @@ async function handlePost(req, res, clientIp) {
                 });
 
             } catch (error) {
+                orchestrationState.executionInProgress = false;
                 addAuditEntry({
                     action: 'ORCHESTRATION_FAILED',
                     ip: clientIp,
@@ -749,27 +772,154 @@ async function handlePost(req, res, clientIp) {
                 });
             }
 
-        case 'setMode':
-            // Set global orchestration mode
-            const validModes = ['manual', 'supervised', 'autonomous'];
-            if (!mode || !validModes.includes(mode)) {
-                return res.status(400).json({ error: 'Invalid mode. Use: manual, supervised, autonomous' });
+        case 'executeMultiple':
+            // Execute multiple teams at once
+            const { teamIds: multiTeamIds, parallel } = req.body || {};
+            
+            if (!multiTeamIds || !Array.isArray(multiTeamIds) || multiTeamIds.length === 0) {
+                return res.status(400).json({ 
+                    error: 'teamIds array is required', 
+                    code: 'VALIDATION_ERROR' 
+                });
             }
 
-            orchestrationState.globalMode = mode;
+            // Auto-start all specified teams
+            multiTeamIds.forEach(tid => {
+                if (orchestrationState.teams[tid] && orchestrationState.teams[tid].status !== 'running') {
+                    orchestrationState.teams[tid].status = 'running';
+                    addTeamActivity(tid, 'System', 'Auto-started for multi-team execution', 'Auto-Start');
+                }
+            });
+
+            orchestrationState.executionInProgress = true;
+            try {
+                const multiResult = await executeMultipleTeams(multiTeamIds, task, clientIp, { parallel: !!parallel });
+                orchestrationState.executionInProgress = false;
+
+                addAuditEntry({
+                    action: 'MULTI_TEAM_ORCHESTRATION_EXECUTED',
+                    ip: clientIp,
+                    success: multiResult.success,
+                    teamsExecuted: multiResult.executed.length,
+                    teamsFailed: multiResult.failed.length
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: multiResult
+                });
+
+            } catch (error) {
+                orchestrationState.executionInProgress = false;
+                return res.status(500).json({
+                    error: 'Multi-team orchestration failed',
+                    code: 'EXECUTION_ERROR',
+                    details: error.message
+                });
+            }
+
+        case 'executeAll':
+            // Execute ALL teams (company-wide orchestration)
+            orchestrationState.executionInProgress = true;
+
+            // Auto-start all teams
+            Object.keys(orchestrationState.teams).forEach(tid => {
+                if (orchestrationState.teams[tid].status !== 'running') {
+                    orchestrationState.teams[tid].status = 'running';
+                    addTeamActivity(tid, 'System', 'Auto-started for company-wide execution', 'Auto-Start');
+                }
+            });
+
+            try {
+                const allResult = await executeAllTeams(task, clientIp, { parallel: req.body?.parallel });
+                orchestrationState.executionInProgress = false;
+
+                addAuditEntry({
+                    action: 'ALL_TEAMS_ORCHESTRATION_EXECUTED',
+                    ip: clientIp,
+                    success: allResult.success,
+                    teamsExecuted: allResult.executed.length,
+                    teamsFailed: allResult.failed.length,
+                    totalActivities: allResult.totalActivities.length
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    data: allResult
+                });
+
+            } catch (error) {
+                orchestrationState.executionInProgress = false;
+                return res.status(500).json({
+                    error: 'Company-wide orchestration failed',
+                    code: 'EXECUTION_ERROR',
+                    details: error.message
+                });
+            }
+
+        case 'setWorldState':
+            // Set world state (paused, manual, semi_auto, autonomous)
+            const newWorldState = req.body?.state;
+            if (!newWorldState) {
+                return res.status(400).json({ 
+                    error: 'state is required', 
+                    code: 'VALIDATION_ERROR',
+                    validStates: Object.values(WORLD_STATES)
+                });
+            }
+
+            const worldStateResult = setWorldState(newWorldState, 'api');
+
+            addAuditEntry({
+                action: 'WORLD_STATE_CHANGED',
+                ip: clientIp,
+                success: worldStateResult.success,
+                previousState: worldStateResult.previousState,
+                newState: newWorldState
+            });
+
+            if (!worldStateResult.success) {
+                return res.status(400).json({
+                    error: worldStateResult.error,
+                    code: 'INVALID_STATE'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: worldStateResult
+            });
+
+        case 'setMode':
+            // Legacy: Set global orchestration mode (maps to world state)
+            const validModes = ['manual', 'paused', 'semi_auto', 'autonomous', 'supervised'];
+            let mappedMode = mode;
+            
+            // Map legacy 'supervised' to 'semi_auto'
+            if (mode === 'supervised') mappedMode = 'semi_auto';
+            
+            if (!mappedMode || !Object.values(WORLD_STATES).includes(mappedMode)) {
+                return res.status(400).json({ 
+                    error: `Invalid mode. Use: ${Object.values(WORLD_STATES).join(', ')}`,
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+
+            const modeResult = setWorldState(mappedMode, 'api');
 
             addAuditEntry({
                 action: 'ORCHESTRATION_MODE_CHANGED',
                 ip: clientIp,
-                success: true,
-                mode
+                success: modeResult.success,
+                mode: mappedMode
             });
 
             return res.status(200).json({
                 success: true,
                 data: {
-                    globalMode: mode,
-                    message: `Global orchestration mode set to ${mode}`
+                    globalMode: mappedMode,
+                    worldState: orchestrationState.worldState,
+                    message: `Orchestration mode set to ${mappedMode}`
                 }
             });
 
@@ -779,10 +929,20 @@ async function handlePost(req, res, clientIp) {
                 orchestrationState.teams[id].status = 'running';
                 addTeamActivity(id, 'System', 'Orchestration started (batch)', 'Started');
             });
+            
+            // Update world state if it was paused
+            if (orchestrationState.worldState === WORLD_STATES.PAUSED) {
+                orchestrationState.worldState = WORLD_STATES.MANUAL;
+                orchestrationState.globalMode = WORLD_STATES.MANUAL;
+            }
 
             return res.status(200).json({
                 success: true,
-                data: { message: 'All teams started' }
+                data: { 
+                    message: 'All teams started',
+                    worldState: orchestrationState.worldState,
+                    teamsStarted: Object.keys(orchestrationState.teams).length
+                }
             });
 
         case 'stopAll':
@@ -792,12 +952,36 @@ async function handlePost(req, res, clientIp) {
                 addTeamActivity(id, 'System', 'Orchestration paused (batch)', 'Paused');
             });
 
+            // Update world state to paused
+            orchestrationState.worldState = WORLD_STATES.PAUSED;
+            orchestrationState.globalMode = WORLD_STATES.PAUSED;
+
             return res.status(200).json({
                 success: true,
-                data: { message: 'All teams paused' }
+                data: { 
+                    message: 'All teams paused',
+                    worldState: orchestrationState.worldState,
+                    teamsPaused: Object.keys(orchestrationState.teams).length
+                }
+            });
+
+        case 'getWorldState':
+            // Get current world state (also available via GET)
+            return res.status(200).json({
+                success: true,
+                data: getWorldState()
             });
 
         default:
-            return res.status(400).json({ error: 'Unknown action. Use: start, stop, execute, setMode, startAll, stopAll' });
+            return res.status(400).json({ 
+                error: 'Unknown action', 
+                code: 'INVALID_ACTION',
+                validActions: [
+                    'start', 'stop', 'execute', 
+                    'executeMultiple', 'executeAll',
+                    'setMode', 'setWorldState',
+                    'startAll', 'stopAll', 'getWorldState'
+                ]
+            });
     }
 }

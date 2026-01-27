@@ -142,7 +142,9 @@ const AgentTeams = {
 const state = {
     activeTab: 'overview',
     activeTeam: 'all',
+    selectedTeams: [],  // For multi-team selection
     orchestrationMode: 'paused',
+    worldState: 'paused',  // Current world state
     teamOrchestrationState: {},
     activities: [],
     decisions: [],
@@ -162,6 +164,9 @@ const state = {
     adminToken: null,
     charts: {},
     isAuthenticated: false,
+    // Orchestration state
+    executionInProgress: false,
+    lastExecutionTime: null,
     // Biometric state
     biometricSupported: false,
     biometricVerified: false,
@@ -358,20 +363,78 @@ function initWorldControls() {
     }
 }
 
-function setWorldState(newState) {
+async function setWorldState(newState) {
     state.orchestrationMode = newState;
+    state.worldState = newState;
 
     elements.worldStateBtns.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.state === newState);
     });
 
+    // Call backend to set world state
+    if (state.adminToken) {
+        try {
+            const response = await fetch('/api/orchestrate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.adminToken}`
+                },
+                body: JSON.stringify({ action: 'setWorldState', state: newState })
+            });
+
+            const data = await response.json();
+            
+            if (!data.success) {
+                showToast('error', 'State Change Failed', data.error || 'Failed to set world state');
+                return;
+            }
+
+            // Update UI based on response
+            if (data.data.teamsAffected) {
+                updateAllTeamUI();
+            }
+
+        } catch (error) {
+            console.error('[WorldState] Error:', error);
+            // Continue with local state update even if API fails
+        }
+    }
+
     // Update orchestration based on world state
     switch (newState) {
         case 'paused':
-            pauseAllTeams();
+            // Local state update - teams paused via API
+            Object.keys(AgentTeams).forEach(teamId => {
+                state.teamOrchestrationState[teamId] = { status: 'paused', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                AgentTeams[teamId].orchestrationStatus = 'paused';
+            });
+            updateAllTeamUI();
             break;
+            
+        case 'manual':
+            // Manual mode - keep current team states
+            showToast('info', 'Manual Mode', 'You can manually start/stop individual teams');
+            break;
+            
+        case 'semi_auto':
+            // Semi-auto - start all teams but require approval for actions
+            Object.keys(AgentTeams).forEach(teamId => {
+                state.teamOrchestrationState[teamId] = { status: 'running', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                AgentTeams[teamId].orchestrationStatus = 'running';
+            });
+            updateAllTeamUI();
+            showToast('info', 'Semi-Auto Mode', 'Teams active - actions require your approval');
+            break;
+            
         case 'autonomous':
-            startAllTeams();
+            // Autonomous - start all teams
+            Object.keys(AgentTeams).forEach(teamId => {
+                state.teamOrchestrationState[teamId] = { status: 'running', lastRun: state.teamOrchestrationState[teamId]?.lastRun };
+                AgentTeams[teamId].orchestrationStatus = 'running';
+            });
+            updateAllTeamUI();
+            showToast('success', 'Autonomous Mode', 'All teams active - full autonomous operation');
             break;
     }
 
