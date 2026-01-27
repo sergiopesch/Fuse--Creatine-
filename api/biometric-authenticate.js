@@ -414,6 +414,13 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             }
 
             const credentials = normalizeCredentials(ownerCredential);
+            console.log('[BiometricAuth] Owner credential retrieved:', {
+                hasCredentials: credentials.length > 0,
+                credentialCount: credentials.length,
+                firstCredentialId: credentials[0]?.credentialId?.substring(0, 20) + '...',
+                transports: credentials[0]?.transports
+            });
+            
             if (!credentials.length) {
                 return res.status(500).json({
                     success: false,
@@ -423,7 +430,15 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             }
 
             const challenge = generateChallenge();
-            await storeChallenge(deviceMatch.fingerprint, challenge);
+            const challengeStored = await storeChallenge(deviceMatch.fingerprint, challenge);
+            
+            if (!challengeStored) {
+                console.error('[BiometricAuth] Failed to store auth challenge');
+                return res.status(503).json({
+                    success: false,
+                    error: 'Failed to initialize authentication. Please try again.'
+                });
+            }
 
             addAuditEntry({
                 action: 'BIOMETRIC_AUTH_CHALLENGE_ISSUED',
@@ -433,10 +448,18 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
             });
 
+            const allowCredentials = credentials.map(c => ({ 
+                id: c.credentialId, 
+                type: 'public-key', 
+                transports: c.transports || ['internal'] 
+            }));
+            
+            console.log('[BiometricAuth] Sending allowCredentials:', JSON.stringify(allowCredentials));
+
             return res.status(200).json({
                 success: true,
                 challenge,
-                allowCredentials: credentials.map(c => ({ id: c.credentialId, type: 'public-key', transports: c.transports || ['internal'] }))
+                allowCredentials
             });
         }
 
