@@ -514,6 +514,74 @@
                             <canvas id="miniTrendChart"></canvas>
                         </div>
                     </div>
+
+                    <!-- Orchestrator Chat Panel -->
+                    <div class="overview-panel orchestrator-chat-panel">
+                        <div class="panel-header">
+                            <h2>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                                    <circle cx="12" cy="10" r="1.5"/>
+                                    <circle cx="8" cy="10" r="1.5"/>
+                                    <circle cx="16" cy="10" r="1.5"/>
+                                </svg>
+                                Orchestrator Chat
+                            </h2>
+                            <div class="chat-status" id="chatStatus">
+                                <span class="status-dot idle"></span>
+                                <span class="status-text">Ready</span>
+                            </div>
+                        </div>
+                        <div class="orchestrator-chat-container">
+                            <div class="chat-messages" id="orchestratorMessages">
+                                <div class="chat-welcome">
+                                    <div class="welcome-icon">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                                        </svg>
+                                    </div>
+                                    <h3>Hello! I'm the Main Orchestrator</h3>
+                                    <p>I coordinate all AI teams to accomplish your goals. Tell me what you'd like to achieve and I'll delegate tasks to the appropriate teams.</p>
+                                    <div class="welcome-suggestions">
+                                        <button class="suggestion-btn" data-suggestion="What's the current status of all teams?">Team Status</button>
+                                        <button class="suggestion-btn" data-suggestion="Create a marketing campaign for our creatine product launch">Launch Campaign</button>
+                                        <button class="suggestion-btn" data-suggestion="Review and improve our website's user experience">Improve UX</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-delegations" id="chatDelegations" style="display: none;">
+                                <div class="delegations-header">
+                                    <span class="delegations-title">Active Delegations</span>
+                                    <button class="btn-collapse-delegations" id="btnCollapseDelegations">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="delegations-list" id="delegationsList"></div>
+                            </div>
+                            <div class="chat-input-container">
+                                <div class="chat-typing-indicator" id="chatTypingIndicator" style="display: none;">
+                                    <div class="typing-dots">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                    <span class="typing-text">Orchestrator is thinking...</span>
+                                </div>
+                                <div class="chat-input-wrapper">
+                                    <textarea
+                                        id="orchestratorInput"
+                                        placeholder="Ask the orchestrator to coordinate your teams..."
+                                        rows="1"
+                                    ></textarea>
+                                    <button class="btn-send-chat" id="btnSendChat" title="Send message (Enter)">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 

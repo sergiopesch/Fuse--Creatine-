@@ -134,30 +134,58 @@ const DEFAULT_TEAMS = {
 const TEAM_PROMPTS = {
   developer: {
     name: 'Developer Team',
+    systemPrompt: `You are the Developer Team lead coordinating Architect, Coder, and QA Engineer agents for FUSE.
+Your focus: platform development, code quality, system architecture.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['Architect', 'Coder', 'QA Engineer'],
   },
   design: {
     name: 'Design Team',
+    systemPrompt: `You are the Design Team lead coordinating UX Lead, Visual Designer, and Motion Designer for FUSE.
+Your focus: user experience, visual design, animations, brand consistency.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['UX Lead', 'Visual Designer', 'Motion Designer'],
   },
   communications: {
     name: 'Communications Team',
+    systemPrompt: `You are the Communications Team lead coordinating Content Strategist, Copywriter, and Social Manager for FUSE.
+Your focus: content strategy, brand voice, social media engagement.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['Content Strategist', 'Copywriter', 'Social Manager'],
   },
   legal: {
     name: 'Legal Team',
+    systemPrompt: `You are the Legal Team lead coordinating Compliance Officer, Contract Analyst, and IP Counsel for FUSE.
+Your focus: regulatory compliance, contracts, intellectual property protection.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['Compliance Officer', 'Contract Analyst', 'IP Counsel'],
   },
   marketing: {
     name: 'Marketing Team',
+    systemPrompt: `You are the Marketing Team lead coordinating Growth Lead, Brand Strategist, and Analytics Expert for FUSE.
+Your focus: user acquisition, brand positioning, growth metrics.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['Growth Lead', 'Brand Strategist', 'Analytics Expert'],
   },
   gtm: {
     name: 'Go-to-Market Team',
+    systemPrompt: `You are the GTM Team lead coordinating Launch Coordinator, Partnership Manager, and Market Researcher for FUSE.
+Your focus: product launch, strategic partnerships, market intelligence.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['Launch Coordinator', 'Partnership Manager', 'Market Researcher'],
   },
   sales: {
     name: 'Sales Team',
+    systemPrompt: `You are the Sales Team lead coordinating Sales Director, Account Executive, SDR Lead, Solutions Consultant, and Customer Success for FUSE.
+Your focus: revenue growth, pipeline management, customer relationships.
+Respond with brief, actionable status updates (2-3 sentences max).
+Format: [AGENT_NAME]: [Brief status/action]`,
     agents: ['Sales Director', 'Account Executive', 'SDR Lead', 'Solutions Consultant', 'Customer Success'],
   },
 };

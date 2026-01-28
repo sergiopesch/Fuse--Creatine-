@@ -309,6 +309,12 @@ const state = {
     biometricSupported: false,
     biometricVerified: false,
     authenticatorType: 'Biometric',
+    // Orchestrator chat state
+    orchestratorChat: {
+        messages: [],
+        isProcessing: false,
+        currentDelegations: [],
+    },
 };
 
 // Initialize team orchestration state
@@ -390,6 +396,15 @@ function cacheElements() {
 
     // Toast container
     elements.toastContainer = document.getElementById('toastContainer');
+
+    // Orchestrator Chat elements
+    elements.orchestratorMessages = document.getElementById('orchestratorMessages');
+    elements.orchestratorInput = document.getElementById('orchestratorInput');
+    elements.btnSendChat = document.getElementById('btnSendChat');
+    elements.chatStatus = document.getElementById('chatStatus');
+    elements.chatTypingIndicator = document.getElementById('chatTypingIndicator');
+    elements.chatDelegations = document.getElementById('chatDelegations');
+    elements.delegationsList = document.getElementById('delegationsList');
 }
 
 // ============================================
@@ -405,6 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initModals();
     initAnalytics();
     initSettings();
+    initOrchestratorChat();
     loadAdminToken();
     renderTeamsMiniGrid();
     renderAgentsTeamsGrid();
@@ -551,6 +567,21 @@ async function setWorldState(newState) {
                 },
                 body: JSON.stringify({ action: 'setWorldState', state: newState }),
             });
+
+            // Check if response is ok before parsing JSON
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch {
+                    const text = await response.text().catch(() => '');
+                    if (text) errorMessage += `: ${text.substring(0, 100)}`;
+                }
+                console.error('[WorldState] Error:', errorMessage);
+                showToast('error', 'State Change Failed', errorMessage);
+                return;
+            }
 
             const data = await response.json();
 
@@ -1448,6 +1479,24 @@ async function executeOrchestrationCycle() {
             });
         }
 
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.code) {
+                    errorMessage += ` (${errorData.code})`;
+                }
+            } catch {
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage += `: ${text.substring(0, 100)}`;
+            }
+            console.error('[Orchestration] Execute failed:', response.status, errorMessage);
+            showToast('error', 'Execution Failed', errorMessage);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -1646,6 +1695,13 @@ function updateExecuteButtonState(isExecuting) {
 async function fetchOrchestrationStatus() {
     try {
         const response = await fetch('/api/orchestrate?action=status');
+
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            console.error('[Orchestration] Status fetch failed:', response.status);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -2999,6 +3055,241 @@ window.addEventListener('biometric-authenticated', () => {
     fetchOrchestrationStatus();
     loadSignups();
 });
+
+// ============================================
+// ORCHESTRATOR CHAT
+// ============================================
+
+function initOrchestratorChat() {
+    if (!elements.orchestratorInput || !elements.btnSendChat) return;
+
+    // Send button click
+    elements.btnSendChat.addEventListener('click', sendOrchestratorMessage);
+
+    // Enter to send (Shift+Enter for newline)
+    elements.orchestratorInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendOrchestratorMessage();
+        }
+    });
+
+    // Auto-resize textarea
+    elements.orchestratorInput.addEventListener('input', () => {
+        elements.orchestratorInput.style.height = 'auto';
+        elements.orchestratorInput.style.height =
+            Math.min(elements.orchestratorInput.scrollHeight, 120) + 'px';
+    });
+
+    // Suggestion buttons
+    document.querySelectorAll('.suggestion-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const suggestion = btn.dataset.suggestion;
+            if (suggestion) {
+                elements.orchestratorInput.value = suggestion;
+                sendOrchestratorMessage();
+            }
+        });
+    });
+
+    // Collapse delegations toggle
+    const btnCollapse = document.getElementById('btnCollapseDelegations');
+    if (btnCollapse) {
+        btnCollapse.addEventListener('click', () => {
+            const list = document.getElementById('delegationsList');
+            if (list) {
+                list.style.display = list.style.display === 'none' ? 'flex' : 'none';
+                btnCollapse.style.transform =
+                    list.style.display === 'none' ? 'rotate(180deg)' : 'rotate(0)';
+            }
+        });
+    }
+}
+
+async function sendOrchestratorMessage() {
+    const input = elements.orchestratorInput;
+    const message = input.value.trim();
+
+    if (!message || state.orchestratorChat.isProcessing) return;
+
+    if (!state.adminToken) {
+        showToast(
+            'warning',
+            'Admin Token Required',
+            'Configure admin token in Settings to chat with orchestrator'
+        );
+        return;
+    }
+
+    // Clear input
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Add user message
+    addChatMessage('user', message);
+
+    // Update UI state
+    state.orchestratorChat.isProcessing = true;
+    updateChatStatus('thinking', 'Processing...');
+    showTypingIndicator(true);
+    elements.btnSendChat.disabled = true;
+
+    try {
+        const response = await fetch('/api/orchestrator-chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${state.adminToken}`,
+            },
+            body: JSON.stringify({ message }),
+        });
+
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch {
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage = text.substring(0, 200);
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Add assistant response
+            addChatMessage('assistant', data.response || data.message);
+
+            // Handle delegations (check both top-level and metadata)
+            const delegations = data.delegations || data.metadata?.delegations || [];
+            if (delegations.length > 0) {
+                updateDelegations(delegations);
+            }
+
+            // Add any generated activities to the main feed
+            const activities = data.activities || data.metadata?.activities || [];
+            if (activities.length > 0) {
+                state.activities = [...activities, ...state.activities].slice(0, 50);
+                renderActivityFeed();
+                renderOverviewActivity();
+            }
+
+            updateChatStatus('idle', 'Ready');
+        } else {
+            throw new Error(data.error || 'Orchestrator request failed');
+        }
+    } catch (error) {
+        console.error('[Orchestrator Chat] Error:', error);
+        addChatMessage(
+            'assistant',
+            `I encountered an error: ${error.message}. Please try again or check your configuration.`
+        );
+        updateChatStatus('error', 'Error');
+
+        // Reset to idle after a moment
+        setTimeout(() => updateChatStatus('idle', 'Ready'), 3000);
+    } finally {
+        state.orchestratorChat.isProcessing = false;
+        showTypingIndicator(false);
+        elements.btnSendChat.disabled = false;
+    }
+}
+
+function addChatMessage(role, content) {
+    const messagesContainer = elements.orchestratorMessages;
+    if (!messagesContainer) return;
+
+    // Remove welcome message if present
+    const welcome = messagesContainer.querySelector('.chat-welcome');
+    if (welcome) {
+        welcome.remove();
+    }
+
+    // Add to state
+    const message = {
+        id: Date.now(),
+        role,
+        content,
+        timestamp: new Date().toISOString(),
+    };
+    state.orchestratorChat.messages.push(message);
+
+    // Create message element
+    const messageEl = document.createElement('div');
+    messageEl.className = `chat-message ${role}`;
+
+    const avatarSvg =
+        role === 'assistant'
+            ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+
+    messageEl.innerHTML = `
+        <div class="message-avatar">${avatarSvg}</div>
+        <div class="message-content">
+            <div class="message-bubble">${escapeHtml(content).replace(/\n/g, '<br>')}</div>
+            <div class="message-meta">${formatTimeAgo(new Date(message.timestamp))}</div>
+        </div>
+    `;
+
+    messagesContainer.appendChild(messageEl);
+
+    // Scroll to bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function updateChatStatus(status, text) {
+    if (!elements.chatStatus) return;
+
+    const dot = elements.chatStatus.querySelector('.status-dot');
+    const textEl = elements.chatStatus.querySelector('.status-text');
+
+    if (dot) {
+        dot.className = `status-dot ${status}`;
+    }
+    if (textEl) {
+        textEl.textContent = text;
+    }
+}
+
+function showTypingIndicator(show) {
+    if (elements.chatTypingIndicator) {
+        elements.chatTypingIndicator.style.display = show ? 'flex' : 'none';
+    }
+}
+
+function updateDelegations(delegations) {
+    if (!elements.chatDelegations || !elements.delegationsList) return;
+
+    // Show delegations panel
+    elements.chatDelegations.style.display = 'block';
+
+    // Update state
+    state.orchestratorChat.currentDelegations = delegations;
+
+    // Render delegations
+    elements.delegationsList.innerHTML = delegations
+        .map(d => {
+            const team = AgentTeams[d.teamId];
+            const badgeClass = team?.badgeClass || 'system';
+            const badge = team?.badge || d.teamId.toUpperCase().slice(0, 3);
+            const statusClass = d.status || 'pending';
+
+            return `
+            <div class="delegation-item">
+                <span class="team-badge ${badgeClass}">${escapeHtml(badge)}</span>
+                <span class="delegation-task">${escapeHtml(d.task || d.description)}</span>
+                <span class="delegation-status ${statusClass}">
+                    ${statusClass === 'completed' ? '✓' : statusClass === 'failed' ? '✗' : '○'}
+                    ${escapeHtml(statusClass)}
+                </span>
+            </div>
+        `;
+        })
+        .join('');
+}
 
 // Export for biometric-auth.js integration
 window.CEODashboard = {
