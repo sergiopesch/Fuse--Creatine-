@@ -18,6 +18,7 @@
 const { AGENT_TOOLS, executeAgentTool } = require('./agent-tools');
 const { buildTeamContext } = require('./context-builder');
 const { recordUsage, estimateTokens } = require('./cost-tracker');
+const { resilientFetch, getCircuit } = require('./circuit-breaker');
 
 // =============================================================================
 // CONFIGURATION
@@ -190,6 +191,15 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
         result.completionSummary = toolResult.data?.summary || 'Completed';
       }
 
+      // Check for failure signal
+      if (toolUse.name === 'signal_failure') {
+        completionSignaled = true;
+        result.completed = false;
+        result.failed = true;
+        result.failureReason = toolResult.data?.reason || 'Unknown failure';
+        result.completionSummary = `FAILED: ${result.failureReason}`;
+      }
+
       // Build tool result message
       toolResults.push({
         type: 'tool_result',
@@ -241,39 +251,56 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
  */
 async function callClaudeAPI(apiKey, model, systemPrompt, messages, tools) {
   const startTime = Date.now();
+  const url = 'https://api.anthropic.com/v1/messages';
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), LOOP_CONFIG.API_TIMEOUT_MS);
+  const fetchOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': LOOP_CONFIG.ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: LOOP_CONFIG.MAX_TOKENS,
+      system: systemPrompt,
+      messages,
+      tools,
+    }),
+  };
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': LOOP_CONFIG.ANTHROPIC_VERSION,
+  // Use resilient fetch with circuit breaker and retry
+  const response = await resilientFetch(url, fetchOptions, {
+    circuitName: 'anthropic-api',
+    circuitOptions: {
+      failureThreshold: 3,
+      resetTimeoutMs: 60000,     // 60s before retrying after circuit opens
+      requestTimeoutMs: LOOP_CONFIG.API_TIMEOUT_MS,
+    },
+    retryOptions: {
+      maxRetries: 2,
+      shouldRetry: (error) => {
+        // Retry on timeouts and 5xx errors, not on 4xx (auth/validation)
+        if (error.message?.includes('timeout')) return true;
+        if (error.message?.includes('network')) return true;
+        if (error.status >= 500) return true;
+        return false;
       },
-      body: JSON.stringify({
-        model,
-        max_tokens: LOOP_CONFIG.MAX_TOKENS,
-        system: systemPrompt,
-        messages,
-        tools,
-      }),
-      signal: controller.signal,
-    });
+    },
+    timeoutMs: LOOP_CONFIG.API_TIMEOUT_MS,
+    fallbackResponse: null, // No fallback - let it throw so the loop can handle it
+  });
 
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'Unable to read error body');
-      throw new Error(`Claude API error ${response.status}: ${errorBody}`);
-    }
-
-    const data = await response.json();
-    data._latencyMs = Date.now() - startTime;
-    return data;
-  } finally {
-    clearTimeout(timeout);
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'Unable to read error body');
+    const error = new Error(`Claude API error ${response.status}: ${errorBody}`);
+    error.status = response.status;
+    throw error;
   }
+
+  const data = await response.json();
+  data._latencyMs = Date.now() - startTime;
+  return data;
 }
 
 // =============================================================================
@@ -305,7 +332,17 @@ Begin.`;
 // EXPORTS
 // =============================================================================
 
+/**
+ * Get circuit breaker status for the Anthropic API.
+ * Useful for health checks and monitoring.
+ */
+function getApiCircuitStatus() {
+  const circuit = getCircuit('anthropic-api');
+  return circuit.getStatus();
+}
+
 module.exports = {
   runAgentLoop,
   LOOP_CONFIG,
+  getApiCircuitStatus,
 };

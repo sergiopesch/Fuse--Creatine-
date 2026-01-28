@@ -195,8 +195,62 @@ const AGENT_TOOLS = [
     },
   },
 
+  {
+    name: 'delete_task',
+    description:
+      'Delete a task that is no longer needed. Use when a task has become irrelevant, was created in error, or has been superseded by another task.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The task ID to delete' },
+        reason: { type: 'string', description: 'Why the task is being deleted' },
+      },
+      required: ['taskId'],
+    },
+  },
+  {
+    name: 'resolve_decision',
+    description:
+      'Resolve a pending decision with a status (approved, rejected, deferred). Only use when you have authority or the owner has delegated the decision.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        decisionId: { type: 'string', description: 'The decision ID to resolve' },
+        status: {
+          type: 'string',
+          enum: ['approved', 'rejected', 'deferred'],
+          description: 'Resolution status',
+        },
+        resolution: { type: 'string', description: 'Explanation of the resolution' },
+      },
+      required: ['decisionId', 'status'],
+    },
+  },
+  {
+    name: 'broadcast_message',
+    description:
+      'Broadcast a message to all teams or a subset of teams. Use for system-wide announcements, status updates, or coordination across multiple teams.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', description: 'The broadcast message' },
+        priority: {
+          type: 'string',
+          enum: ['info', 'important', 'urgent'],
+          description: 'Message priority (default: info)',
+        },
+        targetTeams: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific team IDs to target. Omit to broadcast to all teams.',
+        },
+      },
+      required: ['message'],
+    },
+  },
+
   // -------------------------------------------------------------------------
-  // CONTROL TOOL
+  // CONTROL TOOLS
   // -------------------------------------------------------------------------
   {
     name: 'signal_completion',
@@ -211,6 +265,25 @@ const AGENT_TOOLS = [
         messagesSent: { type: 'number', description: 'Number of cross-team messages sent' },
       },
       required: ['summary'],
+    },
+  },
+  {
+    name: 'signal_failure',
+    description:
+      'Signal that the current assignment cannot be completed. Use when you encounter a blocker that prevents progress. Provide details about the failure and any partial work done.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        reason: { type: 'string', description: 'Why the assignment failed' },
+        blockers: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of specific blockers encountered',
+        },
+        partialWork: { type: 'string', description: 'Summary of any partial work completed' },
+        suggestedAction: { type: 'string', description: 'What should be done to unblock this' },
+      },
+      required: ['reason'],
     },
   },
 ];
@@ -251,8 +324,16 @@ function executeAgentTool(toolName, input, callingTeamId, ctx) {
         return handleSendMessage(input, callingTeamId, ctx);
       case 'report_progress':
         return handleReportProgress(input, callingTeamId, ctx);
+      case 'delete_task':
+        return handleDeleteTask(input, callingTeamId, ctx);
+      case 'resolve_decision':
+        return handleResolveDecision(input, callingTeamId, ctx);
+      case 'broadcast_message':
+        return handleBroadcastMessage(input, callingTeamId, ctx);
       case 'signal_completion':
         return handleSignalCompletion(input, callingTeamId, ctx);
+      case 'signal_failure':
+        return handleSignalFailure(input, callingTeamId, ctx);
       default:
         return { success: false, message: `Unknown tool: ${toolName}`, data: null };
     }
@@ -636,6 +717,140 @@ function handleSignalCompletion(input, callingTeamId, ctx) {
     success: true,
     message: 'Assignment marked as complete. Agent loop will stop.',
     data: summary,
+  };
+}
+
+function handleDeleteTask(input, callingTeamId, ctx) {
+  const tasks = ctx.tasks || [];
+  const taskIndex = tasks.findIndex(t => t.id === input.taskId);
+
+  if (taskIndex === -1) {
+    return {
+      success: false,
+      message: `Task not found: ${input.taskId}`,
+      data: null,
+    };
+  }
+
+  const deleted = tasks.splice(taskIndex, 1)[0];
+
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Deleted task: "${deleted.title}"${input.reason ? ` (${input.reason})` : ''}`,
+    'Task Deleted'
+  );
+
+  return {
+    success: true,
+    message: `Task "${deleted.title}" deleted`,
+    data: { taskId: deleted.id, title: deleted.title },
+  };
+}
+
+function handleResolveDecision(input, callingTeamId, ctx) {
+  const decisions = ctx.decisions || [];
+  const decision = decisions.find(d => d.id === input.decisionId);
+
+  if (!decision) {
+    return {
+      success: false,
+      message: `Decision not found: ${input.decisionId}`,
+      data: null,
+    };
+  }
+
+  if (decision.status !== 'pending') {
+    return {
+      success: false,
+      message: `Decision already resolved: ${decision.status}`,
+      data: null,
+    };
+  }
+
+  const previousStatus = decision.status;
+  decision.status = input.status;
+  decision.resolvedAt = new Date().toISOString();
+  decision.resolvedBy = `agent:${callingTeamId}`;
+  decision.resolution = input.resolution || '';
+
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Decision "${decision.title}" resolved: ${input.status}`,
+    input.status === 'approved' ? 'Approved' : input.status === 'rejected' ? 'Rejected' : 'Deferred'
+  );
+
+  return {
+    success: true,
+    message: `Decision "${decision.title}" resolved as ${input.status}`,
+    data: { decisionId: decision.id, title: decision.title, previousStatus, newStatus: input.status },
+  };
+}
+
+function handleBroadcastMessage(input, callingTeamId, ctx) {
+  const targetTeams = input.targetTeams || Object.keys(ctx.teams || {});
+  const priority = input.priority || 'info';
+
+  // Send as communication to each target team
+  const commIds = [];
+  for (const toTeam of targetTeams) {
+    if (!ctx.teams[toTeam]) continue;
+
+    const commId = `comm-broadcast-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+    const comm = {
+      id: commId,
+      from: { agent: 'Team Lead', teamId: callingTeamId },
+      to: { agent: 'Team', teamId: toTeam },
+      message: `[${priority.toUpperCase()}] ${input.message}`,
+      timestamp: new Date().toISOString(),
+      isBroadcast: true,
+    };
+
+    if (!ctx.communications) ctx.communications = [];
+    ctx.communications.unshift(comm);
+    commIds.push(commId);
+  }
+
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Broadcast (${priority}) to ${targetTeams.length} teams: "${input.message.substring(0, 80)}"`,
+    'Broadcast'
+  );
+
+  return {
+    success: true,
+    message: `Broadcast sent to ${targetTeams.length} team(s)`,
+    data: { commIds, targetTeams, priority },
+  };
+}
+
+function handleSignalFailure(input, callingTeamId, ctx) {
+  const failure = {
+    reason: input.reason,
+    blockers: input.blockers || [],
+    partialWork: input.partialWork || null,
+    suggestedAction: input.suggestedAction || null,
+    failedAt: new Date().toISOString(),
+    teamId: callingTeamId,
+  };
+
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Assignment FAILED: ${input.reason}`,
+    'Failed'
+  );
+
+  return {
+    success: true,
+    message: 'Assignment marked as failed. Agent loop will stop.',
+    data: failure,
   };
 }
 

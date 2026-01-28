@@ -13,6 +13,15 @@
  */
 
 // =============================================================================
+// TOKEN BUDGET
+// =============================================================================
+
+const TOKEN_BUDGET = {
+  MAX_SYSTEM_PROMPT_TOKENS: 4000, // Keep system prompt under ~4k tokens
+  CHARS_PER_TOKEN: 4,             // Rough estimate: 1 token ≈ 4 chars
+};
+
+// =============================================================================
 // MAIN BUILDER
 // =============================================================================
 
@@ -45,10 +54,22 @@ function buildTeamContext(teamId, teamPrompt, ctx) {
   // Section 6: Budget awareness
   sections.push(buildBudgetSection(ctx));
 
-  // Section 7: Tools and guidelines
+  // Section 7: Memory (execution history, owner feedback, learned guidelines)
+  sections.push(buildMemorySection(ctx));
+
+  // Section 8: Tools and guidelines
   sections.push(buildGuidelinesSection());
 
-  return sections.filter(Boolean).join('\n\n');
+  // Token budget estimation
+  const fullPrompt = sections.filter(Boolean).join('\n\n');
+  const estimatedTokens = estimateTokenCount(fullPrompt);
+
+  // If we're over budget, trim the less critical sections
+  if (estimatedTokens > TOKEN_BUDGET.MAX_SYSTEM_PROMPT_TOKENS) {
+    return trimToTokenBudget(sections);
+  }
+
+  return fullPrompt;
 }
 
 // =============================================================================
@@ -236,6 +257,85 @@ function buildGuidelinesSection() {
 10. If a task is blocked, update its status and create a decision request if needed.`;
 }
 
+function buildMemorySection(ctx) {
+  const memory = ctx.memory;
+  if (!memory) return null;
+
+  const lines = ['## Memory'];
+  let hasContent = false;
+
+  // Recent execution history
+  const recentExecutions = memory.recentExecutions || [];
+  if (recentExecutions.length > 0) {
+    hasContent = true;
+    lines.push('\nRecent executions:');
+    recentExecutions.slice(0, 3).forEach(exec => {
+      const status = exec.completed ? 'completed' : 'incomplete';
+      lines.push(`  - [${exec.teamName || exec.teamId}] ${exec.summary?.substring(0, 100) || 'No summary'} (${status}, ${exec.iterations || 0} iterations)`);
+    });
+  }
+
+  // Owner guidelines
+  const guidelines = memory.ownerGuidelines || [];
+  if (guidelines.length > 0) {
+    hasContent = true;
+    lines.push('\nOwner guidelines:');
+    guidelines.slice(0, 5).forEach((g, i) => {
+      lines.push(`  ${i + 1}. ${typeof g === 'string' ? g : g.guideline || g.text || JSON.stringify(g)}`);
+    });
+  }
+
+  // Recent feedback
+  const feedback = memory.recentFeedback || [];
+  if (feedback.length > 0) {
+    hasContent = true;
+    lines.push('\nRecent owner feedback:');
+    feedback.slice(0, 3).forEach(f => {
+      const text = typeof f === 'string' ? f : f.feedback || f.message || JSON.stringify(f);
+      lines.push(`  - ${text.substring(0, 120)}`);
+    });
+  }
+
+  if (!hasContent) return null;
+
+  return lines.join('\n');
+}
+
+// =============================================================================
+// TOKEN BUDGETING
+// =============================================================================
+
+function estimateTokenCount(text) {
+  if (!text) return 0;
+  return Math.ceil(text.length / TOKEN_BUDGET.CHARS_PER_TOKEN);
+}
+
+/**
+ * Trim sections to fit within token budget.
+ * Priority order (highest to lowest): Identity, Guidelines, System State,
+ * Current Work, Budget, Memory, Cross-Team, Recent Activity
+ */
+function trimToTokenBudget(sections) {
+  const maxChars = TOKEN_BUDGET.MAX_SYSTEM_PROMPT_TOKENS * TOKEN_BUDGET.CHARS_PER_TOKEN;
+
+  // Filter out nulls
+  const validSections = sections.filter(Boolean);
+
+  // If it fits, return as-is
+  const full = validSections.join('\n\n');
+  if (full.length <= maxChars) return full;
+
+  // Remove sections from the end (least critical) until we fit
+  // Sections are ordered by priority in buildTeamContext
+  const trimmed = [...validSections];
+  while (trimmed.length > 2 && trimmed.join('\n\n').length > maxChars) {
+    // Remove the second-to-last section (keep guidelines last)
+    trimmed.splice(trimmed.length - 2, 1);
+  }
+
+  return trimmed.join('\n\n');
+}
+
 // =============================================================================
 // HELPERS
 // =============================================================================
@@ -264,4 +364,6 @@ function formatRelativeTime(isoString) {
 
 module.exports = {
   buildTeamContext,
+  estimateTokenCount,
+  TOKEN_BUDGET,
 };

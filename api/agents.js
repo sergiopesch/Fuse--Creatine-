@@ -954,7 +954,7 @@ function handlePut(action, body, res, clientIp) {
             if (!task) {
                 return res.status(404).json({ error: 'Task not found' });
             }
-            const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+            const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled', 'failed', 'skipped', 'blocked'];
             if (!validStatuses.includes(body.status)) {
                 return res.status(400).json({ error: 'Invalid status', code: 'VALIDATION_ERROR' });
             }

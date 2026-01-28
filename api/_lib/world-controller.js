@@ -8,120 +8,67 @@
  * - Action triggers per team
  * - Credit protection hard stops
  * - Automation scheduling controls
+ *
+ * REFACTORED: All state now lives in agent-state.js (single source of truth).
+ * This module is pure business logic operating on the shared state.
  */
 
-// World States
-const WORLD_STATES = {
-    PAUSED: 'paused', // Everything stopped - no agent activity
-    MANUAL: 'manual', // Owner must trigger every action
-    SEMI_AUTO: 'semi_auto', // Selective automation with approval gates
-    AUTONOMOUS: 'autonomous', // Full autonomy (use with caution)
-};
+const agentState = require('./agent-state');
 
-// Team Automation Levels
-const AUTOMATION_LEVELS = {
-    STOPPED: 'stopped', // Team completely stopped
-    MANUAL: 'manual', // All actions require approval
-    SUPERVISED: 'supervised', // Major decisions need approval
-    AUTONOMOUS: 'autonomous', // Team operates independently
-};
+// Re-export constants from agent-state for backward compatibility
+const {
+    WORLD_STATES,
+    AUTOMATION_LEVELS,
+    ACTION_TYPES,
+    CREDIT_THRESHOLDS,
+} = agentState;
 
-// Action Types that can be triggered
-const ACTION_TYPES = {
-    THINK: 'think', // Agent thinking/analysis
-    EXECUTE: 'execute', // Execute a task
-    COMMUNICATE: 'communicate', // Inter-agent communication
-    REPORT: 'report', // Generate report/status
-    SYNC: 'sync', // Sync with other teams
-    RESEARCH: 'research', // Research/gather information
-    CREATE: 'create', // Create deliverables
-    REVIEW: 'review', // Review work
-};
+// =============================================================================
+// HELPERS (internal)
+// =============================================================================
 
-// Credit Protection Thresholds
-const CREDIT_THRESHOLDS = {
-    WARNING: 0.5, // 50% - Yellow warning
-    CAUTION: 0.75, // 75% - Orange caution
-    CRITICAL: 0.9, // 90% - Red critical
-    HARD_STOP: 1.0, // 100% - Auto-pause everything
-};
+function logControlAction(action, details) {
+    agentState.addControlLogEntry({
+        timestamp: new Date().toISOString(),
+        action,
+        details,
+    });
+}
 
-/**
- * World Controller State
- * Persisted state for the entire ecosystem control
- */
-let worldState = {
-    // Global Controls
-    worldStatus: WORLD_STATES.MANUAL, // Default to MANUAL - owner has full control
-    globalPaused: false,
-    pausedAt: null,
-    pausedBy: null,
-    pauseReason: null,
+function estimateActionCost(actionType) {
+    const costEstimates = {
+        [ACTION_TYPES.THINK]: 0.01,
+        [ACTION_TYPES.EXECUTE]: 0.05,
+        [ACTION_TYPES.COMMUNICATE]: 0.02,
+        [ACTION_TYPES.REPORT]: 0.03,
+        [ACTION_TYPES.SYNC]: 0.01,
+        [ACTION_TYPES.RESEARCH]: 0.1,
+        [ACTION_TYPES.CREATE]: 0.15,
+        [ACTION_TYPES.REVIEW]: 0.05,
+    };
+    return costEstimates[actionType] || 0.05;
+}
 
-    // Team-Level Controls
-    teamControls: {
-        developer: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-        design: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-        communications: {
-            paused: false,
-            automationLevel: AUTOMATION_LEVELS.MANUAL,
-            allowedActions: [],
-        },
-        legal: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-        marketing: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-        gtm: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-        sales: { paused: false, automationLevel: AUTOMATION_LEVELS.MANUAL, allowedActions: [] },
-    },
-
-    // Credit Protection
-    creditProtection: {
-        enabled: true,
-        dailyLimit: 50.0, // $50 daily limit
-        monthlyLimit: 500.0, // $500 monthly limit
-        currentDailySpend: 0,
-        currentMonthlySpend: 0,
-        autoStopOnLimit: true, // Auto-pause when limit reached
-        warningThreshold: CREDIT_THRESHOLDS.WARNING,
-        hardStopThreshold: CREDIT_THRESHOLDS.HARD_STOP,
-    },
-
-    // Action Queue - pending manual approvals
-    pendingActions: [],
-
-    // Audit Trail
-    controlLog: [],
-
-    // Scheduled Automation Windows (for semi-auto mode)
-    automationSchedule: {
-        enabled: false,
-        windows: [], // Array of { start: 'HH:MM', end: 'HH:MM', teams: [], actions: [] }
-        timezone: 'UTC',
-    },
-
-    // Emergency Controls
-    emergencyStop: {
-        triggered: false,
-        triggeredAt: null,
-        reason: null,
-        requiresManualReset: true,
-    },
-};
-
-/**
- * GLOBAL PAUSE CONTROLS
- */
+// =============================================================================
+// GLOBAL PAUSE CONTROLS
+// =============================================================================
 
 function pauseWorld(reason = 'Manual pause by owner', pausedBy = 'owner') {
-    worldState.globalPaused = true;
-    worldState.pausedAt = new Date().toISOString();
-    worldState.pausedBy = pausedBy;
-    worldState.pauseReason = reason;
-    worldState.worldStatus = WORLD_STATES.PAUSED;
+    const wc = agentState.getWorldControllerState();
+
+    agentState.setWorldControllerField('globalPaused', true);
+    agentState.setWorldControllerField('pausedAt', new Date().toISOString());
+    agentState.setWorldControllerField('pausedBy', pausedBy);
+    agentState.setWorldControllerField('pauseReason', reason);
 
     // Pause all teams
-    Object.keys(worldState.teamControls).forEach(team => {
-        worldState.teamControls[team].paused = true;
-    });
+    const teams = agentState.getAllTeamPrompts();
+    for (const teamId of Object.keys(teams)) {
+        agentState.setTeamControl(teamId, { paused: true });
+    }
+
+    // Update orchestration world state
+    agentState.setWorldState(WORLD_STATES.PAUSED);
 
     logControlAction('WORLD_PAUSED', { reason, pausedBy });
 
@@ -133,24 +80,29 @@ function pauseWorld(reason = 'Manual pause by owner', pausedBy = 'owner') {
 }
 
 function resumeWorld(resumedBy = 'owner', targetState = WORLD_STATES.MANUAL) {
-    if (worldState.emergencyStop.triggered && worldState.emergencyStop.requiresManualReset) {
+    const wc = agentState.getWorldControllerState();
+
+    if (wc.emergencyStop.triggered && wc.emergencyStop.requiresManualReset) {
         return {
             success: false,
             message: 'Emergency stop is active. Manual reset required.',
-            emergencyStop: worldState.emergencyStop,
+            emergencyStop: wc.emergencyStop,
         };
     }
 
-    worldState.globalPaused = false;
-    worldState.pausedAt = null;
-    worldState.pausedBy = null;
-    worldState.pauseReason = null;
-    worldState.worldStatus = targetState;
+    agentState.setWorldControllerField('globalPaused', false);
+    agentState.setWorldControllerField('pausedAt', null);
+    agentState.setWorldControllerField('pausedBy', null);
+    agentState.setWorldControllerField('pauseReason', null);
 
-    // Resume all teams (but respect their individual automation levels)
-    Object.keys(worldState.teamControls).forEach(team => {
-        worldState.teamControls[team].paused = false;
-    });
+    // Resume all teams
+    const teams = agentState.getAllTeamPrompts();
+    for (const teamId of Object.keys(teams)) {
+        agentState.setTeamControl(teamId, { paused: false });
+    }
+
+    // Update orchestration world state
+    agentState.setWorldState(targetState);
 
     logControlAction('WORLD_RESUMED', { resumedBy, targetState });
 
@@ -170,14 +122,18 @@ function setWorldState(newState, changedBy = 'owner') {
         };
     }
 
-    const previousState = worldState.worldStatus;
-    worldState.worldStatus = newState;
+    const wc = agentState.getWorldControllerState();
+    const orchestration = agentState.getOrchestrationState();
+    const previousState = orchestration.worldState;
+
+    // Update orchestration world state
+    agentState.setWorldState(newState);
 
     if (newState === WORLD_STATES.PAUSED) {
-        worldState.globalPaused = true;
-        worldState.pausedAt = new Date().toISOString();
+        agentState.setWorldControllerField('globalPaused', true);
+        agentState.setWorldControllerField('pausedAt', new Date().toISOString());
     } else {
-        worldState.globalPaused = false;
+        agentState.setWorldControllerField('globalPaused', false);
     }
 
     logControlAction('WORLD_STATE_CHANGED', {
@@ -193,62 +149,70 @@ function setWorldState(newState, changedBy = 'owner') {
     };
 }
 
-/**
- * TEAM-LEVEL CONTROLS
- */
+// =============================================================================
+// TEAM-LEVEL CONTROLS
+// =============================================================================
 
 function pauseTeam(teamId, reason = 'Manual pause', pausedBy = 'owner') {
-    if (!worldState.teamControls[teamId]) {
+    const control = agentState.getTeamControl(teamId);
+    if (!control) {
         return {
             success: false,
             message: `Unknown team: ${teamId}`,
-            validTeams: Object.keys(worldState.teamControls),
+            validTeams: Object.keys(agentState.getAllTeamPrompts()),
         };
     }
 
-    worldState.teamControls[teamId].paused = true;
-    worldState.teamControls[teamId].pausedAt = new Date().toISOString();
-    worldState.teamControls[teamId].pauseReason = reason;
+    agentState.setTeamControl(teamId, {
+        paused: true,
+        pausedAt: new Date().toISOString(),
+        pauseReason: reason,
+    });
 
     logControlAction('TEAM_PAUSED', { teamId, reason, pausedBy });
 
     return {
         success: true,
         message: `Team ${teamId} paused`,
-        teamState: worldState.teamControls[teamId],
+        teamState: agentState.getTeamControl(teamId),
     };
 }
 
 function resumeTeam(teamId, resumedBy = 'owner') {
-    if (!worldState.teamControls[teamId]) {
+    const control = agentState.getTeamControl(teamId);
+    if (!control) {
         return {
             success: false,
             message: `Unknown team: ${teamId}`,
         };
     }
 
-    if (worldState.globalPaused) {
+    const wc = agentState.getWorldControllerState();
+    if (wc.globalPaused) {
         return {
             success: false,
             message: 'Cannot resume team while world is paused. Resume world first.',
         };
     }
 
-    worldState.teamControls[teamId].paused = false;
-    delete worldState.teamControls[teamId].pausedAt;
-    delete worldState.teamControls[teamId].pauseReason;
+    agentState.setTeamControl(teamId, {
+        paused: false,
+        pausedAt: undefined,
+        pauseReason: undefined,
+    });
 
     logControlAction('TEAM_RESUMED', { teamId, resumedBy });
 
     return {
         success: true,
         message: `Team ${teamId} resumed`,
-        teamState: worldState.teamControls[teamId],
+        teamState: agentState.getTeamControl(teamId),
     };
 }
 
 function setTeamAutomationLevel(teamId, level, allowedActions = []) {
-    if (!worldState.teamControls[teamId]) {
+    const control = agentState.getTeamControl(teamId);
+    if (!control) {
         return {
             success: false,
             message: `Unknown team: ${teamId}`,
@@ -263,12 +227,13 @@ function setTeamAutomationLevel(teamId, level, allowedActions = []) {
         };
     }
 
-    // Validate allowed actions
     const validActions = allowedActions.filter(a => Object.values(ACTION_TYPES).includes(a));
+    const previousLevel = control.automationLevel;
 
-    const previousLevel = worldState.teamControls[teamId].automationLevel;
-    worldState.teamControls[teamId].automationLevel = level;
-    worldState.teamControls[teamId].allowedActions = validActions;
+    agentState.setTeamControl(teamId, {
+        automationLevel: level,
+        allowedActions: validActions,
+    });
 
     logControlAction('TEAM_AUTOMATION_CHANGED', {
         teamId,
@@ -280,20 +245,18 @@ function setTeamAutomationLevel(teamId, level, allowedActions = []) {
     return {
         success: true,
         message: `Team ${teamId} automation set to ${level}`,
-        teamState: worldState.teamControls[teamId],
+        teamState: agentState.getTeamControl(teamId),
     };
 }
 
-/**
- * ACTION TRIGGERS - Manual execution control
- */
+// =============================================================================
+// ACTION TRIGGERS
+// =============================================================================
 
 function triggerTeamAction(teamId, actionType, parameters = {}) {
-    if (!worldState.teamControls[teamId]) {
-        return {
-            success: false,
-            message: `Unknown team: ${teamId}`,
-        };
+    const control = agentState.getTeamControl(teamId);
+    if (!control) {
+        return { success: false, message: `Unknown team: ${teamId}` };
     }
 
     if (!Object.values(ACTION_TYPES).includes(actionType)) {
@@ -304,29 +267,19 @@ function triggerTeamAction(teamId, actionType, parameters = {}) {
         };
     }
 
-    // Check if world/team is paused
-    if (worldState.globalPaused) {
-        return {
-            success: false,
-            message: 'Cannot trigger action while world is paused',
-        };
+    const wc = agentState.getWorldControllerState();
+
+    if (wc.globalPaused) {
+        return { success: false, message: 'Cannot trigger action while world is paused' };
     }
 
-    if (worldState.teamControls[teamId].paused) {
-        return {
-            success: false,
-            message: `Cannot trigger action while team ${teamId} is paused`,
-        };
+    if (control.paused) {
+        return { success: false, message: `Cannot trigger action while team ${teamId} is paused` };
     }
 
-    // Check credit limits before executing
     const creditCheck = checkCreditLimits();
     if (!creditCheck.canProceed) {
-        return {
-            success: false,
-            message: creditCheck.message,
-            creditStatus: creditCheck,
-        };
+        return { success: false, message: creditCheck.message, creditStatus: creditCheck };
     }
 
     const action = {
@@ -360,8 +313,7 @@ function queueAction(teamId, actionType, parameters = {}, requiresApproval = tru
         estimatedCost: estimateActionCost(actionType),
     };
 
-    worldState.pendingActions.push(action);
-
+    agentState.addPendingAction(action);
     logControlAction('ACTION_QUEUED', action);
 
     return {
@@ -372,111 +324,103 @@ function queueAction(teamId, actionType, parameters = {}, requiresApproval = tru
 }
 
 function approveAction(actionId) {
-    const actionIndex = worldState.pendingActions.findIndex(a => a.id === actionId);
+    const pending = agentState.getPendingActions();
+    const action = pending.find(a => a.id === actionId);
 
-    if (actionIndex === -1) {
-        return {
-            success: false,
-            message: `Action not found: ${actionId}`,
-        };
+    if (!action) {
+        return { success: false, message: `Action not found: ${actionId}` };
     }
 
-    const action = worldState.pendingActions[actionIndex];
     action.status = 'approved';
     action.approvedAt = new Date().toISOString();
 
-    // Remove from pending and trigger
-    worldState.pendingActions.splice(actionIndex, 1);
-
+    agentState.removePendingAction(actionId);
     logControlAction('ACTION_APPROVED', action);
 
     return triggerTeamAction(action.teamId, action.actionType, action.parameters);
 }
 
 function rejectAction(actionId, reason = 'Rejected by owner') {
-    const actionIndex = worldState.pendingActions.findIndex(a => a.id === actionId);
+    const pending = agentState.getPendingActions();
+    const action = pending.find(a => a.id === actionId);
 
-    if (actionIndex === -1) {
-        return {
-            success: false,
-            message: `Action not found: ${actionId}`,
-        };
+    if (!action) {
+        return { success: false, message: `Action not found: ${actionId}` };
     }
 
-    const action = worldState.pendingActions[actionIndex];
     action.status = 'rejected';
     action.rejectedAt = new Date().toISOString();
     action.rejectionReason = reason;
 
-    worldState.pendingActions.splice(actionIndex, 1);
-
+    agentState.removePendingAction(actionId);
     logControlAction('ACTION_REJECTED', action);
 
-    return {
-        success: true,
-        message: 'Action rejected',
-        action,
-    };
+    return { success: true, message: 'Action rejected', action };
 }
 
 function getPendingActions() {
+    const pending = agentState.getPendingActions();
     return {
-        count: worldState.pendingActions.length,
-        actions: worldState.pendingActions,
-        totalEstimatedCost: worldState.pendingActions.reduce(
-            (sum, a) => sum + (a.estimatedCost || 0),
-            0
-        ),
+        count: pending.length,
+        actions: pending,
+        totalEstimatedCost: pending.reduce((sum, a) => sum + (a.estimatedCost || 0), 0),
     };
 }
 
-/**
- * CREDIT PROTECTION SYSTEM
- */
+// =============================================================================
+// CREDIT PROTECTION SYSTEM
+// =============================================================================
 
 function setCreditLimits(daily = null, monthly = null) {
-    if (daily !== null) {
-        worldState.creditProtection.dailyLimit = daily;
-    }
-    if (monthly !== null) {
-        worldState.creditProtection.monthlyLimit = monthly;
-    }
+    const wc = agentState.getWorldControllerState();
+    const cp = { ...wc.creditProtection };
+
+    if (daily !== null) cp.dailyLimit = daily;
+    if (monthly !== null) cp.monthlyLimit = monthly;
+
+    agentState.setWorldControllerField('creditProtection', cp);
 
     logControlAction('CREDIT_LIMITS_UPDATED', {
-        dailyLimit: worldState.creditProtection.dailyLimit,
-        monthlyLimit: worldState.creditProtection.monthlyLimit,
+        dailyLimit: cp.dailyLimit,
+        monthlyLimit: cp.monthlyLimit,
     });
 
     return {
         success: true,
         message: 'Credit limits updated',
-        creditProtection: worldState.creditProtection,
+        creditProtection: cp,
     };
 }
 
 function recordSpend(amount, source = 'agent_action') {
-    worldState.creditProtection.currentDailySpend += amount;
-    worldState.creditProtection.currentMonthlySpend += amount;
+    const wc = agentState.getWorldControllerState();
+    const cp = { ...wc.creditProtection };
+
+    cp.currentDailySpend += amount;
+    cp.currentMonthlySpend += amount;
+
+    agentState.setWorldControllerField('creditProtection', cp);
 
     const status = checkCreditLimits();
 
-    // Auto-pause if limit reached
-    if (!status.canProceed && worldState.creditProtection.autoStopOnLimit) {
+    if (!status.canProceed && cp.autoStopOnLimit) {
         pauseWorld(`Credit limit reached: ${status.message}`, 'credit_protection');
     }
 
     logControlAction('SPEND_RECORDED', {
         amount,
         source,
-        dailySpend: worldState.creditProtection.currentDailySpend,
-        monthlySpend: worldState.creditProtection.currentMonthlySpend,
+        dailySpend: cp.currentDailySpend,
+        monthlySpend: cp.currentMonthlySpend,
     });
 
     return status;
 }
 
 function checkCreditLimits() {
-    const cp = worldState.creditProtection;
+    const wc = agentState.getWorldControllerState();
+    const cp = wc.creditProtection;
+
     const dailyUsageRatio = cp.currentDailySpend / cp.dailyLimit;
     const monthlyUsageRatio = cp.currentMonthlySpend / cp.monthlyLimit;
 
@@ -528,43 +472,44 @@ function checkCreditLimits() {
 }
 
 function resetDailySpend() {
-    worldState.creditProtection.currentDailySpend = 0;
+    const wc = agentState.getWorldControllerState();
+    const cp = { ...wc.creditProtection, currentDailySpend: 0 };
+    agentState.setWorldControllerField('creditProtection', cp);
     logControlAction('DAILY_SPEND_RESET', {});
     return { success: true, message: 'Daily spend reset' };
 }
 
 function resetMonthlySpend() {
-    worldState.creditProtection.currentMonthlySpend = 0;
+    const wc = agentState.getWorldControllerState();
+    const cp = { ...wc.creditProtection, currentMonthlySpend: 0 };
+    agentState.setWorldControllerField('creditProtection', cp);
     logControlAction('MONTHLY_SPEND_RESET', {});
     return { success: true, message: 'Monthly spend reset' };
 }
 
-/**
- * EMERGENCY CONTROLS
- */
+// =============================================================================
+// EMERGENCY CONTROLS
+// =============================================================================
 
 function triggerEmergencyStop(reason = 'Emergency stop triggered') {
-    worldState.emergencyStop = {
+    agentState.setWorldControllerField('emergencyStop', {
         triggered: true,
         triggeredAt: new Date().toISOString(),
         reason,
         requiresManualReset: true,
-    };
+    });
 
-    // Immediately pause everything
     pauseWorld(reason, 'emergency_stop');
-
     logControlAction('EMERGENCY_STOP', { reason });
 
     return {
         success: true,
         message: 'EMERGENCY STOP ACTIVATED - All operations halted',
-        emergencyStop: worldState.emergencyStop,
+        emergencyStop: agentState.getWorldControllerState().emergencyStop,
     };
 }
 
 function resetEmergencyStop(resetBy = 'owner', confirmationCode = null) {
-    // Require confirmation for safety
     if (!confirmationCode || confirmationCode !== 'CONFIRM_RESET') {
         return {
             success: false,
@@ -572,12 +517,12 @@ function resetEmergencyStop(resetBy = 'owner', confirmationCode = null) {
         };
     }
 
-    worldState.emergencyStop = {
+    agentState.setWorldControllerField('emergencyStop', {
         triggered: false,
         triggeredAt: null,
         reason: null,
         requiresManualReset: true,
-    };
+    });
 
     logControlAction('EMERGENCY_STOP_RESET', { resetBy });
 
@@ -588,54 +533,58 @@ function resetEmergencyStop(resetBy = 'owner', confirmationCode = null) {
     };
 }
 
-/**
- * AUTOMATION SCHEDULING (for semi-auto mode)
- */
+// =============================================================================
+// AUTOMATION SCHEDULING
+// =============================================================================
 
 function setAutomationSchedule(enabled, windows = [], timezone = 'UTC') {
-    worldState.automationSchedule = {
+    agentState.setWorldControllerField('automationSchedule', {
         enabled,
         windows,
         timezone,
-    };
+    });
 
-    logControlAction('AUTOMATION_SCHEDULE_UPDATED', worldState.automationSchedule);
+    logControlAction('AUTOMATION_SCHEDULE_UPDATED', { enabled, windows, timezone });
 
     return {
         success: true,
         message: `Automation schedule ${enabled ? 'enabled' : 'disabled'}`,
-        schedule: worldState.automationSchedule,
+        schedule: agentState.getWorldControllerState().automationSchedule,
     };
 }
 
 function addAutomationWindow(start, end, teams = [], actions = []) {
+    const wc = agentState.getWorldControllerState();
+    const allTeamIds = Object.keys(agentState.getAllTeamPrompts());
+
     const window = {
         id: `window_${Date.now()}`,
         start,
         end,
-        teams: teams.length ? teams : Object.keys(worldState.teamControls),
+        teams: teams.length ? teams : allTeamIds,
         actions: actions.length ? actions : Object.values(ACTION_TYPES),
     };
 
-    worldState.automationSchedule.windows.push(window);
+    const schedule = { ...wc.automationSchedule };
+    schedule.windows = [...schedule.windows, window];
+    agentState.setWorldControllerField('automationSchedule', schedule);
 
     logControlAction('AUTOMATION_WINDOW_ADDED', window);
 
-    return {
-        success: true,
-        message: 'Automation window added',
-        window,
-    };
+    return { success: true, message: 'Automation window added', window };
 }
 
 function removeAutomationWindow(windowId) {
-    const index = worldState.automationSchedule.windows.findIndex(w => w.id === windowId);
+    const wc = agentState.getWorldControllerState();
+    const schedule = { ...wc.automationSchedule };
+    const index = schedule.windows.findIndex(w => w.id === windowId);
 
     if (index === -1) {
         return { success: false, message: 'Window not found' };
     }
 
-    worldState.automationSchedule.windows.splice(index, 1);
+    schedule.windows = schedule.windows.filter(w => w.id !== windowId);
+    agentState.setWorldControllerField('automationSchedule', schedule);
 
     logControlAction('AUTOMATION_WINDOW_REMOVED', { windowId });
 
@@ -643,14 +592,13 @@ function removeAutomationWindow(windowId) {
 }
 
 function isWithinAutomationWindow(teamId = null, actionType = null) {
-    if (!worldState.automationSchedule.enabled) {
-        return false;
-    }
+    const wc = agentState.getWorldControllerState();
+    if (!wc.automationSchedule.enabled) return false;
 
     const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+    const currentTime = now.toTimeString().slice(0, 5);
 
-    for (const window of worldState.automationSchedule.windows) {
+    for (const window of wc.automationSchedule.windows) {
         if (currentTime >= window.start && currentTime <= window.end) {
             if (teamId && !window.teams.includes(teamId)) continue;
             if (actionType && !window.actions.includes(actionType)) continue;
@@ -661,54 +609,35 @@ function isWithinAutomationWindow(teamId = null, actionType = null) {
     return false;
 }
 
-/**
- * CHECK IF ACTION IS ALLOWED
- * Central permission check for all agent actions
- */
+// =============================================================================
+// PERMISSION CHECK
+// =============================================================================
 
 function canExecuteAction(teamId, actionType) {
-    // Emergency stop blocks everything
-    if (worldState.emergencyStop.triggered) {
-        return {
-            allowed: false,
-            reason: 'Emergency stop active',
-            code: 'EMERGENCY_STOP',
-        };
+    const wc = agentState.getWorldControllerState();
+    const orchestration = agentState.getOrchestrationState();
+
+    if (wc.emergencyStop.triggered) {
+        return { allowed: false, reason: 'Emergency stop active', code: 'EMERGENCY_STOP' };
     }
 
-    // Global pause blocks everything
-    if (worldState.globalPaused) {
-        return {
-            allowed: false,
-            reason: 'World is paused',
-            code: 'WORLD_PAUSED',
-        };
+    if (wc.globalPaused) {
+        return { allowed: false, reason: 'World is paused', code: 'WORLD_PAUSED' };
     }
 
-    // Team pause blocks team actions
-    if (worldState.teamControls[teamId]?.paused) {
-        return {
-            allowed: false,
-            reason: `Team ${teamId} is paused`,
-            code: 'TEAM_PAUSED',
-        };
+    const teamControl = agentState.getTeamControl(teamId);
+    if (teamControl?.paused) {
+        return { allowed: false, reason: `Team ${teamId} is paused`, code: 'TEAM_PAUSED' };
     }
 
-    // Credit limits
     const creditCheck = checkCreditLimits();
     if (!creditCheck.canProceed) {
-        return {
-            allowed: false,
-            reason: creditCheck.message,
-            code: 'CREDIT_LIMIT',
-        };
+        return { allowed: false, reason: creditCheck.message, code: 'CREDIT_LIMIT' };
     }
 
-    const teamControl = worldState.teamControls[teamId];
     const automationLevel = teamControl?.automationLevel || AUTOMATION_LEVELS.MANUAL;
 
-    // Check based on world state and team automation level
-    switch (worldState.worldStatus) {
+    switch (orchestration.worldState) {
         case WORLD_STATES.PAUSED:
             return { allowed: false, reason: 'World is paused', code: 'WORLD_PAUSED' };
 
@@ -721,10 +650,8 @@ function canExecuteAction(teamId, actionType) {
             };
 
         case WORLD_STATES.SEMI_AUTO:
-            // Check if in automation window
             if (isWithinAutomationWindow(teamId, actionType)) {
-                // Check if action is in team's allowed actions
-                if (teamControl.allowedActions.includes(actionType)) {
+                if (teamControl && teamControl.allowedActions.includes(actionType)) {
                     return { allowed: true, reason: 'Within automation window and allowed' };
                 }
             }
@@ -754,76 +681,49 @@ function canExecuteAction(teamId, actionType) {
     }
 }
 
-/**
- * STATUS AND REPORTING
- */
+// =============================================================================
+// STATUS AND REPORTING
+// =============================================================================
 
 function getWorldStatus() {
+    const wc = agentState.getWorldControllerState();
+    const orchestration = agentState.getOrchestrationState();
+
     return {
-        worldStatus: worldState.worldStatus,
-        globalPaused: worldState.globalPaused,
-        pausedAt: worldState.pausedAt,
-        pauseReason: worldState.pauseReason,
-        emergencyStop: worldState.emergencyStop,
-        teamControls: worldState.teamControls,
+        worldStatus: orchestration.worldState,
+        globalPaused: wc.globalPaused,
+        pausedAt: wc.pausedAt,
+        pauseReason: wc.pauseReason,
+        emergencyStop: wc.emergencyStop,
+        teamControls: wc.teamControls,
         creditStatus: checkCreditLimits(),
-        pendingActionsCount: worldState.pendingActions.length,
-        automationSchedule: worldState.automationSchedule,
+        pendingActionsCount: wc.pendingActions.length,
+        automationSchedule: wc.automationSchedule,
     };
 }
 
 function getTeamStatus(teamId) {
-    if (!worldState.teamControls[teamId]) {
+    const control = agentState.getTeamControl(teamId);
+    if (!control) {
         return { success: false, message: `Unknown team: ${teamId}` };
     }
 
     return {
         teamId,
-        ...worldState.teamControls[teamId],
+        ...control,
         canExecute: canExecuteAction(teamId, 'execute').allowed,
     };
 }
 
 function getControlLog(limit = 50) {
-    return worldState.controlLog.slice(-limit);
+    const wc = agentState.getWorldControllerState();
+    return wc.controlLog.slice(-limit);
 }
 
-/**
- * HELPER FUNCTIONS
- */
+// =============================================================================
+// EXPORTS
+// =============================================================================
 
-function logControlAction(action, details) {
-    const logEntry = {
-        timestamp: new Date().toISOString(),
-        action,
-        details,
-    };
-
-    worldState.controlLog.push(logEntry);
-
-    // Keep log size manageable
-    if (worldState.controlLog.length > 1000) {
-        worldState.controlLog = worldState.controlLog.slice(-500);
-    }
-}
-
-function estimateActionCost(actionType) {
-    // Rough cost estimates per action type (in dollars)
-    const costEstimates = {
-        [ACTION_TYPES.THINK]: 0.01,
-        [ACTION_TYPES.EXECUTE]: 0.05,
-        [ACTION_TYPES.COMMUNICATE]: 0.02,
-        [ACTION_TYPES.REPORT]: 0.03,
-        [ACTION_TYPES.SYNC]: 0.01,
-        [ACTION_TYPES.RESEARCH]: 0.1,
-        [ACTION_TYPES.CREATE]: 0.15,
-        [ACTION_TYPES.REVIEW]: 0.05,
-    };
-
-    return costEstimates[actionType] || 0.05;
-}
-
-// Export everything
 module.exports = {
     // Constants
     WORLD_STATES,
@@ -873,9 +773,11 @@ module.exports = {
     getTeamStatus,
     getControlLog,
 
-    // State access (for API)
-    getState: () => worldState,
-    setState: newState => {
-        worldState = { ...worldState, ...newState };
+    // State access (for API backward compat)
+    getState: () => agentState.getWorldControllerState(),
+    setState: (newState) => {
+        for (const [key, value] of Object.entries(newState)) {
+            agentState.setWorldControllerField(key, value);
+        }
     },
 };

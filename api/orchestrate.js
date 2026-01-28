@@ -3,14 +3,18 @@
  * Real AI-powered team coordination using Claude
  *
  * Features:
- * - Per-team orchestration state (paused/running)
+ * - Per-team orchestration state via unified agent-state.js
  * - Manual start/stop controls
  * - Multi-team and company-wide orchestration
  * - World state modes (manual, paused, semi_auto, autonomous)
+ * - Agentic tool-use loop via agent-loop.js
  * - Minimal token usage for efficiency
  * - Real activity tracking
  *
- * @version 2.0.0
+ * REFACTORED: Removed local orchestrationState and TEAM_PROMPTS.
+ * All state now flows through agent-state.js (single source of truth).
+ *
+ * @version 3.0.0
  */
 
 const {
@@ -26,8 +30,10 @@ const {
 
 const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
 const { runAgentLoop } = require('./_lib/agent-loop');
-const { buildStateContext, syncFromAgentLoop, TEAM_PROMPTS: SHARED_TEAM_PROMPTS } = require('./_lib/agent-state');
 const { checkCreditLimits } = require('./_lib/world-controller');
+
+// Single source of truth
+const agentState = require('./_lib/agent-state');
 
 // ============================================================================
 // CONFIGURATION
@@ -35,139 +41,18 @@ const { checkCreditLimits } = require('./_lib/world-controller');
 
 const CONFIG = {
     RATE_LIMIT_READ: 60,
-    RATE_LIMIT_WRITE: 20, // Increased for batch operations
-    MAX_TOKENS_PER_CALL: 400, // Slightly increased for better responses
-    MODEL: 'claude-3-5-haiku-latest', // Fast and cost-effective
-    PARALLEL_EXECUTION_LIMIT: 3, // Max teams to execute in parallel
-    EXECUTION_DELAY_MS: 500, // Delay between sequential executions
+    RATE_LIMIT_WRITE: 20,
+    MAX_TOKENS_PER_CALL: 400,
+    MODEL: 'claude-3-5-haiku-latest',
+    PARALLEL_EXECUTION_LIMIT: 3,
+    EXECUTION_DELAY_MS: 500,
 };
 
 // ============================================================================
-// WORLD STATES
+// WORLD STATES (re-exported for backward compat)
 // ============================================================================
 
-const WORLD_STATES = {
-    MANUAL: 'manual', // User must manually trigger each action
-    PAUSED: 'paused', // All orchestration stopped
-    SEMI_AUTO: 'semi_auto', // Agents propose, user approves
-    AUTONOMOUS: 'autonomous', // Agents act independently
-};
-
-// ============================================================================
-// TEAM DEFINITIONS WITH SPECIALIZED PROMPTS
-// ============================================================================
-
-const TEAM_PROMPTS = {
-    developer: {
-        name: 'Developer Team',
-        systemPrompt: `You are the Developer Team lead coordinating Architect, Coder, and QA Engineer agents for FUSE.
-Your focus: platform development, code quality, system architecture.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Architect', 'Coder', 'QA Engineer'],
-    },
-    design: {
-        name: 'Design Team',
-        systemPrompt: `You are the Design Team lead coordinating UX Lead, Visual Designer, and Motion Designer for FUSE.
-Your focus: user experience, visual design, animations, brand consistency.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['UX Lead', 'Visual Designer', 'Motion Designer'],
-    },
-    communications: {
-        name: 'Communications Team',
-        systemPrompt: `You are the Communications Team lead coordinating Content Strategist, Copywriter, and Social Manager for FUSE.
-Your focus: content strategy, brand voice, social media engagement.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Content Strategist', 'Copywriter', 'Social Manager'],
-    },
-    legal: {
-        name: 'Legal Team',
-        systemPrompt: `You are the Legal Team lead coordinating Compliance Officer, Contract Analyst, and IP Counsel for FUSE.
-Your focus: regulatory compliance, contracts, intellectual property protection.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Compliance Officer', 'Contract Analyst', 'IP Counsel'],
-    },
-    marketing: {
-        name: 'Marketing Team',
-        systemPrompt: `You are the Marketing Team lead coordinating Growth Lead, Brand Strategist, and Analytics Expert for FUSE.
-Your focus: user acquisition, brand positioning, growth metrics.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Growth Lead', 'Brand Strategist', 'Analytics Expert'],
-    },
-    gtm: {
-        name: 'Go-to-Market Team',
-        systemPrompt: `You are the GTM Team lead coordinating Launch Coordinator, Partnership Manager, and Market Researcher for FUSE.
-Your focus: product launch, strategic partnerships, market intelligence.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: ['Launch Coordinator', 'Partnership Manager', 'Market Researcher'],
-    },
-    sales: {
-        name: 'Sales Team',
-        systemPrompt: `You are the Sales Team lead coordinating Sales Director, Account Executive, SDR Lead, Solutions Consultant, and Customer Success for FUSE.
-Your focus: revenue growth, pipeline management, customer relationships.
-Respond with brief, actionable status updates (2-3 sentences max).
-Format: [AGENT_NAME]: [Brief status/action]`,
-        agents: [
-            'Sales Director',
-            'Account Executive',
-            'SDR Lead',
-            'Solutions Consultant',
-            'Customer Success',
-        ],
-    },
-};
-
-// ============================================================================
-// ORCHESTRATION STATE (Per-team status)
-// ============================================================================
-
-const orchestrationState = {
-    teams: {
-        developer: {
-            status: 'paused',
-            lastRun: null,
-            runCount: 0,
-            activities: [],
-            pendingActions: [],
-        },
-        design: {
-            status: 'paused',
-            lastRun: null,
-            runCount: 0,
-            activities: [],
-            pendingActions: [],
-        },
-        communications: {
-            status: 'paused',
-            lastRun: null,
-            runCount: 0,
-            activities: [],
-            pendingActions: [],
-        },
-        legal: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-        marketing: {
-            status: 'paused',
-            lastRun: null,
-            runCount: 0,
-            activities: [],
-            pendingActions: [],
-        },
-        gtm: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-        sales: { status: 'paused', lastRun: null, runCount: 0, activities: [], pendingActions: [] },
-    },
-    worldState: WORLD_STATES.PAUSED, // Current world state
-    globalMode: 'manual', // Legacy - maps to worldState
-    lastActivity: null,
-    totalOrchestrations: 0,
-    executionInProgress: false,
-    lastExecutionTime: null,
-    autonomousInterval: null, // For autonomous mode timer
-};
+const WORLD_STATES = agentState.WORLD_STATES;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -181,45 +66,32 @@ function addTeamActivity(teamId, agent, message, tag) {
         message: sanitizeString(message, 500),
         tag: sanitizeString(tag, 50),
         timestamp: new Date().toISOString(),
-        isReal: true, // Flag to indicate this is from actual orchestration
+        isReal: true,
     };
 
-    if (!orchestrationState.teams[teamId]) {
-        orchestrationState.teams[teamId] = {
-            status: 'paused',
-            lastRun: null,
-            runCount: 0,
-            activities: [],
-        };
-    }
+    // Write to unified state
+    agentState.addActivity(activity);
 
-    orchestrationState.teams[teamId].activities.unshift(activity);
+    // Also update orchestration lastActivity
+    agentState.setOrchestrationFlag('lastActivity', activity);
 
-    // Keep only last 50 activities per team
-    if (orchestrationState.teams[teamId].activities.length > 50) {
-        orchestrationState.teams[teamId].activities.length = 50;
-    }
-
-    orchestrationState.lastActivity = activity;
     return activity;
 }
 
 function parseAgentResponses(response, teamId) {
-    const team = TEAM_PROMPTS[teamId];
-    if (!team) return [];
+    const teamPrompt = agentState.getTeamPrompt(teamId);
+    if (!teamPrompt) return [];
 
     const activities = [];
     const lines = response.split('\n').filter(line => line.trim());
 
     for (const line of lines) {
-        // Try to parse [AGENT_NAME]: message format
         const match = line.match(/^\[?([A-Za-z\s]+)\]?:\s*(.+)$/);
         if (match) {
             const agentName = match[1].trim();
             const message = match[2].trim();
 
-            // Verify agent belongs to team
-            const isValidAgent = team.agents.some(
+            const isValidAgent = teamPrompt.agents.some(
                 a =>
                     a.toLowerCase() === agentName.toLowerCase() ||
                     agentName.toLowerCase().includes(a.toLowerCase().split(' ')[0])
@@ -232,7 +104,6 @@ function parseAgentResponses(response, teamId) {
         }
     }
 
-    // If no structured response, create a team-level activity
     if (activities.length === 0 && response.length > 10) {
         const activity = addTeamActivity(teamId, 'Team Lead', response.substring(0, 200), 'Status');
         activities.push(activity);
@@ -246,8 +117,8 @@ function parseAgentResponses(response, teamId) {
 // ============================================================================
 
 async function executeOrchestration(teamId, task, clientIp, context = {}) {
-    const team = TEAM_PROMPTS[teamId];
-    if (!team) {
+    const teamPrompt = agentState.getTeamPrompt(teamId);
+    if (!teamPrompt) {
         throw new Error(`Unknown team: ${teamId}`);
     }
 
@@ -256,12 +127,10 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
         throw new Error('Anthropic API key not configured');
     }
 
-    // Enhanced prompt with context
     let userPrompt = task
         ? `Current task: ${task}\n\nProvide brief status updates from each agent.`
         : `Provide brief status updates from each agent on current priorities.`;
 
-    // Add collaboration context if orchestrating with other teams
     if (context.collaboratingTeams && context.collaboratingTeams.length > 0) {
         userPrompt += `\n\nNote: This is a coordinated orchestration with: ${context.collaboratingTeams.join(', ')}. Consider cross-team dependencies.`;
     }
@@ -279,7 +148,7 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
             body: JSON.stringify({
                 model: CONFIG.MODEL,
                 max_tokens: CONFIG.MAX_TOKENS_PER_CALL,
-                system: team.systemPrompt,
+                system: teamPrompt.systemPrompt,
                 messages: [{ role: 'user', content: userPrompt }],
             }),
         });
@@ -293,9 +162,8 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
         const data = await response.json();
         const latencyMs = Date.now() - requestStartTime;
 
-        // Record usage
         const inputTokens =
-            data.usage?.input_tokens || estimateTokens(team.systemPrompt + userPrompt);
+            data.usage?.input_tokens || estimateTokens(teamPrompt.systemPrompt + userPrompt);
         const outputTokens = data.usage?.output_tokens || 50;
 
         recordUsage({
@@ -309,36 +177,34 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
             latencyMs,
         });
 
-        // Parse response
         const assistantMessage = data.content?.[0]?.text || '';
         const activities = parseAgentResponses(assistantMessage, teamId);
 
-        // Update team state
-        orchestrationState.teams[teamId].lastRun = new Date().toISOString();
-        orchestrationState.teams[teamId].runCount++;
-        orchestrationState.totalOrchestrations++;
-        orchestrationState.lastExecutionTime = new Date().toISOString();
+        // Update orchestration tracking through agent-state
+        agentState.setTeamOrchestrationStatus(teamId, {
+            status: 'running',
+            lastRun: new Date().toISOString(),
+            runCount: (agentState.getTeamOrchestrationStatus(teamId)?.runCount || 0) + 1,
+        });
+        agentState.setOrchestrationFlag('totalOrchestrations',
+            (agentState.getOrchestrationState().totalOrchestrations || 0) + 1);
+        agentState.setOrchestrationFlag('lastExecutionTime', new Date().toISOString());
 
         return {
             success: true,
             teamId,
-            teamName: team.name,
+            teamName: teamPrompt.name,
             activities,
             rawResponse: assistantMessage,
-            usage: {
-                inputTokens,
-                outputTokens,
-                latencyMs,
-            },
+            usage: { inputTokens, outputTokens, latencyMs },
         };
     } catch (error) {
         console.error('[Orchestrate] Execution error:', error);
 
-        // Record failed usage
         recordUsage({
             provider: 'anthropic',
             model: CONFIG.MODEL,
-            inputTokens: estimateTokens(team.systemPrompt + (task || '')),
+            inputTokens: estimateTokens(teamPrompt.systemPrompt + (task || '')),
             outputTokens: 0,
             endpoint: '/api/orchestrate',
             clientIp,
@@ -354,9 +220,6 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
 // MULTI-TEAM ORCHESTRATION
 // ============================================================================
 
-/**
- * Execute orchestration for multiple teams (sequential with optional parallel batching)
- */
 async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
     const { parallel = false } = options;
     const results = {
@@ -367,10 +230,11 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
         usage: { inputTokens: 0, outputTokens: 0, totalLatencyMs: 0 },
     };
 
-    // Filter to only valid, running teams
+    const allTeamPrompts = agentState.getAllTeamPrompts();
+
     const validTeamIds = teamIds.filter(id => {
-        const teamState = orchestrationState.teams[id];
-        return teamState && teamState.status === 'running' && TEAM_PROMPTS[id];
+        const orchStatus = agentState.getTeamOrchestrationStatus(id);
+        return orchStatus && orchStatus.status === 'running' && allTeamPrompts[id];
     });
 
     if (validTeamIds.length === 0) {
@@ -382,11 +246,9 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
         };
     }
 
-    // Get team names for collaboration context
-    const collaboratingTeamNames = validTeamIds.map(id => TEAM_PROMPTS[id].name);
+    const collaboratingTeamNames = validTeamIds.map(id => allTeamPrompts[id].name);
 
     if (parallel && validTeamIds.length > 1) {
-        // Parallel execution in batches
         const batches = [];
         for (let i = 0; i < validTeamIds.length; i += CONFIG.PARALLEL_EXECUTION_LIMIT) {
             batches.push(validTeamIds.slice(i, i + CONFIG.PARALLEL_EXECUTION_LIMIT));
@@ -415,13 +277,11 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
                 }
             }
 
-            // Small delay between batches to avoid rate limiting
             if (batches.indexOf(batch) < batches.length - 1) {
                 await sleep(CONFIG.EXECUTION_DELAY_MS);
             }
         }
     } else {
-        // Sequential execution
         for (const teamId of validTeamIds) {
             try {
                 const result = await executeOrchestration(teamId, task, clientIp, {
@@ -433,7 +293,6 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
                 results.usage.outputTokens += result.usage?.outputTokens || 0;
                 results.usage.totalLatencyMs += result.usage?.latencyMs || 0;
 
-                // Small delay between teams
                 if (validTeamIds.indexOf(teamId) < validTeamIds.length - 1) {
                     await sleep(CONFIG.EXECUTION_DELAY_MS);
                 }
@@ -447,23 +306,17 @@ async function executeMultipleTeams(teamIds, task, clientIp, options = {}) {
     return results;
 }
 
-/**
- * Execute orchestration for ALL teams
- */
 async function executeAllTeams(task, clientIp, options = {}) {
-    const allTeamIds = Object.keys(TEAM_PROMPTS);
+    const allTeamIds = Object.keys(agentState.getAllTeamPrompts());
     return executeMultipleTeams(allTeamIds, task, clientIp, options);
 }
 
-/**
- * Helper function to sleep
- */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ============================================================================
-// WORLD STATE MANAGEMENT
+// WORLD STATE MANAGEMENT (delegates to agent-state)
 // ============================================================================
 
 function setWorldState(newState, _source = 'api') {
@@ -472,48 +325,29 @@ function setWorldState(newState, _source = 'api') {
         return { success: false, error: `Invalid state. Valid states: ${validStates.join(', ')}` };
     }
 
-    const previousState = orchestrationState.worldState;
-    orchestrationState.worldState = newState;
-    orchestrationState.globalMode = newState; // Keep legacy compatibility
+    const orchestration = agentState.getOrchestrationState();
+    const previousState = orchestration.worldState;
 
-    // Handle state transitions
+    agentState.setWorldState(newState);
+
+    // Handle team status transitions
+    const allTeamIds = Object.keys(agentState.getAllTeamPrompts());
+
     switch (newState) {
         case WORLD_STATES.PAUSED:
-            // Pause all teams
-            Object.keys(orchestrationState.teams).forEach(teamId => {
-                orchestrationState.teams[teamId].status = 'paused';
+            allTeamIds.forEach(teamId => {
+                agentState.setTeamOrchestrationStatus(teamId, { status: 'paused' });
             });
-            // Clear any autonomous interval
-            if (orchestrationState.autonomousInterval) {
-                clearInterval(orchestrationState.autonomousInterval);
-                orchestrationState.autonomousInterval = null;
-            }
-            break;
-
-        case WORLD_STATES.MANUAL:
-            // Keep team states as-is, but stop autonomous execution
-            if (orchestrationState.autonomousInterval) {
-                clearInterval(orchestrationState.autonomousInterval);
-                orchestrationState.autonomousInterval = null;
-            }
             break;
 
         case WORLD_STATES.SEMI_AUTO:
-            // Enable all teams for semi-auto mode
-            Object.keys(orchestrationState.teams).forEach(teamId => {
-                orchestrationState.teams[teamId].status = 'running';
-            });
-            break;
-
         case WORLD_STATES.AUTONOMOUS:
-            // Enable all teams for autonomous mode
-            Object.keys(orchestrationState.teams).forEach(teamId => {
-                orchestrationState.teams[teamId].status = 'running';
+            allTeamIds.forEach(teamId => {
+                agentState.setTeamOrchestrationStatus(teamId, { status: 'running' });
             });
             break;
     }
 
-    // Add system activity
     addTeamActivity(
         'system',
         'System',
@@ -525,30 +359,36 @@ function setWorldState(newState, _source = 'api') {
         success: true,
         previousState,
         currentState: newState,
-        teamsAffected: Object.keys(orchestrationState.teams).length,
+        teamsAffected: allTeamIds.length,
     };
 }
 
 function getWorldState() {
+    const orchestration = agentState.getOrchestrationState();
+    const allTeamPrompts = agentState.getAllTeamPrompts();
+
     return {
-        worldState: orchestrationState.worldState,
-        globalMode: orchestrationState.globalMode,
+        worldState: orchestration.worldState,
+        globalMode: orchestration.worldState,
         teams: Object.fromEntries(
-            Object.entries(orchestrationState.teams).map(([id, team]) => [
-                id,
-                {
-                    name: TEAM_PROMPTS[id]?.name,
-                    status: team.status,
-                    lastRun: team.lastRun,
-                    runCount: team.runCount,
-                    recentActivityCount: team.activities.length,
-                    pendingActionsCount: team.pendingActions?.length || 0,
-                },
-            ])
+            Object.keys(allTeamPrompts).map(id => {
+                const orchStatus = agentState.getTeamOrchestrationStatus(id);
+                return [
+                    id,
+                    {
+                        name: allTeamPrompts[id]?.name,
+                        status: orchStatus?.status || 'paused',
+                        lastRun: orchStatus?.lastRun || null,
+                        runCount: orchStatus?.runCount || 0,
+                        recentActivityCount: orchStatus?.lastActivities?.length || 0,
+                        pendingActionsCount: 0,
+                    },
+                ];
+            })
         ),
-        totalOrchestrations: orchestrationState.totalOrchestrations,
-        lastExecutionTime: orchestrationState.lastExecutionTime,
-        executionInProgress: orchestrationState.executionInProgress,
+        totalOrchestrations: orchestration.totalOrchestrations || 0,
+        lastExecutionTime: orchestration.lastExecutionTime || null,
+        executionInProgress: orchestration.executionInProgress || false,
     };
 }
 
@@ -566,7 +406,6 @@ module.exports = async (req, res) => {
         return res.status(200).end();
     }
 
-    // Validate origin
     if (req.headers.origin && !origin) {
         return res.status(403).json({ error: 'Origin not allowed', code: 'CORS_ERROR' });
     }
@@ -587,7 +426,7 @@ module.exports = async (req, res) => {
 };
 
 // ============================================================================
-// GET HANDLER - Status queries (public with rate limiting)
+// GET HANDLER
 // ============================================================================
 
 async function handleGet(req, res, clientIp) {
@@ -609,11 +448,11 @@ async function handleGet(req, res, clientIp) {
     }
 
     const { teamId, action } = req.query;
+    const allTeamPrompts = agentState.getAllTeamPrompts();
 
-    // Get specific team status
     if (teamId && teamId !== 'all') {
-        const teamState = orchestrationState.teams[teamId];
-        if (!teamState) {
+        const orchStatus = agentState.getTeamOrchestrationStatus(teamId);
+        if (!orchStatus) {
             return res.status(404).json({ error: 'Team not found' });
         }
 
@@ -621,42 +460,43 @@ async function handleGet(req, res, clientIp) {
             success: true,
             data: {
                 teamId,
-                teamName: TEAM_PROMPTS[teamId]?.name || teamId,
-                ...teamState,
-                agents: TEAM_PROMPTS[teamId]?.agents || [],
+                teamName: allTeamPrompts[teamId]?.name || teamId,
+                ...orchStatus,
+                agents: allTeamPrompts[teamId]?.agents || [],
             },
         });
     }
 
-    // Get all teams status
     if (action === 'status' || !action) {
+        const orchestration = agentState.getOrchestrationState();
         const teamsStatus = {};
-        Object.entries(orchestrationState.teams).forEach(([id, state]) => {
+
+        Object.keys(allTeamPrompts).forEach(id => {
+            const orchStatus = agentState.getTeamOrchestrationStatus(id);
             teamsStatus[id] = {
-                name: TEAM_PROMPTS[id]?.name || id,
-                status: state.status,
-                lastRun: state.lastRun,
-                runCount: state.runCount,
-                recentActivities: state.activities.slice(0, 5),
-                pendingActionsCount: state.pendingActions?.length || 0,
+                name: allTeamPrompts[id]?.name || id,
+                status: orchStatus?.status || 'paused',
+                lastRun: orchStatus?.lastRun || null,
+                runCount: orchStatus?.runCount || 0,
+                recentActivities: agentState.getActivities({ teamId: id, limit: 5 }),
+                pendingActionsCount: 0,
             };
         });
 
         return res.status(200).json({
             success: true,
             data: {
-                worldState: orchestrationState.worldState,
-                globalMode: orchestrationState.globalMode,
-                totalOrchestrations: orchestrationState.totalOrchestrations,
-                lastActivity: orchestrationState.lastActivity,
-                lastExecutionTime: orchestrationState.lastExecutionTime,
-                executionInProgress: orchestrationState.executionInProgress,
+                worldState: orchestration.worldState,
+                globalMode: orchestration.worldState,
+                totalOrchestrations: orchestration.totalOrchestrations || 0,
+                lastActivity: orchestration.lastActivity || null,
+                lastExecutionTime: orchestration.lastExecutionTime || null,
+                executionInProgress: orchestration.executionInProgress || false,
                 teams: teamsStatus,
             },
         });
     }
 
-    // Get full world state
     if (action === 'worldState') {
         return res.status(200).json({
             success: true,
@@ -664,23 +504,13 @@ async function handleGet(req, res, clientIp) {
         });
     }
 
-    // Get recent activities across all teams
     if (action === 'activities') {
         const limit = Math.min(parseInt(req.query.limit) || 20, 100);
-        const allActivities = [];
-
-        Object.entries(orchestrationState.teams).forEach(([teamId, state]) => {
-            state.activities.forEach(activity => {
-                allActivities.push({ ...activity, teamId });
-            });
-        });
-
-        // Sort by timestamp descending
-        allActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const activities = agentState.getActivities({ limit });
 
         return res.status(200).json({
             success: true,
-            data: allActivities.slice(0, limit),
+            data: activities,
         });
     }
 
@@ -688,11 +518,10 @@ async function handleGet(req, res, clientIp) {
 }
 
 // ============================================================================
-// POST HANDLER - Orchestration commands (authenticated)
+// POST HANDLER
 // ============================================================================
 
 async function handlePost(req, res, clientIp) {
-    // Authenticate
     const adminToken = process.env.ADMIN_TOKEN;
     if (!adminToken) {
         return res
@@ -711,7 +540,6 @@ async function handlePost(req, res, clientIp) {
         return res.status(401).json({ error: authResult.error, code: 'UNAUTHORIZED' });
     }
 
-    // Rate limit
     const rateLimit = checkRateLimit(
         `orchestrate:post:${clientIp}`,
         CONFIG.RATE_LIMIT_WRITE,
@@ -726,32 +554,30 @@ async function handlePost(req, res, clientIp) {
     }
 
     const { teamId, action, task, mode } = req.body || {};
+    const allTeamPrompts = agentState.getAllTeamPrompts();
 
-    // Actions that don't require a specific teamId
     const globalActions = [
         'setMode', 'setWorldState', 'startAll', 'stopAll',
         'executeAll', 'executeMultiple', 'getWorldState',
         'execute-agentic-all'
     ];
 
-    // Validate teamId for team-specific actions
     if (!globalActions.includes(action)) {
-        if (!teamId || !TEAM_PROMPTS[teamId]) {
+        if (!teamId || !allTeamPrompts[teamId]) {
             return res.status(400).json({
                 error: 'Invalid or missing teamId',
-                validTeams: Object.keys(TEAM_PROMPTS),
+                validTeams: Object.keys(allTeamPrompts),
             });
         }
     }
 
     switch (action) {
         case 'start':
-            // Start team orchestration
-            orchestrationState.teams[teamId].status = 'running';
+            agentState.setTeamOrchestrationStatus(teamId, { status: 'running' });
             addTeamActivity(
                 teamId,
                 'System',
-                `Orchestration started for ${TEAM_PROMPTS[teamId].name}`,
+                `Orchestration started for ${allTeamPrompts[teamId].name}`,
                 'Started'
             );
 
@@ -767,17 +593,16 @@ async function handlePost(req, res, clientIp) {
                 data: {
                     teamId,
                     status: 'running',
-                    message: `${TEAM_PROMPTS[teamId].name} orchestration started`,
+                    message: `${allTeamPrompts[teamId].name} orchestration started`,
                 },
             });
 
         case 'stop':
-            // Stop team orchestration
-            orchestrationState.teams[teamId].status = 'paused';
+            agentState.setTeamOrchestrationStatus(teamId, { status: 'paused' });
             addTeamActivity(
                 teamId,
                 'System',
-                `Orchestration paused for ${TEAM_PROMPTS[teamId].name}`,
+                `Orchestration paused for ${allTeamPrompts[teamId].name}`,
                 'Paused'
             );
 
@@ -793,22 +618,22 @@ async function handlePost(req, res, clientIp) {
                 data: {
                     teamId,
                     status: 'paused',
-                    message: `${TEAM_PROMPTS[teamId].name} orchestration paused`,
+                    message: `${allTeamPrompts[teamId].name} orchestration paused`,
                 },
             });
 
-        case 'execute':
-            // Execute single orchestration cycle (uses Claude API)
-            // Auto-start team if not running (improved UX)
-            if (orchestrationState.teams[teamId].status !== 'running') {
-                orchestrationState.teams[teamId].status = 'running';
-                addTeamActivity(teamId, 'System', `Auto-started for execution`, 'Auto-Start');
+        case 'execute': {
+            // Single-shot orchestration (non-agentic, legacy path)
+            const orchStatus = agentState.getTeamOrchestrationStatus(teamId);
+            if (orchStatus?.status !== 'running') {
+                agentState.setTeamOrchestrationStatus(teamId, { status: 'running' });
+                addTeamActivity(teamId, 'System', 'Auto-started for execution', 'Auto-Start');
             }
 
-            orchestrationState.executionInProgress = true;
+            agentState.setOrchestrationFlag('executionInProgress', true);
             try {
                 const result = await executeOrchestration(teamId, task, clientIp);
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
 
                 addAuditEntry({
                     action: 'ORCHESTRATION_EXECUTED',
@@ -818,12 +643,9 @@ async function handlePost(req, res, clientIp) {
                     activitiesGenerated: result.activities.length,
                 });
 
-                return res.status(200).json({
-                    success: true,
-                    data: result,
-                });
+                return res.status(200).json({ success: true, data: result });
             } catch (error) {
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
                 addAuditEntry({
                     action: 'ORCHESTRATION_FAILED',
                     ip: clientIp,
@@ -838,21 +660,16 @@ async function handlePost(req, res, clientIp) {
                     details: error.message,
                 });
             }
+        }
 
         case 'execute-agentic': {
-            // ================================================================
-            // AGENTIC EXECUTION - Full tool-use loop with observe/act/evaluate
-            // This is the agent-native mode. The agent gets tools, iterates
-            // in a loop, and signals completion when done.
-            // ================================================================
-
-            // Auto-start team if not running
-            if (orchestrationState.teams[teamId].status !== 'running') {
-                orchestrationState.teams[teamId].status = 'running';
+            const agenticOrchStatus = agentState.getTeamOrchestrationStatus(teamId);
+            if (agenticOrchStatus?.status !== 'running') {
+                agentState.setTeamOrchestrationStatus(teamId, { status: 'running' });
                 addTeamActivity(teamId, 'System', 'Auto-started for agentic execution', 'Auto-Start');
             }
 
-            orchestrationState.executionInProgress = true;
+            agentState.setOrchestrationFlag('executionInProgress', true);
 
             try {
                 const agenticApiKey = process.env.ANTHROPIC_API_KEY?.trim();
@@ -863,16 +680,12 @@ async function handlePost(req, res, clientIp) {
                     });
                 }
 
-                // Build state context for the agent loop
                 let agenticCreditStatus = { status: 'ok', message: 'Within limits' };
-                try {
-                    agenticCreditStatus = checkCreditLimits();
-                } catch (_e) { /* credit check failure shouldn't block */ }
+                try { agenticCreditStatus = checkCreditLimits(); } catch (_e) { /* */ }
 
-                const stateContext = buildStateContext(agenticCreditStatus);
+                const stateContext = agentState.buildStateContext(agenticCreditStatus);
 
-                // Get team prompt config
-                const agenticTeamPrompt = TEAM_PROMPTS[teamId] || SHARED_TEAM_PROMPTS[teamId];
+                const agenticTeamPrompt = allTeamPrompts[teamId];
                 if (!agenticTeamPrompt) {
                     return res.status(400).json({
                         error: `No prompt config for team: ${teamId}`,
@@ -880,7 +693,6 @@ async function handlePost(req, res, clientIp) {
                     });
                 }
 
-                // Run the agent loop
                 const loopResult = await runAgentLoop(
                     teamId,
                     task || 'Assess current priorities and take appropriate action for your team.',
@@ -894,20 +706,20 @@ async function handlePost(req, res, clientIp) {
                     }
                 );
 
-                // Sync agent loop results back to unified state
-                syncFromAgentLoop(loopResult, stateContext);
+                agentState.syncFromAgentLoop(loopResult, stateContext);
 
-                // Also sync activities to orchestration state for backward compat
                 for (const activity of loopResult.activities || []) {
                     addTeamActivity(teamId, activity.agent, activity.message, activity.tag);
                 }
 
-                // Update orchestration tracking
-                orchestrationState.executionInProgress = false;
-                orchestrationState.teams[teamId].lastRun = new Date().toISOString();
-                orchestrationState.teams[teamId].runCount++;
-                orchestrationState.totalOrchestrations++;
-                orchestrationState.lastExecutionTime = new Date().toISOString();
+                agentState.setOrchestrationFlag('executionInProgress', false);
+                agentState.setTeamOrchestrationStatus(teamId, {
+                    lastRun: new Date().toISOString(),
+                    runCount: (agentState.getTeamOrchestrationStatus(teamId)?.runCount || 0) + 1,
+                });
+                agentState.setOrchestrationFlag('totalOrchestrations',
+                    (agentState.getOrchestrationState().totalOrchestrations || 0) + 1);
+                agentState.setOrchestrationFlag('lastExecutionTime', new Date().toISOString());
 
                 addAuditEntry({
                     action: 'AGENTIC_ORCHESTRATION_EXECUTED',
@@ -944,9 +756,8 @@ async function handlePost(req, res, clientIp) {
                         usage: loopResult.usage,
                     }
                 });
-
             } catch (error) {
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
 
                 addAuditEntry({
                     action: 'AGENTIC_ORCHESTRATION_FAILED',
@@ -965,15 +776,11 @@ async function handlePost(req, res, clientIp) {
         }
 
         case 'execute-agentic-all': {
-            // ================================================================
-            // AGENTIC EXECUTION FOR ALL TEAMS
-            // Runs each team through the agentic loop sequentially
-            // ================================================================
-            orchestrationState.executionInProgress = true;
+            agentState.setOrchestrationFlag('executionInProgress', true);
 
             const agenticAllApiKey = process.env.ANTHROPIC_API_KEY?.trim();
             if (!agenticAllApiKey || !agenticAllApiKey.startsWith('sk-ant-')) {
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
                 return res.status(503).json({
                     error: 'Anthropic API key not configured',
                     code: 'NOT_CONFIGURED'
@@ -991,12 +798,12 @@ async function handlePost(req, res, clientIp) {
                 usage: { inputTokens: 0, outputTokens: 0, apiCalls: 0 },
             };
 
-            const allTeamIds = Object.keys(TEAM_PROMPTS);
+            const allTeamIds = Object.keys(allTeamPrompts);
 
             for (const tid of allTeamIds) {
-                // Auto-start team
-                if (orchestrationState.teams[tid] && orchestrationState.teams[tid].status !== 'running') {
-                    orchestrationState.teams[tid].status = 'running';
+                const tidOrchStatus = agentState.getTeamOrchestrationStatus(tid);
+                if (tidOrchStatus?.status !== 'running') {
+                    agentState.setTeamOrchestrationStatus(tid, { status: 'running' });
                     addTeamActivity(tid, 'System', 'Auto-started for company-wide agentic execution', 'Auto-Start');
                 }
 
@@ -1004,8 +811,8 @@ async function handlePost(req, res, clientIp) {
                     let tidCreditStatus = { status: 'ok', message: 'Within limits' };
                     try { tidCreditStatus = checkCreditLimits(); } catch (_e) { /* */ }
 
-                    const tidStateContext = buildStateContext(tidCreditStatus);
-                    const tidTeamPrompt = TEAM_PROMPTS[tid] || SHARED_TEAM_PROMPTS[tid];
+                    const tidStateContext = agentState.buildStateContext(tidCreditStatus);
+                    const tidTeamPrompt = allTeamPrompts[tid];
 
                     if (!tidTeamPrompt) continue;
 
@@ -1022,15 +829,18 @@ async function handlePost(req, res, clientIp) {
                         }
                     );
 
-                    syncFromAgentLoop(tidResult, tidStateContext);
+                    agentState.syncFromAgentLoop(tidResult, tidStateContext);
 
                     for (const activity of tidResult.activities || []) {
                         addTeamActivity(tid, activity.agent, activity.message, activity.tag);
                     }
 
-                    orchestrationState.teams[tid].lastRun = new Date().toISOString();
-                    orchestrationState.teams[tid].runCount++;
-                    orchestrationState.totalOrchestrations++;
+                    agentState.setTeamOrchestrationStatus(tid, {
+                        lastRun: new Date().toISOString(),
+                        runCount: (agentState.getTeamOrchestrationStatus(tid)?.runCount || 0) + 1,
+                    });
+                    agentState.setOrchestrationFlag('totalOrchestrations',
+                        (agentState.getOrchestrationState().totalOrchestrations || 0) + 1);
 
                     allTeamsResults.teams.push({
                         teamId: tid,
@@ -1059,8 +869,8 @@ async function handlePost(req, res, clientIp) {
                 }
             }
 
-            orchestrationState.executionInProgress = false;
-            orchestrationState.lastExecutionTime = new Date().toISOString();
+            agentState.setOrchestrationFlag('executionInProgress', false);
+            agentState.setOrchestrationFlag('lastExecutionTime', new Date().toISOString());
 
             addAuditEntry({
                 action: 'AGENTIC_ALL_TEAMS_EXECUTED',
@@ -1076,8 +886,7 @@ async function handlePost(req, res, clientIp) {
             });
         }
 
-        case 'executeMultiple':
-            // Execute multiple teams at once
+        case 'executeMultiple': {
             const { teamIds: multiTeamIds, parallel } = req.body || {};
 
             if (!multiTeamIds || !Array.isArray(multiTeamIds) || multiTeamIds.length === 0) {
@@ -1087,28 +896,20 @@ async function handlePost(req, res, clientIp) {
                 });
             }
 
-            // Auto-start all specified teams
             multiTeamIds.forEach(tid => {
-                if (
-                    orchestrationState.teams[tid] &&
-                    orchestrationState.teams[tid].status !== 'running'
-                ) {
-                    orchestrationState.teams[tid].status = 'running';
-                    addTeamActivity(
-                        tid,
-                        'System',
-                        'Auto-started for multi-team execution',
-                        'Auto-Start'
-                    );
+                const orchStatus = agentState.getTeamOrchestrationStatus(tid);
+                if (orchStatus && orchStatus.status !== 'running') {
+                    agentState.setTeamOrchestrationStatus(tid, { status: 'running' });
+                    addTeamActivity(tid, 'System', 'Auto-started for multi-team execution', 'Auto-Start');
                 }
             });
 
-            orchestrationState.executionInProgress = true;
+            agentState.setOrchestrationFlag('executionInProgress', true);
             try {
                 const multiResult = await executeMultipleTeams(multiTeamIds, task, clientIp, {
                     parallel: !!parallel,
                 });
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
 
                 addAuditEntry({
                     action: 'MULTI_TEAM_ORCHESTRATION_EXECUTED',
@@ -1118,12 +919,9 @@ async function handlePost(req, res, clientIp) {
                     teamsFailed: multiResult.failed.length,
                 });
 
-                return res.status(200).json({
-                    success: true,
-                    data: multiResult,
-                });
+                return res.status(200).json({ success: true, data: multiResult });
             } catch (error) {
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
                 return res.status(500).json({
                     error: 'Multi-team orchestration failed',
                     code: 'EXECUTION_ERROR',
@@ -1132,20 +930,15 @@ async function handlePost(req, res, clientIp) {
             }
         }
 
-        case 'executeAll':
-            // Execute ALL teams (company-wide orchestration)
-            orchestrationState.executionInProgress = true;
+        case 'executeAll': {
+            agentState.setOrchestrationFlag('executionInProgress', true);
 
-            // Auto-start all teams
-            Object.keys(orchestrationState.teams).forEach(tid => {
-                if (orchestrationState.teams[tid].status !== 'running') {
-                    orchestrationState.teams[tid].status = 'running';
-                    addTeamActivity(
-                        tid,
-                        'System',
-                        'Auto-started for company-wide execution',
-                        'Auto-Start'
-                    );
+            const allIds = Object.keys(allTeamPrompts);
+            allIds.forEach(tid => {
+                const orchStatus = agentState.getTeamOrchestrationStatus(tid);
+                if (orchStatus?.status !== 'running') {
+                    agentState.setTeamOrchestrationStatus(tid, { status: 'running' });
+                    addTeamActivity(tid, 'System', 'Auto-started for company-wide execution', 'Auto-Start');
                 }
             });
 
@@ -1153,7 +946,7 @@ async function handlePost(req, res, clientIp) {
                 const allResult = await executeAllTeams(task, clientIp, {
                     parallel: req.body?.parallel,
                 });
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
 
                 addAuditEntry({
                     action: 'ALL_TEAMS_ORCHESTRATION_EXECUTED',
@@ -1164,21 +957,18 @@ async function handlePost(req, res, clientIp) {
                     totalActivities: allResult.totalActivities.length,
                 });
 
-                return res.status(200).json({
-                    success: true,
-                    data: allResult,
-                });
+                return res.status(200).json({ success: true, data: allResult });
             } catch (error) {
-                orchestrationState.executionInProgress = false;
+                agentState.setOrchestrationFlag('executionInProgress', false);
                 return res.status(500).json({
                     error: 'Company-wide orchestration failed',
                     code: 'EXECUTION_ERROR',
                     details: error.message,
                 });
             }
+        }
 
         case 'setWorldState': {
-            // Set world state (paused, manual, semi_auto, autonomous)
             const newWorldState = req.body?.state;
             if (!newWorldState) {
                 return res.status(400).json({
@@ -1205,17 +995,11 @@ async function handlePost(req, res, clientIp) {
                 });
             }
 
-            return res.status(200).json({
-                success: true,
-                data: worldStateResult,
-            });
+            return res.status(200).json({ success: true, data: worldStateResult });
         }
 
         case 'setMode': {
-            // Legacy: Set global orchestration mode (maps to world state)
             let mappedMode = mode;
-
-            // Map legacy 'supervised' to 'semi_auto'
             if (mode === 'supervised') mappedMode = 'semi_auto';
 
             if (!mappedMode || !Object.values(WORLD_STATES).includes(mappedMode)) {
@@ -1238,56 +1022,54 @@ async function handlePost(req, res, clientIp) {
                 success: true,
                 data: {
                     globalMode: mappedMode,
-                    worldState: orchestrationState.worldState,
+                    worldState: agentState.getOrchestrationState().worldState,
                     message: `Orchestration mode set to ${mappedMode}`,
                 },
             });
         }
 
-        case 'startAll':
-            // Start all teams
-            Object.keys(orchestrationState.teams).forEach(id => {
-                orchestrationState.teams[id].status = 'running';
+        case 'startAll': {
+            const startAllIds = Object.keys(allTeamPrompts);
+            startAllIds.forEach(id => {
+                agentState.setTeamOrchestrationStatus(id, { status: 'running' });
                 addTeamActivity(id, 'System', 'Orchestration started (batch)', 'Started');
             });
 
-            // Update world state if it was paused
-            if (orchestrationState.worldState === WORLD_STATES.PAUSED) {
-                orchestrationState.worldState = WORLD_STATES.MANUAL;
-                orchestrationState.globalMode = WORLD_STATES.MANUAL;
+            const orch = agentState.getOrchestrationState();
+            if (orch.worldState === WORLD_STATES.PAUSED) {
+                agentState.setWorldState(WORLD_STATES.MANUAL);
             }
 
             return res.status(200).json({
                 success: true,
                 data: {
                     message: 'All teams started',
-                    worldState: orchestrationState.worldState,
-                    teamsStarted: Object.keys(orchestrationState.teams).length,
+                    worldState: agentState.getOrchestrationState().worldState,
+                    teamsStarted: startAllIds.length,
                 },
             });
+        }
 
-        case 'stopAll':
-            // Stop all teams
-            Object.keys(orchestrationState.teams).forEach(id => {
-                orchestrationState.teams[id].status = 'paused';
+        case 'stopAll': {
+            const stopAllIds = Object.keys(allTeamPrompts);
+            stopAllIds.forEach(id => {
+                agentState.setTeamOrchestrationStatus(id, { status: 'paused' });
                 addTeamActivity(id, 'System', 'Orchestration paused (batch)', 'Paused');
             });
 
-            // Update world state to paused
-            orchestrationState.worldState = WORLD_STATES.PAUSED;
-            orchestrationState.globalMode = WORLD_STATES.PAUSED;
+            agentState.setWorldState(WORLD_STATES.PAUSED);
 
             return res.status(200).json({
                 success: true,
                 data: {
                     message: 'All teams paused',
-                    worldState: orchestrationState.worldState,
-                    teamsPaused: Object.keys(orchestrationState.teams).length,
+                    worldState: WORLD_STATES.PAUSED,
+                    teamsPaused: stopAllIds.length,
                 },
             });
+        }
 
         case 'getWorldState':
-            // Get current world state (also available via GET)
             return res.status(200).json({
                 success: true,
                 data: getWorldState(),
