@@ -32,6 +32,7 @@
                 --text-secondary: #888888;
                 --success: #34c759;
                 --error: #ff3b30;
+                --passkey-color: #5856d6;
             }
 
             body {
@@ -47,7 +48,7 @@
 
             .login-container {
                 width: 100%;
-                max-width: 400px;
+                max-width: 420px;
             }
 
             .login-header {
@@ -78,21 +79,27 @@
 
             .tab-nav {
                 display: flex;
-                gap: 8px;
+                gap: 6px;
                 margin-bottom: 24px;
+                flex-wrap: wrap;
             }
 
             .tab-btn {
                 flex: 1;
-                padding: 12px 16px;
+                min-width: 80px;
+                padding: 10px 12px;
                 background: transparent;
                 border: 1px solid var(--border);
                 border-radius: 8px;
                 color: var(--text-secondary);
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
             }
 
             .tab-btn:hover {
@@ -104,6 +111,16 @@
                 background: var(--primary);
                 border-color: var(--primary);
                 color: white;
+            }
+
+            .tab-btn[data-tab="passkey"].active {
+                background: var(--passkey-color);
+                border-color: var(--passkey-color);
+            }
+
+            .tab-btn svg {
+                width: 16px;
+                height: 16px;
             }
 
             .tab-content {
@@ -147,6 +164,10 @@
                 color: var(--text-secondary);
             }
 
+            .form-input[data-passkey-autofill]:focus {
+                border-color: var(--passkey-color);
+            }
+
             .btn-primary {
                 width: 100%;
                 padding: 14px 24px;
@@ -174,6 +195,34 @@
                 cursor: not-allowed;
             }
 
+            .btn-passkey {
+                background: var(--passkey-color);
+            }
+
+            .btn-passkey:hover:not(:disabled) {
+                background: #4846c4;
+            }
+
+            .btn-secondary {
+                width: 100%;
+                padding: 12px 20px;
+                background: transparent;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                color: var(--text);
+                font-size: 14px;
+                font-weight: 500;
+                font-family: inherit;
+                cursor: pointer;
+                transition: all 0.2s;
+                margin-top: 12px;
+            }
+
+            .btn-secondary:hover:not(:disabled) {
+                background: var(--surface-hover);
+                border-color: var(--text-secondary);
+            }
+
             .message {
                 padding: 12px 16px;
                 border-radius: 8px;
@@ -198,12 +247,20 @@
                 color: var(--error);
             }
 
-            .magic-link-info {
+            .message.info {
+                background: rgba(88, 86, 214, 0.15);
+                border: 1px solid rgba(88, 86, 214, 0.3);
+                color: var(--passkey-color);
+            }
+
+            .magic-link-info,
+            .passkey-info {
                 text-align: center;
                 padding: 20px 0;
             }
 
-            .magic-link-info p {
+            .magic-link-info p,
+            .passkey-info p {
                 color: var(--text-secondary);
                 font-size: 14px;
                 line-height: 1.6;
@@ -217,6 +274,49 @@
                 border-radius: 6px;
                 color: var(--text);
                 font-weight: 500;
+            }
+
+            .passkey-icon {
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 16px;
+                background: linear-gradient(135deg, var(--passkey-color) 0%, #7c3aed 100%);
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .passkey-icon svg {
+                width: 32px;
+                height: 32px;
+                color: white;
+            }
+
+            .passkey-benefits {
+                display: flex;
+                gap: 12px;
+                margin: 20px 0;
+                flex-wrap: wrap;
+            }
+
+            .passkey-benefit {
+                flex: 1;
+                min-width: 100px;
+                padding: 12px;
+                background: var(--bg);
+                border-radius: 8px;
+                text-align: center;
+            }
+
+            .passkey-benefit-icon {
+                font-size: 20px;
+                margin-bottom: 4px;
+            }
+
+            .passkey-benefit-text {
+                font-size: 11px;
+                color: var(--text-secondary);
             }
 
             .login-footer {
@@ -280,6 +380,56 @@
                 background: var(--error);
             }
 
+            .divider {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin: 20px 0;
+            }
+
+            .divider::before,
+            .divider::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: var(--border);
+            }
+
+            .divider span {
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+
+            .passkey-mode-toggle {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .mode-btn {
+                flex: 1;
+                padding: 8px 12px;
+                background: var(--bg);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--text-secondary);
+                font-size: 12px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .mode-btn.active {
+                background: var(--passkey-color);
+                border-color: var(--passkey-color);
+                color: white;
+            }
+
+            .mode-btn:hover:not(.active) {
+                background: var(--surface-hover);
+                color: var(--text);
+            }
+
             @media (max-width: 480px) {
                 .login-card {
                     padding: 24px;
@@ -287,6 +437,15 @@
 
                 .logo {
                     font-size: 40px;
+                }
+
+                .tab-btn {
+                    padding: 8px 10px;
+                    font-size: 12px;
+                }
+
+                .passkey-benefits {
+                    flex-direction: column;
                 }
             }
         </style>
@@ -300,11 +459,108 @@
 
             <main class="login-card">
                 <nav class="tab-nav">
+                    <button class="tab-btn" data-tab="passkey">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                            <polyline points="10 17 15 12 10 7" />
+                            <line x1="15" y1="12" x2="3" y2="12" />
+                        </svg>
+                        Passkey
+                    </button>
                     <button class="tab-btn active" data-tab="pin">PIN</button>
                     <button class="tab-btn" data-tab="magic-link">Magic Link</button>
                 </nav>
 
                 <div id="message" class="message"></div>
+
+                <!-- Passkey Login -->
+                <div id="tab-passkey" class="tab-content">
+                    <div class="passkey-info">
+                        <div class="passkey-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </div>
+                        <p>Sign in securely with your device's biometrics or security key. No password needed.</p>
+                        <div class="passkey-benefits">
+                            <div class="passkey-benefit">
+                                <div class="passkey-benefit-icon">🔒</div>
+                                <div class="passkey-benefit-text">Phishing-resistant</div>
+                            </div>
+                            <div class="passkey-benefit">
+                                <div class="passkey-benefit-icon">📱</div>
+                                <div class="passkey-benefit-text">Syncs across devices</div>
+                            </div>
+                            <div class="passkey-benefit">
+                                <div class="passkey-benefit-icon">⚡</div>
+                                <div class="passkey-benefit-text">Fast & easy</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="passkey-mode-toggle">
+                        <button class="mode-btn active" data-mode="signin">Sign In</button>
+                        <button class="mode-btn" data-mode="register">Register New</button>
+                    </div>
+
+                    <!-- Sign In Mode -->
+                    <div id="passkey-signin" class="passkey-mode active">
+                        <div class="form-group">
+                            <label class="form-label" for="passkeyEmail">Email (optional)</label>
+                            <input
+                                type="email"
+                                id="passkeyEmail"
+                                class="form-input"
+                                placeholder="your@email.com"
+                                autocomplete="username webauthn"
+                                data-passkey-autofill
+                            />
+                        </div>
+                        <button id="passkeySignIn" class="btn-primary btn-passkey">
+                            Sign in with Passkey
+                        </button>
+                    </div>
+
+                    <!-- Register Mode -->
+                    <div id="passkey-register" class="passkey-mode" style="display: none;">
+                        <form id="passkeyRegisterForm">
+                            <div class="form-group">
+                                <label class="form-label" for="registerEmail">Email</label>
+                                <input
+                                    type="email"
+                                    id="registerEmail"
+                                    class="form-input"
+                                    placeholder="your@email.com"
+                                    autocomplete="email"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="registerName">Display Name (optional)</label>
+                                <input
+                                    type="text"
+                                    id="registerName"
+                                    class="form-input"
+                                    placeholder="Your Name"
+                                    autocomplete="name"
+                                />
+                            </div>
+                            <button type="submit" id="passkeyRegister" class="btn-primary btn-passkey">
+                                Create Passkey
+                            </button>
+                        </form>
+                    </div>
+
+                    <div id="passkeyNotSupported" style="display: none; text-align: center; padding: 20px;">
+                        <p style="color: var(--text-secondary); margin-bottom: 12px;">
+                            Passkeys are not supported on this device or browser.
+                        </p>
+                        <p style="color: var(--text-secondary); font-size: 13px;">
+                            Try using Chrome, Safari, or Edge on a recent device.
+                        </p>
+                    </div>
+                </div>
 
                 <!-- PIN Login -->
                 <div id="tab-pin" class="tab-content active">
@@ -349,6 +605,7 @@
             </footer>
         </div>
 
+        <script src="js/passkey-auth.js"></script>
         <script>
             (function() {
                 'use strict';
@@ -369,12 +626,51 @@
                 const statusDot = document.getElementById('statusDot');
                 const statusText = document.getElementById('statusText');
 
+                // Passkey elements
+                const passkeySignInBtn = document.getElementById('passkeySignIn');
+                const passkeyRegisterBtn = document.getElementById('passkeyRegister');
+                const passkeyRegisterForm = document.getElementById('passkeyRegisterForm');
+                const passkeyEmailInput = document.getElementById('passkeyEmail');
+                const registerEmailInput = document.getElementById('registerEmail');
+                const registerNameInput = document.getElementById('registerName');
+                const passkeyModeBtns = document.querySelectorAll('.mode-btn');
+                const passkeySignInMode = document.getElementById('passkey-signin');
+                const passkeyRegisterMode = document.getElementById('passkey-register');
+                const passkeyNotSupported = document.getElementById('passkeyNotSupported');
+
                 let authMethods = { pin: false, magicLink: false };
+                let passkeySupported = false;
 
                 // ─────────────────────────────────────────────────────────────
                 // Initialize
                 // ─────────────────────────────────────────────────────────────
                 async function init() {
+                    // Check passkey support
+                    if (typeof PasskeyAuth !== 'undefined') {
+                        const support = await PasskeyAuth.checkSupport();
+                        passkeySupported = support.supported && support.platformAuthenticator;
+
+                        if (!passkeySupported) {
+                            passkeySignInMode.style.display = 'none';
+                            passkeyRegisterMode.style.display = 'none';
+                            document.querySelector('.passkey-mode-toggle').style.display = 'none';
+                            passkeyNotSupported.style.display = 'block';
+                        } else {
+                            // Check for existing passkey session
+                            const sessionResult = await PasskeyAuth.verifySession();
+                            if (sessionResult.valid) {
+                                showMessage('Session active. Redirecting...', 'success');
+                                setTimeout(redirectToDashboard, 500);
+                                return;
+                            }
+
+                            // Start conditional UI for passkey autofill
+                            if (support.conditionalUI) {
+                                startConditionalUI();
+                            }
+                        }
+                    }
+
                     // Check for auth token in URL (magic link redirect)
                     const urlParams = new URLSearchParams(window.location.search);
                     const authToken = urlParams.get('auth_token');
@@ -399,6 +695,87 @@
                 }
 
                 // ─────────────────────────────────────────────────────────────
+                // Passkey Functions
+                // ─────────────────────────────────────────────────────────────
+                async function startConditionalUI() {
+                    try {
+                        const result = await PasskeyAuth.authenticateConditional();
+                        if (result && result.success) {
+                            showMessage('Welcome back!', 'success');
+                            setTimeout(redirectToDashboard, 500);
+                        }
+                    } catch (e) {
+                        // Conditional UI failed silently - user can still use regular buttons
+                        console.log('[Login] Conditional UI:', e.message);
+                    }
+                }
+
+                async function handlePasskeySignIn() {
+                    if (!passkeySupported) return;
+
+                    setLoading(passkeySignInBtn, true);
+                    try {
+                        const email = passkeyEmailInput.value.trim() || undefined;
+                        const result = await PasskeyAuth.authenticate(email, (progress) => {
+                            showMessage(progress, 'info');
+                        });
+
+                        if (result.success) {
+                            showMessage(result.message || 'Welcome back!', 'success');
+                            setTimeout(redirectToDashboard, 500);
+                        }
+                    } catch (error) {
+                        showMessage(error.message || 'Authentication failed', 'error');
+                    } finally {
+                        setLoading(passkeySignInBtn, false);
+                    }
+                }
+
+                async function handlePasskeyRegister(e) {
+                    e.preventDefault();
+                    if (!passkeySupported) return;
+
+                    const email = registerEmailInput.value.trim();
+                    const displayName = registerNameInput.value.trim();
+
+                    if (!email) {
+                        showMessage('Email is required', 'error');
+                        return;
+                    }
+
+                    setLoading(passkeyRegisterBtn, true);
+                    try {
+                        const result = await PasskeyAuth.register(email, displayName, (progress) => {
+                            showMessage(progress, 'info');
+                        });
+
+                        if (result.success) {
+                            showMessage(result.message || 'Passkey created! Redirecting...', 'success');
+                            setTimeout(redirectToDashboard, 1000);
+                        }
+                    } catch (error) {
+                        showMessage(error.message || 'Registration failed', 'error');
+                    } finally {
+                        setLoading(passkeyRegisterBtn, false);
+                    }
+                }
+
+                function switchPasskeyMode(mode) {
+                    passkeyModeBtns.forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.mode === mode);
+                    });
+
+                    if (mode === 'signin') {
+                        passkeySignInMode.style.display = 'block';
+                        passkeyRegisterMode.style.display = 'none';
+                    } else {
+                        passkeySignInMode.style.display = 'none';
+                        passkeyRegisterMode.style.display = 'block';
+                    }
+                    hideMessage();
+                }
+
+                // ─────────────────────────────────────────────────────────────
                 // API Calls
                 // ─────────────────────────────────────────────────────────────
                 async function checkStatus() {
@@ -415,7 +792,8 @@
                             emailDisplay.textContent = data.ceoEmail || 'Not configured';
 
                             // Update status
-                            if (authMethods.pin || authMethods.magicLink) {
+                            const hasAnyMethod = authMethods.pin || authMethods.magicLink || passkeySupported;
+                            if (hasAnyMethod) {
                                 statusDot.className = 'status-dot';
                                 statusText.textContent = 'Ready';
                             } else {
@@ -426,10 +804,16 @@
                             // Hide unavailable tabs
                             if (!authMethods.pin) {
                                 document.querySelector('[data-tab="pin"]').style.display = 'none';
-                                switchTab('magic-link');
                             }
                             if (!authMethods.magicLink) {
                                 document.querySelector('[data-tab="magic-link"]').style.display = 'none';
+                            }
+
+                            // If passkey is supported, make it the default tab
+                            if (passkeySupported) {
+                                switchTab('passkey');
+                            } else if (!authMethods.pin && authMethods.magicLink) {
+                                switchTab('magic-link');
                             }
                         }
                     } catch (error) {
@@ -586,6 +970,14 @@
 
                 sendMagicLinkBtn.addEventListener('click', () => {
                     requestMagicLink();
+                });
+
+                // Passkey event listeners
+                passkeySignInBtn.addEventListener('click', handlePasskeySignIn);
+                passkeyRegisterForm.addEventListener('submit', handlePasskeyRegister);
+
+                passkeyModeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => switchPasskeyMode(btn.dataset.mode));
                 });
 
                 // Initialize
