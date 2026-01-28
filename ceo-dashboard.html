@@ -116,10 +116,12 @@
 
                     <div class="biometric-alt-actions">
                         <p>
-                            You can still access this dashboard using a magic link sent to the admin
-                            email.
+                            Use PIN or magic link to access the dashboard.
                         </p>
-                        <button class="btn-biometric btn-magic-link" id="btnMagicLinkAlt">
+                        <button
+                            class="btn-biometric btn-magic-link"
+                            onclick="window.location.href = '/login.html'"
+                        >
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -128,12 +130,10 @@
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             >
-                                <path
-                                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                                />
-                                <polyline points="22,6 12,13 2,6" />
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0110 0v4" />
                             </svg>
-                            <span>Send Magic Link to Email</span>
+                            <span>Go to Login Page</span>
                         </button>
                         <button
                             class="btn-biometric btn-secondary-bio"
@@ -1162,8 +1162,9 @@
         <div class="toast-container" id="toastContainer"></div>
 
         <!-- Scripts (cache-bust with version) -->
+        <script src="js/ceo-auth.js?v=5.0.0"></script>
         <script src="js/biometric-auth.js?v=4.0.2"></script>
-        <script src="js/ceo-dashboard.js?v=4.0.2"></script>
+        <script src="js/ceo-dashboard.js?v=5.0.0"></script>
 
         <!-- Vercel Analytics & Speed Insights -->
         <script>

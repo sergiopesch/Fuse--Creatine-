@@ -411,11 +411,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTeamNavButtons();
     updateStats();
 
-    // Initialize biometric authentication gate
-    const biometricResult = await initBiometricAuth();
+    // Check authentication - try simplified auth first
+    let isAuthenticated = false;
 
-    // Only start periodic updates if authenticated or no gate
-    if (biometricResult) {
+    // Check if CEOAuth (simplified) is available
+    if (typeof CEOAuth !== 'undefined') {
+        console.log('[CEO Dashboard] Using simplified CEOAuth');
+        isAuthenticated = await CEOAuth.checkAuth(false); // Don't redirect yet
+
+        if (isAuthenticated) {
+            console.log('[CEO Dashboard] Authenticated via CEOAuth');
+            hideBiometricGate();
+            state.isAuthenticated = true;
+            state.biometricVerified = true;
+        }
+    }
+
+    // If not authenticated via CEOAuth, try biometric/magic link flow
+    if (!isAuthenticated) {
+        const biometricResult = await initBiometricAuth();
+        isAuthenticated = biometricResult;
+    }
+
+    // If still not authenticated, redirect to login
+    if (!isAuthenticated) {
+        const gate = document.getElementById('biometricGate');
+        // Only redirect if no biometric gate (gate handles its own auth flow)
+        if (!gate && typeof CEOAuth !== 'undefined') {
+            CEOAuth.logout();
+            return;
+        }
+    }
+
+    // Only start periodic updates if authenticated
+    if (isAuthenticated) {
         setInterval(fetchOrchestrationStatus, 30000);
     }
 
@@ -2180,17 +2209,23 @@ function sendBroadcast() {
 }
 
 function logout() {
-    // Clear session
+    // Clear all session data
     sessionStorage.removeItem('fuse_session_token');
     sessionStorage.removeItem('fuse_admin_token');
+    sessionStorage.removeItem('fuse_ceo_session');
 
-    // Show biometric gate
-    const gate = document.getElementById('biometricGate');
-    if (gate) {
-        gate.style.display = 'flex';
+    // Clear biometric session if available
+    if (typeof BiometricAuth !== 'undefined') {
+        BiometricAuth.clearSession();
     }
 
-    showToast('info', 'Logged Out', 'Dashboard locked');
+    // Clear CEOAuth session if available
+    if (typeof CEOAuth !== 'undefined') {
+        CEOAuth.clearSession();
+    }
+
+    // Redirect to login page
+    window.location.href = '/login.html';
 }
 
 // ============================================
