@@ -11,10 +11,35 @@
  * All modules import from here instead of defining their own state.
  * This fixes the triple state desynchronization problem.
  *
- * State is in-memory for now (fast). DynamoDB persistence is
- * available via the repositories in db/repositories/ and should
- * be wired up for production durability.
+ * State is in-memory with optional DynamoDB persistence.
+ * Set ENABLE_DB_PERSISTENCE=true to enable database sync.
  */
+
+// =============================================================================
+// PERSISTENCE CONFIGURATION
+// =============================================================================
+
+const PERSISTENCE_ENABLED = process.env.ENABLE_DB_PERSISTENCE === 'true';
+const SYNC_DEBOUNCE_MS = 1000; // Debounce writes to avoid excessive DB calls
+
+let db = null;
+let syncTimeout = null;
+let pendingSyncOperations = new Set();
+
+/**
+ * Lazy-load database module to avoid initialization errors when DB not configured
+ */
+function getDb() {
+  if (!db && PERSISTENCE_ENABLED) {
+    try {
+      db = require('./db');
+    } catch (error) {
+      console.warn('[agent-state] Database module not available:', error.message);
+      return null;
+    }
+  }
+  return db;
+}
 
 // =============================================================================
 // TEAM DEFINITIONS
@@ -265,6 +290,8 @@ function addTask(task) {
   if (state.tasks.length > LIMITS.MAX_TASKS) {
     state.tasks.length = LIMITS.MAX_TASKS;
   }
+  // Sync to database
+  schedulePersistenceSync({ type: 'upsertTask', data: task });
   return task;
 }
 
@@ -272,6 +299,11 @@ function updateTask(taskId, updates) {
   const task = state.tasks.find(t => t.id === taskId);
   if (task) {
     Object.assign(task, updates, { updatedAt: new Date().toISOString() });
+    // Sync to database
+    schedulePersistenceSync({
+      type: 'updateTask',
+      data: { teamId: task.teamId, taskId, status: task.status, updates },
+    });
   }
   return task;
 }
@@ -279,7 +311,10 @@ function updateTask(taskId, updates) {
 function removeTask(taskId) {
   const index = state.tasks.findIndex(t => t.id === taskId);
   if (index !== -1) {
-    return state.tasks.splice(index, 1)[0];
+    const removed = state.tasks.splice(index, 1)[0];
+    // Sync to database
+    schedulePersistenceSync({ type: 'deleteTask', data: { teamId: removed.teamId, taskId } });
+    return removed;
   }
   return null;
 }
@@ -289,6 +324,8 @@ function addDecision(decision) {
   if (state.decisions.length > LIMITS.MAX_DECISIONS) {
     state.decisions.length = LIMITS.MAX_DECISIONS;
   }
+  // Sync to database
+  schedulePersistenceSync({ type: 'upsertDecision', data: decision });
   return decision;
 }
 
@@ -296,6 +333,22 @@ function updateDecision(decisionId, updates) {
   const decision = state.decisions.find(d => d.id === decisionId);
   if (decision) {
     Object.assign(decision, updates);
+    // If resolving, sync resolution to database
+    if (updates.status && updates.status !== 'pending') {
+      schedulePersistenceSync({
+        type: 'resolveDecision',
+        data: {
+          teamId: decision.teamId,
+          decisionId,
+          resolution: {
+            status: updates.status,
+            resolvedBy: updates.resolvedBy,
+            selectedOption: updates.selectedOption,
+            resolution: updates.resolution,
+          },
+        },
+      });
+    }
   }
   return decision;
 }
@@ -313,6 +366,8 @@ function addActivity(activity) {
   if (state.activities.length > LIMITS.MAX_ACTIVITIES) {
     state.activities.length = LIMITS.MAX_ACTIVITIES;
   }
+  // Sync to database
+  schedulePersistenceSync({ type: 'logActivity', data: activity });
   return activity;
 }
 
@@ -321,6 +376,8 @@ function addCommunication(comm) {
   if (state.communications.length > LIMITS.MAX_COMMUNICATIONS) {
     state.communications.length = LIMITS.MAX_COMMUNICATIONS;
   }
+  // Sync to database
+  schedulePersistenceSync({ type: 'logCommunication', data: comm });
   return comm;
 }
 
@@ -446,6 +503,192 @@ function countActiveAgents() {
 }
 
 // =============================================================================
+// PERSISTENCE LAYER
+// =============================================================================
+
+/**
+ * Schedule a debounced sync to the database
+ */
+function schedulePersistenceSync(operation) {
+  if (!PERSISTENCE_ENABLED) return;
+
+  pendingSyncOperations.add(operation);
+
+  if (syncTimeout) {
+    clearTimeout(syncTimeout);
+  }
+
+  syncTimeout = setTimeout(async () => {
+    const operations = [...pendingSyncOperations];
+    pendingSyncOperations.clear();
+    await executePersistenceSync(operations);
+  }, SYNC_DEBOUNCE_MS);
+}
+
+/**
+ * Execute pending persistence operations
+ */
+async function executePersistenceSync(operations) {
+  const database = getDb();
+  if (!database) return;
+
+  for (const op of operations) {
+    try {
+      switch (op.type) {
+        case 'upsertTask':
+          await database.agents.createTask(op.data);
+          break;
+        case 'updateTask':
+          await database.agents.updateTaskStatus(op.data.teamId, op.data.taskId, op.data.status, op.data.updates);
+          break;
+        case 'deleteTask':
+          await database.agents.deleteTask(op.data.teamId, op.data.taskId);
+          break;
+        case 'upsertDecision':
+          await database.agents.createDecision(op.data);
+          break;
+        case 'resolveDecision':
+          await database.agents.resolveDecision(op.data.teamId, op.data.decisionId, op.data.resolution);
+          break;
+        case 'logActivity':
+          await database.agents.logActivity(op.data);
+          break;
+        case 'logCommunication':
+          await database.agents.logCommunication(op.data);
+          break;
+        case 'upsertTeam':
+          await database.agents.upsertTeam(op.data);
+          break;
+        default:
+          console.warn(`[agent-state] Unknown persistence operation: ${op.type}`);
+      }
+    } catch (error) {
+      console.error(`[agent-state] Persistence error for ${op.type}:`, error.message);
+    }
+  }
+}
+
+/**
+ * Load state from database on startup
+ */
+async function loadStateFromDatabase() {
+  const database = getDb();
+  if (!database) {
+    console.log('[agent-state] Persistence disabled, using in-memory state only');
+    return false;
+  }
+
+  try {
+    console.log('[agent-state] Loading state from database...');
+
+    // Load teams
+    const teams = await database.agents.getAllTeams();
+    if (teams && teams.length > 0) {
+      for (const team of teams) {
+        if (state.teams[team.teamId]) {
+          state.teams[team.teamId] = {
+            ...state.teams[team.teamId],
+            ...team,
+          };
+
+          // Update orchestration status
+          if (state.orchestration.teamStatuses[team.teamId]) {
+            state.orchestration.teamStatuses[team.teamId].status = team.orchestrationStatus || 'paused';
+          }
+        }
+      }
+    }
+
+    // Load pending tasks
+    const pendingTasks = await database.agents.getTasksByStatus('pending', 100);
+    const inProgressTasks = await database.agents.getTasksByStatus('in_progress', 100);
+    const allTasks = [...pendingTasks, ...inProgressTasks];
+
+    if (allTasks.length > 0) {
+      state.tasks = allTasks.map(t => ({
+        id: t.taskId,
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        status: t.status,
+        teamId: t.teamId,
+        assignedAgents: t.assignedAgents || [],
+        createdBy: t.createdBy,
+        progress: t.progress || 0,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+        startedAt: t.startedAt,
+        completedAt: t.completedAt,
+        result: t.result,
+      }));
+    }
+
+    // Load pending decisions
+    const pendingDecisions = await database.agents.getPendingDecisions(50);
+    if (pendingDecisions.length > 0) {
+      state.decisions = pendingDecisions.map(d => ({
+        id: d.decisionId,
+        title: d.title,
+        description: d.description,
+        priority: d.priority,
+        impact: d.impact,
+        options: d.options || [],
+        status: d.status,
+        teamId: d.teamId,
+        requestedBy: d.requestedBy,
+        createdAt: d.createdAt,
+      }));
+    }
+
+    // Load recent activities
+    const activities = await database.agents.getAllActivities(200);
+    if (activities.length > 0) {
+      state.activities = activities.map(a => ({
+        id: a.activityId,
+        agent: a.agentId,
+        teamId: a.teamId,
+        message: a.message,
+        tag: a.tag,
+        timestamp: a.timestamp,
+        isReal: true,
+        source: 'database',
+      }));
+    }
+
+    console.log(`[agent-state] Loaded: ${allTasks.length} tasks, ${pendingDecisions.length} decisions, ${activities.length} activities`);
+    return true;
+  } catch (error) {
+    console.error('[agent-state] Failed to load state from database:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Force immediate sync to database (for graceful shutdown)
+ */
+async function flushToDatabase() {
+  if (!PERSISTENCE_ENABLED) return;
+
+  if (syncTimeout) {
+    clearTimeout(syncTimeout);
+    syncTimeout = null;
+  }
+
+  if (pendingSyncOperations.size > 0) {
+    const operations = [...pendingSyncOperations];
+    pendingSyncOperations.clear();
+    await executePersistenceSync(operations);
+  }
+}
+
+/**
+ * Check if persistence is enabled
+ */
+function isPersistenceEnabled() {
+  return PERSISTENCE_ENABLED;
+}
+
+// =============================================================================
 // EXPORTS
 // =============================================================================
 
@@ -489,4 +732,10 @@ module.exports = {
   // Stats
   countTotalAgents,
   countActiveAgents,
+
+  // Persistence
+  loadStateFromDatabase,
+  flushToDatabase,
+  isPersistenceEnabled,
+  schedulePersistenceSync,
 };
