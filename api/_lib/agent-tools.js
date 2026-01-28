@@ -195,6 +195,99 @@ const AGENT_TOOLS = [
     },
   },
 
+  {
+    name: 'delete_task',
+    description:
+      'Delete a task that is no longer needed. Use for cleanup of obsolete, duplicate, or cancelled tasks. Cannot delete tasks that are in_progress.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The task ID to delete' },
+        reason: { type: 'string', description: 'Reason for deletion (for audit trail)' },
+      },
+      required: ['taskId'],
+    },
+  },
+  {
+    name: 'resolve_decision',
+    description:
+      'Resolve a pending decision. Use when a decision has been made by the owner or when a decision is no longer relevant. Agents can only resolve decisions that belong to their team.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        decisionId: { type: 'string', description: 'The decision ID to resolve' },
+        status: {
+          type: 'string',
+          enum: ['approved', 'rejected', 'deferred'],
+          description: 'Resolution status',
+        },
+        resolution: { type: 'string', description: 'Explanation of the resolution' },
+        selectedOption: { type: 'string', description: 'Which option was selected (if applicable)' },
+      },
+      required: ['decisionId', 'status'],
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // PRIMITIVE TOOLS (for emergent capability)
+  // -------------------------------------------------------------------------
+  {
+    name: 'read_workspace_file',
+    description:
+      'Read a file from the shared workspace. Use to access documents, notes, research, and other artifacts created by teams.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'File path relative to workspace root (e.g., "docs/research.md")' },
+      },
+      required: ['path'],
+    },
+  },
+  {
+    name: 'write_workspace_file',
+    description:
+      'Write or update a file in the shared workspace. Use to create documents, save research, write reports, or store artifacts for other teams.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'File path relative to workspace root (e.g., "docs/report.md")' },
+        content: { type: 'string', description: 'File content to write' },
+        append: { type: 'boolean', description: 'If true, append to existing file instead of overwriting' },
+      },
+      required: ['path', 'content'],
+    },
+  },
+  {
+    name: 'list_workspace_files',
+    description:
+      'List files in the shared workspace. Use to discover available documents and artifacts.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        directory: { type: 'string', description: 'Directory path to list (default: root)' },
+        pattern: { type: 'string', description: 'Glob pattern to filter files (e.g., "*.md")' },
+      },
+    },
+  },
+  {
+    name: 'search_workspace',
+    description:
+      'Search for content across workspace files. Use to find relevant information, research, or artifacts.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query (searches file contents)' },
+        fileTypes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'File extensions to search (e.g., ["md", "txt", "json"])',
+        },
+        limit: { type: 'number', description: 'Maximum results to return (default: 10)' },
+      },
+      required: ['query'],
+    },
+  },
+
   // -------------------------------------------------------------------------
   // CONTROL TOOL
   // -------------------------------------------------------------------------
@@ -251,6 +344,18 @@ function executeAgentTool(toolName, input, callingTeamId, ctx) {
         return handleSendMessage(input, callingTeamId, ctx);
       case 'report_progress':
         return handleReportProgress(input, callingTeamId, ctx);
+      case 'delete_task':
+        return handleDeleteTask(input, callingTeamId, ctx);
+      case 'resolve_decision':
+        return handleResolveDecision(input, callingTeamId, ctx);
+      case 'read_workspace_file':
+        return handleReadWorkspaceFile(input, callingTeamId, ctx);
+      case 'write_workspace_file':
+        return handleWriteWorkspaceFile(input, callingTeamId, ctx);
+      case 'list_workspace_files':
+        return handleListWorkspaceFiles(input, callingTeamId, ctx);
+      case 'search_workspace':
+        return handleSearchWorkspace(input, callingTeamId, ctx);
       case 'signal_completion':
         return handleSignalCompletion(input, callingTeamId, ctx);
       default:
@@ -637,6 +742,388 @@ function handleSignalCompletion(input, callingTeamId, ctx) {
     message: 'Assignment marked as complete. Agent loop will stop.',
     data: summary,
   };
+}
+
+function handleDeleteTask(input, callingTeamId, ctx) {
+  const tasks = ctx.tasks || [];
+  const taskIndex = tasks.findIndex(t => t.id === input.taskId);
+
+  if (taskIndex === -1) {
+    return {
+      success: false,
+      message: `Task not found: ${input.taskId}`,
+      data: null,
+    };
+  }
+
+  const task = tasks[taskIndex];
+
+  // Prevent deleting tasks that are in progress
+  if (task.status === 'in_progress') {
+    return {
+      success: false,
+      message: `Cannot delete task "${task.title}" - it is currently in progress. Update status first.`,
+      data: null,
+    };
+  }
+
+  // Only allow teams to delete their own tasks or tasks they created
+  if (task.teamId !== callingTeamId && task.createdBy !== `agent:${callingTeamId}`) {
+    return {
+      success: false,
+      message: `Cannot delete task belonging to another team (${task.teamId})`,
+      data: null,
+    };
+  }
+
+  // Remove the task
+  const deletedTask = tasks.splice(taskIndex, 1)[0];
+
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Deleted task: "${task.title}" (${input.reason || 'no reason provided'})`,
+    'Task Deleted'
+  );
+
+  return {
+    success: true,
+    message: `Task "${task.title}" deleted`,
+    data: { taskId: deletedTask.id, title: deletedTask.title, reason: input.reason },
+  };
+}
+
+function handleResolveDecision(input, callingTeamId, ctx) {
+  const decisions = ctx.decisions || [];
+  const decision = decisions.find(d => d.id === input.decisionId);
+
+  if (!decision) {
+    return {
+      success: false,
+      message: `Decision not found: ${input.decisionId}`,
+      data: null,
+    };
+  }
+
+  // Only allow teams to resolve their own decisions
+  if (decision.teamId !== callingTeamId) {
+    return {
+      success: false,
+      message: `Cannot resolve decision belonging to another team (${decision.teamId})`,
+      data: null,
+    };
+  }
+
+  if (decision.status !== 'pending') {
+    return {
+      success: false,
+      message: `Decision already resolved with status: ${decision.status}`,
+      data: null,
+    };
+  }
+
+  const previousStatus = decision.status;
+  decision.status = input.status;
+  decision.resolution = input.resolution || '';
+  decision.selectedOption = input.selectedOption || null;
+  decision.resolvedAt = new Date().toISOString();
+  decision.resolvedBy = `agent:${callingTeamId}`;
+
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Decision "${decision.title}" resolved: ${input.status}${input.resolution ? ` - ${input.resolution}` : ''}`,
+    'Decision Resolved'
+  );
+
+  return {
+    success: true,
+    message: `Decision "${decision.title}" resolved as ${input.status}`,
+    data: {
+      decisionId: decision.id,
+      title: decision.title,
+      previousStatus,
+      newStatus: input.status,
+      resolution: input.resolution,
+    },
+  };
+}
+
+// =============================================================================
+// WORKSPACE FILE HANDLERS
+// =============================================================================
+
+const fs = require('fs').promises;
+const path = require('path');
+
+// Workspace root - configurable via environment
+const WORKSPACE_ROOT = process.env.AGENT_WORKSPACE_ROOT || path.join(process.cwd(), 'agent-workspace');
+
+/**
+ * Sanitize path to prevent directory traversal attacks
+ */
+function sanitizePath(inputPath) {
+  // Remove any .. segments and normalize
+  const normalized = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
+  // Ensure the path doesn't start with /
+  const cleaned = normalized.replace(/^[\/\\]+/, '');
+  return cleaned;
+}
+
+/**
+ * Get full path within workspace
+ */
+function getWorkspacePath(relativePath) {
+  const sanitized = sanitizePath(relativePath);
+  const fullPath = path.join(WORKSPACE_ROOT, sanitized);
+
+  // Ensure the resolved path is still within workspace
+  if (!fullPath.startsWith(WORKSPACE_ROOT)) {
+    throw new Error('Path escapes workspace boundary');
+  }
+
+  return fullPath;
+}
+
+async function handleReadWorkspaceFile(input, callingTeamId, ctx) {
+  try {
+    const filePath = getWorkspacePath(input.path);
+
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return {
+        success: false,
+        message: `File not found: ${input.path}`,
+        data: null,
+      };
+    }
+
+    const content = await fs.readFile(filePath, 'utf-8');
+    const stats = await fs.stat(filePath);
+
+    // Limit content size to prevent context overflow
+    const maxSize = 50000; // 50KB
+    const truncated = content.length > maxSize;
+    const returnContent = truncated ? content.substring(0, maxSize) + '\n... (truncated)' : content;
+
+    return {
+      success: true,
+      message: `Read file: ${input.path} (${content.length} bytes)`,
+      data: {
+        path: input.path,
+        content: returnContent,
+        size: stats.size,
+        modified: stats.mtime.toISOString(),
+        truncated,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to read file: ${error.message}`,
+      data: null,
+    };
+  }
+}
+
+async function handleWriteWorkspaceFile(input, callingTeamId, ctx) {
+  try {
+    const filePath = getWorkspacePath(input.path);
+
+    // Ensure directory exists
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true });
+
+    // Write or append
+    if (input.append) {
+      await fs.appendFile(filePath, input.content, 'utf-8');
+    } else {
+      await fs.writeFile(filePath, input.content, 'utf-8');
+    }
+
+    addActivityToContext(
+      ctx,
+      callingTeamId,
+      'Team Lead',
+      `${input.append ? 'Appended to' : 'Wrote'} file: ${input.path}`,
+      'File Written'
+    );
+
+    return {
+      success: true,
+      message: `File ${input.append ? 'appended' : 'written'}: ${input.path}`,
+      data: {
+        path: input.path,
+        size: input.content.length,
+        append: input.append || false,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to write file: ${error.message}`,
+      data: null,
+    };
+  }
+}
+
+async function handleListWorkspaceFiles(input, callingTeamId, ctx) {
+  try {
+    const dirPath = getWorkspacePath(input.directory || '');
+
+    // Check if directory exists
+    try {
+      const stats = await fs.stat(dirPath);
+      if (!stats.isDirectory()) {
+        return {
+          success: false,
+          message: `Not a directory: ${input.directory || '/'}`,
+          data: null,
+        };
+      }
+    } catch {
+      // Create workspace root if it doesn't exist
+      if (!input.directory) {
+        await fs.mkdir(dirPath, { recursive: true });
+        return {
+          success: true,
+          message: 'Workspace is empty',
+          data: { files: [], directories: [] },
+        };
+      }
+      return {
+        success: false,
+        message: `Directory not found: ${input.directory}`,
+        data: null,
+      };
+    }
+
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+    const files = [];
+    const directories = [];
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        directories.push(entry.name);
+      } else if (entry.isFile()) {
+        // Apply pattern filter if provided
+        if (input.pattern) {
+          const pattern = input.pattern.replace(/\*/g, '.*');
+          const regex = new RegExp(`^${pattern}$`);
+          if (!regex.test(entry.name)) continue;
+        }
+
+        const stats = await fs.stat(path.join(dirPath, entry.name));
+        files.push({
+          name: entry.name,
+          size: stats.size,
+          modified: stats.mtime.toISOString(),
+        });
+      }
+    }
+
+    return {
+      success: true,
+      message: `Listed ${files.length} files and ${directories.length} directories`,
+      data: {
+        path: input.directory || '/',
+        files,
+        directories,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to list directory: ${error.message}`,
+      data: null,
+    };
+  }
+}
+
+async function handleSearchWorkspace(input, callingTeamId, ctx) {
+  try {
+    const results = [];
+    const limit = Math.min(input.limit || 10, 50);
+    const fileTypes = input.fileTypes || ['md', 'txt', 'json'];
+    const query = input.query.toLowerCase();
+
+    // Recursive search function
+    async function searchDir(dirPath, relativePath = '') {
+      try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+          if (results.length >= limit) return;
+
+          const fullPath = path.join(dirPath, entry.name);
+          const relPath = path.join(relativePath, entry.name);
+
+          if (entry.isDirectory()) {
+            // Skip hidden directories
+            if (!entry.name.startsWith('.')) {
+              await searchDir(fullPath, relPath);
+            }
+          } else if (entry.isFile()) {
+            // Check file extension
+            const ext = entry.name.split('.').pop()?.toLowerCase();
+            if (!fileTypes.includes(ext)) continue;
+
+            try {
+              const content = await fs.readFile(fullPath, 'utf-8');
+              const lowerContent = content.toLowerCase();
+
+              if (lowerContent.includes(query)) {
+                // Find matching lines
+                const lines = content.split('\n');
+                const matchingLines = [];
+
+                for (let i = 0; i < lines.length && matchingLines.length < 3; i++) {
+                  if (lines[i].toLowerCase().includes(query)) {
+                    matchingLines.push({
+                      line: i + 1,
+                      text: lines[i].substring(0, 200),
+                    });
+                  }
+                }
+
+                results.push({
+                  path: relPath,
+                  matches: matchingLines,
+                });
+              }
+            } catch {
+              // Skip files that can't be read
+            }
+          }
+        }
+      } catch {
+        // Skip directories that can't be read
+      }
+    }
+
+    await searchDir(WORKSPACE_ROOT);
+
+    return {
+      success: true,
+      message: `Found ${results.length} files matching "${input.query}"`,
+      data: {
+        query: input.query,
+        results: results.slice(0, limit),
+        totalMatches: results.length,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Search failed: ${error.message}`,
+      data: null,
+    };
+  }
 }
 
 // =============================================================================

@@ -13,11 +13,19 @@
  * - Explicit completion signals (signal_completion tool)
  * - Tool-based action (not just text)
  * - Rich context injection via system prompt
+ * - Checkpointing for resilience (resume after failures)
  */
 
 const { AGENT_TOOLS, executeAgentTool } = require('./agent-tools');
 const { buildTeamContext } = require('./context-builder');
 const { recordUsage, estimateTokens } = require('./cost-tracker');
+const {
+  createCheckpointState,
+  checkpointAfterIteration,
+  finalizeCheckpoint,
+  loadCheckpoint,
+  updateCheckpointStatus,
+} = require('./checkpoint-manager');
 
 // =============================================================================
 // CONFIGURATION
@@ -42,7 +50,7 @@ const LOOP_CONFIG = {
  * @param {string} task - The task/assignment in natural language
  * @param {object} teamPrompt - Team prompt config { name, systemPrompt, agents }
  * @param {object} stateContext - Mutable state context for tools
- * @param {object} options - { apiKey, model, maxIterations, clientIp }
+ * @param {object} options - { apiKey, model, maxIterations, clientIp, enableCheckpoint, onEvent }
  * @returns {Promise<AgentLoopResult>}
  */
 async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}) {
@@ -50,6 +58,8 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
   const model = options.model || LOOP_CONFIG.MODEL;
   const maxIterations = options.maxIterations || LOOP_CONFIG.MAX_ITERATIONS;
   const clientIp = options.clientIp || 'internal';
+  const enableCheckpoint = options.enableCheckpoint !== false; // Default: true
+  const onEvent = options.onEvent || (() => {}); // Event callback for SSE
 
   if (!apiKey || !apiKey.startsWith('sk-ant-')) {
     throw new Error('Valid Anthropic API key required (sk-ant-...)');
@@ -60,6 +70,13 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
 
   // Initialize conversation with the assignment
   const messages = [{ role: 'user', content: buildAssignmentPrompt(task, teamPrompt) }];
+
+  // Create checkpoint state if enabled
+  let checkpoint = null;
+  if (enableCheckpoint) {
+    checkpoint = createCheckpointState(teamId, task, teamPrompt, stateContext);
+    onEvent({ type: 'checkpoint_created', sessionId: checkpoint.sessionId });
+  }
 
   // Result accumulator
   const result = {
@@ -81,10 +98,14 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
     },
     teamId,
     teamName: teamPrompt.name,
+    sessionId: checkpoint?.sessionId || null,
   };
 
   // Track activities count before loop to extract new ones after
   const activitiesBefore = (stateContext.activities || []).length;
+
+  // Emit start event
+  onEvent({ type: 'loop_started', teamId, task: task.substring(0, 100) });
 
   // -------------------------------------------------------------------------
   // THE LOOP
@@ -92,13 +113,23 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     result.iterations = iteration + 1;
 
+    // Emit iteration start event
+    onEvent({ type: 'iteration_started', iteration: iteration + 1, maxIterations });
+
     // Call Claude API with tools
     let response;
     try {
+      onEvent({ type: 'thinking', message: `Iteration ${iteration + 1}: Calling Claude API...` });
       response = await callClaudeAPI(apiKey, model, systemPrompt, messages, AGENT_TOOLS);
     } catch (error) {
       // If API call fails, log and stop
       result.completionSummary = `API error on iteration ${iteration + 1}: ${error.message}`;
+      onEvent({ type: 'error', message: result.completionSummary });
+
+      // Save checkpoint with failed status
+      if (checkpoint) {
+        await finalizeCheckpoint(checkpoint, result, 'failed');
+      }
       break;
     }
 
@@ -157,12 +188,18 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
     let completionSignaled = false;
 
     for (const toolUse of toolUseBlocks) {
+      // Emit tool call event
+      onEvent({ type: 'tool_call', tool: toolUse.name, input: toolUse.input });
+
       const toolResult = executeAgentTool(
         toolUse.name,
         toolUse.input || {},
         teamId,
         stateContext
       );
+
+      // Emit tool result event
+      onEvent({ type: 'tool_result', tool: toolUse.name, success: toolResult.success });
 
       // Track the tool call
       result.toolCalls.push({
@@ -175,12 +212,15 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
       // Track side effects
       if (toolUse.name === 'create_task' && toolResult.success) {
         result.tasksCreated.push(toolResult.data);
+        onEvent({ type: 'task_created', task: toolResult.data });
       }
       if (toolUse.name === 'create_decision_request' && toolResult.success) {
         result.decisionsCreated.push(toolResult.data);
+        onEvent({ type: 'decision_created', decision: toolResult.data });
       }
       if (toolUse.name === 'send_message' && toolResult.success) {
         result.messagesSent.push(toolResult.data);
+        onEvent({ type: 'message_sent', message: toolResult.data });
       }
 
       // Check for completion signal
@@ -188,6 +228,7 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
         completionSignaled = true;
         result.completed = true;
         result.completionSummary = toolResult.data?.summary || 'Completed';
+        onEvent({ type: 'completion_signaled', summary: result.completionSummary });
       }
 
       // Build tool result message
@@ -200,6 +241,25 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
 
     // Feed tool results back to Claude
     messages.push({ role: 'user', content: toolResults });
+
+    // Save checkpoint after each iteration
+    if (checkpoint) {
+      await checkpointAfterIteration(
+        checkpoint,
+        iteration + 1,
+        messages,
+        result.toolCalls,
+        result.textResponses
+      );
+    }
+
+    // Emit iteration complete event
+    onEvent({
+      type: 'iteration_completed',
+      iteration: iteration + 1,
+      toolCalls: toolUseBlocks.length,
+      completed: completionSignaled,
+    });
 
     // If completion was signaled, break after feeding results
     if (completionSignaled) {
@@ -218,11 +278,100 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
   // If we hit max iterations without completion
   if (!result.completed) {
     result.completionSummary = `Reached maximum iterations (${maxIterations}). Work may be incomplete.`;
+    onEvent({ type: 'max_iterations_reached', iterations: maxIterations });
   }
 
   result.success = result.completed || result.toolCalls.length > 0;
 
+  // Finalize checkpoint
+  if (checkpoint) {
+    const status = result.completed ? 'completed' : 'interrupted';
+    await finalizeCheckpoint(checkpoint, result, status);
+    onEvent({ type: 'checkpoint_finalized', sessionId: checkpoint.sessionId, status });
+  }
+
+  // Emit completion event
+  onEvent({
+    type: 'loop_completed',
+    success: result.success,
+    completed: result.completed,
+    iterations: result.iterations,
+    toolCalls: result.toolCalls.length,
+    summary: result.completionSummary,
+  });
+
   return result;
+}
+
+/**
+ * Resume an agent loop from a checkpoint.
+ *
+ * @param {string} sessionId - The session ID to resume
+ * @param {object} stateContext - Current state context
+ * @param {object} options - { apiKey, model, maxIterations, clientIp, onEvent }
+ * @returns {Promise<AgentLoopResult>}
+ */
+async function resumeAgentLoop(sessionId, stateContext, options = {}) {
+  const checkpoint = await loadCheckpoint(sessionId);
+
+  if (!checkpoint) {
+    throw new Error(`Checkpoint not found: ${sessionId}`);
+  }
+
+  if (!['running', 'interrupted'].includes(checkpoint.status)) {
+    throw new Error(`Cannot resume checkpoint with status: ${checkpoint.status}`);
+  }
+
+  const onEvent = options.onEvent || (() => {});
+
+  onEvent({
+    type: 'resuming_from_checkpoint',
+    sessionId,
+    iteration: checkpoint.iteration,
+    previousToolCalls: checkpoint.toolCalls?.length || 0,
+  });
+
+  // Update checkpoint status to running
+  await updateCheckpointStatus(sessionId, 'running');
+
+  // Reconstruct team prompt from checkpoint
+  const teamPrompt = checkpoint.teamPrompt;
+
+  // Calculate remaining iterations
+  const maxIterations = options.maxIterations || LOOP_CONFIG.MAX_ITERATIONS;
+  const remainingIterations = maxIterations - checkpoint.iteration;
+
+  if (remainingIterations <= 0) {
+    return {
+      success: false,
+      completed: false,
+      iterations: checkpoint.iteration,
+      completionSummary: 'No remaining iterations after resume',
+      sessionId,
+      teamId: checkpoint.teamId,
+      teamName: teamPrompt.name,
+      toolCalls: checkpoint.toolCalls || [],
+      textResponses: checkpoint.textResponses || [],
+      activities: [],
+      tasksCreated: [],
+      decisionsCreated: [],
+      messagesSent: [],
+      usage: { inputTokens: 0, outputTokens: 0, totalCost: 0, apiCalls: 0 },
+    };
+  }
+
+  // Run the loop with remaining iterations, starting from checkpoint state
+  return runAgentLoop(
+    checkpoint.teamId,
+    checkpoint.task,
+    teamPrompt,
+    stateContext,
+    {
+      ...options,
+      maxIterations: remainingIterations,
+      enableCheckpoint: true,
+    }
+  );
 }
 
 // =============================================================================
@@ -307,5 +456,6 @@ Begin.`;
 
 module.exports = {
   runAgentLoop,
+  resumeAgentLoop,
   LOOP_CONFIG,
 };
