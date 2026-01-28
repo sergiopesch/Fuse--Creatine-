@@ -229,6 +229,17 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 });
             }
 
+            // Magic-link sessions are valid without device fingerprint
+            if (payload.authMethod === 'magic-link') {
+                return res.status(200).json({
+                    success: true,
+                    verified: true,
+                    authMethod: 'magic-link',
+                    expiresIn: Math.floor((payload.expiresAt - Date.now()) / 1000)
+                });
+            }
+
+            // Biometric sessions: validate device fingerprint
             let fingerprintValid = (payload.deviceFingerprint === deviceFingerprint);
             if (!fingerprintValid && validatedBody.deviceId) {
                 const clientFp = createClientFingerprint(validatedBody.deviceId);
