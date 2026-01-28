@@ -289,6 +289,42 @@ const AGENT_TOOLS = [
   },
 
   // -------------------------------------------------------------------------
+  // DELEGATION TOOL (for team-to-team execution)
+  // -------------------------------------------------------------------------
+  {
+    name: 'request_team_assistance',
+    description:
+      'Request another team to perform a specific task. This creates a high-priority task for the target team that will be executed in the next orchestration cycle. Use this when you need specialized help from another team to complete your work.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        toTeam: {
+          type: 'string',
+          description: 'Target team ID (developer, design, communications, legal, marketing, gtm, sales)',
+        },
+        task: {
+          type: 'string',
+          description: 'Clear, specific description of what you need the team to do',
+        },
+        context: {
+          type: 'string',
+          description: 'Additional context about why this help is needed and any relevant background',
+        },
+        priority: {
+          type: 'string',
+          enum: ['medium', 'high', 'critical'],
+          description: 'Priority level (defaults to high for assistance requests)',
+        },
+        blocking: {
+          type: 'boolean',
+          description: 'If true, indicates this request blocks your current work',
+        },
+      },
+      required: ['toTeam', 'task'],
+    },
+  },
+
+  // -------------------------------------------------------------------------
   // CONTROL TOOL
   // -------------------------------------------------------------------------
   {
@@ -358,6 +394,8 @@ function executeAgentTool(toolName, input, callingTeamId, ctx) {
         return handleSearchWorkspace(input, callingTeamId, ctx);
       case 'signal_completion':
         return handleSignalCompletion(input, callingTeamId, ctx);
+      case 'request_team_assistance':
+        return handleRequestTeamAssistance(input, callingTeamId, ctx);
       default:
         return { success: false, message: `Unknown tool: ${toolName}`, data: null };
     }
@@ -741,6 +779,96 @@ function handleSignalCompletion(input, callingTeamId, ctx) {
     success: true,
     message: 'Assignment marked as complete. Agent loop will stop.',
     data: summary,
+  };
+}
+
+function handleRequestTeamAssistance(input, callingTeamId, ctx) {
+  const { toTeam, task, context: taskContext, priority, blocking } = input;
+
+  // Validate target team
+  if (!ctx.teams[toTeam]) {
+    return {
+      success: false,
+      message: `Invalid target team: ${toTeam}. Valid teams: ${Object.keys(ctx.teams).join(', ')}`,
+      data: null,
+    };
+  }
+
+  // Cannot request assistance from self
+  if (toTeam === callingTeamId) {
+    return {
+      success: false,
+      message: 'Cannot request assistance from your own team',
+      data: null,
+    };
+  }
+
+  const taskId = `task-assist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const assistancePriority = priority || 'high';
+
+  // Build task description with context
+  let fullDescription = `## Assistance Request from ${ctx.teams[callingTeamId]?.name || callingTeamId}\n\n`;
+  fullDescription += `**Task:** ${task}\n\n`;
+  if (taskContext) {
+    fullDescription += `**Context:** ${taskContext}\n\n`;
+  }
+  if (blocking) {
+    fullDescription += `**Note:** This request is blocking the ${ctx.teams[callingTeamId]?.name || callingTeamId}'s current work.\n`;
+  }
+
+  const assistTask = {
+    id: taskId,
+    title: `[Assistance Request] ${task.substring(0, 80)}`,
+    description: fullDescription,
+    priority: assistancePriority,
+    status: 'pending',
+    teamId: toTeam,
+    assignedAgents: [],
+    createdBy: `agent:${callingTeamId}`,
+    isAssistanceRequest: true,
+    requestingTeam: callingTeamId,
+    blocking: blocking || false,
+    progress: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  // Add to tasks
+  if (!ctx.tasks) ctx.tasks = [];
+  ctx.tasks.unshift(assistTask);
+
+  // Also send a message to the team
+  const commId = `comm-assist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const comm = {
+    id: commId,
+    from: { agent: 'Team Lead', teamId: callingTeamId },
+    to: { agent: 'Team', teamId: toTeam },
+    message: `Assistance requested: ${task}${blocking ? ' (BLOCKING)' : ''}`,
+    relatedTask: taskId,
+    timestamp: new Date().toISOString(),
+  };
+
+  if (!ctx.communications) ctx.communications = [];
+  ctx.communications.unshift(comm);
+
+  // Log activity
+  addActivityToContext(
+    ctx,
+    callingTeamId,
+    'Team Lead',
+    `Requested assistance from ${ctx.teams[toTeam]?.name || toTeam}: "${task.substring(0, 60)}"`,
+    'Assistance Request'
+  );
+
+  return {
+    success: true,
+    message: `Assistance request sent to ${ctx.teams[toTeam]?.name || toTeam}. Task created with ${assistancePriority} priority.`,
+    data: {
+      taskId,
+      toTeam,
+      priority: assistancePriority,
+      blocking: blocking || false,
+    },
   };
 }
 
