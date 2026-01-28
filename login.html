@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="noindex, nofollow" />
+        <title>FUSE | Login</title>
+        <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --primary: #ff3b30;
+                --primary-hover: #e6352b;
+                --bg: #0a0a0a;
+                --surface: #141414;
+                --surface-hover: #1a1a1a;
+                --border: #2a2a2a;
+                --text: #ffffff;
+                --text-secondary: #888888;
+                --success: #34c759;
+                --error: #ff3b30;
+            }
+
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .login-container {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .login-header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            .logo {
+                font-family: 'Bebas Neue', sans-serif;
+                font-size: 48px;
+                letter-spacing: 0.15em;
+                color: var(--text);
+                margin-bottom: 8px;
+            }
+
+            .subtitle {
+                color: var(--text-secondary);
+                font-size: 14px;
+                font-weight: 400;
+            }
+
+            .login-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 32px;
+            }
+
+            .tab-nav {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 24px;
+            }
+
+            .tab-btn {
+                flex: 1;
+                padding: 12px 16px;
+                background: transparent;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                color: var(--text-secondary);
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .tab-btn:hover {
+                background: var(--surface-hover);
+                color: var(--text);
+            }
+
+            .tab-btn.active {
+                background: var(--primary);
+                border-color: var(--primary);
+                color: white;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                display: block;
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--text-secondary);
+                margin-bottom: 8px;
+            }
+
+            .form-input {
+                width: 100%;
+                padding: 14px 16px;
+                background: var(--bg);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                color: var(--text);
+                font-size: 16px;
+                font-family: inherit;
+                transition: border-color 0.2s;
+            }
+
+            .form-input:focus {
+                outline: none;
+                border-color: var(--primary);
+            }
+
+            .form-input::placeholder {
+                color: var(--text-secondary);
+            }
+
+            .btn-primary {
+                width: 100%;
+                padding: 14px 24px;
+                background: var(--primary);
+                border: none;
+                border-radius: 10px;
+                color: white;
+                font-size: 15px;
+                font-weight: 600;
+                font-family: inherit;
+                cursor: pointer;
+                transition: background 0.2s, transform 0.1s;
+            }
+
+            .btn-primary:hover:not(:disabled) {
+                background: var(--primary-hover);
+            }
+
+            .btn-primary:active:not(:disabled) {
+                transform: scale(0.98);
+            }
+
+            .btn-primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            .message {
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-size: 14px;
+                margin-bottom: 20px;
+                display: none;
+            }
+
+            .message.show {
+                display: block;
+            }
+
+            .message.success {
+                background: rgba(52, 199, 89, 0.15);
+                border: 1px solid rgba(52, 199, 89, 0.3);
+                color: var(--success);
+            }
+
+            .message.error {
+                background: rgba(255, 59, 48, 0.15);
+                border: 1px solid rgba(255, 59, 48, 0.3);
+                color: var(--error);
+            }
+
+            .magic-link-info {
+                text-align: center;
+                padding: 20px 0;
+            }
+
+            .magic-link-info p {
+                color: var(--text-secondary);
+                font-size: 14px;
+                line-height: 1.6;
+            }
+
+            .email-display {
+                display: inline-block;
+                margin-top: 12px;
+                padding: 8px 16px;
+                background: var(--bg);
+                border-radius: 6px;
+                color: var(--text);
+                font-weight: 500;
+            }
+
+            .login-footer {
+                text-align: center;
+                margin-top: 24px;
+            }
+
+            .footer-link {
+                color: var(--text-secondary);
+                font-size: 13px;
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+
+            .footer-link:hover {
+                color: var(--text);
+            }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 0.8s ease-in-out infinite;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 10px;
+                background: var(--bg);
+                border-radius: 12px;
+                font-size: 11px;
+                color: var(--text-secondary);
+                margin-top: 16px;
+            }
+
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--success);
+            }
+
+            .status-dot.warning {
+                background: #ff9500;
+            }
+
+            .status-dot.error {
+                background: var(--error);
+            }
+
+            @media (max-width: 480px) {
+                .login-card {
+                    padding: 24px;
+                }
+
+                .logo {
+                    font-size: 40px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <header class="login-header">
+                <h1 class="logo">FUSE</h1>
+                <p class="subtitle">CEO Command Center</p>
+            </header>
+
+            <main class="login-card">
+                <nav class="tab-nav">
+                    <button class="tab-btn active" data-tab="pin">PIN</button>
+                    <button class="tab-btn" data-tab="magic-link">Magic Link</button>
+                </nav>
+
+                <div id="message" class="message"></div>
+
+                <!-- PIN Login -->
+                <div id="tab-pin" class="tab-content active">
+                    <form id="pinForm">
+                        <div class="form-group">
+                            <label class="form-label" for="pinInput">Enter your PIN</label>
+                            <input
+                                type="password"
+                                id="pinInput"
+                                class="form-input"
+                                placeholder="Enter PIN"
+                                autocomplete="current-password"
+                                inputmode="numeric"
+                                required
+                            />
+                        </div>
+                        <button type="submit" id="pinSubmit" class="btn-primary">
+                            Access Dashboard
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Magic Link -->
+                <div id="tab-magic-link" class="tab-content">
+                    <div class="magic-link-info">
+                        <p>We'll send a secure login link to your registered email address.</p>
+                        <span class="email-display" id="emailDisplay">Loading...</span>
+                    </div>
+                    <button id="sendMagicLink" class="btn-primary">
+                        Send Magic Link
+                    </button>
+                </div>
+
+                <div class="status-badge" id="statusBadge">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Checking...</span>
+                </div>
+            </main>
+
+            <footer class="login-footer">
+                <a href="/" class="footer-link">Return to Home</a>
+            </footer>
+        </div>
+
+        <script>
+            (function() {
+                'use strict';
+
+                const API_BASE = '/api/ceo-auth';
+                const SESSION_KEY = 'fuse_ceo_session';
+
+                // Elements
+                const tabBtns = document.querySelectorAll('.tab-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+                const messageEl = document.getElementById('message');
+                const pinForm = document.getElementById('pinForm');
+                const pinInput = document.getElementById('pinInput');
+                const pinSubmit = document.getElementById('pinSubmit');
+                const sendMagicLinkBtn = document.getElementById('sendMagicLink');
+                const emailDisplay = document.getElementById('emailDisplay');
+                const statusBadge = document.getElementById('statusBadge');
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+
+                let authMethods = { pin: false, magicLink: false };
+
+                // ─────────────────────────────────────────────────────────────
+                // Initialize
+                // ─────────────────────────────────────────────────────────────
+                async function init() {
+                    // Check for auth token in URL (magic link redirect)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const authToken = urlParams.get('auth_token');
+                    if (authToken) {
+                        await verifyMagicLink(authToken);
+                        return;
+                    }
+
+                    // Check existing session
+                    const existingSession = sessionStorage.getItem(SESSION_KEY);
+                    if (existingSession) {
+                        const valid = await verifySession(existingSession);
+                        if (valid) {
+                            redirectToDashboard();
+                            return;
+                        }
+                        sessionStorage.removeItem(SESSION_KEY);
+                    }
+
+                    // Check available auth methods
+                    await checkStatus();
+                }
+
+                // ─────────────────────────────────────────────────────────────
+                // API Calls
+                // ─────────────────────────────────────────────────────────────
+                async function checkStatus() {
+                    try {
+                        const res = await fetch(API_BASE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'status' }),
+                        });
+                        const data = await res.json();
+
+                        if (data.success) {
+                            authMethods = data.methods;
+                            emailDisplay.textContent = data.ceoEmail || 'Not configured';
+
+                            // Update status
+                            if (authMethods.pin || authMethods.magicLink) {
+                                statusDot.className = 'status-dot';
+                                statusText.textContent = 'Ready';
+                            } else {
+                                statusDot.className = 'status-dot error';
+                                statusText.textContent = 'Not configured';
+                            }
+
+                            // Hide unavailable tabs
+                            if (!authMethods.pin) {
+                                document.querySelector('[data-tab="pin"]').style.display = 'none';
+                                switchTab('magic-link');
+                            }
+                            if (!authMethods.magicLink) {
+                                document.querySelector('[data-tab="magic-link"]').style.display = 'none';
+                            }
+                        }
+                    } catch (error) {
+                        statusDot.className = 'status-dot error';
+                        statusText.textContent = 'Connection error';
+                    }
+                }
+
+                async function verifySession(token) {
+                    try {
+                        const res = await fetch(API_BASE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'verify-session', sessionToken: token }),
+                        });
+                        const data = await res.json();
+                        return data.success && data.verified;
+                    } catch (error) {
+                        return false;
+                    }
+                }
+
+                async function loginWithPin(pin) {
+                    setLoading(pinSubmit, true);
+                    try {
+                        const res = await fetch(API_BASE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'pin', pin }),
+                        });
+                        const data = await res.json();
+
+                        if (data.success && data.sessionToken) {
+                            sessionStorage.setItem(SESSION_KEY, data.sessionToken);
+                            showMessage(data.message, 'success');
+                            setTimeout(redirectToDashboard, 500);
+                        } else {
+                            showMessage(data.error || 'Invalid PIN', 'error');
+                        }
+                    } catch (error) {
+                        showMessage('Connection error. Please try again.', 'error');
+                    } finally {
+                        setLoading(pinSubmit, false);
+                    }
+                }
+
+                async function requestMagicLink() {
+                    setLoading(sendMagicLinkBtn, true);
+                    try {
+                        const res = await fetch(API_BASE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'send-magic-link', page: 'ceo-dashboard' }),
+                        });
+                        const data = await res.json();
+
+                        if (data.success) {
+                            showMessage(data.message, 'success');
+                            sendMagicLinkBtn.textContent = 'Check your email';
+                            sendMagicLinkBtn.disabled = true;
+                        } else {
+                            showMessage(data.error || 'Failed to send magic link', 'error');
+                        }
+                    } catch (error) {
+                        showMessage('Connection error. Please try again.', 'error');
+                    } finally {
+                        setLoading(sendMagicLinkBtn, false);
+                    }
+                }
+
+                async function verifyMagicLink(token) {
+                    showMessage('Verifying magic link...', 'success');
+                    try {
+                        const res = await fetch(API_BASE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'verify-magic-link', token }),
+                        });
+                        const data = await res.json();
+
+                        if (data.success && data.sessionToken) {
+                            sessionStorage.setItem(SESSION_KEY, data.sessionToken);
+                            showMessage(data.message, 'success');
+
+                            // Clear token from URL
+                            const url = new URL(window.location);
+                            url.searchParams.delete('auth_token');
+                            window.history.replaceState({}, '', url.toString());
+
+                            setTimeout(redirectToDashboard, 500);
+                        } else {
+                            showMessage(data.error || 'Invalid or expired magic link', 'error');
+                            // Clear token from URL
+                            const url = new URL(window.location);
+                            url.searchParams.delete('auth_token');
+                            window.history.replaceState({}, '', url.toString());
+                        }
+                    } catch (error) {
+                        showMessage('Connection error. Please try again.', 'error');
+                    }
+                }
+
+                // ─────────────────────────────────────────────────────────────
+                // UI Helpers
+                // ─────────────────────────────────────────────────────────────
+                function showMessage(text, type) {
+                    messageEl.textContent = text;
+                    messageEl.className = `message show ${type}`;
+                }
+
+                function hideMessage() {
+                    messageEl.className = 'message';
+                }
+
+                function setLoading(btn, loading) {
+                    if (loading) {
+                        btn.disabled = true;
+                        btn.dataset.originalText = btn.textContent;
+                        btn.innerHTML = '<span class="loading-spinner"></span>Please wait...';
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = btn.dataset.originalText || 'Submit';
+                    }
+                }
+
+                function switchTab(tabId) {
+                    tabBtns.forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.tab === tabId);
+                    });
+                    tabContents.forEach(content => {
+                        content.classList.toggle('active', content.id === `tab-${tabId}`);
+                    });
+                    hideMessage();
+                }
+
+                function redirectToDashboard() {
+                    window.location.href = '/ceo-dashboard.html';
+                }
+
+                // ─────────────────────────────────────────────────────────────
+                // Event Listeners
+                // ─────────────────────────────────────────────────────────────
+                tabBtns.forEach(btn => {
+                    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+                });
+
+                pinForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const pin = pinInput.value.trim();
+                    if (pin) {
+                        loginWithPin(pin);
+                    }
+                });
+
+                sendMagicLinkBtn.addEventListener('click', () => {
+                    requestMagicLink();
+                });
+
+                // Initialize
+                init();
+            })();
+        </script>
+    </body>
+</html>
