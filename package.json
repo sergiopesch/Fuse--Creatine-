@@ -11,7 +11,11 @@
     "lint": "eslint js/ api/ --ext .js",
     "lint:fix": "eslint js/ api/ --ext .js --fix",
     "format": "prettier --write \"js/**/*.js\" \"api/**/*.js\"",
-    "format:check": "prettier --check \"js/**/*.js\" \"api/**/*.js\""
+    "format:check": "prettier --check \"js/**/*.js\" \"api/**/*.js\"",
+    "fuse": "cd cli && npx ts-node src/index.ts",
+    "fuse:build": "cd cli && npm run build",
+    "fuse:status": "cd cli && npx ts-node src/index.ts status all",
+    "fuse:queue": "cd cli && npx ts-node src/index.ts queue list"
   },
   "repository": {
     "type": "git",
