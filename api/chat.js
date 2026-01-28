@@ -11,7 +11,7 @@
 const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
 const { resilientFetch } = require('./_lib/circuit-breaker');
 // Import shared utilities to avoid code duplication
-const { getClientIp: securityGetClientIp } = require('./_lib/security');
+const { getClientIp: securityGetClientIp, getCorsOrigin, setSecurityHeaders } = require('./_lib/security');
 
 // ============================================================================
 // SECURITY LAYER 1: PROMPT INJECTION DETECTION PATTERNS
@@ -503,16 +503,6 @@ const RATE_LIMIT_MAX_ENTRIES = 2000;
 // Rate limiting store
 const rateLimitStore = new Map();
 
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-    'https://fuse-creatine.vercel.app',
-    'https://www.fusecreatine.com',
-    'https://fusecreatine.com',
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-];
-
 /**
  * Get client IP from request
  * Uses shared utility from security module
@@ -605,53 +595,6 @@ function validateHistory(history) {
 }
 
 /**
- * Get CORS origin
- */
-function getCorsOrigin(requestOrigin, requestHost = '') {
-    if (!requestOrigin) return null;
-    if (ALLOWED_ORIGINS.includes(requestOrigin)) return requestOrigin;
-    if (requestOrigin.endsWith('.vercel.app')) return requestOrigin;
-
-    let originHostname = '';
-    try {
-        originHostname = new URL(requestOrigin).hostname.toLowerCase();
-    } catch (error) {
-        return null;
-    }
-
-    if (
-        originHostname === 'localhost' ||
-        originHostname === '127.0.0.1' ||
-        originHostname === '::1' ||
-        originHostname === '0.0.0.0'
-    ) {
-        return requestOrigin;
-    }
-
-    if (requestHost) {
-        const hostHostname = requestHost.split(':')[0].toLowerCase();
-        if (originHostname === hostHostname) {
-            return requestOrigin;
-        }
-    }
-
-    return null;
-}
-
-/**
- * Set security headers
- */
-function setSecurityHeaders(res, origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Access-Control-Max-Age', '86400');
-    res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-}
-
-/**
  * Main handler
  */
 module.exports = async (req, res) => {
@@ -659,7 +602,7 @@ module.exports = async (req, res) => {
         ? req.headers['x-forwarded-host'][0]
         : req.headers['x-forwarded-host'] || req.headers.host || '';
     const origin = getCorsOrigin(req.headers.origin, requestHost);
-    setSecurityHeaders(res, origin);
+    setSecurityHeaders(res, origin, 'POST, OPTIONS');
 
     // Handle preflight
     if (req.method === 'OPTIONS') {

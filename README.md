@@ -76,6 +76,7 @@ fuse-creatine/
 │   └── validation/         # Market validation
 ├── docs/                   # Documentation
 │   └── DASHBOARD_AUTH_DEBUG_REPORT.md  # Biometric auth debug guide
+├── molt/                   # Molt bot integration (CEO assistant skills)
 ├── scripts/                # Utility scripts
 │   ├── test-signup-integration.js  # Integration tests
 │   └── test-orchestration.sh       # Orchestration tests
@@ -330,10 +331,12 @@ Current coverage thresholds: 50% (branches, functions, lines, statements)
 
 ## Browser Support
 
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
+- Chrome 90+ (desktop & mobile)
+- Firefox 88+ (desktop & mobile)
+- Safari 14+ (desktop & iOS)
 - Edge 90+
+
+**Responsive:** Optimized for viewports from 393px (iPhone 14 Pro) to 2560px+ ultrawide. All pages tested at iPhone SE (375px), iPhone 14 Pro (393px), iPad (768px), and desktop (1200px+).
 
 **Note**: WebAuthn requires a platform authenticator (Face ID, Touch ID, Windows Hello, or fingerprint sensor).
 
@@ -341,7 +344,7 @@ Current coverage thresholds: 50% (branches, functions, lines, statements)
 
 ### Planned: AWS Migration
 
-We're planning to migrate from in-memory stores to persistent AWS storage. See [Technical Documentation](./docs/README.md) for details.
+Potential future migration from in-memory stores to persistent AWS storage.
 
 | Current | Planned | Status |
 |---------|---------|--------|
@@ -351,14 +354,14 @@ We're planning to migrate from in-memory stores to persistent AWS storage. See [
 | In-memory (audit) | DynamoDB | Planned |
 | Upstash Redis | Keep / ElastiCache | Planned |
 
-### Planned: Consent Management
+### Consent Management
 
-GDPR/CCPA compliant consent and cookie preference system.
+Client-side cookie consent and preference system.
 
 | Feature | Status |
 |---------|--------|
-| Cookie consent banner | Planned |
-| Preference center | Planned |
+| Cookie consent banner | Implemented |
+| Preference center | Implemented |
 | Consent audit trail | Planned |
 | Data export (GDPR) | Planned |
 | Data deletion (GDPR) | Planned |
@@ -367,45 +370,49 @@ GDPR/CCPA compliant consent and cookie preference system.
 
 | Document | Description |
 |----------|-------------|
-| [Technical Docs](./docs/README.md) | Documentation index |
-| [AWS Services](./docs/architecture/aws-services.md) | AWS migration plan |
-| [Data Model](./docs/architecture/data-model.md) | Entity schemas |
-| [DynamoDB Design](./docs/architecture/dynamodb-design.md) | Database patterns |
-| [Consent Management](./docs/architecture/consent-management.md) | Privacy compliance |
-| [Cookie Preferences](./docs/architecture/cookie-preferences.md) | Cookie consent |
+| [Auth Debug Guide](./docs/DASHBOARD_AUTH_DEBUG_REPORT.md) | Biometric auth debug reference |
 
 ---
 
 ## Recent Updates
 
+### Version 2.5.0
+- **Full responsive redesign** targeting iPhone 14 Pro (393px) and all small mobile devices
+  - Added `@media (max-width: 420px)` breakpoints across all 8 CSS files
+  - Fixed hero orbs overflow (520-680px orbs scaled to 210-340px on mobile)
+  - Fixed admin table `min-width: 980px` → `600px` with horizontal scroll container
+  - Made CEO dashboard header, nav tabs, and control bar fully mobile-adaptive
+  - Added responsive breakpoints to legal.css (previously had none)
+  - Chat widget goes full-width on small screens
+  - All dashboards collapse to single-column grids on mobile
+  - Modals become bottom sheets / full-width on small screens
+- **Removed duplicate code** in API layer
+  - Removed duplicate `getCorsOrigin()`/`setSecurityHeaders()` from `chat.js` and `health.js` (now imported from `_lib/security.js`)
+  - Removed duplicate imports from `magic-link.js`
+  - `health.js` reduced from 148 to 94 lines
+- **Cleaned up outdated documentation**
+  - Removed 8 "Planning Phase" architecture docs that were never implemented
+  - Kept active reference doc (DASHBOARD_AUTH_DEBUG_REPORT.md)
+  - Updated README to reflect current state
+
 ### Version 2.4.0
 - Rebranded from "FUSE UK" to "FUSE Creatine" across all touchpoints
 - Updated hero headline from "POUR. FUSE." to "FUSE CREATINE" (red + white styling)
 - Replaced specific member/athlete counts with science-backed stats
-- Marked city reach as "Potential UK Cities" (concept stage)
-- Replaced "18 months" messaging with grounded creatine science messaging
 - Removed pricing section (product is at idea stage)
-- Removed "Elite" references for more grounded tone
 - Updated all CTAs from pricing-focused to "Get Early Access"
-- Updated social share text and waitlist modal messaging
-- Updated documentation to reflect concept stage status
 
-### Version 2.3.0 (Planned)
-- AWS DynamoDB integration for persistent storage
-- Consent management system
-- Cookie preference center
-- GDPR/CCPA compliance features
+### Version 2.3.0
+- Cookie consent banner and preference center (client-side)
+- Consent UI with accessible, WCAG 2.1 AA compliant design
 
 ### Version 2.2.0
 - Refactored biometric authentication to use shared utilities module
 - Reduced code duplication between authenticate and register endpoints
-- Updated tests to work with Redis-based rate limiting
-- Improved documentation
 
 ### Version 2.1.0
 - Added multi-device support for biometric authentication
 - Implemented device linking feature
-- Enhanced device fingerprinting with client-provided device IDs
 - Added CEO Dashboard
 
 ## License
