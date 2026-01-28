@@ -3868,6 +3868,192 @@ body {
     }
 }
 
+/* =================================
+   Small Mobile (iPhone 14 Pro & similar ≤420px)
+   ================================= */
+@media (max-width: 420px) {
+    .nav {
+        padding: 1rem 4%;
+    }
+
+    .nav.scrolled {
+        padding: 0.75rem 4%;
+    }
+
+    .logo {
+        font-size: 1.6rem;
+    }
+
+    .hero {
+        padding: calc(var(--nav-height) + 1.5rem) 0 3rem;
+    }
+
+    .hero-main {
+        padding: 0 4%;
+        gap: 2rem;
+    }
+
+    .hero-british-badge {
+        padding: 0.4rem 0.9rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .hero-british-badge .text {
+        font-size: 0.65rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        margin: 0.75rem 0 1rem;
+    }
+
+    .hero-footnote {
+        font-size: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-cta-group .btn-primary,
+    .hero-cta-group .btn-secondary {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .orb {
+        width: 260px;
+        height: 260px;
+    }
+
+    .orb-2 {
+        width: 340px;
+        height: 340px;
+    }
+
+    .orb-3 {
+        width: 210px;
+        height: 210px;
+    }
+
+    section {
+        padding: 3rem 4%;
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .stat-number {
+        font-size: clamp(1.5rem, 8vw, 2.5rem);
+    }
+
+    .science-step-title {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+    }
+
+    .product-visual {
+        min-height: 300px;
+    }
+
+    .showcase-product {
+        max-width: 280px;
+    }
+
+    .showcase-content h2 {
+        font-size: clamp(3rem, 10vw, 4rem);
+    }
+
+    .bottom-cta {
+        padding: 3rem 4%;
+    }
+
+    .cta-title {
+        font-size: clamp(2.5rem, 11vw, 4rem);
+    }
+
+    .cta-subtitle {
+        font-size: 1rem;
+    }
+
+    .social-proof {
+        padding: 2.5rem 4%;
+    }
+
+    .proof-container {
+        gap: 1.5rem;
+    }
+
+    .proof-item {
+        min-width: 100px;
+    }
+
+    .trust-badges {
+        gap: 0.75rem;
+    }
+
+    .trust-badge {
+        padding: 0.5rem 0.875rem;
+    }
+
+    .badge-text {
+        font-size: 0.7rem;
+    }
+
+    .pricing-preview {
+        padding: 3rem 4%;
+    }
+
+    .pricing-card {
+        padding: 1.5rem 1.25rem;
+        border-radius: 16px;
+    }
+
+    .pricing-badge {
+        font-size: 0.6rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pricing-offer {
+        padding: 1.25rem;
+    }
+
+    .site-footer {
+        padding: 2.5rem 4% 1.5rem;
+    }
+
+    .footer-nav {
+        gap: 0.75rem;
+    }
+
+    .fuse-chat {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .chat-window {
+        width: calc(100vw - 2rem);
+        right: 0;
+        bottom: 70px;
+        max-height: 70vh;
+        border-radius: 16px;
+    }
+
+    .mobile-menu a {
+        font-size: 3rem;
+        margin: 0.75rem 0;
+    }
+
+    .modal-content {
+        width: 100%;
+        margin: 0.5rem;
+        padding: 1.5rem 1rem;
+        border-radius: 0.875rem;
+    }
+
+    .modal-title {
+        font-size: 1.75rem;
+    }
+}
+
 /* Focus visible for accessibility */
 a:focus-visible,
 button:focus-visible,

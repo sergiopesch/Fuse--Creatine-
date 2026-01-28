@@ -13,10 +13,6 @@
 const crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
 const { createSecuredHandler, addAuditEntry } = require('./_lib/security');
-const {
-    createSecuredHandler,
-    addAuditEntry
-} = require('./_lib/security');
 
 // ============================================================================
 // CONFIGURATION

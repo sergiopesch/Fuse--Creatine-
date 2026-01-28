@@ -4770,3 +4770,184 @@
         border-color: rgba(239, 68, 68, 0.3);
     }
 }
+
+/* =================================
+   Small Mobile (≤420px)
+   ================================= */
+@media (max-width: 420px) {
+    .command-header {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .command-header .logo-text {
+        font-size: 1.4rem;
+    }
+
+    .command-header .header-divider {
+        display: none;
+    }
+
+    .command-title {
+        font-size: 0.85rem;
+    }
+
+    .header-nav {
+        display: none;
+    }
+
+    .owner-controls {
+        gap: 0.375rem;
+    }
+
+    .world-state-indicator {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .world-state-text {
+        font-size: 0.55rem;
+    }
+
+    .credit-indicator {
+        padding: 0.25rem 0.375rem;
+    }
+
+    .credit-value,
+    .credit-limit {
+        font-size: 0.65rem;
+    }
+
+    .master-pause-btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .master-pause-btn span {
+        display: none;
+    }
+
+    .system-status {
+        display: none;
+    }
+
+    .live-clock {
+        display: none;
+    }
+
+    .user-badge .user-role {
+        display: none;
+    }
+
+    .command-center {
+        padding: 0.75rem;
+    }
+
+    .team-sidebar {
+        width: 100%;
+    }
+
+    .sidebar-header h3 {
+        font-size: 0.85rem;
+    }
+
+    .agent-workspace {
+        padding: 0.75rem;
+    }
+
+    .workspace-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .workspace-header .workspace-actions {
+        width: 100%;
+    }
+
+    .workspace-header .workspace-actions button {
+        flex: 1;
+    }
+
+    .team-card {
+        padding: 1rem;
+    }
+
+    .team-card-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .agents-list {
+        grid-template-columns: 1fr;
+    }
+
+    .agent-card {
+        padding: 0.875rem;
+    }
+
+    .activity-panel {
+        padding: 0.75rem;
+    }
+
+    .activity-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .world-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .world-controls .control-group {
+        width: 100%;
+    }
+
+    .world-state-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .task-form {
+        padding: 1rem;
+    }
+
+    .task-form input,
+    .task-form textarea,
+    .task-form select {
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        padding: 0.875rem;
+    }
+
+    .output-panel {
+        max-height: 250px;
+    }
+
+    .modal-content {
+        width: calc(100% - 1rem);
+        margin: 0.5rem;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        padding: 1rem;
+        flex-direction: column;
+    }
+
+    .modal-footer button {
+        width: 100%;
+    }
+}

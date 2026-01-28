@@ -87,3 +87,64 @@ ul {
     padding-left: 1.3rem;
     margin: 0;
 }
+
+/* =================================
+   Responsive - Tablet & Mobile
+   ================================= */
+@media (max-width: 768px) {
+    .legal {
+        padding: 40px 20px 60px;
+    }
+
+    .legal-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .legal-header h1 {
+        font-size: 1.8rem;
+    }
+
+    h2 {
+        font-size: 1.15rem;
+    }
+
+    p,
+    li {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .legal {
+        padding: 32px 16px 48px;
+    }
+
+    .legal-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .legal-eyebrow {
+        font-size: 0.65rem;
+    }
+
+    .legal-link {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    h2 {
+        font-size: 1.05rem;
+    }
+
+    p,
+    li {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    section {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+}
