@@ -195,8 +195,16 @@ async function sendMagicLinkEmail(magicLinkUrl) {
             console.log('[CEOAuth] DEV MODE - Magic Link URL:', magicLinkUrl);
             return { success: true, devMode: true };
         }
-        return { success: false, error: 'Email not configured' };
+        return { success: false, error: 'Email not configured. Set RESEND_API_KEY in environment variables.' };
     }
+
+    // Validate API key format (Resend keys start with 're_')
+    if (!RESEND_API_KEY.startsWith('re_')) {
+        console.error('[CEOAuth] Invalid Resend API key format - should start with "re_"');
+        return { success: false, error: 'Invalid email API key format. Check RESEND_API_KEY configuration.' };
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>';
 
     try {
         const response = await fetch('https://api.resend.com/emails', {
@@ -206,7 +214,7 @@ async function sendMagicLinkEmail(magicLinkUrl) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                from: process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>',
+                from: fromEmail,
                 to: [CEO_EMAIL],
                 subject: 'FUSE Dashboard - Login Link',
                 html: `
@@ -229,13 +237,36 @@ async function sendMagicLinkEmail(magicLinkUrl) {
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             console.error('[CEOAuth] Resend error:', response.status, err);
-            return { success: false, error: 'Failed to send email' };
+
+            // Provide specific error messages based on status code
+            if (response.status === 401) {
+                return { success: false, error: 'Invalid email API key. Check RESEND_API_KEY.' };
+            }
+            if (response.status === 403) {
+                return { success: false, error: 'Email API access denied. Check Resend dashboard permissions.' };
+            }
+            if (response.status === 422) {
+                // Common 422 errors: unverified domain, invalid email format
+                const message = err.message || '';
+                if (message.toLowerCase().includes('domain') || message.toLowerCase().includes('verified')) {
+                    return { success: false, error: 'Sender domain not verified. Verify your domain in Resend dashboard.' };
+                }
+                if (message.toLowerCase().includes('from')) {
+                    return { success: false, error: 'Invalid sender email. Check RESEND_FROM_EMAIL configuration.' };
+                }
+                return { success: false, error: `Email validation failed: ${message || 'Check email configuration'}` };
+            }
+            if (response.status === 429) {
+                return { success: false, error: 'Email rate limit exceeded. Please try again later.' };
+            }
+
+            return { success: false, error: `Failed to send email (${response.status})` };
         }
 
         return { success: true };
     } catch (error) {
         console.error('[CEOAuth] Email error:', error.message);
-        return { success: false, error: 'Email service error' };
+        return { success: false, error: `Email service error: ${error.message}` };
     }
 }
 
@@ -311,13 +342,32 @@ module.exports = async (req, res) => {
     // ACTION: status - Check what auth methods are available
     // ─────────────────────────────────────────────────────────────────────────
     if (action === 'status') {
+        // Determine email configuration status with detailed info
+        let emailStatus = 'not-configured';
+        let emailStatusDetail = null;
+
+        if (RESEND_API_KEY) {
+            if (!RESEND_API_KEY.startsWith('re_')) {
+                emailStatus = 'invalid-key';
+                emailStatusDetail = 'API key should start with "re_"';
+            } else {
+                emailStatus = 'configured';
+            }
+        } else if (process.env.NODE_ENV !== 'production') {
+            emailStatus = 'dev-mode';
+            emailStatusDetail = 'Emails logged to console';
+        } else {
+            emailStatusDetail = 'Set RESEND_API_KEY';
+        }
+
         return res.status(200).json({
             success: true,
             methods: {
                 pin: !!CEO_PIN,
                 magicLink: !!SESSION_SECRET,
-                email: RESEND_API_KEY ? 'configured' : (process.env.NODE_ENV !== 'production' ? 'dev-mode' : 'not-configured'),
+                email: emailStatus,
             },
+            emailStatusDetail,
             ceoEmail: CEO_EMAIL ? CEO_EMAIL.replace(/(.{2}).*(@.*)/, '$1***$2') : null,
         });
     }

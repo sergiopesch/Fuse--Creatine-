@@ -414,10 +414,19 @@
                             authMethods = data.methods;
                             emailDisplay.textContent = data.ceoEmail || 'Not configured';
 
-                            // Update status
+                            // Update status based on auth methods and email configuration
                             if (authMethods.pin || authMethods.magicLink) {
-                                statusDot.className = 'status-dot';
-                                statusText.textContent = 'Ready';
+                                // Check email status for warnings
+                                if (authMethods.email === 'invalid-key') {
+                                    statusDot.className = 'status-dot warning';
+                                    statusText.textContent = data.emailStatusDetail || 'Email config issue';
+                                } else if (authMethods.email === 'not-configured' && !authMethods.pin) {
+                                    statusDot.className = 'status-dot warning';
+                                    statusText.textContent = data.emailStatusDetail || 'Email not configured';
+                                } else {
+                                    statusDot.className = 'status-dot';
+                                    statusText.textContent = 'Ready';
+                                }
                             } else {
                                 statusDot.className = 'status-dot error';
                                 statusText.textContent = 'Not configured';
@@ -430,6 +439,11 @@
                             }
                             if (!authMethods.magicLink) {
                                 document.querySelector('[data-tab="magic-link"]').style.display = 'none';
+                            }
+
+                            // Show warning if email is misconfigured but magic link tab is available
+                            if (authMethods.magicLink && authMethods.email !== 'configured' && authMethods.email !== 'dev-mode') {
+                                console.warn('[CEOAuth] Email status:', authMethods.email, data.emailStatusDetail);
                             }
                         }
                     } catch (error) {
