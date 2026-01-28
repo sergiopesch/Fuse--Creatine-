@@ -113,7 +113,9 @@
     };
 
     const hasActiveFilters = () => {
-        return Boolean(state.filterEmail || state.filterKeyword || state.filterFrom || state.filterTo);
+        return Boolean(
+            state.filterEmail || state.filterKeyword || state.filterFrom || state.filterTo
+        );
     };
 
     const getFilterSummary = () => {
@@ -132,7 +134,7 @@
         return parts.length ? parts.join(' • ') : 'All';
     };
 
-    const setEmptyState = (visible) => {
+    const setEmptyState = visible => {
         if (!emptyState) return;
         if (visible) {
             emptyState.textContent = hasActiveFilters()
@@ -142,21 +144,21 @@
         emptyState.classList.toggle('hidden', !visible);
     };
 
-    const formatDate = (value) => {
+    const formatDate = value => {
         const date = value ? new Date(value) : null;
         if (!date || Number.isNaN(date.getTime())) return 'N/A';
         return date.toLocaleString('en-GB');
     };
 
-    const formatShortDate = (date) => {
+    const formatShortDate = date => {
         return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     };
 
-    const getDateKey = (date) => {
+    const getDateKey = date => {
         return date.toISOString().split('T')[0];
     };
 
-    const getDaysDiff = (date1, date2) => {
+    const _getDaysDiff = (date1, date2) => {
         const oneDay = 24 * 60 * 60 * 1000;
         return Math.round(Math.abs((date1 - date2) / oneDay));
     };
@@ -164,7 +166,7 @@
     const animateValue = (element, start, end, duration = 500) => {
         if (!element) return;
         const startTime = performance.now();
-        const update = (currentTime) => {
+        const update = currentTime => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             const easeOut = 1 - Math.pow(1 - progress, 3);
@@ -178,7 +180,7 @@
     };
 
     // Tab Navigation
-    const switchTab = (tabName) => {
+    const switchTab = tabName => {
         state.activeTab = tabName;
         tabs.forEach(tab => {
             tab.classList.toggle('active', tab.dataset.tab === tabName);
@@ -289,7 +291,9 @@
             }
 
             // Interest categories
-            const interest = String(row.mainInterest || 'Other').toLowerCase().trim();
+            const interest = String(row.mainInterest || 'Other')
+                .toLowerCase()
+                .trim();
             const category = categorizeInterest(interest);
             interestCounts[category] = (interestCounts[category] || 0) + 1;
         });
@@ -327,13 +331,22 @@
         };
     };
 
-    const categorizeInterest = (interest) => {
+    const categorizeInterest = interest => {
         const categories = {
-            'Strength Training': ['strength', 'powerlifting', 'weightlifting', 'lifting', 'squat', 'deadlift', 'bench', 'barbell'],
-            'Bodybuilding': ['bodybuilding', 'muscle', 'hypertrophy', 'physique', 'aesthetic'],
-            'CrossFit': ['crossfit', 'wod', 'functional'],
-            'Cardio': ['cardio', 'running', 'cycling', 'hiit', 'endurance', 'marathon'],
-            'Nutrition': ['nutrition', 'diet', 'meal', 'calories', 'macro', 'protein', 'supplement'],
+            'Strength Training': [
+                'strength',
+                'powerlifting',
+                'weightlifting',
+                'lifting',
+                'squat',
+                'deadlift',
+                'bench',
+                'barbell',
+            ],
+            Bodybuilding: ['bodybuilding', 'muscle', 'hypertrophy', 'physique', 'aesthetic'],
+            CrossFit: ['crossfit', 'wod', 'functional'],
+            Cardio: ['cardio', 'running', 'cycling', 'hiit', 'endurance', 'marathon'],
+            Nutrition: ['nutrition', 'diet', 'meal', 'calories', 'macro', 'protein', 'supplement'],
             'Weight Loss': ['weight loss', 'fat loss', 'cutting', 'lean'],
             'General Fitness': ['fitness', 'health', 'wellness', 'exercise', 'workout', 'training'],
         };
@@ -367,12 +380,21 @@
 
         // Update trends
         updateTrend(metricTotalTrend, analytics.weekCount, analytics.lastWeekCount, 'this week');
-        updateTrend(metricTodayTrend, analytics.todayCount, analytics.yesterdayCount, 'vs yesterday');
+        updateTrend(
+            metricTodayTrend,
+            analytics.todayCount,
+            analytics.yesterdayCount,
+            'vs yesterday'
+        );
         updateTrend(metricWeekTrend, analytics.weekCount, analytics.lastWeekCount, 'vs last week');
 
         if (metricConsentTrend) {
-            metricConsentTrend.textContent = analytics.consentRate >= 80 ? 'Excellent' :
-                                             analytics.consentRate >= 60 ? 'Good' : 'Needs attention';
+            metricConsentTrend.textContent =
+                analytics.consentRate >= 80
+                    ? 'Excellent'
+                    : analytics.consentRate >= 60
+                      ? 'Good'
+                      : 'Needs attention';
             metricConsentTrend.classList.toggle('positive', analytics.consentRate >= 60);
         }
 
@@ -386,9 +408,16 @@
 
         if (statMonth) statMonth.textContent = analytics.monthCount.toLocaleString();
         if (statMonthGrowth) {
-            const growth = analytics.lastMonthCount > 0
-                ? Math.round(((analytics.monthCount - analytics.lastMonthCount) / analytics.lastMonthCount) * 100)
-                : (analytics.monthCount > 0 ? 100 : 0);
+            const growth =
+                analytics.lastMonthCount > 0
+                    ? Math.round(
+                          ((analytics.monthCount - analytics.lastMonthCount) /
+                              analytics.lastMonthCount) *
+                              100
+                      )
+                    : analytics.monthCount > 0
+                      ? 100
+                      : 0;
             statMonthGrowth.textContent = `${growth >= 0 ? '+' : ''}${growth}% vs last month`;
             statMonthGrowth.classList.toggle('positive', growth >= 0);
             statMonthGrowth.classList.toggle('negative', growth < 0);
@@ -416,7 +445,7 @@
         }
 
         const diff = current - previous;
-        const percent = previous > 0 ? Math.round((diff / previous) * 100) : (current > 0 ? 100 : 0);
+        const percent = previous > 0 ? Math.round((diff / previous) * 100) : current > 0 ? 100 : 0;
         const arrow = diff >= 0 ? '↑' : '↓';
 
         element.textContent = `${arrow} ${Math.abs(percent)}% ${label}`;
@@ -449,19 +478,21 @@
             type: 'line',
             data: {
                 labels: [],
-                datasets: [{
-                    label: 'Signups',
-                    data: [],
-                    borderColor: chartColors.primary,
-                    backgroundColor: chartColors.primaryLight,
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: chartColors.primary,
-                    pointBorderColor: chartColors.primary,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                }]
+                datasets: [
+                    {
+                        label: 'Signups',
+                        data: [],
+                        borderColor: chartColors.primary,
+                        backgroundColor: chartColors.primaryLight,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: chartColors.primary,
+                        pointBorderColor: chartColors.primary,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -483,10 +514,10 @@
                         padding: 12,
                         displayColors: false,
                         callbacks: {
-                            title: (items) => items[0]?.label || '',
-                            label: (item) => `${item.raw} signup${item.raw !== 1 ? 's' : ''}`,
-                        }
-                    }
+                            title: items => items[0]?.label || '',
+                            label: item => `${item.raw} signup${item.raw !== 1 ? 's' : ''}`,
+                        },
+                    },
                 },
                 scales: {
                     x: {
@@ -495,7 +526,7 @@
                         },
                         ticks: {
                             maxRotation: 0,
-                        }
+                        },
                     },
                     y: {
                         beginAtZero: true,
@@ -505,10 +536,10 @@
                         ticks: {
                             stepSize: 1,
                             precision: 0,
-                        }
-                    }
-                }
-            }
+                        },
+                    },
+                },
+            },
         });
     };
 
@@ -521,21 +552,23 @@
             type: 'doughnut',
             data: {
                 labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: [
-                        chartColors.primary,
-                        chartColors.blue,
-                        chartColors.purple,
-                        chartColors.green,
-                        chartColors.yellow,
-                        chartColors.pink,
-                        chartColors.cyan,
-                        chartColors.orange,
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 8,
-                }]
+                datasets: [
+                    {
+                        data: [],
+                        backgroundColor: [
+                            chartColors.primary,
+                            chartColors.blue,
+                            chartColors.purple,
+                            chartColors.green,
+                            chartColors.yellow,
+                            chartColors.pink,
+                            chartColors.cyan,
+                            chartColors.orange,
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 8,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -553,23 +586,24 @@
                         borderWidth: 1,
                         padding: 12,
                         callbacks: {
-                            label: (item) => {
+                            label: item => {
                                 const total = item.dataset.data.reduce((a, b) => a + b, 0);
                                 const percent = Math.round((item.raw / total) * 100);
                                 return `${item.label}: ${item.raw} (${percent}%)`;
-                            }
-                        }
-                    }
-                }
-            }
+                            },
+                        },
+                    },
+                },
+            },
         });
     };
 
-    const updateTrendChart = (analytics) => {
+    const updateTrendChart = analytics => {
         if (!trendChart || !analytics) return;
 
         const { dailyCounts } = analytics;
-        const days = currentChartRange === 'all' ? Object.keys(dailyCounts).length : currentChartRange;
+        const days =
+            currentChartRange === 'all' ? Object.keys(dailyCounts).length : currentChartRange;
 
         // Generate date labels for the range
         const labels = [];
@@ -589,7 +623,7 @@
         trendChart.update('none');
     };
 
-    const updateInterestChart = (analytics) => {
+    const updateInterestChart = analytics => {
         if (!interestChart || !analytics) return;
 
         const { interestCounts } = analytics;
@@ -609,26 +643,39 @@
         // Update legend
         if (interestLegend) {
             const colors = interestChart.data.datasets[0].backgroundColor;
-            interestLegend.innerHTML = sorted.map(([cat, count], i) => `
+            interestLegend.innerHTML = sorted
+                .map(
+                    ([cat, count], i) => `
                 <div class="legend-item">
                     <span class="legend-color" style="background: ${colors[i]}"></span>
                     <span>${cat}</span>
                     <span class="legend-value">${count}</span>
                 </div>
-            `).join('');
+            `
+                )
+                .join('');
         }
     };
 
-    const updateHeatmap = (hourlyCounts) => {
+    const updateHeatmap = hourlyCounts => {
         if (!hourlyHeatmap) return;
 
         const maxCount = Math.max(...hourlyCounts, 1);
 
-        hourlyHeatmap.innerHTML = hourlyCounts.map((count, hour) => {
-            const level = count === 0 ? 0 : Math.min(5, Math.ceil((count / maxCount) * 5));
-            const hourLabel = hour === 0 ? '12am' : hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
-            return `<div class="heatmap-cell" data-level="${level}" data-tooltip="${hourLabel}: ${count} signup${count !== 1 ? 's' : ''}"></div>`;
-        }).join('');
+        hourlyHeatmap.innerHTML = hourlyCounts
+            .map((count, hour) => {
+                const level = count === 0 ? 0 : Math.min(5, Math.ceil((count / maxCount) * 5));
+                const hourLabel =
+                    hour === 0
+                        ? '12am'
+                        : hour < 12
+                          ? `${hour}am`
+                          : hour === 12
+                            ? '12pm'
+                            : `${hour - 12}pm`;
+                return `<div class="heatmap-cell" data-level="${level}" data-tooltip="${hourLabel}: ${count} signup${count !== 1 ? 's' : ''}"></div>`;
+            })
+            .join('');
     };
 
     // Data Table Functions
@@ -647,12 +694,12 @@
         setEmptyState(false);
     };
 
-    const renderRows = (rows) => {
+    const renderRows = rows => {
         if (!signupRows) return;
         signupRows.innerHTML = '';
         if (!rows.length) return;
         const fragment = document.createDocumentFragment();
-        rows.forEach((row) => {
+        rows.forEach(row => {
             const tr = document.createElement('tr');
 
             const nameCell = document.createElement('td');
@@ -686,7 +733,7 @@
         signupRows.appendChild(fragment);
     };
 
-    const toggleControls = (enabled) => {
+    const toggleControls = enabled => {
         if (refreshBtn) refreshBtn.disabled = !enabled;
         if (signOutBtn) signOutBtn.disabled = !enabled;
         if (emailFilter) emailFilter.disabled = !enabled;
@@ -716,7 +763,7 @@
         if (clearLocalFiltersBtn) clearLocalFiltersBtn.disabled = !isLocalFiltered || state.loading;
     };
 
-    const showLogin = (message) => {
+    const showLogin = message => {
         if (loginCard) loginCard.classList.remove('hidden');
         if (tabNav) tabNav.classList.add('hidden');
         if (analyticsCard) analyticsCard.classList.add('hidden');
@@ -744,7 +791,7 @@
         updateFilterControls();
     };
 
-    const setToken = (token) => {
+    const setToken = token => {
         state.token = token;
         sessionStorage.setItem(TOKEN_KEY, token);
     };
@@ -765,7 +812,7 @@
         const fromDate = parseDateInput(state.filterFrom);
         const toDate = parseDateInput(state.filterTo, true);
 
-        const filtered = state.rows.filter((row) => {
+        const filtered = state.rows.filter(row => {
             if (keyword) {
                 const haystack = String(row.mainInterest || '').toLowerCase();
                 if (!haystack.includes(keyword)) return false;
@@ -882,7 +929,10 @@
                 updateAnalyticsDashboard();
             }
         } catch (error) {
-            setStatus(dataStatus, error && error.message ? error.message : 'Unable to load signups.');
+            setStatus(
+                dataStatus,
+                error && error.message ? error.message : 'Unable to load signups.'
+            );
         } finally {
             state.loading = false;
             if (refreshBtn) refreshBtn.disabled = false;
@@ -892,7 +942,7 @@
         }
     };
 
-    const handleLogin = async (event) => {
+    const handleLogin = async event => {
         event.preventDefault();
         const token = tokenInput ? tokenInput.value.trim() : '';
         if (!token) {
@@ -989,7 +1039,9 @@
     };
 
     const copyEmails = async () => {
-        const emails = Array.from(new Set(state.filteredRows.map((row) => row.email).filter(Boolean)));
+        const emails = Array.from(
+            new Set(state.filteredRows.map(row => row.email).filter(Boolean))
+        );
         if (!emails.length) return;
         const text = emails.join('\n');
 
@@ -1009,7 +1061,7 @@
         }
     };
 
-    const escapeCsv = (value) => {
+    const escapeCsv = value => {
         const safe = String(value ?? '');
         if (/[",\n]/.test(safe)) {
             return `"${safe.replace(/"/g, '""')}"`;
@@ -1029,7 +1081,7 @@
             'Signup Date',
             'Stored At',
         ];
-        const rows = state.filteredRows.map((row) => [
+        const rows = state.filteredRows.map(row => [
             row.fullName,
             row.email,
             row.mainInterest,
@@ -1039,7 +1091,7 @@
             row.signupDate,
             row.storedAt,
         ]);
-        const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
+        const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -1082,7 +1134,7 @@
 
     if (emailFilter) {
         emailFilter.addEventListener('input', updateFilterControls);
-        emailFilter.addEventListener('keydown', (event) => {
+        emailFilter.addEventListener('keydown', event => {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 applyFilter();
@@ -1100,7 +1152,7 @@
 
     if (interestFilter) {
         interestFilter.addEventListener('input', updateFilterControls);
-        interestFilter.addEventListener('keydown', (event) => {
+        interestFilter.addEventListener('keydown', event => {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 applyLocalFilters();
@@ -1136,7 +1188,8 @@
         btn.addEventListener('click', () => {
             chartRangeBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            currentChartRange = btn.dataset.range === 'all' ? 'all' : parseInt(btn.dataset.range, 10);
+            currentChartRange =
+                btn.dataset.range === 'all' ? 'all' : parseInt(btn.dataset.range, 10);
             const analytics = computeAnalytics();
             if (analytics) {
                 updateTrendChart(analytics);

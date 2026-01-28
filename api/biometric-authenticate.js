@@ -15,16 +15,8 @@
 const crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
 const { verifyAuthenticationResponse } = require('@simplewebauthn/server');
-const {
-    base64urlToBuffer,
-    getExpectedOrigins,
-    getExpectedRpIds
-} = require('./_lib/webauthn');
-const {
-    createSecuredHandler,
-    addAuditEntry,
-    sanitizeString
-} = require('./_lib/security');
+const { base64urlToBuffer, getExpectedOrigins, getExpectedRpIds } = require('./_lib/webauthn');
+const { createSecuredHandler, addAuditEntry, sanitizeString } = require('./_lib/security');
 const {
     CONFIG: BIOMETRIC_CONFIG,
     createClientFingerprint,
@@ -41,7 +33,7 @@ const {
     storeDeviceLink,
     getDeviceLink,
     deleteDeviceLink,
-    addAuthorizedDevice
+    addAuthorizedDevice,
 } = require('./_lib/biometric-utils');
 
 // ============================================================================
@@ -60,14 +52,14 @@ const CONFIG = {
     MAX_FAILED_ATTEMPTS: 5,
     LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
     SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
-    SESSION_SECRET: SESSION_SECRET
+    SESSION_SECRET: SESSION_SECRET,
 };
 
 // Initialize Redis client if configuration is available
 const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? Redis.fromEnv()
-    : null;
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+        ? Redis.fromEnv()
+        : null;
 
 // ============================================================================
 // SESSION & LOCKOUT FUNCTIONS (Auth-specific, not in shared module)
@@ -88,11 +80,12 @@ function generateSessionToken(userId, deviceFingerprint) {
         deviceFingerprint,
         issuedAt: Date.now(),
         expiresAt: Date.now() + CONFIG.SESSION_DURATION,
-        nonce: crypto.randomBytes(16).toString('hex')
+        nonce: crypto.randomBytes(16).toString('hex'),
     };
 
     const data = JSON.stringify(payload);
-    const hmac = crypto.createHmac('sha256', CONFIG.SESSION_SECRET)
+    const hmac = crypto
+        .createHmac('sha256', CONFIG.SESSION_SECRET)
         .update(data)
         .digest('base64url');
 
@@ -113,7 +106,8 @@ function verifySessionToken(token) {
         if (!dataB64 || !hmac) return null;
 
         const data = Buffer.from(dataB64, 'base64url').toString();
-        const expectedHmac = crypto.createHmac('sha256', CONFIG.SESSION_SECRET)
+        const expectedHmac = crypto
+            .createHmac('sha256', CONFIG.SESSION_SECRET)
             .update(data)
             .digest('base64url');
 
@@ -183,7 +177,6 @@ async function clearFailedAttempts(key) {
     }
 }
 
-
 const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
     const deviceFingerprint = createDeviceFingerprint(req, validatedBody.deviceId);
 
@@ -197,7 +190,7 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             sessionToken,
             rawId,
             type,
-            userHandle
+            userHandle,
         } = validatedBody;
 
         // ====================================
@@ -209,13 +202,13 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     success: false,
                     verified: false,
                     requiresAuth: true,
-                    error: 'Session tokens unavailable'
+                    error: 'Session tokens unavailable',
                 });
             }
             if (!sessionToken) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Missing session token'
+                    error: 'Missing session token',
                 });
             }
 
@@ -225,18 +218,18 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 return res.status(401).json({
                     success: false,
                     error: 'Invalid or expired session',
-                    requiresAuth: true
+                    requiresAuth: true,
                 });
             }
 
-            let fingerprintValid = (payload.deviceFingerprint === deviceFingerprint);
+            let fingerprintValid = payload.deviceFingerprint === deviceFingerprint;
             if (!fingerprintValid && validatedBody.deviceId) {
                 const clientFp = createClientFingerprint(validatedBody.deviceId);
-                fingerprintValid = (payload.deviceFingerprint === clientFp);
+                fingerprintValid = payload.deviceFingerprint === clientFp;
             }
             if (!fingerprintValid) {
                 const headerFp = createHeaderFingerprint(req);
-                fingerprintValid = (payload.deviceFingerprint === headerFp);
+                fingerprintValid = payload.deviceFingerprint === headerFp;
             }
 
             if (!fingerprintValid) {
@@ -244,19 +237,19 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     action: 'BIOMETRIC_SESSION_DEVICE_MISMATCH',
                     ip: clientIp,
                     success: false,
-                    endpoint: '/api/biometric-authenticate'
+                    endpoint: '/api/biometric-authenticate',
                 });
                 return res.status(401).json({
                     success: false,
                     error: 'Session invalid for this device',
-                    requiresAuth: true
+                    requiresAuth: true,
                 });
             }
 
             return res.status(200).json({
                 success: true,
                 verified: true,
-                expiresIn: Math.floor((payload.expiresAt - Date.now()) / 1000)
+                expiresIn: Math.floor((payload.expiresAt - Date.now()) / 1000),
             });
         }
 
@@ -270,7 +263,7 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             if (!adminToken) {
                 return res.status(503).json({
                     success: false,
-                    error: 'Admin functionality not configured'
+                    error: 'Admin functionality not configured',
                 });
             }
 
@@ -279,11 +272,11 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     action: 'BIOMETRIC_RESET_UNAUTHORIZED',
                     ip: clientIp,
                     success: false,
-                    endpoint: '/api/biometric-authenticate'
+                    endpoint: '/api/biometric-authenticate',
                 });
                 return res.status(401).json({
                     success: false,
-                    error: 'Invalid admin token'
+                    error: 'Invalid admin token',
                 });
             }
 
@@ -292,7 +285,9 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             const blobPath = 'biometric-credentials/owner-credential.json';
 
             try {
-                const { blobs } = await require('@vercel/blob').list({ prefix: 'biometric-credentials/' });
+                const { blobs } = await require('@vercel/blob').list({
+                    prefix: 'biometric-credentials/',
+                });
                 const blob = blobs.find(b => b.pathname === blobPath);
 
                 if (blob) {
@@ -303,18 +298,18 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     action: 'BIOMETRIC_OWNER_RESET',
                     ip: clientIp,
                     success: true,
-                    endpoint: '/api/biometric-authenticate'
+                    endpoint: '/api/biometric-authenticate',
                 });
 
                 return res.status(200).json({
                     success: true,
-                    message: 'Owner registration cleared. You can now register a new owner.'
+                    message: 'Owner registration cleared. You can now register a new owner.',
                 });
             } catch (error) {
                 console.error('[BiometricAuth] Reset owner failed:', error);
                 return res.status(500).json({
                     success: false,
-                    error: 'Failed to reset owner registration'
+                    error: 'Failed to reset owner registration',
                 });
             }
         }
@@ -323,14 +318,18 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
         // CHECK ACCESS STATUS
         // ====================================
         if (action === 'check-access') {
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
 
             if (credentialError) {
-                console.error('[BiometricAuth] Service error during check-access:', credentialError);
+                console.error(
+                    '[BiometricAuth] Service error during check-access:',
+                    credentialError
+                );
                 return res.status(503).json({
                     success: false,
                     error: 'Unable to verify access status. Please try again.',
-                    code: credentialError
+                    code: credentialError,
                 });
             }
 
@@ -339,7 +338,7 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     success: true,
                     hasOwner: false,
                     canRegister: true,
-                    message: 'Dashboard not yet secured. Set up biometric access.'
+                    message: 'Dashboard not yet secured. Set up biometric access.',
                 });
             }
 
@@ -351,9 +350,9 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 isOwnerDevice: deviceMatch.matches,
                 canAuthenticate: deviceMatch.matches,
                 canLinkDevice: !deviceMatch.matches,
-                message: deviceMatch.matches ?
-                    'Welcome back. Authenticate to access your dashboard.' :
-                    'This dashboard is secured. Only the owner can access it.'
+                message: deviceMatch.matches
+                    ? 'Welcome back. Authenticate to access your dashboard.'
+                    : 'This dashboard is secured. Only the owner can access it.',
             });
         }
 
@@ -367,23 +366,27 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     action: 'BIOMETRIC_AUTH_LOCKED_OUT',
                     ip: clientIp,
                     success: false,
-                    endpoint: '/api/biometric-authenticate'
+                    endpoint: '/api/biometric-authenticate',
                 });
                 return res.status(403).json({
                     success: false,
                     error: 'Too many failed attempts. Please wait before trying again.',
-                    retryAfter: Math.ceil(CONFIG.LOCKOUT_DURATION / 1000)
+                    retryAfter: Math.ceil(CONFIG.LOCKOUT_DURATION / 1000),
                 });
             }
 
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
 
             if (credentialError) {
-                console.error('[BiometricAuth] Service error during get-challenge:', credentialError);
+                console.error(
+                    '[BiometricAuth] Service error during get-challenge:',
+                    credentialError
+                );
                 return res.status(503).json({
                     success: false,
                     error: 'Authentication service temporarily unavailable. Please try again.',
-                    code: credentialError
+                    code: credentialError,
                 });
             }
 
@@ -391,7 +394,7 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 return res.status(403).json({
                     success: false,
                     error: 'Dashboard not yet secured. Please set up biometric access first.',
-                    requiresSetup: true
+                    requiresSetup: true,
                 });
             }
 
@@ -403,13 +406,13 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     ip: clientIp,
                     success: false,
                     endpoint: '/api/biometric-authenticate',
-                    note: 'Authentication attempt from non-owner device'
+                    note: 'Authentication attempt from non-owner device',
                 });
                 return res.status(403).json({
                     success: false,
                     error: 'Access denied. This dashboard is secured by another device.',
                     isLocked: true,
-                    canLinkDevice: true
+                    canLinkDevice: true,
                 });
             }
 
@@ -418,25 +421,25 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 hasCredentials: credentials.length > 0,
                 credentialCount: credentials.length,
                 firstCredentialId: credentials[0]?.credentialId?.substring(0, 20) + '...',
-                transports: credentials[0]?.transports
+                transports: credentials[0]?.transports,
             });
-            
+
             if (!credentials.length) {
                 return res.status(500).json({
                     success: false,
                     error: 'No credentials available. Please re-register.',
-                    requiresSetup: true
+                    requiresSetup: true,
                 });
             }
 
             const challenge = generateChallenge();
             const challengeStored = await storeChallenge(deviceMatch.fingerprint, challenge);
-            
+
             if (!challengeStored) {
                 console.error('[BiometricAuth] Failed to store auth challenge');
                 return res.status(503).json({
                     success: false,
-                    error: 'Failed to initialize authentication. Please try again.'
+                    error: 'Failed to initialize authentication. Please try again.',
                 });
             }
 
@@ -445,21 +448,24 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 ip: clientIp,
                 success: true,
                 endpoint: '/api/biometric-authenticate',
-                deviceFingerprint: deviceFingerprint.substring(0, 8) + '...'
+                deviceFingerprint: deviceFingerprint.substring(0, 8) + '...',
             });
 
-            const allowCredentials = credentials.map(c => ({ 
-                id: c.credentialId, 
-                type: 'public-key', 
-                transports: c.transports || ['internal'] 
+            const allowCredentials = credentials.map(c => ({
+                id: c.credentialId,
+                type: 'public-key',
+                transports: c.transports || ['internal'],
             }));
-            
-            console.log('[BiometricAuth] Sending allowCredentials:', JSON.stringify(allowCredentials));
+
+            console.log(
+                '[BiometricAuth] Sending allowCredentials:',
+                JSON.stringify(allowCredentials)
+            );
 
             return res.status(200).json({
                 success: true,
                 challenge,
-                allowCredentials
+                allowCredentials,
             });
         }
 
@@ -473,12 +479,14 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 return res.status(403).json({
                     success: false,
                     error: 'Account temporarily locked',
-                    retryAfter: Math.ceil(CONFIG.LOCKOUT_DURATION / 1000)
+                    retryAfter: Math.ceil(CONFIG.LOCKOUT_DURATION / 1000),
                 });
             }
 
             if (!credentialId || !authenticatorData || !signature || !clientDataJSON) {
-                return res.status(400).json({ success: false, error: 'Missing authentication data' });
+                return res
+                    .status(400)
+                    .json({ success: false, error: 'Missing authentication data' });
             }
 
             const expectedOrigins = getExpectedOrigins(req);
@@ -486,18 +494,29 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
 
             if (!expectedOrigins.length || !expectedRpIds.length) {
                 console.error('[BiometricAuth] Unable to resolve expected origin/RP ID');
-                return res.status(500).json({ success: false, error: 'Authentication configuration error.' });
+                return res
+                    .status(500)
+                    .json({ success: false, error: 'Authentication configuration error.' });
             }
 
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
 
             if (credentialError) {
                 console.error('[BiometricAuth] Service error during verify:', credentialError);
-                return res.status(503).json({ success: false, error: 'Authentication service temporarily unavailable.', code: credentialError });
+                return res.status(503).json({
+                    success: false,
+                    error: 'Authentication service temporarily unavailable.',
+                    code: credentialError,
+                });
             }
 
             if (!ownerCredential) {
-                return res.status(403).json({ success: false, error: 'Dashboard not configured', requiresSetup: true });
+                return res.status(403).json({
+                    success: false,
+                    error: 'Dashboard not configured',
+                    requiresSetup: true,
+                });
             }
 
             const deviceMatch = checkDeviceMatch(req, validatedBody.deviceId, ownerCredential);
@@ -505,22 +524,41 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
 
             if (!issuedChallenge) {
                 await recordFailedAttempt(lockoutKey);
-                return res.status(400).json({ success: false, error: 'Invalid or expired challenge. Please try again.' });
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid or expired challenge. Please try again.',
+                });
             }
 
             if (!deviceMatch.matches) {
                 await recordFailedAttempt(lockoutKey);
-                addAuditEntry({ action: 'BIOMETRIC_AUTH_DEVICE_MISMATCH', ip: clientIp, success: false, endpoint: '/api/biometric-authenticate' });
-                return res.status(403).json({ success: false, error: 'Access denied. Device mismatch.', isLocked: true });
+                addAuditEntry({
+                    action: 'BIOMETRIC_AUTH_DEVICE_MISMATCH',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-authenticate',
+                });
+                return res.status(403).json({
+                    success: false,
+                    error: 'Access denied. Device mismatch.',
+                    isLocked: true,
+                });
             }
 
             const sanitizedCredentialId = sanitizeString(credentialId, 512);
             const credentials = normalizeCredentials(ownerCredential);
-            const credentialRecord = credentials.find(entry => entry.credentialId === sanitizedCredentialId);
+            const credentialRecord = credentials.find(
+                entry => entry.credentialId === sanitizedCredentialId
+            );
 
             if (!credentialRecord) {
                 await recordFailedAttempt(lockoutKey);
-                addAuditEntry({ action: 'BIOMETRIC_AUTH_CREDENTIAL_MISMATCH', ip: clientIp, success: false, endpoint: '/api/biometric-authenticate' });
+                addAuditEntry({
+                    action: 'BIOMETRIC_AUTH_CREDENTIAL_MISMATCH',
+                    ip: clientIp,
+                    success: false,
+                    endpoint: '/api/biometric-authenticate',
+                });
                 return res.status(401).json({ success: false, error: 'Invalid credentials' });
             }
 
@@ -528,7 +566,10 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             const publicKeyBuffer = base64urlToBuffer(credentialRecord.publicKey);
             if (!credentialIdBuffer || !publicKeyBuffer) {
                 await recordFailedAttempt(lockoutKey);
-                return res.status(500).json({ success: false, error: 'Stored credential is invalid. Please re-register.' });
+                return res.status(500).json({
+                    success: false,
+                    error: 'Stored credential is invalid. Please re-register.',
+                });
             }
 
             let verification;
@@ -542,8 +583,8 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                             authenticatorData: sanitizeString(authenticatorData, 4096),
                             clientDataJSON: sanitizeString(clientDataJSON, 4096),
                             signature: sanitizeString(signature, 4096),
-                            userHandle: userHandle ? sanitizeString(userHandle, 512) : undefined
-                        }
+                            userHandle: userHandle ? sanitizeString(userHandle, 512) : undefined,
+                        },
                     },
                     expectedChallenge: issuedChallenge,
                     expectedOrigin: expectedOrigins,
@@ -552,25 +593,32 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                         id: credentialIdBuffer,
                         publicKey: publicKeyBuffer,
                         counter: credentialRecord.counter || 0,
-                        transports: credentialRecord.transports
-                    }
+                        transports: credentialRecord.transports,
+                    },
                 });
             } catch (error) {
                 await recordFailedAttempt(lockoutKey);
                 console.error('[BiometricAuth] Authentication verification failed:', error);
-                return res.status(401).json({ success: false, error: 'Authentication verification failed' });
+                return res
+                    .status(401)
+                    .json({ success: false, error: 'Authentication verification failed' });
             }
 
             if (!verification?.verified || !verification.authenticationInfo) {
                 await recordFailedAttempt(lockoutKey);
-                return res.status(401).json({ success: false, error: 'Authentication verification failed' });
+                return res
+                    .status(401)
+                    .json({ success: false, error: 'Authentication verification failed' });
             }
 
             await clearFailedAttempts(lockoutKey);
 
             ownerCredential.lastUsed = new Date().toISOString();
             ownerCredential.authCount = (ownerCredential.authCount || 0) + 1;
-            credentialRecord.counter = typeof verification.authenticationInfo.newCounter === 'number' ? verification.authenticationInfo.newCounter : credentialRecord.counter;
+            credentialRecord.counter =
+                typeof verification.authenticationInfo.newCounter === 'number'
+                    ? verification.authenticationInfo.newCounter
+                    : credentialRecord.counter;
             credentialRecord.lastUsed = new Date().toISOString();
             ownerCredential.credentials = credentials;
             ownerCredential.credentialId = credentialRecord.credentialId;
@@ -586,7 +634,10 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
 
             await updateOwnerCredential(ownerCredential);
 
-            const newSessionToken = generateSessionToken(ownerCredential.userId, ownerCredential.deviceFingerprint);
+            const newSessionToken = generateSessionToken(
+                ownerCredential.userId,
+                ownerCredential.deviceFingerprint
+            );
 
             addAuditEntry({
                 action: 'BIOMETRIC_AUTH_SUCCESS',
@@ -595,14 +646,14 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 endpoint: '/api/biometric-authenticate',
                 userId: ownerCredential.userId.substring(0, 8) + '...',
                 authCount: ownerCredential.authCount,
-                migrated: deviceMatch.needsMigration
+                migrated: deviceMatch.needsMigration,
             });
 
             const responseBody = {
                 success: true,
                 verified: true,
                 message: 'Welcome back! Dashboard unlocked.',
-                userId: ownerCredential.userId
+                userId: ownerCredential.userId,
             };
 
             if (newSessionToken) {
@@ -618,7 +669,9 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
         // ====================================
         if (action === 'create-device-link') {
             if (!CONFIG.SESSION_SECRET) {
-                return res.status(503).json({ success: false, error: 'Session tokens unavailable' });
+                return res
+                    .status(503)
+                    .json({ success: false, error: 'Session tokens unavailable' });
             }
 
             const { sessionToken: linkSessionToken } = validatedBody;
@@ -628,19 +681,32 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
 
             const payload = verifySessionToken(linkSessionToken);
             if (!payload) {
-                return res.status(401).json({ success: false, error: 'Invalid or expired session', requiresAuth: true });
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid or expired session',
+                    requiresAuth: true,
+                });
             }
 
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
             if (credentialError || !ownerCredential) {
-                return res.status(503).json({ success: false, error: 'Unable to retrieve owner credential' });
+                return res
+                    .status(503)
+                    .json({ success: false, error: 'Unable to retrieve owner credential' });
             }
 
             const code = generateDeviceLinkCode();
-            const stored = await storeDeviceLink(code, ownerCredential.userId, payload.deviceFingerprint);
+            const stored = await storeDeviceLink(
+                code,
+                ownerCredential.userId,
+                payload.deviceFingerprint
+            );
 
             if (!stored) {
-                return res.status(500).json({ success: false, error: 'Failed to create device link' });
+                return res
+                    .status(500)
+                    .json({ success: false, error: 'Failed to create device link' });
             }
 
             addAuditEntry({
@@ -648,14 +714,14 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 ip: clientIp,
                 success: true,
                 endpoint: '/api/biometric-authenticate',
-                userId: ownerCredential.userId.substring(0, 8) + '...'
+                userId: ownerCredential.userId.substring(0, 8) + '...',
             });
 
             return res.status(200).json({
                 success: true,
                 linkCode: code,
                 expiresIn: Math.ceil(BIOMETRIC_CONFIG.DEVICE_LINK_EXPIRY / 1000),
-                message: `Enter this code on your other device: ${code}`
+                message: `Enter this code on your other device: ${code}`,
             });
         }
 
@@ -674,14 +740,19 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                     action: 'BIOMETRIC_DEVICE_LINK_INVALID',
                     ip: clientIp,
                     success: false,
-                    endpoint: '/api/biometric-authenticate'
+                    endpoint: '/api/biometric-authenticate',
                 });
-                return res.status(400).json({ success: false, error: 'Invalid or expired link code' });
+                return res
+                    .status(400)
+                    .json({ success: false, error: 'Invalid or expired link code' });
             }
 
-            const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
+            const { credential: ownerCredential, error: credentialError } =
+                await getOwnerCredential();
             if (credentialError || !ownerCredential) {
-                return res.status(503).json({ success: false, error: 'Unable to retrieve owner credential' });
+                return res
+                    .status(503)
+                    .json({ success: false, error: 'Unable to retrieve owner credential' });
             }
 
             // Detect device name from user-agent
@@ -692,7 +763,11 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             else if (/Mac/i.test(ua)) deviceName = 'Mac';
             else if (/Windows/i.test(ua)) deviceName = 'Windows PC';
 
-            const result = await addAuthorizedDevice(ownerCredential, deviceFingerprint, deviceName);
+            const result = await addAuthorizedDevice(
+                ownerCredential,
+                deviceFingerprint,
+                deviceName
+            );
 
             if (!result.success) {
                 return res.status(400).json({ success: false, error: result.error });
@@ -707,19 +782,18 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
                 success: true,
                 endpoint: '/api/biometric-authenticate',
                 deviceName,
-                deviceCount: result.deviceCount
+                deviceCount: result.deviceCount,
             });
 
             return res.status(200).json({
                 success: true,
                 deviceName,
                 deviceCount: result.deviceCount,
-                message: `${deviceName} has been authorized. You can now register biometric access on this device.`
+                message: `${deviceName} has been authorized. You can now register biometric access on this device.`,
             });
         }
 
         return res.status(400).json({ success: false, error: 'Invalid action' });
-
     } catch (error) {
         console.error('[BiometricAuth] Error:', error);
         addAuditEntry({
@@ -727,18 +801,21 @@ const biometricAuthHandler = async (req, res, { clientIp, validatedBody }) => {
             ip: clientIp,
             success: false,
             endpoint: '/api/biometric-authenticate',
-            error: error.message
+            error: error.message,
         });
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
-}
+};
 
-module.exports = createSecuredHandler({
-  requireAuth: false,
-  allowedMethods: ['POST', 'OPTIONS'],
-  rateLimit: {
-      limit: CONFIG.RATE_LIMIT.limit,
-      windowMs: CONFIG.RATE_LIMIT.windowMs,
-      keyPrefix: 'biometric-auth'
-  },
-}, biometricAuthHandler);
+module.exports = createSecuredHandler(
+    {
+        requireAuth: false,
+        allowedMethods: ['POST', 'OPTIONS'],
+        rateLimit: {
+            limit: CONFIG.RATE_LIMIT.limit,
+            windowMs: CONFIG.RATE_LIMIT.windowMs,
+            keyPrefix: 'biometric-auth',
+        },
+    },
+    biometricAuthHandler
+);

@@ -48,7 +48,9 @@
     z-index: var(--consent-z-index);
     transform: translateY(100%);
     opacity: 0;
-    transition: transform var(--consent-transition), opacity var(--consent-transition);
+    transition:
+        transform var(--consent-transition),
+        opacity var(--consent-transition);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
 
@@ -200,7 +202,9 @@
     padding: 16px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity var(--consent-transition), visibility var(--consent-transition);
+    transition:
+        opacity var(--consent-transition),
+        visibility var(--consent-transition);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
 

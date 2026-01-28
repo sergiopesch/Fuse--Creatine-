@@ -11,7 +11,7 @@ const {
     getCorsOrigin,
     checkRateLimit,
     CONFIG,
-    ALLOWED_ORIGINS
+    ALLOWED_ORIGINS,
 } = require('../security');
 
 describe('Security Module', () => {
@@ -39,8 +39,8 @@ describe('Security Module', () => {
         it('should return x-forwarded-for IP if present', () => {
             const req = {
                 headers: {
-                    'x-forwarded-for': '192.168.1.1, 10.0.0.1'
-                }
+                    'x-forwarded-for': '192.168.1.1, 10.0.0.1',
+                },
             };
             expect(getClientIp(req)).toBe('192.168.1.1');
         });
@@ -48,8 +48,8 @@ describe('Security Module', () => {
         it('should return x-real-ip if x-forwarded-for is not present', () => {
             const req = {
                 headers: {
-                    'x-real-ip': '10.0.0.2'
-                }
+                    'x-real-ip': '10.0.0.2',
+                },
             };
             expect(getClientIp(req)).toBe('10.0.0.2');
         });
@@ -57,7 +57,7 @@ describe('Security Module', () => {
         it('should return socket remoteAddress as fallback', () => {
             const req = {
                 headers: {},
-                socket: { remoteAddress: '127.0.0.1' }
+                socket: { remoteAddress: '127.0.0.1' },
             };
             expect(getClientIp(req)).toBe('127.0.0.1');
         });
@@ -72,8 +72,8 @@ describe('Security Module', () => {
         it('should extract Bearer token from Authorization header', () => {
             const req = {
                 headers: {
-                    authorization: 'Bearer test-token-12345'
-                }
+                    authorization: 'Bearer test-token-12345',
+                },
             };
             expect(getAuthToken(req)).toBe('test-token-12345');
         });
@@ -81,8 +81,8 @@ describe('Security Module', () => {
         it('should handle case-insensitive Bearer prefix', () => {
             const req = {
                 headers: {
-                    authorization: 'bearer test-token-12345'
-                }
+                    authorization: 'bearer test-token-12345',
+                },
             };
             expect(getAuthToken(req)).toBe('test-token-12345');
         });
@@ -90,8 +90,8 @@ describe('Security Module', () => {
         it('should extract token from x-admin-token header', () => {
             const req = {
                 headers: {
-                    'x-admin-token': 'admin-token-12345'
-                }
+                    'x-admin-token': 'admin-token-12345',
+                },
             };
             expect(getAuthToken(req)).toBe('admin-token-12345');
         });

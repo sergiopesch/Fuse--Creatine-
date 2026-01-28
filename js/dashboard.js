@@ -16,7 +16,7 @@
         TOAST_DURATION: 4000,
         API_ENDPOINT: '/api/agents',
         STORAGE_KEY: 'fuse_dashboard_layout',
-        ANIMATION_DURATION: 250
+        ANIMATION_DURATION: 250,
     };
 
     // ============================================
@@ -25,7 +25,7 @@
     const cleanupRegistry = {
         intervals: [],
         timeouts: [],
-        eventListeners: []
+        eventListeners: [],
     };
 
     // Store interval ID for cleanup
@@ -35,7 +35,7 @@
     }
 
     // Store timeout ID for cleanup
-    function trackTimeout(id) {
+    function _trackTimeout(id) {
         cleanupRegistry.timeouts.push(id);
         return id;
     }
@@ -44,13 +44,21 @@
     function cleanupResources() {
         // Clear all tracked intervals
         cleanupRegistry.intervals.forEach(id => {
-            try { clearInterval(id); } catch (e) { /* ignore */ }
+            try {
+                clearInterval(id);
+            } catch (e) {
+                /* ignore */
+            }
         });
         cleanupRegistry.intervals = [];
 
         // Clear all tracked timeouts
         cleanupRegistry.timeouts.forEach(id => {
-            try { clearTimeout(id); } catch (e) { /* ignore */ }
+            try {
+                clearTimeout(id);
+            } catch (e) {
+                /* ignore */
+            }
         });
         cleanupRegistry.timeouts = [];
 
@@ -68,25 +76,30 @@
     // Agent data - All agents start IDLE (paused by default)
     // Real activity comes from orchestration API
     const AGENT_DATA = {
-        'architect': {
+        architect: {
             name: 'Architect',
             role: 'System Design',
             team: 'developer',
             teamLabel: 'Developer Team',
-            capabilities: ['System Architecture', 'API Design', 'Database Modeling', 'Scalability Planning'],
+            capabilities: [
+                'System Architecture',
+                'API Design',
+                'Database Modeling',
+                'Scalability Planning',
+            ],
             stats: { tasksCompleted: 47, avgResponseTime: '1.2s', uptime: '99.8%' },
             currentTask: {
                 title: 'API Gateway Redesign',
                 description: 'Designing new microservices architecture for improved scalability',
-                progress: 65
+                progress: 65,
             },
             recentActivity: [
                 { time: '10:30', text: 'Completed database schema review' },
                 { time: '09:45', text: 'Started API gateway analysis' },
-                { time: '09:00', text: 'Morning standup completed' }
-            ]
+                { time: '09:00', text: 'Morning standup completed' },
+            ],
         },
-        'coder': {
+        coder: {
             name: 'Coder',
             role: 'Implementation',
             team: 'developer',
@@ -96,49 +109,59 @@
             currentTask: {
                 title: 'Feature Implementation',
                 description: 'Building new dashboard components with React and TypeScript',
-                progress: 42
+                progress: 42,
             },
             recentActivity: [
                 { time: '11:15', text: 'Pushed 3 commits to main' },
                 { time: '10:00', text: 'Code review completed' },
-                { time: '09:30', text: 'Started feature branch' }
-            ]
+                { time: '09:30', text: 'Started feature branch' },
+            ],
         },
-        'tester': {
+        tester: {
             name: 'QA Engineer',
             role: 'Quality Assurance',
             team: 'developer',
             teamLabel: 'Developer Team',
-            capabilities: ['Unit Testing', 'Integration Testing', 'E2E Testing', 'Performance Testing'],
+            capabilities: [
+                'Unit Testing',
+                'Integration Testing',
+                'E2E Testing',
+                'Performance Testing',
+            ],
             stats: { tasksCompleted: 89, avgResponseTime: '1.5s', uptime: '99.7%' },
             currentTask: {
                 title: 'Regression Testing',
                 description: 'Running full test suite on staging environment',
-                progress: 78
+                progress: 78,
             },
             recentActivity: [
                 { time: '11:00', text: 'Found and reported 2 bugs' },
                 { time: '10:30', text: 'Integration tests passed' },
-                { time: '09:15', text: 'Started test automation' }
-            ]
+                { time: '09:15', text: 'Started test automation' },
+            ],
         },
         'ux-lead': {
             name: 'UX Lead',
             role: 'User Research',
             team: 'design',
             teamLabel: 'Design Team',
-            capabilities: ['User Research', 'Usability Testing', 'Information Architecture', 'Wireframing'],
+            capabilities: [
+                'User Research',
+                'Usability Testing',
+                'Information Architecture',
+                'Wireframing',
+            ],
             stats: { tasksCompleted: 34, avgResponseTime: '1.8s', uptime: '99.5%' },
             currentTask: {
                 title: 'User Journey Mapping',
                 description: 'Mapping the onboarding flow to identify friction points',
-                progress: 55
+                progress: 55,
             },
             recentActivity: [
                 { time: '11:00', text: 'Completed user interview synthesis' },
                 { time: '10:15', text: 'Updated persona documentation' },
-                { time: '09:30', text: 'Reviewed heatmap analytics' }
-            ]
+                { time: '09:30', text: 'Reviewed heatmap analytics' },
+            ],
         },
         'ui-artist': {
             name: 'Visual Designer',
@@ -150,31 +173,36 @@
             currentTask: {
                 title: 'Component Library Update',
                 description: 'Refreshing button and input components with new brand colors',
-                progress: 80
+                progress: 80,
             },
             recentActivity: [
                 { time: '10:45', text: 'Exported new icon set to Figma' },
                 { time: '09:30', text: 'Finalized dark mode palette' },
-                { time: '08:45', text: 'Started component audit' }
-            ]
+                { time: '08:45', text: 'Started component audit' },
+            ],
         },
-        'motion': {
+        motion: {
             name: 'Motion Designer',
             role: 'Animations',
             team: 'design',
             teamLabel: 'Design Team',
-            capabilities: ['Motion Design', 'Micro-interactions', 'Animation Systems', 'Lottie Export'],
+            capabilities: [
+                'Motion Design',
+                'Micro-interactions',
+                'Animation Systems',
+                'Lottie Export',
+            ],
             stats: { tasksCompleted: 28, avgResponseTime: '2.1s', uptime: '99.3%' },
             currentTask: {
                 title: 'Loading Animation Suite',
                 description: 'Creating branded loading spinners and skeleton states',
-                progress: 45
+                progress: 45,
             },
             recentActivity: [
                 { time: '11:20', text: 'Exported Lottie files for mobile' },
                 { time: '10:00', text: 'Refined page transition timing' },
-                { time: '09:15', text: 'Completed hover state animations' }
-            ]
+                { time: '09:15', text: 'Completed hover state animations' },
+            ],
         },
         'content-strategist': {
             name: 'Content Strategist',
@@ -186,15 +214,15 @@
             currentTask: {
                 title: 'Q1 Editorial Calendar',
                 description: 'Planning content themes and publication schedule for next quarter',
-                progress: 70
+                progress: 70,
             },
             recentActivity: [
                 { time: '10:50', text: 'Completed SEO keyword research' },
                 { time: '09:45', text: 'Reviewed competitor content gaps' },
-                { time: '08:30', text: 'Updated content pillar strategy' }
-            ]
+                { time: '08:30', text: 'Updated content pillar strategy' },
+            ],
         },
-        'copywriter': {
+        copywriter: {
             name: 'Copywriter',
             role: 'Content Creation',
             team: 'communications',
@@ -204,67 +232,83 @@
             currentTask: {
                 title: 'Product Launch Copy',
                 description: 'Writing landing page and email sequence for new feature release',
-                progress: 60
+                progress: 60,
             },
             recentActivity: [
                 { time: '11:10', text: 'Drafted email subject line variants' },
                 { time: '10:20', text: 'Completed hero section copy' },
-                { time: '09:00', text: 'Brand voice guidelines review' }
-            ]
+                { time: '09:00', text: 'Brand voice guidelines review' },
+            ],
         },
         'social-manager': {
             name: 'Social Manager',
             role: 'Social Media',
             team: 'communications',
             teamLabel: 'Communications Team',
-            capabilities: ['Social Media Management', 'Community Engagement', 'Analytics', 'Campaign Planning'],
+            capabilities: [
+                'Social Media Management',
+                'Community Engagement',
+                'Analytics',
+                'Campaign Planning',
+            ],
             stats: { tasksCompleted: 156, avgResponseTime: '0.9s', uptime: '99.8%' },
             currentTask: {
                 title: 'Weekly Content Schedule',
                 description: 'Scheduling posts and monitoring engagement across platforms',
-                progress: 85
+                progress: 85,
             },
             recentActivity: [
                 { time: '11:30', text: 'Responded to 12 community mentions' },
                 { time: '10:15', text: 'Published LinkedIn thought leadership' },
-                { time: '09:00', text: 'Analyzed weekly engagement metrics' }
-            ]
+                { time: '09:00', text: 'Analyzed weekly engagement metrics' },
+            ],
         },
         'compliance-officer': {
             name: 'Compliance Officer',
             role: 'Regulatory Compliance',
             team: 'legal',
             teamLabel: 'Legal Team',
-            capabilities: ['GDPR Compliance', 'Privacy Reviews', 'Risk Assessment', 'Policy Development'],
+            capabilities: [
+                'GDPR Compliance',
+                'Privacy Reviews',
+                'Risk Assessment',
+                'Policy Development',
+            ],
             stats: { tasksCompleted: 23, avgResponseTime: '2.3s', uptime: '99.9%' },
             currentTask: {
                 title: 'Privacy Policy Update',
-                description: 'Reviewing and updating privacy policy for new data handling requirements',
-                progress: 40
+                description:
+                    'Reviewing and updating privacy policy for new data handling requirements',
+                progress: 40,
             },
             recentActivity: [
                 { time: '10:30', text: 'Completed GDPR compliance audit' },
                 { time: '09:15', text: 'Reviewed new vendor DPA' },
-                { time: '08:45', text: 'Updated data retention policy' }
-            ]
+                { time: '08:45', text: 'Updated data retention policy' },
+            ],
         },
         'contract-analyst': {
             name: 'Contract Analyst',
             role: 'Contract Review',
             team: 'legal',
             teamLabel: 'Legal Team',
-            capabilities: ['Contract Review', 'Negotiation Support', 'Risk Analysis', 'Template Management'],
+            capabilities: [
+                'Contract Review',
+                'Negotiation Support',
+                'Risk Analysis',
+                'Template Management',
+            ],
             stats: { tasksCompleted: 38, avgResponseTime: '1.9s', uptime: '99.6%' },
             currentTask: {
                 title: 'Enterprise Agreement Review',
                 description: 'Analyzing terms for Fortune 500 client contract',
-                progress: 55
+                progress: 55,
             },
             recentActivity: [
                 { time: '11:00', text: 'Flagged 3 risk clauses for review' },
                 { time: '10:00', text: 'Updated SaaS template v3.2' },
-                { time: '09:30', text: 'Completed NDA batch review' }
-            ]
+                { time: '09:30', text: 'Completed NDA batch review' },
+            ],
         },
         'ip-counsel': {
             name: 'IP Counsel',
@@ -276,13 +320,13 @@
             currentTask: {
                 title: 'Patent Application',
                 description: 'Drafting provisional patent for AI orchestration technology',
-                progress: 30
+                progress: 30,
             },
             recentActivity: [
                 { time: '10:45', text: 'Submitted trademark application' },
                 { time: '09:30', text: 'Prior art search completed' },
-                { time: '08:00', text: 'IP portfolio quarterly review' }
-            ]
+                { time: '08:00', text: 'IP portfolio quarterly review' },
+            ],
         },
         'growth-lead': {
             name: 'Growth Lead',
@@ -294,13 +338,13 @@
             currentTask: {
                 title: 'Conversion Optimization',
                 description: 'Running A/B tests on signup flow to improve conversion rates',
-                progress: 72
+                progress: 72,
             },
             recentActivity: [
                 { time: '11:15', text: 'Test variant B showing +15% lift' },
                 { time: '10:00', text: 'Launched pricing page experiment' },
-                { time: '09:00', text: 'Weekly growth metrics review' }
-            ]
+                { time: '09:00', text: 'Weekly growth metrics review' },
+            ],
         },
         'brand-strategist': {
             name: 'Brand Strategist',
@@ -312,157 +356,197 @@
             currentTask: {
                 title: 'Brand Refresh Initiative',
                 description: 'Updating brand guidelines and messaging framework',
-                progress: 50
+                progress: 50,
             },
             recentActivity: [
                 { time: '10:30', text: 'Finalized new tagline options' },
                 { time: '09:45', text: 'Competitor positioning analysis' },
-                { time: '08:30', text: 'Brand perception survey results' }
-            ]
+                { time: '08:30', text: 'Brand perception survey results' },
+            ],
         },
         'analytics-expert': {
             name: 'Analytics Expert',
             role: 'Data Analysis',
             team: 'marketing',
             teamLabel: 'Marketing Team',
-            capabilities: ['Marketing Analytics', 'Attribution Modeling', 'Dashboard Creation', 'Reporting'],
+            capabilities: [
+                'Marketing Analytics',
+                'Attribution Modeling',
+                'Dashboard Creation',
+                'Reporting',
+            ],
             stats: { tasksCompleted: 58, avgResponseTime: '1.0s', uptime: '99.8%' },
             currentTask: {
                 title: 'Attribution Model Update',
                 description: 'Implementing multi-touch attribution across all channels',
-                progress: 65
+                progress: 65,
             },
             recentActivity: [
                 { time: '11:20', text: 'Updated executive dashboard' },
                 { time: '10:15', text: 'CAC/LTV analysis complete' },
-                { time: '09:00', text: 'Channel performance report sent' }
-            ]
+                { time: '09:00', text: 'Channel performance report sent' },
+            ],
         },
         'launch-coordinator': {
             name: 'Launch Coordinator',
             role: 'Product Launch',
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
-            capabilities: ['Launch Planning', 'Timeline Management', 'Cross-functional Coordination', 'Go-live Support'],
+            capabilities: [
+                'Launch Planning',
+                'Timeline Management',
+                'Cross-functional Coordination',
+                'Go-live Support',
+            ],
             stats: { tasksCompleted: 27, avgResponseTime: '1.5s', uptime: '99.6%' },
             currentTask: {
                 title: 'V2.0 Launch Readiness',
                 description: 'Coordinating cross-functional teams for major product release',
-                progress: 88
+                progress: 88,
             },
             recentActivity: [
                 { time: '11:00', text: 'All teams confirmed launch ready' },
                 { time: '10:15', text: 'Updated launch checklist status' },
-                { time: '09:30', text: 'Stakeholder sync completed' }
-            ]
+                { time: '09:30', text: 'Stakeholder sync completed' },
+            ],
         },
         'partnership-manager': {
             name: 'Partnership Manager',
             role: 'Strategic Partnerships',
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
-            capabilities: ['Partner Recruitment', 'Relationship Management', 'Co-marketing', 'Integration Support'],
+            capabilities: [
+                'Partner Recruitment',
+                'Relationship Management',
+                'Co-marketing',
+                'Integration Support',
+            ],
             stats: { tasksCompleted: 22, avgResponseTime: '2.0s', uptime: '99.4%' },
             currentTask: {
                 title: 'Integration Partnership',
                 description: 'Negotiating technical integration with enterprise platform',
-                progress: 45
+                progress: 45,
             },
             recentActivity: [
                 { time: '10:45', text: 'Partner demo scheduled for Friday' },
                 { time: '09:30', text: 'Co-marketing proposal sent' },
-                { time: '08:15', text: 'Updated partner portal docs' }
-            ]
+                { time: '08:15', text: 'Updated partner portal docs' },
+            ],
         },
         'market-researcher': {
             name: 'Market Researcher',
             role: 'Market Intelligence',
             team: 'gtm',
             teamLabel: 'Go-to-Market Team',
-            capabilities: ['Market Research', 'Competitive Analysis', 'Trend Analysis', 'Customer Insights'],
+            capabilities: [
+                'Market Research',
+                'Competitive Analysis',
+                'Trend Analysis',
+                'Customer Insights',
+            ],
             stats: { tasksCompleted: 36, avgResponseTime: '1.8s', uptime: '99.5%' },
             currentTask: {
                 title: 'Competitive Intelligence Report',
                 description: 'Deep analysis of top 5 competitors new features and pricing',
-                progress: 60
+                progress: 60,
             },
             recentActivity: [
                 { time: '11:10', text: 'Competitor pricing update detected' },
                 { time: '10:00', text: 'Market size report finalized' },
-                { time: '09:00', text: 'Industry trend analysis started' }
-            ]
+                { time: '09:00', text: 'Industry trend analysis started' },
+            ],
         },
         'sales-director': {
             name: 'Sales Director',
             role: 'Revenue Strategy',
             team: 'sales',
             teamLabel: 'Sales Team',
-            capabilities: ['Revenue Planning', 'Team Leadership', 'Strategic Accounts', 'Forecasting'],
+            capabilities: [
+                'Revenue Planning',
+                'Team Leadership',
+                'Strategic Accounts',
+                'Forecasting',
+            ],
             stats: { tasksCompleted: 42, avgResponseTime: '1.2s', uptime: '99.9%' },
             currentTask: {
                 title: 'Q1 Revenue Planning',
                 description: 'Finalizing quota allocation and territory assignments',
-                progress: 75
+                progress: 75,
             },
             recentActivity: [
                 { time: '11:30', text: 'Pipeline review meeting completed' },
                 { time: '10:00', text: 'Updated sales forecast model' },
-                { time: '09:00', text: 'Team performance analysis done' }
-            ]
+                { time: '09:00', text: 'Team performance analysis done' },
+            ],
         },
         'account-executive': {
             name: 'Account Executive',
             role: 'Enterprise Sales',
             team: 'sales',
             teamLabel: 'Sales Team',
-            capabilities: ['Enterprise Sales', 'Solution Selling', 'Contract Negotiation', 'Relationship Building'],
+            capabilities: [
+                'Enterprise Sales',
+                'Solution Selling',
+                'Contract Negotiation',
+                'Relationship Building',
+            ],
             stats: { tasksCompleted: 64, avgResponseTime: '1.0s', uptime: '99.7%' },
             currentTask: {
                 title: 'Enterprise Deal Closing',
                 description: 'Negotiating final terms with Fortune 100 prospect',
-                progress: 90
+                progress: 90,
             },
             recentActivity: [
                 { time: '11:15', text: 'Sent revised proposal to client' },
                 { time: '10:30', text: 'Procurement call successful' },
-                { time: '09:45', text: 'Updated CRM with deal notes' }
-            ]
+                { time: '09:45', text: 'Updated CRM with deal notes' },
+            ],
         },
-        'sdr': {
+        sdr: {
             name: 'SDR Lead',
             role: 'Lead Generation',
             team: 'sales',
             teamLabel: 'Sales Team',
-            capabilities: ['Outbound Prospecting', 'Lead Qualification', 'Cold Outreach', 'Pipeline Generation'],
+            capabilities: [
+                'Outbound Prospecting',
+                'Lead Qualification',
+                'Cold Outreach',
+                'Pipeline Generation',
+            ],
             stats: { tasksCompleted: 189, avgResponseTime: '0.7s', uptime: '99.8%' },
             currentTask: {
                 title: 'Outbound Campaign',
                 description: 'Running targeted outreach to enterprise tech sector',
-                progress: 68
+                progress: 68,
             },
             recentActivity: [
                 { time: '11:20', text: 'Booked 3 discovery calls' },
                 { time: '10:45', text: 'Sent 50 personalized emails' },
-                { time: '09:30', text: 'Lead list enrichment complete' }
-            ]
+                { time: '09:30', text: 'Lead list enrichment complete' },
+            ],
         },
         'solutions-consultant': {
             name: 'Solutions Consultant',
             role: 'Technical Sales',
             team: 'sales',
             teamLabel: 'Sales Team',
-            capabilities: ['Technical Demos', 'Solution Design', 'POC Management', 'Technical Discovery'],
+            capabilities: [
+                'Technical Demos',
+                'Solution Design',
+                'POC Management',
+                'Technical Discovery',
+            ],
             stats: { tasksCompleted: 48, avgResponseTime: '1.4s', uptime: '99.6%' },
             currentTask: {
                 title: 'POC Environment Setup',
                 description: 'Configuring proof-of-concept for enterprise customer',
-                progress: 55
+                progress: 55,
             },
             recentActivity: [
                 { time: '11:00', text: 'Demo to CISO went excellently' },
                 { time: '10:15', text: 'Security questionnaire completed' },
-                { time: '09:00', text: 'Architecture review prepared' }
-            ]
+                { time: '09:00', text: 'Architecture review prepared' },
+            ],
         },
         'customer-success': {
             name: 'Customer Success',
@@ -474,14 +558,14 @@
             currentTask: {
                 title: 'QBR Preparation',
                 description: 'Preparing quarterly business reviews for top 10 accounts',
-                progress: 82
+                progress: 82,
             },
             recentActivity: [
                 { time: '11:25', text: 'Completed 2 onboarding calls' },
                 { time: '10:30', text: 'Identified expansion opportunity' },
-                { time: '09:15', text: 'NPS survey analysis finished' }
-            ]
-        }
+                { time: '09:15', text: 'NPS survey analysis finished' },
+            ],
+        },
     };
 
     // ============================================
@@ -499,7 +583,7 @@
         teamOrder: [],
         sidebarOrder: [],
         collapsedTeams: new Set(),
-        modalOpen: false
+        modalOpen: false,
     };
 
     // ============================================
@@ -516,7 +600,7 @@
         const authTypeText = document.getElementById('authTypeText');
         const gateSubtitle = document.getElementById('gateSubtitle');
         const gateMessage = document.getElementById('gateMessage');
-        const iconContainer = document.getElementById('biometricIcon');
+        const _iconContainer = document.getElementById('biometricIcon');
 
         if (!gate) return true; // No gate, allow access
 
@@ -546,7 +630,10 @@
                     const magicResult = await BiometricAuth.verifyMagicLink(magicToken);
                     BiometricAuth.clearMagicLinkToken();
                     if (magicResult.success) {
-                        showStatus(magicResult.message || 'Access granted via magic link!', 'success');
+                        showStatus(
+                            magicResult.message || 'Access granted via magic link!',
+                            'success'
+                        );
                         await new Promise(r => setTimeout(r, 800));
                         hideBiometricGate();
                         return true;
@@ -595,16 +682,24 @@
 
             // Handle service errors (e.g., missing BLOB_READ_WRITE_TOKEN)
             if (accessStatus.serviceError) {
-                console.error('[Dashboard] Service error during access check:', accessStatus.message);
+                console.error(
+                    '[Dashboard] Service error during access check:',
+                    accessStatus.message
+                );
                 btnAuth.style.display = 'none';
                 btnSetup.style.display = 'none';
                 if (gateSubtitle) {
                     gateSubtitle.textContent = 'Service Unavailable';
                 }
                 if (gateMessage) {
-                    gateMessage.textContent = accessStatus.message || 'Authentication service is temporarily unavailable. Please try again later.';
+                    gateMessage.textContent =
+                        accessStatus.message ||
+                        'Authentication service is temporarily unavailable. Please try again later.';
                 }
-                showStatus('Authentication service error. Please check server configuration.', 'error');
+                showStatus(
+                    'Authentication service error. Please check server configuration.',
+                    'error'
+                );
                 return false;
             }
 
@@ -617,7 +712,8 @@
                         gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${state.authenticatorType}</span> to unlock.`;
                     }
                     if (gateMessage) {
-                        gateMessage.textContent = 'Your biometric is required to access this dashboard';
+                        gateMessage.textContent =
+                            'Your biometric is required to access this dashboard';
                     }
                     updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
                 } else {
@@ -630,9 +726,10 @@
                         gateSubtitle.textContent = 'Access Denied';
                     }
                     if (gateMessage) {
-                        gateMessage.textContent = 'This dashboard is secured by another device. Only the owner can access it.';
+                        gateMessage.textContent =
+                            'This dashboard is secured by another device. Only the owner can access it.';
                     }
-                    showStatus('This dashboard is locked to its owner\'s device', 'error');
+                    showStatus("This dashboard is locked to its owner's device", 'error');
 
                     // Show link device option if available
                     const btnLinkDevice = document.getElementById('btnLinkDevice');
@@ -657,12 +754,12 @@
                     gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${state.authenticatorType}</span>`;
                 }
                 if (gateMessage) {
-                    gateMessage.textContent = 'First-time setup: Your biometric will become the only key to this dashboard';
+                    gateMessage.textContent =
+                        'First-time setup: Your biometric will become the only key to this dashboard';
                 }
             }
 
             return false; // Don't allow access until verified
-
         } catch (error) {
             console.error('[Dashboard] Biometric initialization error:', error);
             showStatus(`Initialization failed: ${error.message}`, 'error');
@@ -727,7 +824,6 @@
     async function handleBiometricAuth() {
         console.log('[Dashboard] handleBiometricAuth called');
         const iconContainer = document.getElementById('biometricIcon');
-        const statusEl = document.getElementById('biometricStatus');
 
         // Check if BiometricAuth is available
         if (typeof BiometricAuth === 'undefined') {
@@ -751,7 +847,7 @@
             iconContainer?.classList.remove('error', 'success');
             hideStatus();
 
-            const result = await BiometricAuth.authenticate((progress) => {
+            const result = await BiometricAuth.authenticate(progress => {
                 console.log('[Dashboard] Auth progress:', progress);
                 showStatus(progress, 'info');
             });
@@ -791,8 +887,12 @@
             // Provide more specific error messages
             let errorMessage = error.message || 'Authentication failed';
 
-            if (errorMessage.includes('temporarily unavailable') || errorMessage.includes('CONFIG_ERROR')) {
-                errorMessage = 'Server configuration error. Please contact administrator to set up ENCRYPTION_KEY.';
+            if (
+                errorMessage.includes('temporarily unavailable') ||
+                errorMessage.includes('CONFIG_ERROR')
+            ) {
+                errorMessage =
+                    'Server configuration error. Please contact administrator to set up ENCRYPTION_KEY.';
             } else if (errorMessage.includes('Unable to connect')) {
                 errorMessage = 'Cannot connect to server. Please check your internet connection.';
             } else if (errorMessage.includes('cancelled')) {
@@ -806,7 +906,7 @@
             console.error('[Dashboard] Full error details:', {
                 message: error.message,
                 name: error.name,
-                stack: error.stack
+                stack: error.stack,
             });
 
             // Reset icon state after delay
@@ -834,7 +934,7 @@
             iconContainer?.classList.remove('error', 'success');
             hideStatus();
 
-            const result = await BiometricAuth.register((progress) => {
+            const result = await BiometricAuth.register(progress => {
                 showStatus(progress, 'info');
             });
 
@@ -845,7 +945,8 @@
                 showStatus(result.message || 'Dashboard secured!', 'success');
 
                 if (gateMessage) {
-                    gateMessage.textContent = 'Your biometric is now the only key to this dashboard';
+                    gateMessage.textContent =
+                        'Your biometric is now the only key to this dashboard';
                 }
 
                 // Switch to authenticate mode after brief delay
@@ -899,11 +1000,12 @@
 
         // Update icon based on type
         if (statusIcon) {
-            statusIcon.innerHTML = type === 'success'
-                ? '<polyline points="20 6 9 17 4 12"/>'
-                : type === 'error'
-                ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
-                : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
+            statusIcon.innerHTML =
+                type === 'success'
+                    ? '<polyline points="20 6 9 17 4 12"/>'
+                    : type === 'error'
+                      ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+                      : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
         }
     }
 
@@ -940,7 +1042,9 @@
         const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
 
         // Determine page name for return URL
-        const pageName = window.location.pathname.includes('ceo-dashboard') ? 'ceo-dashboard' : 'dashboard';
+        const pageName = window.location.pathname.includes('ceo-dashboard')
+            ? 'ceo-dashboard'
+            : 'dashboard';
 
         if (btnMagicLink) {
             btnMagicLink.addEventListener('click', () => handleSendMagicLink(pageName));
@@ -1044,11 +1148,11 @@
             if (linkCodeInput) {
                 linkCodeInput.value = '';
             }
-            showStatus('This dashboard is locked to its owner\'s device', 'error');
+            showStatus("This dashboard is locked to its owner's device", 'error');
         });
 
         // Format input as uppercase
-        linkCodeInput?.addEventListener('input', (e) => {
+        linkCodeInput?.addEventListener('input', e => {
             e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
 
@@ -1056,7 +1160,7 @@
         btnClaimLink?.addEventListener('click', handleClaimLink);
 
         // Handle enter key in input
-        linkCodeInput?.addEventListener('keydown', (e) => {
+        linkCodeInput?.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 handleClaimLink();
             }
@@ -1117,7 +1221,8 @@
                     gateSubtitle.innerHTML = `Device linked! Now secure with <span class="biometric-type">${state.authenticatorType}</span>`;
                 }
                 if (gateMessage) {
-                    gateMessage.textContent = 'Set up biometric access on this device to complete the link';
+                    gateMessage.textContent =
+                        'Set up biometric access on this device to complete the link';
                 }
 
                 // Show setup button
@@ -1159,7 +1264,7 @@
         recentActivity: document.getElementById('recentActivity'),
         fabMain: document.getElementById('fabMain'),
         fabMenu: document.getElementById('fabMenu'),
-        toastContainer: document.getElementById('toastContainer')
+        toastContainer: document.getElementById('toastContainer'),
     };
 
     // ============================================
@@ -1182,7 +1287,7 @@
         return window.innerWidth < 600;
     }
 
-    function isTablet() {
+    function _isTablet() {
         return window.innerWidth >= 600 && window.innerWidth < 900;
     }
 
@@ -1229,7 +1334,7 @@
             elements.currentTime.textContent = now.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit'
+                second: '2-digit',
             });
         }
     }
@@ -1271,7 +1376,9 @@
 
         // Update team sections visibility
         document.querySelectorAll('.team-section').forEach(section => {
-            const visibleAgents = section.querySelectorAll('.agent-mini-card:not([style*="display: none"])');
+            const visibleAgents = section.querySelectorAll(
+                '.agent-mini-card:not([style*="display: none"])'
+            );
             section.style.display = visibleAgents.length > 0 ? '' : 'none';
         });
     }
@@ -1349,7 +1456,7 @@
 
         let placeholder = null;
 
-        teamsContainer.addEventListener('dragstart', (e) => {
+        teamsContainer.addEventListener('dragstart', e => {
             if (!state.editMode) return;
 
             const teamSection = e.target.closest('.team-section');
@@ -1372,7 +1479,7 @@
             placeholder.style.borderRadius = '12px';
         });
 
-        teamsContainer.addEventListener('dragend', (e) => {
+        teamsContainer.addEventListener('dragend', _e => {
             if (!state.draggedElement) return;
 
             state.draggedElement.classList.remove('dragging');
@@ -1391,7 +1498,7 @@
             saveLayout();
         });
 
-        teamsContainer.addEventListener('dragover', (e) => {
+        teamsContainer.addEventListener('dragover', e => {
             if (!state.editMode || state.draggedType !== 'team') return;
 
             e.preventDefault();
@@ -1409,7 +1516,7 @@
             }
         });
 
-        teamsContainer.addEventListener('drop', (e) => {
+        teamsContainer.addEventListener('drop', e => {
             e.preventDefault();
         });
 
@@ -1422,16 +1529,19 @@
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.team-section:not(.dragging)')];
 
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
+        return draggableElements.reduce(
+            (closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
 
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            },
+            { offset: Number.NEGATIVE_INFINITY }
+        ).element;
     }
 
     function updateTeamOrder() {
@@ -1447,7 +1557,7 @@
         const sidebar = document.querySelector('.dashboard-sidebar');
         if (!sidebar) return;
 
-        sidebar.addEventListener('dragstart', (e) => {
+        sidebar.addEventListener('dragstart', e => {
             if (!state.editMode) return;
 
             const card = e.target.closest('.sidebar-card');
@@ -1460,7 +1570,7 @@
             e.dataTransfer.effectAllowed = 'move';
         });
 
-        sidebar.addEventListener('dragend', (e) => {
+        sidebar.addEventListener('dragend', _e => {
             if (!state.draggedElement) return;
 
             state.draggedElement.classList.remove('dragging');
@@ -1471,7 +1581,7 @@
             saveLayout();
         });
 
-        sidebar.addEventListener('dragover', (e) => {
+        sidebar.addEventListener('dragover', e => {
             if (!state.editMode || state.draggedType !== 'sidebar') return;
 
             e.preventDefault();
@@ -1497,16 +1607,19 @@
     function getSidebarDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.sidebar-card:not(.dragging)')];
 
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
+        return draggableElements.reduce(
+            (closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
 
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            },
+            { offset: Number.NEGATIVE_INFINITY }
+        ).element;
     }
 
     function updateSidebarOrder() {
@@ -1523,63 +1636,75 @@
     // ============================================
 
     function initTouchDragAndDrop() {
-        let touchStartY = 0;
+        let _touchStartY = 0;
         let touchElement = null;
         let clone = null;
 
         const teamsContainer = elements.teamsContainer;
         if (!teamsContainer) return;
 
-        teamsContainer.addEventListener('touchstart', (e) => {
-            if (!state.editMode) return;
+        teamsContainer.addEventListener(
+            'touchstart',
+            e => {
+                if (!state.editMode) return;
 
-            const teamSection = e.target.closest('.team-section');
-            if (!teamSection) return;
+                const teamSection = e.target.closest('.team-section');
+                if (!teamSection) return;
 
-            touchStartY = e.touches[0].clientY;
-            touchElement = teamSection;
+                _touchStartY = e.touches[0].clientY;
+                touchElement = teamSection;
 
-            // Long press detection
-            const longPressTimer = setTimeout(() => {
-                if (touchElement) {
-                    touchElement.classList.add('dragging');
+                // Long press detection
+                const longPressTimer = setTimeout(() => {
+                    if (touchElement) {
+                        touchElement.classList.add('dragging');
 
-                    // Create visual clone
-                    clone = touchElement.cloneNode(true);
-                    clone.classList.add('drag-ghost');
-                    document.body.appendChild(clone);
+                        // Create visual clone
+                        clone = touchElement.cloneNode(true);
+                        clone.classList.add('drag-ghost');
+                        document.body.appendChild(clone);
 
-                    navigator.vibrate && navigator.vibrate(50);
+                        navigator.vibrate && navigator.vibrate(50);
+                    }
+                }, 300);
+
+                teamSection.addEventListener(
+                    'touchend',
+                    () => {
+                        clearTimeout(longPressTimer);
+                    },
+                    { once: true }
+                );
+            },
+            { passive: true }
+        );
+
+        teamsContainer.addEventListener(
+            'touchmove',
+            e => {
+                if (!touchElement || !touchElement.classList.contains('dragging')) return;
+
+                e.preventDefault();
+
+                const touch = e.touches[0];
+
+                // Move clone
+                if (clone) {
+                    clone.style.top = `${touch.clientY - 40}px`;
+                    clone.style.left = `${touch.clientX - clone.offsetWidth / 2}px`;
                 }
-            }, 300);
 
-            teamSection.addEventListener('touchend', () => {
-                clearTimeout(longPressTimer);
-            }, { once: true });
-        }, { passive: true });
+                // Reorder
+                const afterElement = getDragAfterElement(teamsContainer, touch.clientY);
 
-        teamsContainer.addEventListener('touchmove', (e) => {
-            if (!touchElement || !touchElement.classList.contains('dragging')) return;
-
-            e.preventDefault();
-
-            const touch = e.touches[0];
-
-            // Move clone
-            if (clone) {
-                clone.style.top = `${touch.clientY - 40}px`;
-                clone.style.left = `${touch.clientX - clone.offsetWidth / 2}px`;
-            }
-
-            // Reorder
-            const afterElement = getDragAfterElement(teamsContainer, touch.clientY);
-
-            if (afterElement == null) {
-                teamsContainer.appendChild(touchElement);
-            } else {
-                teamsContainer.insertBefore(touchElement, afterElement);
-            }
-        }, { passive: false });
+                if (afterElement == null) {
+                    teamsContainer.appendChild(touchElement);
+                } else {
+                    teamsContainer.insertBefore(touchElement, afterElement);
+                }
+            },
+            { passive: false }
+        );
 
         teamsContainer.addEventListener('touchend', () => {
             if (touchElement) {
@@ -1607,7 +1732,7 @@
             teamOrder: state.teamOrder,
             sidebarOrder: state.sidebarOrder,
             collapsedTeams: [...state.collapsedTeams],
-            viewMode: state.viewMode
+            viewMode: state.viewMode,
         };
 
         try {
@@ -1754,7 +1879,7 @@
         const assignTaskBtn = modal.querySelector('#modalAssignTask');
 
         closeBtn.addEventListener('click', closeModal);
-        overlay.addEventListener('click', (e) => {
+        overlay.addEventListener('click', e => {
             if (e.target === overlay) closeModal();
         });
 
@@ -1775,7 +1900,7 @@
         });
 
         // Keyboard support
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', e => {
             if (e.key === 'Escape' && state.modalOpen) {
                 closeModal();
             }
@@ -1816,7 +1941,7 @@
             legal: 'legal',
             marketing: 'marketing',
             gtm: 'gtm',
-            sales: 'sales'
+            sales: 'sales',
         };
 
         // Update header
@@ -1833,9 +1958,12 @@
 
         // Update current task
         modal.querySelector('#modalTaskTitle').textContent = agentData.currentTask.title;
-        modal.querySelector('#modalTaskDescription').textContent = agentData.currentTask.description;
-        modal.querySelector('#modalProgressFill').style.width = `${agentData.currentTask.progress}%`;
-        modal.querySelector('#modalProgressText').textContent = `${agentData.currentTask.progress}%`;
+        modal.querySelector('#modalTaskDescription').textContent =
+            agentData.currentTask.description;
+        modal.querySelector('#modalProgressFill').style.width =
+            `${agentData.currentTask.progress}%`;
+        modal.querySelector('#modalProgressText').textContent =
+            `${agentData.currentTask.progress}%`;
 
         // Update capabilities
         const capabilitiesEl = modal.querySelector('#modalCapabilities');
@@ -1846,12 +1974,14 @@
         // Update activity
         const activityEl = modal.querySelector('#modalActivity');
         activityEl.innerHTML = agentData.recentActivity
-            .map(item => `
+            .map(
+                item => `
                 <div class="modal-activity-item">
                     <span class="modal-activity-time">${item.time}</span>
                     <span class="modal-activity-text">${item.text}</span>
                 </div>
-            `)
+            `
+            )
             .join('');
 
         // Show modal
@@ -1920,11 +2050,19 @@
                 const latencyEl = document.getElementById('apiLatencyValue');
                 if (latencyEl) {
                     latencyEl.textContent = `${latency}ms`;
-                    latencyEl.className = latency < 100 ? 'health-value good' :
-                                         latency < 300 ? 'health-value warning' : 'health-value error';
+                    latencyEl.className =
+                        latency < 100
+                            ? 'health-value good'
+                            : latency < 300
+                              ? 'health-value warning'
+                              : 'health-value error';
                 }
 
-                showToast('success', 'Health Check Complete', `System operational - ${latency}ms latency`);
+                showToast(
+                    'success',
+                    'Health Check Complete',
+                    `System operational - ${latency}ms latency`
+                );
             } else {
                 showToast('error', 'Health Check Failed', 'Unable to reach API');
             }
@@ -1954,12 +2092,15 @@
                 const data = await response.json();
 
                 if (data.success && data.data) {
-                    if (elements.totalAgents) elements.totalAgents.textContent = data.data.totalAgents || 23;
-                    if (elements.activeAgents) elements.activeAgents.textContent = data.data.activeAgents || 17;
+                    if (elements.totalAgents)
+                        elements.totalAgents.textContent = data.data.totalAgents || 23;
+                    if (elements.activeAgents)
+                        elements.activeAgents.textContent = data.data.activeAgents || 17;
 
-                    const util = data.data.totalAgents > 0
-                        ? Math.round((data.data.activeAgents / data.data.totalAgents) * 100)
-                        : 0;
+                    const util =
+                        data.data.totalAgents > 0
+                            ? Math.round((data.data.activeAgents / data.data.totalAgents) * 100)
+                            : 0;
                     if (elements.utilization) elements.utilization.textContent = `${util}%`;
                 }
 
@@ -2126,7 +2267,7 @@
     function initStatCardClicks() {
         document.querySelectorAll('.stat-card').forEach((card, index) => {
             card.addEventListener('click', () => {
-                switch(index) {
+                switch (index) {
                     case 0: // Total Agents
                         window.location.href = '/agents';
                         break;
@@ -2201,7 +2342,7 @@
 
         // Setup filter dropdown
         if (elements.statusFilter) {
-            elements.statusFilter.addEventListener('change', (e) => {
+            elements.statusFilter.addEventListener('change', e => {
                 filterAgents(e.target.value);
             });
         }
@@ -2217,7 +2358,7 @@
         }
 
         // Close FAB when clicking outside
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', e => {
             if (state.fabOpen && !e.target.closest('.fab-container')) {
                 toggleFab();
             }
@@ -2238,10 +2379,12 @@
         window.addEventListener('resize', handleResize);
 
         // Periodic refresh - track for cleanup
-        trackInterval(setInterval(() => {
-            updateStats();
-            fetchApiStatus();
-        }, CONFIG.REFRESH_INTERVAL));
+        trackInterval(
+            setInterval(() => {
+                updateStats();
+                fetchApiStatus();
+            }, CONFIG.REFRESH_INTERVAL)
+        );
 
         console.log('FUSE Company Dashboard v2.0 initialized');
     }

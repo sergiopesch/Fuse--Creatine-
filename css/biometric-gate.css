@@ -38,9 +38,10 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 2rem 1rem;
-    transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1),
-                visibility 0.6s cubic-bezier(0.19, 1, 0.22, 1),
-                transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    transition:
+        opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+        visibility 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+        transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .biometric-gate.hidden {
@@ -93,7 +94,7 @@
     border-radius: 32px;
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    box-shadow: 
+    box-shadow:
         0 40px 100px rgba(0, 0, 0, 0.5),
         0 0 0 1px rgba(255, 255, 255, 0.03),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -142,8 +143,15 @@
 }
 
 @keyframes pulseRing {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.15; }
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.15;
+    }
 }
 
 /* Middle Ring */
@@ -197,8 +205,15 @@
 }
 
 @keyframes iconPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(0.92); opacity: 0.7; }
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.92);
+        opacity: 0.7;
+    }
 }
 
 .biometric-icon-container.success .biometric-icon-inner {
@@ -227,9 +242,18 @@
 }
 
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-6px); }
-    40%, 80% { transform: translateX(6px); }
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    20%,
+    60% {
+        transform: translateX(-6px);
+    }
+    40%,
+    80% {
+        transform: translateX(6px);
+    }
 }
 
 /* Scanning Line Animation */
@@ -251,9 +275,19 @@
 }
 
 @keyframes scanLine {
-    0%, 100% { height: 0; top: 32px; }
-    50% { height: 96px; top: 32px; }
-    100% { height: 0; top: 128px; }
+    0%,
+    100% {
+        height: 0;
+        top: 32px;
+    }
+    50% {
+        height: 96px;
+        top: 32px;
+    }
+    100% {
+        height: 0;
+        top: 128px;
+    }
 }
 
 /* Rotating Glow */
@@ -278,8 +312,12 @@
 }
 
 @keyframes rotateGlow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ============================================
@@ -425,12 +463,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.12),
-        transparent
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
     transition: left 0.6s ease;
 }
 
@@ -489,9 +522,15 @@
 }
 
 @keyframes checkPop {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* ============================================
@@ -736,7 +775,7 @@
     margin-bottom: 16px;
 }
 
-.magic-link-form input[type="email"] {
+.magic-link-form input[type='email'] {
     flex: 1;
     padding: 14px 16px;
     font-size: 15px;
@@ -750,11 +789,11 @@
     transition: all 0.3s ease;
 }
 
-.magic-link-form input[type="email"]::placeholder {
+.magic-link-form input[type='email']::placeholder {
     color: rgba(255, 255, 255, 0.25);
 }
 
-.magic-link-form input[type="email"]:focus {
+.magic-link-form input[type='email']:focus {
     border-color: var(--gate-primary);
     box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
 }
@@ -825,7 +864,7 @@
         flex-direction: column;
     }
 
-    .magic-link-form input[type="email"] {
+    .magic-link-form input[type='email'] {
         font-size: 16px; /* Prevents iOS zoom */
         padding: 16px;
     }
@@ -923,7 +962,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ============================================

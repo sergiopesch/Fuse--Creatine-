@@ -9,7 +9,6 @@
  */
 
 const {
-    createSecuredHandler,
     authenticate,
     checkRateLimit,
     setSecurityHeaders,
@@ -17,13 +16,11 @@ const {
     getClientIp,
     getRequestHost,
     addAuditEntry,
-    getAuditLog,
     validateRequestBody,
     sanitizeString,
-    ALLOWED_ORIGINS
 } = require('./_lib/security');
 
-const { recordUsage, getUsageSummary } = require('./_lib/cost-tracker');
+const { getUsageSummary } = require('./_lib/cost-tracker');
 
 // World Controller - Master Control System
 const worldController = require('./_lib/world-controller');
@@ -37,8 +34,8 @@ const agentStateManager = require('./_lib/agent-state');
 
 const CONFIG = {
     // Rate limits (requests per minute)
-    RATE_LIMIT_READ: 60,      // GET requests
-    RATE_LIMIT_WRITE: 20,     // POST/PUT/DELETE requests
+    RATE_LIMIT_READ: 60, // GET requests
+    RATE_LIMIT_WRITE: 20, // POST/PUT/DELETE requests
 
     // Maximum items
     MAX_TASKS: 100,
@@ -49,7 +46,7 @@ const CONFIG = {
     // String limits
     MAX_TITLE_LENGTH: 200,
     MAX_DESCRIPTION_LENGTH: 2000,
-    MAX_MESSAGE_LENGTH: 1000
+    MAX_MESSAGE_LENGTH: 1000,
 };
 
 // ============================================================================
@@ -60,36 +57,44 @@ const SCHEMAS = {
     task: {
         title: { type: 'string', required: true, maxLength: CONFIG.MAX_TITLE_LENGTH },
         description: { type: 'string', maxLength: CONFIG.MAX_DESCRIPTION_LENGTH },
-        priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+        priority: {
+            type: 'string',
+            enum: ['low', 'medium', 'high', 'critical'],
+            default: 'medium',
+        },
         teamId: { type: 'string', required: true, maxLength: 50 },
-        assignedAgents: { type: 'array', maxItems: 10 }
+        assignedAgents: { type: 'array', maxItems: 10 },
     },
     decision: {
         title: { type: 'string', required: true, maxLength: CONFIG.MAX_TITLE_LENGTH },
         description: { type: 'string', maxLength: CONFIG.MAX_DESCRIPTION_LENGTH },
-        priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+        priority: {
+            type: 'string',
+            enum: ['low', 'medium', 'high', 'critical'],
+            default: 'medium',
+        },
         teamId: { type: 'string', required: true, maxLength: 50 },
         requestedBy: { type: 'string', maxLength: 100 },
-        impact: { type: 'string', maxLength: CONFIG.MAX_DESCRIPTION_LENGTH }
+        impact: { type: 'string', maxLength: CONFIG.MAX_DESCRIPTION_LENGTH },
     },
     broadcast: {
         message: { type: 'string', required: true, maxLength: CONFIG.MAX_MESSAGE_LENGTH },
         priority: { type: 'string', enum: ['info', 'important', 'urgent'], default: 'info' },
-        recipients: { type: 'array', maxItems: 20 }
+        recipients: { type: 'array', maxItems: 20 },
     },
     agentStatus: {
         teamId: { type: 'string', required: true, maxLength: 50 },
         agentId: { type: 'string', required: true, maxLength: 50 },
-        status: { type: 'string', required: true, enum: ['working', 'idle', 'offline'] }
+        status: { type: 'string', required: true, enum: ['working', 'idle', 'offline'] },
     },
     orchestrationMode: {
-        mode: { type: 'string', required: true, enum: ['autonomous', 'supervised', 'manual'] }
+        mode: { type: 'string', required: true, enum: ['autonomous', 'supervised', 'manual'] },
     },
     apiKey: {
         provider: { type: 'string', required: true, enum: ['anthropic', 'openai', 'gemini'] },
         model: { type: 'string', maxLength: 100 },
-        apiKey: { type: 'string', maxLength: 200 }
-    }
+        apiKey: { type: 'string', maxLength: 200 },
+    },
 };
 
 // ============================================================================
@@ -131,22 +136,22 @@ function getApiKeyStatus() {
             model: agentState.apiKeyConfig.anthropic.model,
             lastUpdated: agentState.apiKeyConfig.anthropic.lastUpdated,
             provider: 'Anthropic',
-            models: ['claude-3-5-haiku-latest', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest']
+            models: ['claude-3-5-haiku-latest', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest'],
         },
         openai: {
             configured: openaiConfigured || agentState.apiKeyConfig.openai.configured,
             model: agentState.apiKeyConfig.openai.model,
             lastUpdated: agentState.apiKeyConfig.openai.lastUpdated,
             provider: 'OpenAI',
-            models: ['gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo']
+            models: ['gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
         },
         gemini: {
             configured: geminiConfigured || agentState.apiKeyConfig.gemini.configured,
             model: agentState.apiKeyConfig.gemini.model,
             lastUpdated: agentState.apiKeyConfig.gemini.lastUpdated,
             provider: 'Google',
-            models: ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro']
-        }
+            models: ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro'],
+        },
     };
 }
 
@@ -155,7 +160,7 @@ function getAgentHealthSummary() {
         totalAgents: countTotalAgents(),
         activeAgents: countActiveAgents(),
         idleAgents: countTotalAgents() - countActiveAgents(),
-        teamHealth: {}
+        teamHealth: {},
     };
 
     Object.entries(agentState.teams).forEach(([teamId, team]) => {
@@ -166,7 +171,12 @@ function getAgentHealthSummary() {
             active: activeInTeam,
             total: totalInTeam,
             utilization: Math.round((activeInTeam / totalInTeam) * 100),
-            status: activeInTeam === 0 ? 'idle' : activeInTeam === totalInTeam ? 'full-capacity' : 'operational'
+            status:
+                activeInTeam === 0
+                    ? 'idle'
+                    : activeInTeam === totalInTeam
+                      ? 'full-capacity'
+                      : 'operational',
         };
     });
 
@@ -180,7 +190,7 @@ function addActivity(agent, teamId, message, tag) {
         teamId: sanitizeString(teamId, 50),
         message: sanitizeString(message, CONFIG.MAX_MESSAGE_LENGTH),
         tag: sanitizeString(tag, 50),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
     };
     agentState.activities.unshift(activity);
 
@@ -196,14 +206,14 @@ function addCommunication(fromAgent, fromTeam, toTeam, message, toAgent = null) 
         id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         from: {
             agent: sanitizeString(fromAgent, 100),
-            teamId: sanitizeString(fromTeam, 50)
+            teamId: sanitizeString(fromTeam, 50),
         },
         to: {
             agent: toAgent ? sanitizeString(toAgent, 100) : 'Team',
-            teamId: sanitizeString(toTeam, 50)
+            teamId: sanitizeString(toTeam, 50),
         },
         message: sanitizeString(message, CONFIG.MAX_MESSAGE_LENGTH),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
     };
     agentState.communications.unshift(comm);
 
@@ -223,7 +233,7 @@ function generateAnalytics() {
             activeAgents: countActiveAgents(),
             totalTasks: agentState.tasks.length,
             completedTasks: agentState.tasks.filter(t => t.status === 'completed').length,
-            pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length
+            pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length,
         },
         teamPerformance: Object.entries(agentState.teams).map(([id, team]) => {
             const teamTasks = agentState.tasks.filter(t => t.teamId === id);
@@ -240,12 +250,10 @@ function generateAnalytics() {
             };
         }),
         recentActivity: {
-            last24Hours: agentState.activities.filter(a =>
-                new Date(a.timestamp) > new Date(now - 24 * 60 * 60 * 1000)
+            last24Hours: agentState.activities.filter(
+                a => new Date(a.timestamp) > new Date(now - 24 * 60 * 60 * 1000)
             ).length,
-            today: agentState.activities.filter(a =>
-                new Date(a.timestamp) > dayStart
-            ).length
+            today: agentState.activities.filter(a => new Date(a.timestamp) > dayStart).length,
         },
         orchestrationMetrics: {
             mode: agentState.orchestrationMode,
@@ -280,11 +288,11 @@ module.exports = async (req, res) => {
             ip: clientIp,
             origin: req.headers.origin,
             success: false,
-            endpoint: '/api/agents'
+            endpoint: '/api/agents',
         });
         return res.status(403).json({
             error: 'Origin not allowed',
-            code: 'CORS_ERROR'
+            code: 'CORS_ERROR',
         });
     }
 
@@ -310,11 +318,11 @@ module.exports = async (req, res) => {
             ip: clientIp,
             success: false,
             endpoint: '/api/agents',
-            error: error.message
+            error: error.message,
         });
         return res.status(500).json({
             error: 'Internal server error',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
         });
     }
 };
@@ -335,12 +343,12 @@ async function handleGet(action, query, res, clientIp) {
         return res.status(429).json({
             error: 'Too many requests',
             code: 'RATE_LIMITED',
-            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000)
+            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000),
         });
     }
 
     switch (action) {
-        case 'status':
+        case 'status': {
             const totalAgents = countTotalAgents();
             // Build team orchestration status
             const teamOrchestrationStatus = {};
@@ -348,7 +356,7 @@ async function handleGet(action, query, res, clientIp) {
                 teamOrchestrationStatus[teamId] = {
                     status: team.orchestrationStatus || 'paused',
                     activeAgents: team.agents.filter(a => a.status === 'working').length,
-                    totalAgents: team.agents.length
+                    totalAgents: team.agents.length,
                 };
             });
 
@@ -358,16 +366,19 @@ async function handleGet(action, query, res, clientIp) {
                     totalAgents,
                     activeAgents: countActiveAgents(),
                     idleAgents: totalAgents - countActiveAgents(),
-                    tasksInProgress: agentState.tasks.filter(t => t.status === 'in_progress').length,
-                    pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length,
+                    tasksInProgress: agentState.tasks.filter(t => t.status === 'in_progress')
+                        .length,
+                    pendingDecisions: agentState.decisions.filter(d => d.status === 'pending')
+                        .length,
                     orchestrationMode: agentState.orchestrationMode,
-                    teamOrchestrationStatus,  // Per-team orchestration state
+                    teamOrchestrationStatus, // Per-team orchestration state
                     apiKeyConfig: getApiKeyStatus(),
                     healthMetrics: agentState.healthMetrics,
                     teamCount: Object.keys(agentState.teams).length,
-                    timestamp: new Date().toISOString()
-                }
+                    timestamp: new Date().toISOString(),
+                },
             });
+        }
 
         case 'health':
             return res.status(200).json({
@@ -378,17 +389,17 @@ async function handleGet(action, query, res, clientIp) {
                     memory: process.memoryUsage ? process.memoryUsage() : 'N/A',
                     agents: getAgentHealthSummary(),
                     apiKeys: getApiKeyStatus(),
-                    lastCheck: new Date().toISOString()
-                }
+                    lastCheck: new Date().toISOString(),
+                },
             });
 
         case 'api-keys':
             return res.status(200).json({
                 success: true,
-                data: getApiKeyStatus()
+                data: getApiKeyStatus(),
             });
 
-        case 'teams':
+        case 'teams': {
             const teamId = query.teamId;
             if (teamId && teamId !== 'all') {
                 const team = agentState.teams[teamId];
@@ -398,8 +409,9 @@ async function handleGet(action, query, res, clientIp) {
                 return res.status(200).json({ success: true, data: team });
             }
             return res.status(200).json({ success: true, data: agentState.teams });
+        }
 
-        case 'agents':
+        case 'agents': {
             const agentTeamId = query.teamId;
             const agentId = query.agentId;
             if (agentTeamId && agentId) {
@@ -420,8 +432,9 @@ async function handleGet(action, query, res, clientIp) {
                 });
             });
             return res.status(200).json({ success: true, data: allAgents });
+        }
 
-        case 'tasks':
+        case 'tasks': {
             const taskTeamId = query.teamId;
             const taskStatus = query.status;
             let tasks = [...agentState.tasks];
@@ -432,40 +445,45 @@ async function handleGet(action, query, res, clientIp) {
                 tasks = tasks.filter(t => t.status === taskStatus);
             }
             return res.status(200).json({ success: true, data: tasks });
+        }
 
-        case 'decisions':
+        case 'decisions': {
             const decisionStatus = query.status || 'pending';
             const decisions = agentState.decisions.filter(d => d.status === decisionStatus);
             return res.status(200).json({ success: true, data: decisions });
+        }
 
-        case 'activities':
+        case 'activities': {
             const limit = Math.min(parseInt(query.limit) || 20, 100);
             const activities = agentState.activities.slice(0, limit);
             return res.status(200).json({ success: true, data: activities });
+        }
 
-        case 'communications':
+        case 'communications': {
             const commsTeamId = query.teamId;
             let communications = [...agentState.communications];
             if (commsTeamId && commsTeamId !== 'all') {
-                communications = communications.filter(c =>
-                    c.from.teamId === commsTeamId || c.to.teamId === commsTeamId
+                communications = communications.filter(
+                    c => c.from.teamId === commsTeamId || c.to.teamId === commsTeamId
                 );
             }
             return res.status(200).json({ success: true, data: communications });
+        }
 
         case 'analytics':
             return res.status(200).json({
                 success: true,
-                data: generateAnalytics()
+                data: generateAnalytics(),
             });
 
-        case 'costs':
+        case 'costs': {
             // Cost transparency endpoint
             const period = query.period || 'today';
             return res.status(200).json({
                 success: true,
-                data: getUsageSummary(period)
+                data: getUsageSummary(period),
             });
+        }
 
         // ====================================================================
         // WORLD CONTROLLER - OWNER CONTROL ENDPOINTS
@@ -474,54 +492,57 @@ async function handleGet(action, query, res, clientIp) {
         case 'world-status':
             return res.status(200).json({
                 success: true,
-                data: worldController.getWorldStatus()
+                data: worldController.getWorldStatus(),
             });
 
-        case 'team-control-status':
+        case 'team-control-status': {
             const controlTeamId = query.teamId;
             if (controlTeamId) {
                 return res.status(200).json({
                     success: true,
-                    data: worldController.getTeamStatus(controlTeamId)
+                    data: worldController.getTeamStatus(controlTeamId),
                 });
             }
             return res.status(200).json({
                 success: true,
-                data: worldController.getWorldStatus().teamControls
+                data: worldController.getWorldStatus().teamControls,
             });
+        }
 
         case 'pending-actions':
             return res.status(200).json({
                 success: true,
-                data: worldController.getPendingActions()
+                data: worldController.getPendingActions(),
             });
 
         case 'credit-status':
             return res.status(200).json({
                 success: true,
-                data: worldController.checkCreditLimits()
+                data: worldController.checkCreditLimits(),
             });
 
-        case 'control-log':
+        case 'control-log': {
             const logLimit = parseInt(query.limit) || 50;
             return res.status(200).json({
                 success: true,
-                data: worldController.getControlLog(logLimit)
+                data: worldController.getControlLog(logLimit),
             });
+        }
 
-        case 'can-execute':
+        case 'can-execute': {
             const checkTeamId = query.teamId;
             const checkAction = query.actionType;
             if (!checkTeamId || !checkAction) {
                 return res.status(400).json({
                     error: 'teamId and actionType are required',
-                    code: 'VALIDATION_ERROR'
+                    code: 'VALIDATION_ERROR',
                 });
             }
             return res.status(200).json({
                 success: true,
-                data: worldController.canExecuteAction(checkTeamId, checkAction)
+                data: worldController.canExecuteAction(checkTeamId, checkAction),
             });
+        }
 
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });
@@ -540,7 +561,7 @@ async function handleAuthenticatedRequest(method, action, req, res, clientIp) {
         console.error('[Agents API] No authentication token configured');
         return res.status(503).json({
             error: 'Agent management is not configured',
-            code: 'NOT_CONFIGURED'
+            code: 'NOT_CONFIGURED',
         });
     }
 
@@ -552,16 +573,20 @@ async function handleAuthenticatedRequest(method, action, req, res, clientIp) {
             success: false,
             endpoint: '/api/agents',
             method,
-            reason: authResult.error
+            reason: authResult.error,
         });
         return res.status(401).json({
             error: authResult.error,
-            code: 'UNAUTHORIZED'
+            code: 'UNAUTHORIZED',
         });
     }
 
     // Rate limit write operations more strictly
-    const rateLimit = await checkRateLimit(`agents:write:${clientIp}`, CONFIG.RATE_LIMIT_WRITE, 60000);
+    const rateLimit = await checkRateLimit(
+        `agents:write:${clientIp}`,
+        CONFIG.RATE_LIMIT_WRITE,
+        60000
+    );
 
     res.setHeader('X-RateLimit-Limit', CONFIG.RATE_LIMIT_WRITE);
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining);
@@ -571,7 +596,7 @@ async function handleAuthenticatedRequest(method, action, req, res, clientIp) {
         return res.status(429).json({
             error: 'Too many requests',
             code: 'RATE_LIMITED',
-            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000)
+            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000),
         });
     }
 
@@ -596,7 +621,7 @@ function handlePost(action, body, res, clientIp) {
     let validation;
 
     switch (action) {
-        case 'task':
+        case 'task': {
             validation = validateRequestBody(body, SCHEMAS.task);
             if (!validation.valid) {
                 return res.status(400).json({ error: validation.error, code: 'VALIDATION_ERROR' });
@@ -605,7 +630,7 @@ function handlePost(action, body, res, clientIp) {
             if (agentState.tasks.length >= CONFIG.MAX_TASKS) {
                 return res.status(400).json({
                     error: `Maximum tasks (${CONFIG.MAX_TASKS}) reached`,
-                    code: 'LIMIT_REACHED'
+                    code: 'LIMIT_REACHED',
                 });
             }
 
@@ -618,7 +643,7 @@ function handlePost(action, body, res, clientIp) {
                 assignedAgents: validation.sanitized.assignedAgents || [],
                 status: 'pending',
                 createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
             };
             agentState.tasks.push(newTask);
             addActivity('Commander', 'system', `Created task: ${newTask.title}`, 'Task Created');
@@ -626,11 +651,12 @@ function handlePost(action, body, res, clientIp) {
                 action: 'TASK_CREATED',
                 ip: clientIp,
                 success: true,
-                taskId: newTask.id
+                taskId: newTask.id,
             });
             return res.status(201).json({ success: true, data: newTask });
+        }
 
-        case 'decision':
+        case 'decision': {
             validation = validateRequestBody(body, SCHEMAS.decision);
             if (!validation.valid) {
                 return res.status(400).json({ error: validation.error, code: 'VALIDATION_ERROR' });
@@ -639,7 +665,7 @@ function handlePost(action, body, res, clientIp) {
             if (agentState.decisions.length >= CONFIG.MAX_DECISIONS) {
                 return res.status(400).json({
                     error: `Maximum decisions (${CONFIG.MAX_DECISIONS}) reached`,
-                    code: 'LIMIT_REACHED'
+                    code: 'LIMIT_REACHED',
                 });
             }
 
@@ -653,19 +679,25 @@ function handlePost(action, body, res, clientIp) {
                 status: 'pending',
                 impact: validation.sanitized.impact || '',
                 details: {},
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
             };
             agentState.decisions.push(newDecision);
-            addActivity(validation.sanitized.requestedBy || 'Unknown', validation.sanitized.teamId, `Requested decision: ${newDecision.title}`, 'Decision Request');
+            addActivity(
+                validation.sanitized.requestedBy || 'Unknown',
+                validation.sanitized.teamId,
+                `Requested decision: ${newDecision.title}`,
+                'Decision Request'
+            );
             addAuditEntry({
                 action: 'DECISION_CREATED',
                 ip: clientIp,
                 success: true,
-                decisionId: newDecision.id
+                decisionId: newDecision.id,
             });
             return res.status(201).json({ success: true, data: newDecision });
+        }
 
-        case 'broadcast':
+        case 'broadcast': {
             validation = validateRequestBody(body, SCHEMAS.broadcast);
             if (!validation.valid) {
                 return res.status(400).json({ error: validation.error, code: 'VALIDATION_ERROR' });
@@ -677,10 +709,15 @@ function handlePost(action, body, res, clientIp) {
                 priority: validation.sanitized.priority,
                 recipients: validation.sanitized.recipients || ['all'],
                 sentAt: new Date().toISOString(),
-                sentBy: 'Commander'
+                sentBy: 'Commander',
             };
 
-            addActivity('Commander', 'system', `Broadcast: ${validation.sanitized.message.substring(0, 50)}...`, 'Broadcast');
+            addActivity(
+                'Commander',
+                'system',
+                `Broadcast: ${validation.sanitized.message.substring(0, 50)}...`,
+                'Broadcast'
+            );
 
             const teams = broadcast.recipients.includes('all')
                 ? Object.keys(agentState.teams)
@@ -693,11 +730,12 @@ function handlePost(action, body, res, clientIp) {
                 action: 'BROADCAST_SENT',
                 ip: clientIp,
                 success: true,
-                recipients: teams.length
+                recipients: teams.length,
             });
             return res.status(201).json({ success: true, data: broadcast });
+        }
 
-        case 'communicate':
+        case 'communicate': {
             const comm = addCommunication(
                 body.fromAgent,
                 body.fromTeam,
@@ -708,31 +746,33 @@ function handlePost(action, body, res, clientIp) {
             addAuditEntry({
                 action: 'COMMUNICATION_SENT',
                 ip: clientIp,
-                success: true
+                success: true,
             });
             return res.status(201).json({ success: true, data: comm });
+        }
 
-        case 'sync':
+        case 'sync': {
             const syncResult = {
                 synced: true,
                 timestamp: new Date().toISOString(),
                 agentsSynced: countTotalAgents(),
                 tasksSynced: agentState.tasks.length,
-                pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length
+                pendingDecisions: agentState.decisions.filter(d => d.status === 'pending').length,
             };
             addActivity('System', 'system', 'All agents synchronized', 'Sync');
             addAuditEntry({
                 action: 'SYSTEM_SYNC',
                 ip: clientIp,
-                success: true
+                success: true,
             });
             return res.status(200).json({ success: true, data: syncResult });
+        }
 
         // ====================================================================
         // WORLD CONTROLLER - OWNER CONTROL POST ENDPOINTS
         // ====================================================================
 
-        case 'world-pause':
+        case 'world-pause': {
             const pauseReason = body.reason || 'Manual pause by owner';
             const pauseResult = worldController.pauseWorld(pauseReason, 'owner');
             addActivity('OWNER', 'system', `WORLD PAUSED: ${pauseReason}`, 'Emergency');
@@ -740,11 +780,12 @@ function handlePost(action, body, res, clientIp) {
                 action: 'WORLD_PAUSED',
                 ip: clientIp,
                 success: pauseResult.success,
-                reason: pauseReason
+                reason: pauseReason,
             });
             return res.status(200).json({ success: true, data: pauseResult });
+        }
 
-        case 'world-resume':
+        case 'world-resume': {
             const targetState = body.targetState || worldController.WORLD_STATES.MANUAL;
             const resumeResult = worldController.resumeWorld('owner', targetState);
             if (resumeResult.success) {
@@ -754,11 +795,12 @@ function handlePost(action, body, res, clientIp) {
                 action: 'WORLD_RESUMED',
                 ip: clientIp,
                 success: resumeResult.success,
-                targetState
+                targetState,
             });
             return res.status(200).json({ success: true, data: resumeResult });
+        }
 
-        case 'emergency-stop':
+        case 'emergency-stop': {
             const emergencyReason = body.reason || 'Emergency stop triggered by owner';
             const emergencyResult = worldController.triggerEmergencyStop(emergencyReason);
             addActivity('OWNER', 'system', `EMERGENCY STOP: ${emergencyReason}`, 'Critical');
@@ -766,11 +808,12 @@ function handlePost(action, body, res, clientIp) {
                 action: 'EMERGENCY_STOP',
                 ip: clientIp,
                 success: true,
-                reason: emergencyReason
+                reason: emergencyReason,
             });
             return res.status(200).json({ success: true, data: emergencyResult });
+        }
 
-        case 'reset-emergency':
+        case 'reset-emergency': {
             const confirmCode = body.confirmationCode;
             const resetResult = worldController.resetEmergencyStop('owner', confirmCode);
             if (resetResult.success) {
@@ -779,32 +822,43 @@ function handlePost(action, body, res, clientIp) {
             addAuditEntry({
                 action: 'EMERGENCY_RESET_ATTEMPT',
                 ip: clientIp,
-                success: resetResult.success
+                success: resetResult.success,
             });
             return res.status(200).json({ success: true, data: resetResult });
+        }
 
-        case 'trigger-action':
+        case 'trigger-action': {
             const { teamId: actionTeamId, actionType, parameters } = body;
             if (!actionTeamId || !actionType) {
                 return res.status(400).json({
                     error: 'teamId and actionType are required',
-                    code: 'VALIDATION_ERROR'
+                    code: 'VALIDATION_ERROR',
                 });
             }
-            const triggerResult = worldController.triggerTeamAction(actionTeamId, actionType, parameters || {});
+            const triggerResult = worldController.triggerTeamAction(
+                actionTeamId,
+                actionType,
+                parameters || {}
+            );
             if (triggerResult.success) {
-                addActivity('OWNER', actionTeamId, `Triggered action: ${actionType}`, 'Manual Trigger');
+                addActivity(
+                    'OWNER',
+                    actionTeamId,
+                    `Triggered action: ${actionType}`,
+                    'Manual Trigger'
+                );
             }
             addAuditEntry({
                 action: 'ACTION_TRIGGERED',
                 ip: clientIp,
                 success: triggerResult.success,
                 teamId: actionTeamId,
-                actionType
+                actionType,
             });
             return res.status(200).json({ success: true, data: triggerResult });
+        }
 
-        case 'queue-action':
+        case 'queue-action': {
             const queueResult = worldController.queueAction(
                 body.teamId,
                 body.actionType,
@@ -816,11 +870,12 @@ function handlePost(action, body, res, clientIp) {
                 ip: clientIp,
                 success: queueResult.success,
                 teamId: body.teamId,
-                actionType: body.actionType
+                actionType: body.actionType,
             });
             return res.status(200).json({ success: true, data: queueResult });
+        }
 
-        case 'approve-action':
+        case 'approve-action': {
             const approveResult = worldController.approveAction(body.actionId);
             if (approveResult.success) {
                 addActivity('OWNER', 'system', `Approved action: ${body.actionId}`, 'Approval');
@@ -829,20 +884,22 @@ function handlePost(action, body, res, clientIp) {
                 action: 'ACTION_APPROVED',
                 ip: clientIp,
                 success: approveResult.success,
-                actionId: body.actionId
+                actionId: body.actionId,
             });
             return res.status(200).json({ success: true, data: approveResult });
+        }
 
-        case 'reject-action':
+        case 'reject-action': {
             const rejectResult = worldController.rejectAction(body.actionId, body.reason);
             addActivity('OWNER', 'system', `Rejected action: ${body.actionId}`, 'Rejection');
             addAuditEntry({
                 action: 'ACTION_REJECTED',
                 ip: clientIp,
                 success: rejectResult.success,
-                actionId: body.actionId
+                actionId: body.actionId,
             });
             return res.status(200).json({ success: true, data: rejectResult });
+        }
 
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });
@@ -857,7 +914,7 @@ function handlePut(action, body, res, clientIp) {
     let validation;
 
     switch (action) {
-        case 'agent-status':
+        case 'agent-status': {
             validation = validateRequestBody(body, SCHEMAS.agentStatus);
             if (!validation.valid) {
                 return res.status(400).json({ error: validation.error, code: 'VALIDATION_ERROR' });
@@ -874,7 +931,12 @@ function handlePut(action, body, res, clientIp) {
             }
             const oldStatus = agent.status;
             agent.status = status;
-            addActivity(agent.name, teamId, `Status changed from ${oldStatus} to ${status}`, 'Status Update');
+            addActivity(
+                agent.name,
+                teamId,
+                `Status changed from ${oldStatus} to ${status}`,
+                'Status Update'
+            );
             addAuditEntry({
                 action: 'AGENT_STATUS_CHANGED',
                 ip: clientIp,
@@ -882,11 +944,12 @@ function handlePut(action, body, res, clientIp) {
                 agentId,
                 teamId,
                 oldStatus,
-                newStatus: status
+                newStatus: status,
             });
             return res.status(200).json({ success: true, data: agent });
+        }
 
-        case 'task-status':
+        case 'task-status': {
             const task = agentState.tasks.find(t => t.id === body.taskId);
             if (!task) {
                 return res.status(404).json({ error: 'Task not found' });
@@ -898,18 +961,24 @@ function handlePut(action, body, res, clientIp) {
             const oldTaskStatus = task.status;
             task.status = body.status;
             task.updatedAt = new Date().toISOString();
-            addActivity('System', task.teamId, `Task "${task.title}" status: ${body.status}`, 'Task Update');
+            addActivity(
+                'System',
+                task.teamId,
+                `Task "${task.title}" status: ${body.status}`,
+                'Task Update'
+            );
             addAuditEntry({
                 action: 'TASK_STATUS_CHANGED',
                 ip: clientIp,
                 success: true,
                 taskId: task.id,
                 oldStatus: oldTaskStatus,
-                newStatus: body.status
+                newStatus: body.status,
             });
             return res.status(200).json({ success: true, data: task });
+        }
 
-        case 'decision':
+        case 'decision': {
             const decision = agentState.decisions.find(d => d.id === body.decisionId);
             if (!decision) {
                 return res.status(404).json({ error: 'Decision not found' });
@@ -921,32 +990,46 @@ function handlePut(action, body, res, clientIp) {
             decision.status = body.status;
             decision.resolvedAt = new Date().toISOString();
             decision.resolvedBy = 'Commander';
-            addActivity('Commander', decision.teamId, `Decision ${body.status}: ${decision.title}`, body.status === 'approved' ? 'Approved' : 'Rejected');
+            addActivity(
+                'Commander',
+                decision.teamId,
+                `Decision ${body.status}: ${decision.title}`,
+                body.status === 'approved' ? 'Approved' : 'Rejected'
+            );
             addAuditEntry({
                 action: 'DECISION_RESOLVED',
                 ip: clientIp,
                 success: true,
                 decisionId: decision.id,
-                resolution: body.status
+                resolution: body.status,
             });
             return res.status(200).json({ success: true, data: decision });
+        }
 
-        case 'orchestration-mode':
+        case 'orchestration-mode': {
             validation = validateRequestBody(body, SCHEMAS.orchestrationMode);
             if (!validation.valid) {
                 return res.status(400).json({ error: validation.error, code: 'VALIDATION_ERROR' });
             }
             const oldMode = agentState.orchestrationMode;
             agentState.orchestrationMode = validation.sanitized.mode;
-            addActivity('Commander', 'system', `Orchestration mode changed from ${oldMode} to ${validation.sanitized.mode}`, 'Mode Change');
+            addActivity(
+                'Commander',
+                'system',
+                `Orchestration mode changed from ${oldMode} to ${validation.sanitized.mode}`,
+                'Mode Change'
+            );
             addAuditEntry({
                 action: 'ORCHESTRATION_MODE_CHANGED',
                 ip: clientIp,
                 success: true,
                 oldMode,
-                newMode: validation.sanitized.mode
+                newMode: validation.sanitized.mode,
             });
-            return res.status(200).json({ success: true, data: { mode: validation.sanitized.mode } });
+            return res
+                .status(200)
+                .json({ success: true, data: { mode: validation.sanitized.mode } });
+        }
 
         case 'priority-order':
             if (Array.isArray(body.priorities)) {
@@ -960,11 +1043,11 @@ function handlePut(action, body, res, clientIp) {
             addAuditEntry({
                 action: 'PRIORITIES_UPDATED',
                 ip: clientIp,
-                success: true
+                success: true,
             });
             return res.status(200).json({ success: true, data: { updated: true } });
 
-        case 'api-key':
+        case 'api-key': {
             validation = validateRequestBody(body, SCHEMAS.apiKey);
             if (!validation.valid) {
                 return res.status(400).json({ error: validation.error, code: 'VALIDATION_ERROR' });
@@ -976,26 +1059,34 @@ function handlePut(action, body, res, clientIp) {
             const keyPatterns = {
                 anthropic: /^sk-ant-/,
                 openai: /^sk-/,
-                gemini: /^AI/
+                gemini: /^AI/,
             };
 
             if (apiKey && !keyPatterns[provider].test(apiKey)) {
-                return res.status(400).json({ error: 'Invalid API key format for provider', code: 'VALIDATION_ERROR' });
+                return res.status(400).json({
+                    error: 'Invalid API key format for provider',
+                    code: 'VALIDATION_ERROR',
+                });
             }
 
             // Update configuration metadata (actual key should be set via env vars)
             agentState.apiKeyConfig[provider] = {
                 configured: Boolean(apiKey),
                 model: model || agentState.apiKeyConfig[provider].model,
-                lastUpdated: new Date().toISOString()
+                lastUpdated: new Date().toISOString(),
             };
 
-            addActivity('Commander', 'system', `Updated ${provider} API configuration`, 'Config Update');
+            addActivity(
+                'Commander',
+                'system',
+                `Updated ${provider} API configuration`,
+                'Config Update'
+            );
             addAuditEntry({
                 action: 'API_KEY_CONFIGURED',
                 ip: clientIp,
                 success: true,
-                provider
+                provider,
             });
 
             return res.status(200).json({
@@ -1004,12 +1095,19 @@ function handlePut(action, body, res, clientIp) {
                     provider,
                     model: agentState.apiKeyConfig[provider].model,
                     configured: agentState.apiKeyConfig[provider].configured,
-                    message: 'API key configuration updated. For production, set keys via environment variables.'
-                }
+                    message:
+                        'API key configuration updated. For production, set keys via environment variables.',
+                },
             });
+        }
 
-        case 'agent-model':
-            const { teamId: modelTeamId, agentId: modelAgentId, modelProvider, selectedModel } = body;
+        case 'agent-model': {
+            const {
+                teamId: modelTeamId,
+                agentId: modelAgentId,
+                modelProvider,
+                selectedModel,
+            } = body;
 
             if (modelTeamId && agentState.teams[modelTeamId]) {
                 if (modelAgentId) {
@@ -1017,14 +1115,24 @@ function handlePut(action, body, res, clientIp) {
                     if (a) {
                         a.modelProvider = sanitizeString(modelProvider, 50);
                         a.model = sanitizeString(selectedModel, 100);
-                        addActivity(a.name, modelTeamId, `Model changed to ${selectedModel}`, 'Config Update');
+                        addActivity(
+                            a.name,
+                            modelTeamId,
+                            `Model changed to ${selectedModel}`,
+                            'Config Update'
+                        );
                     }
                 } else {
                     agentState.teams[modelTeamId].agents.forEach(a => {
                         a.modelProvider = sanitizeString(modelProvider, 50);
                         a.model = sanitizeString(selectedModel, 100);
                     });
-                    addActivity('System', modelTeamId, `Team model changed to ${selectedModel}`, 'Config Update');
+                    addActivity(
+                        'System',
+                        modelTeamId,
+                        `Team model changed to ${selectedModel}`,
+                        'Config Update'
+                    );
                 }
             }
 
@@ -1033,58 +1141,79 @@ function handlePut(action, body, res, clientIp) {
                 ip: clientIp,
                 success: true,
                 teamId: modelTeamId,
-                agentId: modelAgentId
+                agentId: modelAgentId,
             });
 
             return res.status(200).json({ success: true, data: { updated: true } });
+        }
 
         // ====================================================================
         // WORLD CONTROLLER - OWNER CONTROL PUT ENDPOINTS
         // ====================================================================
 
-        case 'world-state':
+        case 'world-state': {
             const newWorldState = body.state;
             if (!newWorldState) {
                 return res.status(400).json({
                     error: 'state is required',
                     code: 'VALIDATION_ERROR',
-                    validStates: Object.values(worldController.WORLD_STATES)
+                    validStates: Object.values(worldController.WORLD_STATES),
                 });
             }
             const stateResult = worldController.setWorldState(newWorldState, 'owner');
             if (stateResult.success) {
-                addActivity('OWNER', 'system', `World state changed to: ${newWorldState}`, 'Mode Change');
+                addActivity(
+                    'OWNER',
+                    'system',
+                    `World state changed to: ${newWorldState}`,
+                    'Mode Change'
+                );
             }
             addAuditEntry({
                 action: 'WORLD_STATE_CHANGED',
                 ip: clientIp,
                 success: stateResult.success,
-                newState: newWorldState
+                newState: newWorldState,
             });
             return res.status(200).json({ success: true, data: stateResult });
+        }
 
-        case 'team-pause':
+        case 'team-pause': {
             const pauseTeamId = body.teamId;
             const teamPauseReason = body.reason || 'Manual pause';
             if (!pauseTeamId) {
-                return res.status(400).json({ error: 'teamId is required', code: 'VALIDATION_ERROR' });
+                return res
+                    .status(400)
+                    .json({ error: 'teamId is required', code: 'VALIDATION_ERROR' });
             }
-            const teamPauseResult = worldController.pauseTeam(pauseTeamId, teamPauseReason, 'owner');
+            const teamPauseResult = worldController.pauseTeam(
+                pauseTeamId,
+                teamPauseReason,
+                'owner'
+            );
             if (teamPauseResult.success) {
-                addActivity('OWNER', pauseTeamId, `Team PAUSED: ${teamPauseReason}`, 'Team Control');
+                addActivity(
+                    'OWNER',
+                    pauseTeamId,
+                    `Team PAUSED: ${teamPauseReason}`,
+                    'Team Control'
+                );
             }
             addAuditEntry({
                 action: 'TEAM_PAUSED',
                 ip: clientIp,
                 success: teamPauseResult.success,
-                teamId: pauseTeamId
+                teamId: pauseTeamId,
             });
             return res.status(200).json({ success: true, data: teamPauseResult });
+        }
 
-        case 'team-resume':
+        case 'team-resume': {
             const resumeTeamId = body.teamId;
             if (!resumeTeamId) {
-                return res.status(400).json({ error: 'teamId is required', code: 'VALIDATION_ERROR' });
+                return res
+                    .status(400)
+                    .json({ error: 'teamId is required', code: 'VALIDATION_ERROR' });
             }
             const teamResumeResult = worldController.resumeTeam(resumeTeamId, 'owner');
             if (teamResumeResult.success) {
@@ -1094,11 +1223,12 @@ function handlePut(action, body, res, clientIp) {
                 action: 'TEAM_RESUMED',
                 ip: clientIp,
                 success: teamResumeResult.success,
-                teamId: resumeTeamId
+                teamId: resumeTeamId,
             });
             return res.status(200).json({ success: true, data: teamResumeResult });
+        }
 
-        case 'team-automation':
+        case 'team-automation': {
             const autoTeamId = body.teamId;
             const autoLevel = body.level;
             const allowedActions = body.allowedActions || [];
@@ -1106,10 +1236,14 @@ function handlePut(action, body, res, clientIp) {
                 return res.status(400).json({
                     error: 'teamId and level are required',
                     code: 'VALIDATION_ERROR',
-                    validLevels: Object.values(worldController.AUTOMATION_LEVELS)
+                    validLevels: Object.values(worldController.AUTOMATION_LEVELS),
                 });
             }
-            const autoResult = worldController.setTeamAutomationLevel(autoTeamId, autoLevel, allowedActions);
+            const autoResult = worldController.setTeamAutomationLevel(
+                autoTeamId,
+                autoLevel,
+                allowedActions
+            );
             if (autoResult.success) {
                 addActivity('OWNER', autoTeamId, `Automation set to: ${autoLevel}`, 'Team Control');
             }
@@ -1118,67 +1252,86 @@ function handlePut(action, body, res, clientIp) {
                 ip: clientIp,
                 success: autoResult.success,
                 teamId: autoTeamId,
-                level: autoLevel
+                level: autoLevel,
             });
             return res.status(200).json({ success: true, data: autoResult });
+        }
 
-        case 'credit-limits':
-            const creditResult = worldController.setCreditLimits(body.dailyLimit, body.monthlyLimit);
-            addActivity('OWNER', 'system', `Credit limits updated: $${body.dailyLimit}/day, $${body.monthlyLimit}/month`, 'Config');
+        case 'credit-limits': {
+            const creditResult = worldController.setCreditLimits(
+                body.dailyLimit,
+                body.monthlyLimit
+            );
+            addActivity(
+                'OWNER',
+                'system',
+                `Credit limits updated: $${body.dailyLimit}/day, $${body.monthlyLimit}/month`,
+                'Config'
+            );
             addAuditEntry({
                 action: 'CREDIT_LIMITS_UPDATED',
                 ip: clientIp,
                 success: creditResult.success,
                 dailyLimit: body.dailyLimit,
-                monthlyLimit: body.monthlyLimit
+                monthlyLimit: body.monthlyLimit,
             });
             return res.status(200).json({ success: true, data: creditResult });
+        }
 
-        case 'record-spend':
+        case 'record-spend': {
             const spendResult = worldController.recordSpend(body.amount, body.source || 'manual');
             addAuditEntry({
                 action: 'SPEND_RECORDED',
                 ip: clientIp,
                 success: true,
-                amount: body.amount
+                amount: body.amount,
             });
             return res.status(200).json({ success: true, data: spendResult });
+        }
 
-        case 'reset-daily-spend':
+        case 'reset-daily-spend': {
             const dailyResetResult = worldController.resetDailySpend();
             addActivity('OWNER', 'system', 'Daily spend counter reset', 'Config');
             addAuditEntry({
                 action: 'DAILY_SPEND_RESET',
                 ip: clientIp,
-                success: true
+                success: true,
             });
             return res.status(200).json({ success: true, data: dailyResetResult });
+        }
 
-        case 'reset-monthly-spend':
+        case 'reset-monthly-spend': {
             const monthlyResetResult = worldController.resetMonthlySpend();
             addActivity('OWNER', 'system', 'Monthly spend counter reset', 'Config');
             addAuditEntry({
                 action: 'MONTHLY_SPEND_RESET',
                 ip: clientIp,
-                success: true
+                success: true,
             });
             return res.status(200).json({ success: true, data: monthlyResetResult });
+        }
 
-        case 'automation-schedule':
+        case 'automation-schedule': {
             const scheduleResult = worldController.setAutomationSchedule(
                 body.enabled,
                 body.windows || [],
                 body.timezone || 'UTC'
             );
-            addActivity('OWNER', 'system', `Automation schedule ${body.enabled ? 'enabled' : 'disabled'}`, 'Config');
+            addActivity(
+                'OWNER',
+                'system',
+                `Automation schedule ${body.enabled ? 'enabled' : 'disabled'}`,
+                'Config'
+            );
             addAuditEntry({
                 action: 'AUTOMATION_SCHEDULE_UPDATED',
                 ip: clientIp,
-                success: scheduleResult.success
+                success: scheduleResult.success,
             });
             return res.status(200).json({ success: true, data: scheduleResult });
+        }
 
-        case 'add-automation-window':
+        case 'add-automation-window': {
             const windowResult = worldController.addAutomationWindow(
                 body.start,
                 body.end,
@@ -1188,18 +1341,20 @@ function handlePut(action, body, res, clientIp) {
             addAuditEntry({
                 action: 'AUTOMATION_WINDOW_ADDED',
                 ip: clientIp,
-                success: windowResult.success
+                success: windowResult.success,
             });
             return res.status(200).json({ success: true, data: windowResult });
+        }
 
-        case 'remove-automation-window':
+        case 'remove-automation-window': {
             const removeWindowResult = worldController.removeAutomationWindow(body.windowId);
             addAuditEntry({
                 action: 'AUTOMATION_WINDOW_REMOVED',
                 ip: clientIp,
-                success: removeWindowResult.success
+                success: removeWindowResult.success,
             });
             return res.status(200).json({ success: true, data: removeWindowResult });
+        }
 
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });
@@ -1212,22 +1367,30 @@ function handlePut(action, body, res, clientIp) {
 
 function handleDelete(action, query, res, clientIp) {
     switch (action) {
-        case 'task':
+        case 'task': {
             const taskIndex = agentState.tasks.findIndex(t => t.id === query.taskId);
             if (taskIndex === -1) {
                 return res.status(404).json({ error: 'Task not found' });
             }
             const deletedTask = agentState.tasks.splice(taskIndex, 1)[0];
-            addActivity('Commander', deletedTask.teamId, `Deleted task: ${deletedTask.title}`, 'Task Deleted');
+            addActivity(
+                'Commander',
+                deletedTask.teamId,
+                `Deleted task: ${deletedTask.title}`,
+                'Task Deleted'
+            );
             addAuditEntry({
                 action: 'TASK_DELETED',
                 ip: clientIp,
                 success: true,
-                taskId: query.taskId
+                taskId: query.taskId,
             });
-            return res.status(200).json({ success: true, data: { deleted: true, taskId: query.taskId } });
+            return res
+                .status(200)
+                .json({ success: true, data: { deleted: true, taskId: query.taskId } });
+        }
 
-        case 'decision':
+        case 'decision': {
             const decisionIndex = agentState.decisions.findIndex(d => d.id === query.decisionId);
             if (decisionIndex === -1) {
                 return res.status(404).json({ error: 'Decision not found' });
@@ -1237,9 +1400,12 @@ function handleDelete(action, query, res, clientIp) {
                 action: 'DECISION_DELETED',
                 ip: clientIp,
                 success: true,
-                decisionId: query.decisionId
+                decisionId: query.decisionId,
             });
-            return res.status(200).json({ success: true, data: { deleted: true, decisionId: query.decisionId } });
+            return res
+                .status(200)
+                .json({ success: true, data: { deleted: true, decisionId: query.decisionId } });
+        }
 
         default:
             return res.status(400).json({ error: 'Unknown action', code: 'INVALID_ACTION' });

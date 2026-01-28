@@ -11,7 +11,7 @@
  * @date 2026-01-26
  */
 
-(function() {
+(function () {
     'use strict';
 
     // Configuration
@@ -29,34 +29,60 @@
             description: 'Essential for the website to function. These cannot be disabled.',
             required: true,
             cookies: [
-                { name: 'Authentication tokens', purpose: 'Keep you logged in securely', duration: 'Session' },
-                { name: 'Security tokens', purpose: 'Protect against cross-site attacks', duration: 'Session' },
-                { name: 'Consent preferences', purpose: 'Remember your cookie choices', duration: '1 year' }
-            ]
+                {
+                    name: 'Authentication tokens',
+                    purpose: 'Keep you logged in securely',
+                    duration: 'Session',
+                },
+                {
+                    name: 'Security tokens',
+                    purpose: 'Protect against cross-site attacks',
+                    duration: 'Session',
+                },
+                {
+                    name: 'Consent preferences',
+                    purpose: 'Remember your cookie choices',
+                    duration: '1 year',
+                },
+            ],
         },
         analytics: {
             name: 'Analytics & Performance',
-            description: 'Help us understand how visitors interact with our website to improve user experience.',
+            description:
+                'Help us understand how visitors interact with our website to improve user experience.',
             required: false,
             cookies: [
-                { name: 'Vercel Analytics', purpose: 'Anonymous page view analytics', duration: 'Session' }
-            ]
+                {
+                    name: 'Vercel Analytics',
+                    purpose: 'Anonymous page view analytics',
+                    duration: 'Session',
+                },
+            ],
         },
         functional: {
             name: 'Functional',
             description: 'Enable enhanced functionality and personalization.',
             required: false,
             cookies: [
-                { name: 'Dashboard preferences', purpose: 'Remember your layout preferences', duration: 'Persistent' },
-                { name: 'Theme preferences', purpose: 'Remember dark/light mode choice', duration: 'Persistent' }
-            ]
+                {
+                    name: 'Dashboard preferences',
+                    purpose: 'Remember your layout preferences',
+                    duration: 'Persistent',
+                },
+                {
+                    name: 'Theme preferences',
+                    purpose: 'Remember dark/light mode choice',
+                    duration: 'Persistent',
+                },
+            ],
         },
         marketing: {
             name: 'Marketing & Advertising',
-            description: 'Used to deliver relevant advertisements and track campaign effectiveness.',
+            description:
+                'Used to deliver relevant advertisements and track campaign effectiveness.',
             required: false,
-            cookies: [] // Currently none, but structure ready for future
-        }
+            cookies: [], // Currently none, but structure ready for future
+        },
     };
 
     // Consent Manager Class
@@ -101,35 +127,78 @@
         async detectRegion() {
             try {
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                const language = navigator.language || navigator.userLanguage;
+                const _language = navigator.language || navigator.userLanguage;
 
                 // EU/EEA timezones
                 const euTimezones = [
-                    'Europe/Amsterdam', 'Europe/Andorra', 'Europe/Athens', 'Europe/Belgrade',
-                    'Europe/Berlin', 'Europe/Bratislava', 'Europe/Brussels', 'Europe/Bucharest',
-                    'Europe/Budapest', 'Europe/Copenhagen', 'Europe/Dublin', 'Europe/Helsinki',
-                    'Europe/Lisbon', 'Europe/Ljubljana', 'Europe/Luxembourg', 'Europe/Madrid',
-                    'Europe/Malta', 'Europe/Monaco', 'Europe/Oslo', 'Europe/Paris', 'Europe/Prague',
-                    'Europe/Riga', 'Europe/Rome', 'Europe/San_Marino', 'Europe/Sofia',
-                    'Europe/Stockholm', 'Europe/Tallinn', 'Europe/Vienna', 'Europe/Vilnius',
-                    'Europe/Warsaw', 'Europe/Zagreb', 'Atlantic/Canary', 'Atlantic/Madeira',
-                    'Atlantic/Azores'
+                    'Europe/Amsterdam',
+                    'Europe/Andorra',
+                    'Europe/Athens',
+                    'Europe/Belgrade',
+                    'Europe/Berlin',
+                    'Europe/Bratislava',
+                    'Europe/Brussels',
+                    'Europe/Bucharest',
+                    'Europe/Budapest',
+                    'Europe/Copenhagen',
+                    'Europe/Dublin',
+                    'Europe/Helsinki',
+                    'Europe/Lisbon',
+                    'Europe/Ljubljana',
+                    'Europe/Luxembourg',
+                    'Europe/Madrid',
+                    'Europe/Malta',
+                    'Europe/Monaco',
+                    'Europe/Oslo',
+                    'Europe/Paris',
+                    'Europe/Prague',
+                    'Europe/Riga',
+                    'Europe/Rome',
+                    'Europe/San_Marino',
+                    'Europe/Sofia',
+                    'Europe/Stockholm',
+                    'Europe/Tallinn',
+                    'Europe/Vienna',
+                    'Europe/Vilnius',
+                    'Europe/Warsaw',
+                    'Europe/Zagreb',
+                    'Atlantic/Canary',
+                    'Atlantic/Madeira',
+                    'Atlantic/Azores',
                 ];
 
                 // UK timezones
-                const ukTimezones = ['Europe/London', 'Europe/Belfast', 'Europe/Isle_of_Man', 'Europe/Guernsey', 'Europe/Jersey'];
+                const ukTimezones = [
+                    'Europe/London',
+                    'Europe/Belfast',
+                    'Europe/Isle_of_Man',
+                    'Europe/Guernsey',
+                    'Europe/Jersey',
+                ];
 
                 // US timezones
                 const usTimezones = [
-                    'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-                    'America/Anchorage', 'America/Phoenix', 'America/Detroit', 'America/Indiana',
-                    'Pacific/Honolulu', 'America/Boise', 'America/Kentucky'
+                    'America/New_York',
+                    'America/Chicago',
+                    'America/Denver',
+                    'America/Los_Angeles',
+                    'America/Anchorage',
+                    'America/Phoenix',
+                    'America/Detroit',
+                    'America/Indiana',
+                    'Pacific/Honolulu',
+                    'America/Boise',
+                    'America/Kentucky',
                 ];
 
                 // California-specific detection (for CCPA)
                 const isCaliforniaLikely = timezone === 'America/Los_Angeles';
 
-                if (euTimezones.some(tz => timezone.startsWith(tz.split('/')[0]) && timezone.includes('Europe'))) {
+                if (
+                    euTimezones.some(
+                        tz => timezone.startsWith(tz.split('/')[0]) && timezone.includes('Europe')
+                    )
+                ) {
                     this.region = 'EU';
                 } else if (ukTimezones.includes(timezone)) {
                     this.region = 'UK';
@@ -173,7 +242,9 @@
                 timestamp: new Date().toISOString(),
                 categories: categories,
                 region: this.region,
-                expiresAt: new Date(Date.now() + CONFIG.EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString()
+                expiresAt: new Date(
+                    Date.now() + CONFIG.EXPIRY_DAYS * 24 * 60 * 60 * 1000
+                ).toISOString(),
             };
 
             try {
@@ -265,9 +336,15 @@
             `;
 
             // Add event listeners
-            banner.querySelector('[data-action="accept-all"]').addEventListener('click', () => this.acceptAll());
-            banner.querySelector('[data-action="reject-non-essential"]').addEventListener('click', () => this.rejectNonEssential());
-            banner.querySelector('[data-action="customize"]').addEventListener('click', () => this.showPreferencesModal());
+            banner
+                .querySelector('[data-action="accept-all"]')
+                .addEventListener('click', () => this.acceptAll());
+            banner
+                .querySelector('[data-action="reject-non-essential"]')
+                .addEventListener('click', () => this.rejectNonEssential());
+            banner
+                .querySelector('[data-action="customize"]')
+                .addEventListener('click', () => this.showPreferencesModal());
 
             document.body.appendChild(banner);
             this.bannerElement = banner;
@@ -327,13 +404,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${category.cookies.map(cookie => `
+                                    ${category.cookies
+                                        .map(
+                                            cookie => `
                                         <tr>
                                             <td>${cookie.name}</td>
                                             <td>${cookie.purpose}</td>
                                             <td>${cookie.duration}</td>
                                         </tr>
-                                    `).join('')}
+                                    `
+                                        )
+                                        .join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -406,13 +487,19 @@
             `;
 
             // Add event listeners
-            modal.querySelector('.consent-modal-backdrop').addEventListener('click', () => this.hidePreferencesModal());
-            modal.querySelector('.consent-modal-close').addEventListener('click', () => this.hidePreferencesModal());
+            modal
+                .querySelector('.consent-modal-backdrop')
+                .addEventListener('click', () => this.hidePreferencesModal());
+            modal
+                .querySelector('.consent-modal-close')
+                .addEventListener('click', () => this.hidePreferencesModal());
             modal.querySelector('[data-action="reject-all"]').addEventListener('click', () => {
                 this.rejectNonEssential();
                 this.hidePreferencesModal();
             });
-            modal.querySelector('[data-action="save-preferences"]').addEventListener('click', () => this.savePreferences());
+            modal
+                .querySelector('[data-action="save-preferences"]')
+                .addEventListener('click', () => this.savePreferences());
             modal.querySelector('[data-action="accept-all"]').addEventListener('click', () => {
                 this.acceptAll();
                 this.hidePreferencesModal();
@@ -420,14 +507,14 @@
 
             // Expand/collapse category details
             modal.querySelectorAll('.consent-expand-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', e => {
                     const category = e.target.closest('.consent-category');
                     category.classList.toggle('consent-category-expanded');
                 });
             });
 
             // Handle escape key
-            const handleEscape = (e) => {
+            const handleEscape = e => {
                 if (e.key === 'Escape') {
                     this.hidePreferencesModal();
                     document.removeEventListener('keydown', handleEscape);
@@ -548,9 +635,11 @@
             }
 
             // Create Vercel Analytics
-            window.va = window.va || function() {
-                (window.vaq = window.vaq || []).push(arguments);
-            };
+            window.va =
+                window.va ||
+                function () {
+                    (window.vaq = window.vaq || []).push(arguments);
+                };
 
             const script = document.createElement('script');
             script.defer = true;
@@ -589,8 +678,8 @@
                 detail: {
                     type: type,
                     consent: this.consent,
-                    region: this.region
-                }
+                    region: this.region,
+                },
             });
             document.dispatchEvent(event);
         }
@@ -599,7 +688,7 @@
          * Set up preference links in footer
          */
         setupPreferenceLinks() {
-            document.addEventListener('click', (e) => {
+            document.addEventListener('click', e => {
                 if (e.target.matches('[data-cookie-preferences], .cookie-preferences-link')) {
                     e.preventDefault();
                     this.showPreferencesModal();
@@ -625,7 +714,7 @@
                 hasConsent: this.hasValidConsent(),
                 consent: this.consent,
                 region: this.region,
-                categories: COOKIE_CATEGORIES
+                categories: COOKIE_CATEGORIES,
             };
         }
     }
@@ -644,5 +733,4 @@
     // Export for global access
     window.ConsentManager = ConsentManager;
     window.COOKIE_CATEGORIES = COOKIE_CATEGORIES;
-
 })();

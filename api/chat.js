@@ -9,9 +9,9 @@
  */
 
 const { recordUsage, estimateTokens } = require('./_lib/cost-tracker');
-const { resilientFetch, getCircuit } = require('./_lib/circuit-breaker');
+const { resilientFetch } = require('./_lib/circuit-breaker');
 // Import shared utilities to avoid code duplication
-const { getClientIp: securityGetClientIp, getHeaderValue: securityGetHeaderValue } = require('./_lib/security');
+const { getClientIp: securityGetClientIp } = require('./_lib/security');
 
 // ============================================================================
 // SECURITY LAYER 1: PROMPT INJECTION DETECTION PATTERNS
@@ -80,9 +80,9 @@ const INJECTION_PATTERNS = [
     /###\s*(system|instruction|human|assistant)/i,
 
     // Completion manipulation
-    /assistant:\s*["\']?ok/i,
-    /assistant:\s*["\']?sure/i,
-    /assistant:\s*["\']?certainly/i,
+    /assistant:\s*["']?ok/i,
+    /assistant:\s*["']?sure/i,
+    /assistant:\s*["']?certainly/i,
     /\}\s*\]\s*,?\s*["']?system["']?\s*:/i,
 
     // Social engineering
@@ -98,7 +98,7 @@ const INJECTION_PATTERNS = [
 
     // Multi-step/compound injection
     /first\s+(step|task|thing).*second\s+(step|task|thing)/i,
-    /step\s+1.*step\s+2/i
+    /step\s+1.*step\s+2/i,
 ];
 
 /**
@@ -130,7 +130,7 @@ const OFF_TOPIC_PATTERNS = [
     /do\s+you\s+(love|like|hate)\s+me/i,
     /are\s+you\s+(sentient|conscious|alive|real)/i,
     /what\s+do\s+you\s+(think|feel)\s+about\s+(me|life|death)/i,
-    /be\s+my\s+(friend|girlfriend|boyfriend|companion)/i
+    /be\s+my\s+(friend|girlfriend|boyfriend|companion)/i,
 ];
 
 /**
@@ -140,7 +140,7 @@ const SUSPICIOUS_CHAR_PATTERNS = [
     /[\u200B-\u200F\u2028-\u202F\uFEFF]/g, // Zero-width and invisible characters
     /[\u0000-\u001F\u007F-\u009F]/g, // Control characters (except common ones)
     /(.)\1{10,}/g, // Repeated characters (more than 10 times)
-    /[^\x00-\x7F\u00A0-\u024F\u1E00-\u1EFF]{20,}/g // Long non-ASCII sequences
+    /[^\x00-\x7F\u00A0-\u024F\u1E00-\u1EFF]{20,}/g, // Long non-ASCII sequences
 ];
 
 // ============================================================================
@@ -227,10 +227,10 @@ You exist solely to answer questions about FUSE creatine. Stay focused. Stay hel
  */
 const THREAT_LEVEL = {
     NONE: 'none',
-    LOW: 'low',         // Off-topic but not malicious
-    MEDIUM: 'medium',   // Possible manipulation attempt
-    HIGH: 'high',       // Clear injection attempt
-    CRITICAL: 'critical' // Severe attack pattern
+    LOW: 'low', // Off-topic but not malicious
+    MEDIUM: 'medium', // Possible manipulation attempt
+    HIGH: 'high', // Clear injection attempt
+    CRITICAL: 'critical', // Severe attack pattern
 };
 
 /**
@@ -256,7 +256,7 @@ function detectPromptInjection(input) {
             threatLevel: THREAT_LEVEL.CRITICAL,
             patterns: detectedPatterns,
             shouldTerminate: true,
-            reason: 'Multiple injection patterns detected'
+            reason: 'Multiple injection patterns detected',
         };
     }
 
@@ -267,7 +267,7 @@ function detectPromptInjection(input) {
             threatLevel: THREAT_LEVEL.HIGH,
             patterns: detectedPatterns,
             shouldTerminate: true,
-            reason: 'Prompt injection pattern detected'
+            reason: 'Prompt injection pattern detected',
         };
     }
 
@@ -276,7 +276,7 @@ function detectPromptInjection(input) {
         threatLevel: THREAT_LEVEL.NONE,
         patterns: [],
         shouldTerminate: false,
-        reason: null
+        reason: null,
     };
 }
 
@@ -297,7 +297,7 @@ function detectOffTopicRequest(input) {
                 detected: true,
                 threatLevel: isHarmful ? THREAT_LEVEL.HIGH : THREAT_LEVEL.LOW,
                 shouldTerminate: isHarmful, // Only terminate for harmful requests
-                reason: isHarmful ? 'Harmful content request' : 'Off-topic request'
+                reason: isHarmful ? 'Harmful content request' : 'Off-topic request',
             };
         }
     }
@@ -306,7 +306,7 @@ function detectOffTopicRequest(input) {
         detected: false,
         threatLevel: THREAT_LEVEL.NONE,
         shouldTerminate: false,
-        reason: null
+        reason: null,
     };
 }
 
@@ -322,7 +322,7 @@ function detectSuspiciousCharacters(input) {
                 detected: true,
                 threatLevel: THREAT_LEVEL.MEDIUM,
                 shouldTerminate: false,
-                reason: 'Suspicious character sequence detected'
+                reason: 'Suspicious character sequence detected',
             };
         }
     }
@@ -331,7 +331,7 @@ function detectSuspiciousCharacters(input) {
         detected: false,
         threatLevel: THREAT_LEVEL.NONE,
         shouldTerminate: false,
-        reason: null
+        reason: null,
     };
 }
 
@@ -374,14 +374,14 @@ function performSecurityCheck(input) {
         console.warn('[Security] Prompt injection detected:', {
             threatLevel: injectionCheck.threatLevel,
             patterns: injectionCheck.patterns.length,
-            reason: injectionCheck.reason
+            reason: injectionCheck.reason,
         });
         return {
             safe: false,
             threatLevel: injectionCheck.threatLevel,
             shouldTerminate: injectionCheck.shouldTerminate,
             sanitizedInput,
-            reason: injectionCheck.reason
+            reason: injectionCheck.reason,
         };
     }
 
@@ -390,14 +390,14 @@ function performSecurityCheck(input) {
     if (offTopicCheck.detected) {
         console.warn('[Security] Off-topic/manipulation detected:', {
             threatLevel: offTopicCheck.threatLevel,
-            reason: offTopicCheck.reason
+            reason: offTopicCheck.reason,
         });
         return {
             safe: false,
             threatLevel: offTopicCheck.threatLevel,
             shouldTerminate: offTopicCheck.shouldTerminate,
             sanitizedInput,
-            reason: offTopicCheck.reason
+            reason: offTopicCheck.reason,
         };
     }
 
@@ -413,7 +413,7 @@ function performSecurityCheck(input) {
         threatLevel: THREAT_LEVEL.NONE,
         shouldTerminate: false,
         sanitizedInput,
-        reason: null
+        reason: null,
     };
 }
 
@@ -423,8 +423,6 @@ function performSecurityCheck(input) {
  * @returns {{ safe: boolean, filteredResponse: string, reason: string|null }}
  */
 function validateResponse(response) {
-    const lowerResponse = response.toLowerCase();
-
     // Patterns that indicate the LLM might be leaking system prompt info
     const leakagePatterns = [
         /my\s+(system\s+)?instructions?\s+(are|say|tell|include)/i,
@@ -436,7 +434,7 @@ function validateResponse(response) {
         /\[SYSTEM\s+IDENTITY/i,
         /CORE\s+SECURITY\s+DIRECTIVES/i,
         /INSTRUCTION\s+CONFIDENTIALITY/i,
-        /MANIPULATION\s+RESISTANCE/i
+        /MANIPULATION\s+RESISTANCE/i,
     ];
 
     for (const pattern of leakagePatterns) {
@@ -444,8 +442,9 @@ function validateResponse(response) {
             console.warn('[Security] Potential response leakage detected');
             return {
                 safe: false,
-                filteredResponse: "I'm here to help with questions about FUSE creatine. What would you like to know about our products?",
-                reason: 'Potential instruction leakage detected'
+                filteredResponse:
+                    "I'm here to help with questions about FUSE creatine. What would you like to know about our products?",
+                reason: 'Potential instruction leakage detected',
             };
         }
     }
@@ -454,15 +453,16 @@ function validateResponse(response) {
     if (/```[\s\S]*```/g.test(response) || /<script[\s\S]*<\/script>/gi.test(response)) {
         return {
             safe: false,
-            filteredResponse: "I'm here to help with questions about FUSE creatine. What would you like to know about our products?",
-            reason: 'Code block in response'
+            filteredResponse:
+                "I'm here to help with questions about FUSE creatine. What would you like to know about our products?",
+            reason: 'Code block in response',
         };
     }
 
     return {
         safe: true,
         filteredResponse: response,
-        reason: null
+        reason: null,
     };
 }
 
@@ -474,11 +474,16 @@ function validateResponse(response) {
 function getTerminationResponse(reason) {
     // Polite, non-revealing termination messages
     const responses = {
-        'Prompt injection pattern detected': "I can only assist with questions about FUSE creatine products. If you have any questions about our products, I'm happy to help. Otherwise, feel free to reach out to support@fusecreatine.com.",
-        'Multiple injection patterns detected': "I'm the FUSE Agent, here specifically to help with questions about FUSE creatine. For other enquiries, please contact support@fusecreatine.com.",
-        'Harmful content request': "I'm not able to help with that request. I'm here to answer questions about FUSE creatine products. If you have any product questions, I'm happy to assist.",
-        'Off-topic request': "I'm the FUSE Agent, focused specifically on helping with FUSE creatine questions. For that kind of request, you might want to try a general-purpose assistant. Is there anything about FUSE I can help you with?",
-        'default': "I can only help with questions about FUSE creatine products. What would you like to know about FUSE?"
+        'Prompt injection pattern detected':
+            "I can only assist with questions about FUSE creatine products. If you have any questions about our products, I'm happy to help. Otherwise, feel free to reach out to support@fusecreatine.com.",
+        'Multiple injection patterns detected':
+            "I'm the FUSE Agent, here specifically to help with questions about FUSE creatine. For other enquiries, please contact support@fusecreatine.com.",
+        'Harmful content request':
+            "I'm not able to help with that request. I'm here to answer questions about FUSE creatine products. If you have any product questions, I'm happy to assist.",
+        'Off-topic request':
+            "I'm the FUSE Agent, focused specifically on helping with FUSE creatine questions. For that kind of request, you might want to try a general-purpose assistant. Is there anything about FUSE I can help you with?",
+        default:
+            'I can only help with questions about FUSE creatine products. What would you like to know about FUSE?',
     };
 
     return responses[reason] || responses['default'];
@@ -505,14 +510,8 @@ const ALLOWED_ORIGINS = [
     'https://fusecreatine.com',
     'http://localhost:3000',
     'http://localhost:5500',
-    'http://127.0.0.1:5500'
+    'http://127.0.0.1:5500',
 ];
-
-/**
- * Get header value (handles array or string)
- * Uses shared utility from security module
- */
-const getHeaderValue = securityGetHeaderValue;
 
 /**
  * Get client IP from request
@@ -571,7 +570,10 @@ function validateMessage(content) {
     }
 
     if (trimmed.length > MAX_MESSAGE_LENGTH) {
-        return { valid: false, error: `Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters allowed.` };
+        return {
+            valid: false,
+            error: `Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters allowed.`,
+        };
     }
 
     return { valid: true, content: trimmed };
@@ -586,18 +588,19 @@ function validateHistory(history) {
     }
 
     return history
-        .filter(msg =>
-            msg &&
-            typeof msg === 'object' &&
-            typeof msg.content === 'string' &&
-            (msg.role === 'user' || msg.role === 'assistant') &&
-            msg.content.trim().length > 0 &&
-            msg.content.length <= MAX_MESSAGE_LENGTH
+        .filter(
+            msg =>
+                msg &&
+                typeof msg === 'object' &&
+                typeof msg.content === 'string' &&
+                (msg.role === 'user' || msg.role === 'assistant') &&
+                msg.content.trim().length > 0 &&
+                msg.content.length <= MAX_MESSAGE_LENGTH
         )
         .slice(-MAX_HISTORY_LENGTH)
         .map(msg => ({
             role: msg.role,
-            content: msg.content.trim()
+            content: msg.content.trim(),
         }));
 }
 
@@ -616,7 +619,12 @@ function getCorsOrigin(requestOrigin, requestHost = '') {
         return null;
     }
 
-    if (originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname === '::1' || originHostname === '0.0.0.0') {
+    if (
+        originHostname === 'localhost' ||
+        originHostname === '127.0.0.1' ||
+        originHostname === '::1' ||
+        originHostname === '0.0.0.0'
+    ) {
         return requestOrigin;
     }
 
@@ -649,7 +657,7 @@ function setSecurityHeaders(res, origin) {
 module.exports = async (req, res) => {
     const requestHost = Array.isArray(req.headers['x-forwarded-host'])
         ? req.headers['x-forwarded-host'][0]
-        : (req.headers['x-forwarded-host'] || req.headers.host || '');
+        : req.headers['x-forwarded-host'] || req.headers.host || '';
     const origin = getCorsOrigin(req.headers.origin, requestHost);
     setSecurityHeaders(res, origin);
 
@@ -662,20 +670,24 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({
             error: 'Method not allowed',
-            code: 'METHOD_NOT_ALLOWED'
+            code: 'METHOD_NOT_ALLOWED',
         });
     }
 
     // Rate limiting
     const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(`chat:${clientIp}`, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS);
+    const rateLimit = checkRateLimit(
+        `chat:${clientIp}`,
+        RATE_LIMIT_MAX_REQUESTS,
+        RATE_LIMIT_WINDOW_MS
+    );
 
     if (rateLimit.limited) {
         res.setHeader('Retry-After', Math.ceil(rateLimit.retryAfterMs / 1000));
         return res.status(429).json({
             error: 'Too many requests. Please slow down and try again.',
             code: 'RATE_LIMITED',
-            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000)
+            retryAfter: Math.ceil(rateLimit.retryAfterMs / 1000),
         });
     }
 
@@ -685,11 +697,11 @@ module.exports = async (req, res) => {
         console.error('[Chat API] ANTHROPIC_API_KEY not configured:', {
             exists: 'ANTHROPIC_API_KEY' in process.env,
             isEmpty: process.env.ANTHROPIC_API_KEY === '',
-            hint: 'Set ANTHROPIC_API_KEY in Vercel Environment Variables'
+            hint: 'Set ANTHROPIC_API_KEY in Vercel Environment Variables',
         });
         return res.status(503).json({
             error: 'Chat service is temporarily unavailable. Please try again later.',
-            code: 'SERVICE_UNAVAILABLE'
+            code: 'SERVICE_UNAVAILABLE',
         });
     }
 
@@ -698,7 +710,7 @@ module.exports = async (req, res) => {
         console.error('[Chat API] Invalid API key format. Expected sk-ant-* prefix.');
         return res.status(503).json({
             error: 'Chat service is temporarily unavailable. Please try again later.',
-            code: 'SERVICE_UNAVAILABLE'
+            code: 'SERVICE_UNAVAILABLE',
         });
     }
 
@@ -709,7 +721,7 @@ module.exports = async (req, res) => {
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({
                 error: 'Messages array is required',
-                code: 'INVALID_REQUEST'
+                code: 'INVALID_REQUEST',
             });
         }
 
@@ -718,7 +730,7 @@ module.exports = async (req, res) => {
         if (!currentMessage || !currentMessage.content) {
             return res.status(400).json({
                 error: 'Message content is required',
-                code: 'INVALID_MESSAGE'
+                code: 'INVALID_MESSAGE',
             });
         }
 
@@ -726,7 +738,7 @@ module.exports = async (req, res) => {
         if (!validation.valid) {
             return res.status(400).json({
                 error: validation.error,
-                code: 'VALIDATION_ERROR'
+                code: 'VALIDATION_ERROR',
             });
         }
 
@@ -741,7 +753,7 @@ module.exports = async (req, res) => {
                 ip: clientIp,
                 threatLevel: securityCheck.threatLevel,
                 reason: securityCheck.reason,
-                shouldTerminate: securityCheck.shouldTerminate
+                shouldTerminate: securityCheck.shouldTerminate,
             });
 
             const terminationResponse = getTerminationResponse(securityCheck.reason);
@@ -751,7 +763,7 @@ module.exports = async (req, res) => {
                 role: 'assistant',
                 // Signal to frontend that session should be terminated for high threats
                 sessionTerminated: securityCheck.shouldTerminate,
-                terminationReason: securityCheck.shouldTerminate ? 'security' : undefined
+                terminationReason: securityCheck.shouldTerminate ? 'security' : undefined,
             });
         }
 
@@ -773,7 +785,7 @@ module.exports = async (req, res) => {
 
         const formattedMessages = [
             ...validatedHistory,
-            { role: 'user', content: securityCheck.sanitizedInput }
+            { role: 'user', content: securityCheck.sanitizedInput },
         ];
 
         // Estimate input tokens for cost tracking
@@ -782,7 +794,6 @@ module.exports = async (req, res) => {
 
         const requestStartTime = Date.now();
         let response;
-        let apiSuccess = false;
 
         // ================================================================
         // Call Claude API with circuit breaker for resilience
@@ -795,35 +806,35 @@ module.exports = async (req, res) => {
                     headers: {
                         'Content-Type': 'application/json',
                         'x-api-key': apiKey,
-                        'anthropic-version': '2023-06-01'
+                        'anthropic-version': '2023-06-01',
                     },
                     body: JSON.stringify({
                         model: 'claude-3-5-haiku-latest',
                         max_tokens: 512,
                         system: FUSE_KNOWLEDGE,
-                        messages: formattedMessages
-                    })
+                        messages: formattedMessages,
+                    }),
                 },
                 {
                     circuitName: 'anthropic-api',
                     circuitOptions: {
                         failureThreshold: 5,
                         resetTimeoutMs: 30000,
-                        requestTimeoutMs: 15000
+                        requestTimeoutMs: 15000,
                     },
                     retryOptions: {
                         maxRetries: 2,
-                        shouldRetry: (error) => {
+                        shouldRetry: error => {
                             // Retry on network errors and 5xx, not on 4xx
                             if (error.message?.includes('timeout')) return true;
                             if (error.status >= 500) return true;
                             return false;
-                        }
+                        },
                     },
                     fallbackResponse: {
                         error: 'Chat service is temporarily unavailable',
-                        code: 'CIRCUIT_OPEN'
-                    }
+                        code: 'CIRCUIT_OPEN',
+                    },
                 }
             );
         } catch (circuitError) {
@@ -838,12 +849,12 @@ module.exports = async (req, res) => {
                 endpoint: '/api/chat',
                 clientIp,
                 success: false,
-                latencyMs: Date.now() - requestStartTime
+                latencyMs: Date.now() - requestStartTime,
             });
 
             return res.status(503).json({
                 error: 'Chat service is temporarily unavailable. Please try again later.',
-                code: 'SERVICE_UNAVAILABLE'
+                code: 'SERVICE_UNAVAILABLE',
             });
         }
 
@@ -861,7 +872,7 @@ module.exports = async (req, res) => {
                 status: response.status,
                 statusText: response.statusText,
                 error: errorData,
-                keyPrefix: apiKey.substring(0, 10) + '...'
+                keyPrefix: apiKey.substring(0, 10) + '...',
             });
 
             // Record failed usage
@@ -873,7 +884,7 @@ module.exports = async (req, res) => {
                 endpoint: '/api/chat',
                 clientIp,
                 success: false,
-                latencyMs: Date.now() - requestStartTime
+                latencyMs: Date.now() - requestStartTime,
             });
 
             // Map status codes to user-friendly errors
@@ -881,29 +892,29 @@ module.exports = async (req, res) => {
                 case 401:
                     return res.status(503).json({
                         error: 'Chat service is temporarily unavailable. Please try again later.',
-                        code: 'AUTH_FAILED'
+                        code: 'AUTH_FAILED',
                     });
                 case 400:
                     return res.status(400).json({
                         error: 'Invalid request. Please try rephrasing your message.',
-                        code: 'BAD_REQUEST'
+                        code: 'BAD_REQUEST',
                     });
                 case 429:
                     return res.status(429).json({
                         error: 'Service is busy. Please try again in a moment.',
-                        code: 'API_RATE_LIMITED'
+                        code: 'API_RATE_LIMITED',
                     });
                 case 500:
                 case 502:
                 case 503:
                     return res.status(503).json({
                         error: 'Chat service is temporarily unavailable. Please try again later.',
-                        code: 'API_UNAVAILABLE'
+                        code: 'API_UNAVAILABLE',
                     });
                 default:
                     return res.status(503).json({
                         error: 'An unexpected error occurred. Please try again.',
-                        code: 'UNKNOWN_ERROR'
+                        code: 'UNKNOWN_ERROR',
                     });
             }
         }
@@ -917,7 +928,7 @@ module.exports = async (req, res) => {
                 hasData: !!data,
                 hasContent: !!data?.content,
                 isArray: Array.isArray(data?.content),
-                length: data?.content?.length
+                length: data?.content?.length,
             });
 
             // Record failed usage
@@ -929,26 +940,29 @@ module.exports = async (req, res) => {
                 endpoint: '/api/chat',
                 clientIp,
                 success: false,
-                latencyMs: Date.now() - requestStartTime
+                latencyMs: Date.now() - requestStartTime,
             });
 
             return res.status(503).json({
                 error: 'Received an invalid response. Please try again.',
-                code: 'INVALID_RESPONSE'
+                code: 'INVALID_RESPONSE',
             });
         }
 
         const firstContent = data.content[0];
-        if (!firstContent || firstContent.type !== 'text' || typeof firstContent.text !== 'string') {
+        if (
+            !firstContent ||
+            firstContent.type !== 'text' ||
+            typeof firstContent.text !== 'string'
+        ) {
             console.error('[Chat API] Invalid content block:', firstContent);
             return res.status(503).json({
                 error: 'Received an invalid response format. Please try again.',
-                code: 'INVALID_CONTENT'
+                code: 'INVALID_CONTENT',
             });
         }
 
         const assistantMessage = firstContent.text;
-        apiSuccess = true;
 
         // ================================================================
         // COST TRACKING: Record successful API usage
@@ -964,7 +978,7 @@ module.exports = async (req, res) => {
             endpoint: '/api/chat',
             clientIp,
             success: true,
-            latencyMs: Date.now() - requestStartTime
+            latencyMs: Date.now() - requestStartTime,
         });
 
         // ================================================================
@@ -975,27 +989,26 @@ module.exports = async (req, res) => {
         if (!responseValidation.safe) {
             console.warn('[Security] Response filtered:', {
                 reason: responseValidation.reason,
-                originalLength: assistantMessage.length
+                originalLength: assistantMessage.length,
             });
         }
 
         return res.status(200).json({
             message: responseValidation.filteredResponse,
-            role: 'assistant'
+            role: 'assistant',
         });
-
     } catch (error) {
         console.error('[Chat API] Unexpected error:', {
             name: error.name,
             message: error.message,
-            stack: error.stack
+            stack: error.stack,
         });
 
         // Check for network/fetch errors
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             return res.status(503).json({
                 error: 'Unable to connect to chat service. Please try again.',
-                code: 'NETWORK_ERROR'
+                code: 'NETWORK_ERROR',
             });
         }
 
@@ -1003,13 +1016,13 @@ module.exports = async (req, res) => {
         if (error.message?.includes('Circuit') || error.message?.includes('OPEN')) {
             return res.status(503).json({
                 error: 'Chat service is temporarily unavailable. Please try again shortly.',
-                code: 'CIRCUIT_OPEN'
+                code: 'CIRCUIT_OPEN',
             });
         }
 
         return res.status(500).json({
             error: 'Something went wrong. Please try again in a moment.',
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
         });
     }
 };

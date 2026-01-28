@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
+const { createSecuredHandler, addAuditEntry } = require('./_lib/security');
 const {
     createSecuredHandler,
     addAuditEntry
@@ -105,13 +106,11 @@ function generateSessionToken() {
         issuedAt: Date.now(),
         expiresAt: Date.now() + CONFIG.SESSION_DURATION,
         nonce: crypto.randomBytes(16).toString('hex'),
-        authMethod: 'magic-link'
+        authMethod: 'magic-link',
     };
 
     const data = JSON.stringify(payload);
-    const hmac = crypto.createHmac('sha256', SESSION_SECRET)
-        .update(data)
-        .digest('base64url');
+    const hmac = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url');
 
     return Buffer.from(data).toString('base64url') + '.' + hmac;
 }
@@ -137,8 +136,8 @@ async function sendEmail(magicLinkUrl) {
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 from: process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>',
@@ -157,8 +156,8 @@ async function sendEmail(magicLinkUrl) {
                         </div>
                         <p style="color: #999; font-size: 11px; text-align: center; margin-top: 24px;">If you didn't request this, ignore this email.</p>
                     </div>
-                `
-            })
+                `,
+            }),
         });
 
         if (!response.ok) {
@@ -231,7 +230,7 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         return res.status(200).json({
             success: true,
             message: 'Magic link sent! Check your email inbox.',
-            expiresIn: CONFIG.TOKEN_EXPIRY_SECONDS
+            expiresIn: CONFIG.TOKEN_EXPIRY_SECONDS,
         });
     }
 
@@ -254,11 +253,11 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
                 action: 'MAGIC_LINK_INVALID',
                 ip: clientIp,
                 success: false,
-                endpoint: '/api/magic-link'
+                endpoint: '/api/magic-link',
             });
             return res.status(401).json({
                 success: false,
-                error: 'Invalid or expired magic link. Please request a new one.'
+                error: 'Invalid or expired magic link. Please request a new one.',
             });
         }
 

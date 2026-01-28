@@ -21,11 +21,7 @@ function base64urlToBuffer(base64url) {
 function bufferToBase64url(buffer) {
     if (!buffer) return '';
     const data = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
-    return data
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '');
+    return data.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
 /**
@@ -61,7 +57,9 @@ function getRequestProtocol(req) {
  */
 function getExpectedOrigins(req) {
     const origins = new Set();
-    const requestOrigin = Array.isArray(req.headers.origin) ? req.headers.origin[0] : req.headers.origin;
+    const requestOrigin = Array.isArray(req.headers.origin)
+        ? req.headers.origin[0]
+        : req.headers.origin;
     const corsOrigin = getCorsOrigin(requestOrigin, getRequestHost(req));
 
     if (corsOrigin) origins.add(corsOrigin);
@@ -107,5 +105,5 @@ module.exports = {
     base64urlToBuffer,
     bufferToBase64url,
     getExpectedOrigins,
-    getExpectedRpIds
+    getExpectedRpIds,
 };

@@ -44,7 +44,7 @@ const CONFIG = {
 const CircuitState = {
     CLOSED: 'CLOSED',
     OPEN: 'OPEN',
-    HALF_OPEN: 'HALF_OPEN'
+    HALF_OPEN: 'HALF_OPEN',
 };
 
 // Store circuits per service
@@ -82,7 +82,7 @@ class CircuitBreaker {
             failedRequests: 0,
             fallbackExecutions: 0,
             circuitTrips: 0,
-            lastError: null
+            lastError: null,
         };
     }
 
@@ -222,7 +222,7 @@ class CircuitBreaker {
             fn(),
             new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Request timeout')), this.requestTimeout)
-            )
+            ),
         ]);
     }
 
@@ -241,7 +241,7 @@ class CircuitBreaker {
             lastFailureTime: this.lastFailureTime,
             lastSuccessTime: this.lastSuccessTime,
             openedAt: this.openedAt,
-            stats: { ...this.stats }
+            stats: { ...this.stats },
         };
     }
 
@@ -308,10 +308,7 @@ function resetAllCircuits() {
  * @returns {number} Delay in milliseconds
  */
 function calculateBackoff(attempt) {
-    const delay = Math.min(
-        CONFIG.BACKOFF_BASE_MS * Math.pow(2, attempt),
-        CONFIG.MAX_BACKOFF_MS
-    );
+    const delay = Math.min(CONFIG.BACKOFF_BASE_MS * Math.pow(2, attempt), CONFIG.MAX_BACKOFF_MS);
     // Add jitter (0-25% of delay)
     const jitter = Math.random() * 0.25 * delay;
     return Math.floor(delay + jitter);
@@ -325,13 +322,15 @@ function calculateBackoff(attempt) {
  */
 async function executeWithRetry(fn, options = {}) {
     const maxRetries = options.maxRetries || CONFIG.MAX_RETRIES;
-    const shouldRetry = options.shouldRetry || ((error) => {
-        // Default: retry on network errors and 5xx status codes
-        if (error.message?.includes('timeout')) return true;
-        if (error.message?.includes('network')) return true;
-        if (error.status >= 500) return true;
-        return false;
-    });
+    const shouldRetry =
+        options.shouldRetry ||
+        (error => {
+            // Default: retry on network errors and 5xx status codes
+            if (error.message?.includes('timeout')) return true;
+            if (error.message?.includes('network')) return true;
+            if (error.status >= 500) return true;
+            return false;
+        });
 
     let lastError;
 
@@ -343,7 +342,10 @@ async function executeWithRetry(fn, options = {}) {
 
             if (attempt < maxRetries && shouldRetry(error)) {
                 const delay = calculateBackoff(attempt);
-                console.log(`[Retry] Attempt ${attempt + 1} failed, retrying in ${delay}ms:`, error.message);
+                console.log(
+                    `[Retry] Attempt ${attempt + 1} failed, retrying in ${delay}ms:`,
+                    error.message
+                );
                 await new Promise(resolve => setTimeout(resolve, delay));
             } else {
                 throw error;
@@ -371,7 +373,7 @@ async function resilientFetch(url, options = {}, resilience = {}) {
         circuitOptions = {},
         retryOptions = {},
         fallbackResponse = null,
-        timeoutMs = CONFIG.REQUEST_TIMEOUT_MS
+        timeoutMs = CONFIG.REQUEST_TIMEOUT_MS,
     } = resilience;
 
     // Get or create circuit breaker for this service
@@ -379,10 +381,11 @@ async function resilientFetch(url, options = {}, resilience = {}) {
 
     // Define fallback
     const fallback = fallbackResponse
-        ? () => new Response(JSON.stringify(fallbackResponse), {
-            status: 503,
-            headers: { 'Content-Type': 'application/json' }
-        })
+        ? () =>
+              new Response(JSON.stringify(fallbackResponse), {
+                  status: 503,
+                  headers: { 'Content-Type': 'application/json' },
+              })
         : null;
 
     // Execute with circuit breaker
@@ -396,7 +399,7 @@ async function resilientFetch(url, options = {}, resilience = {}) {
             try {
                 const response = await fetch(url, {
                     ...options,
-                    signal: controller.signal
+                    signal: controller.signal,
                 });
 
                 // Treat 5xx as failures for circuit breaker
@@ -437,5 +440,5 @@ module.exports = {
     resilientFetch,
 
     // Direct access to circuits map for testing
-    circuits
+    circuits,
 };

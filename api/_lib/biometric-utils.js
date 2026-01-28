@@ -6,7 +6,7 @@
  */
 
 const crypto = require('crypto');
-const { list, put, del } = require('@vercel/blob');
+const { list, put } = require('@vercel/blob');
 const { Redis } = require('@upstash/redis');
 
 // ============================================================================
@@ -21,13 +21,14 @@ const CONFIG = {
     DEVICE_LINK_PREFIX: 'biometric:devicelink:',
     OWNER_CREDENTIAL_KEY: 'owner-credential.json',
     DEVICE_LINK_EXPIRY: 5 * 60 * 1000, // 5 minutes for device link codes
-    MAX_AUTHORIZED_DEVICES: 5
+    MAX_AUTHORIZED_DEVICES: 5,
 };
 
 // Initialize Redis client
-const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? Redis.fromEnv()
-    : null;
+const redis =
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+        ? Redis.fromEnv()
+        : null;
 
 if (!redis) {
     console.warn('[BiometricUtils] Redis not configured - challenges will use in-memory fallback');
@@ -49,7 +50,8 @@ function createClientFingerprint(clientDeviceId) {
     if (!clientDeviceId || typeof clientDeviceId !== 'string' || clientDeviceId.length < 16) {
         return null;
     }
-    return crypto.createHash('sha256')
+    return crypto
+        .createHash('sha256')
         .update(`client:${clientDeviceId}`)
         .digest('hex')
         .substring(0, 32);
@@ -65,7 +67,8 @@ function createHeaderFingerprint(req) {
     const acceptLang = req.headers['accept-language'] || '';
     const acceptEnc = req.headers['accept-encoding'] || '';
 
-    return crypto.createHash('sha256')
+    return crypto
+        .createHash('sha256')
         .update(`${ua}|${acceptLang}|${acceptEnc}`)
         .digest('hex')
         .substring(0, 32);
@@ -139,15 +142,17 @@ function normalizeCredentials(ownerCredential) {
     }
 
     if (ownerCredential.credentialId && ownerCredential.publicKey) {
-        return [{
-            credentialId: ownerCredential.credentialId,
-            publicKey: ownerCredential.publicKey,
-            counter: ownerCredential.counter || 0,
-            transports: ownerCredential.transports || [],
-            createdAt: ownerCredential.registeredAt || new Date().toISOString(),
-            lastUsed: ownerCredential.lastUsed || null,
-            legacy: true
-        }];
+        return [
+            {
+                credentialId: ownerCredential.credentialId,
+                publicKey: ownerCredential.publicKey,
+                counter: ownerCredential.counter || 0,
+                transports: ownerCredential.transports || [],
+                createdAt: ownerCredential.registeredAt || new Date().toISOString(),
+                lastUsed: ownerCredential.lastUsed || null,
+                legacy: true,
+            },
+        ];
     }
 
     return [];
@@ -160,13 +165,13 @@ function normalizeCredentials(ownerCredential) {
  */
 async function getOwnerCredential() {
     const redisKey = 'biometric:owner:credential';
-    
+
     // Try Redis first (primary storage)
     if (redis) {
         try {
             const data = await redis.get(redisKey);
             console.log('[BiometricUtils] Redis get result:', data ? 'found' : 'not found');
-            
+
             if (data) {
                 const credential = typeof data === 'string' ? JSON.parse(data) : data;
                 return { credential, error: null };
@@ -181,7 +186,9 @@ async function getOwnerCredential() {
     // Try Vercel Blob (backup storage) - but don't fail if unavailable
     try {
         const { blobs } = await list({ prefix: CONFIG.BLOB_PREFIX });
-        const blob = blobs.find(b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`);
+        const blob = blobs.find(
+            b => b.pathname === `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`
+        );
 
         if (!blob) {
             console.log('[BiometricUtils] No owner credential in Blob');
@@ -197,17 +204,17 @@ async function getOwnerCredential() {
 
         const credential = await response.json();
         console.log('[BiometricUtils] Owner credential loaded from Blob');
-        
+
         // Cache in Redis for faster access next time
         if (redis) {
             try {
                 await redis.set(redisKey, JSON.stringify(credential));
                 console.log('[BiometricUtils] Cached credential in Redis');
-            } catch (e) { 
+            } catch (e) {
                 console.warn('[BiometricUtils] Failed to cache in Redis:', e.message);
             }
         }
-        
+
         return { credential, error: null };
     } catch (error) {
         console.warn('[BiometricUtils] Blob unavailable:', error.message);
@@ -233,7 +240,7 @@ async function storeOwnerCredential(credentialData) {
             await redis.set(redisKey, dataString);
             storedInRedis = true;
             console.log('[BiometricUtils] Owner credential stored in Redis');
-            
+
             // Verify it was stored
             const verify = await redis.get(redisKey);
             console.log('[BiometricUtils] Redis verify:', verify ? 'confirmed' : 'FAILED');
@@ -250,7 +257,7 @@ async function storeOwnerCredential(credentialData) {
         await put(blobPath, dataString, {
             access: 'public',
             contentType: 'application/json',
-            addRandomSuffix: false
+            addRandomSuffix: false,
         });
         storedInBlob = true;
         console.log('[BiometricUtils] Owner credential stored in Blob');
@@ -259,7 +266,14 @@ async function storeOwnerCredential(credentialData) {
     }
 
     const success = storedInRedis || storedInBlob;
-    console.log('[BiometricUtils] Store result - Redis:', storedInRedis, 'Blob:', storedInBlob, 'Success:', success);
+    console.log(
+        '[BiometricUtils] Store result - Redis:',
+        storedInRedis,
+        'Blob:',
+        storedInBlob,
+        'Success:',
+        success
+    );
     return success;
 }
 
@@ -296,7 +310,7 @@ async function storeChallenge(key, challenge, nonce = null, prefix = 'auth') {
     const redisKey = `${CONFIG.CHALLENGE_PREFIX}${prefix}:${key}`;
     const data = {
         challenge,
-        createdAt: Date.now()
+        createdAt: Date.now(),
     };
     if (nonce) {
         data.nonce = nonce;
@@ -317,14 +331,14 @@ async function storeChallenge(key, challenge, nonce = null, prefix = 'auth') {
     // Fallback to in-memory store
     challengeStore.set(redisKey, { ...data, expiresAt: Date.now() + CONFIG.CHALLENGE_EXPIRY });
     console.log('[BiometricUtils] Challenge stored in memory:', redisKey);
-    
+
     // Clean up old entries
     for (const [k, v] of challengeStore) {
         if (v.expiresAt < Date.now()) {
             challengeStore.delete(k);
         }
     }
-    
+
     return true;
 }
 
@@ -344,15 +358,15 @@ async function verifyChallenge(key, prefix = 'auth') {
             if (data) {
                 // Delete the challenge (consume it - one-time use)
                 await redis.del(redisKey);
-                
+
                 const entry = typeof data === 'string' ? JSON.parse(data) : data;
                 console.log('[BiometricUtils] Challenge verified from Redis:', redisKey);
-                
+
                 // Check expiry (belt and suspenders - Redis TTL should handle this)
                 if (Date.now() - entry.createdAt > CONFIG.CHALLENGE_EXPIRY) {
                     return null;
                 }
-                
+
                 // Return full entry for registration (includes nonce), just challenge for auth
                 return prefix === 'reg' ? entry : entry.challenge;
             }
@@ -366,11 +380,11 @@ async function verifyChallenge(key, prefix = 'auth') {
     const entry = challengeStore.get(redisKey);
     if (entry) {
         challengeStore.delete(redisKey); // Consume it
-        
+
         if (entry.expiresAt < Date.now()) {
             return null; // Expired
         }
-        
+
         console.log('[BiometricUtils] Challenge verified from memory:', redisKey);
         return prefix === 'reg' ? entry : entry.challenge;
     }
@@ -411,12 +425,16 @@ async function storeDeviceLink(code, ownerUserId, createdByFingerprint) {
         ownerUserId,
         createdByFingerprint,
         createdAt: Date.now(),
-        claimed: false
+        claimed: false,
     };
 
     if (redis) {
         try {
-            await redis.setex(redisKey, Math.ceil(CONFIG.DEVICE_LINK_EXPIRY / 1000), JSON.stringify(data));
+            await redis.setex(
+                redisKey,
+                Math.ceil(CONFIG.DEVICE_LINK_EXPIRY / 1000),
+                JSON.stringify(data)
+            );
             return true;
         } catch (error) {
             console.error('[BiometricUtils] Failed to store device link:', error);
@@ -498,7 +516,7 @@ async function addAuthorizedDevice(ownerCredential, newFingerprint, deviceName =
             ownerCredential.authorizedDevices.push({
                 fingerprint: ownerCredential.deviceFingerprint,
                 name: 'Primary Device',
-                addedAt: ownerCredential.registeredAt || new Date().toISOString()
+                addedAt: ownerCredential.registeredAt || new Date().toISOString(),
             });
         }
     }
@@ -517,7 +535,7 @@ async function addAuthorizedDevice(ownerCredential, newFingerprint, deviceName =
     ownerCredential.authorizedDevices.push({
         fingerprint: newFingerprint,
         name: deviceName,
-        addedAt: new Date().toISOString()
+        addedAt: new Date().toISOString(),
     });
 
     // Save updated credential
@@ -559,5 +577,5 @@ module.exports = {
     storeDeviceLink,
     getDeviceLink,
     deleteDeviceLink,
-    addAuthorizedDevice
+    addAuthorizedDevice,
 };

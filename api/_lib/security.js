@@ -35,9 +35,9 @@ const CONFIG = {
 // ============================================================================
 
 const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? Redis.fromEnv()
-    : null;
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+        ? Redis.fromEnv()
+        : null;
 
 const auditLog = [];
 
@@ -51,7 +51,7 @@ const ALLOWED_ORIGINS = [
     'https://fusecreatine.com',
     'http://localhost:3000',
     'http://localhost:5500',
-    'http://127.0.0.1:5500'
+    'http://127.0.0.1:5500',
 ];
 
 // ============================================================================
@@ -139,7 +139,12 @@ function getCorsOrigin(requestOrigin, requestHost = '') {
         return null;
     }
 
-    if (originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname === '::1' || originHostname === '0.0.0.0') {
+    if (
+        originHostname === 'localhost' ||
+        originHostname === '127.0.0.1' ||
+        originHostname === '::1' ||
+        originHostname === '0.0.0.0'
+    ) {
         return requestOrigin;
     }
 
@@ -161,7 +166,10 @@ function setSecurityHeaders(res, origin, methods = 'GET, POST, PUT, DELETE, OPTI
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Methods', methods);
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Token, X-Request-ID');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Admin-Token, X-Request-ID'
+    );
     res.setHeader('Access-Control-Max-Age', '86400');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -211,7 +219,11 @@ function authenticate(req, expectedToken) {
  * @param {number} windowMs - Time window in milliseconds
  * @returns {Promise<{ limited: boolean, remaining: number, retryAfterMs?: number }>}
  */
-async function checkRateLimit(key, limit = CONFIG.RATE_LIMIT_MAX_REQUESTS, windowMs = CONFIG.RATE_LIMIT_WINDOW_MS) {
+async function checkRateLimit(
+    key,
+    limit = CONFIG.RATE_LIMIT_MAX_REQUESTS,
+    windowMs = CONFIG.RATE_LIMIT_WINDOW_MS
+) {
     if (!redis) {
         console.warn('Rate limiting is disabled because Redis is not configured.');
         return { limited: false, remaining: limit, resetAt: new Date(Date.now() + windowMs) };
@@ -234,14 +246,14 @@ async function checkRateLimit(key, limit = CONFIG.RATE_LIMIT_MAX_REQUESTS, windo
                 limited: true,
                 remaining: 0,
                 retryAfterMs: ttl * 1000,
-                resetAt: new Date(Date.now() + ttl * 1000).toISOString()
+                resetAt: new Date(Date.now() + ttl * 1000).toISOString(),
             };
         }
 
         return {
             limited: false,
             remaining: limit - count,
-            resetAt: new Date(Date.now() + ttl * 1000).toISOString()
+            resetAt: new Date(Date.now() + ttl * 1000).toISOString(),
         };
     } catch (error) {
         console.error('Redis rate limit check failed:', error);
@@ -269,7 +281,10 @@ function validateRequestBody(body, schema = {}) {
     // Check body size (rough estimate)
     const bodyString = JSON.stringify(body);
     if (bodyString.length > CONFIG.MAX_REQUEST_BODY_SIZE) {
-        return { valid: false, error: `Request body too large (max ${CONFIG.MAX_REQUEST_BODY_SIZE} bytes)` };
+        return {
+            valid: false,
+            error: `Request body too large (max ${CONFIG.MAX_REQUEST_BODY_SIZE} bytes)`,
+        };
     }
 
     const sanitized = {};
@@ -302,10 +317,16 @@ function validateRequestBody(body, schema = {}) {
         // String length validation
         if (rules.type === 'string' && typeof value === 'string') {
             if (rules.maxLength && value.length > rules.maxLength) {
-                return { valid: false, error: `${field} exceeds maximum length of ${rules.maxLength}` };
+                return {
+                    valid: false,
+                    error: `${field} exceeds maximum length of ${rules.maxLength}`,
+                };
             }
             if (rules.minLength && value.length < rules.minLength) {
-                return { valid: false, error: `${field} must be at least ${rules.minLength} characters` };
+                return {
+                    valid: false,
+                    error: `${field} must be at least ${rules.minLength} characters`,
+                };
             }
             // Sanitize string
             sanitized[field] = sanitizeString(value, rules.maxLength || CONFIG.MAX_STRING_LENGTH);
@@ -314,7 +335,10 @@ function validateRequestBody(body, schema = {}) {
         // Array validation
         if (rules.type === 'array' && Array.isArray(value)) {
             if (rules.maxItems && value.length > rules.maxItems) {
-                return { valid: false, error: `${field} exceeds maximum items of ${rules.maxItems}` };
+                return {
+                    valid: false,
+                    error: `${field} exceeds maximum items of ${rules.maxItems}`,
+                };
             }
             sanitized[field] = value.slice(0, rules.maxItems || CONFIG.MAX_ARRAY_LENGTH);
         }
@@ -365,7 +389,7 @@ function addAuditEntry(entry) {
     const auditEntry = {
         id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: new Date().toISOString(),
-        ...entry
+        ...entry,
     };
 
     auditLog.unshift(auditEntry);
@@ -376,12 +400,15 @@ function addAuditEntry(entry) {
     }
 
     // Log to console for serverless function logs
-    console.log('[Audit]', JSON.stringify({
-        action: entry.action,
-        ip: entry.ip,
-        success: entry.success,
-        endpoint: entry.endpoint
-    }));
+    console.log(
+        '[Audit]',
+        JSON.stringify({
+            action: entry.action,
+            ip: entry.ip,
+            success: entry.success,
+            endpoint: entry.endpoint,
+        })
+    );
 
     return auditEntry;
 }
@@ -448,11 +475,11 @@ function createSecuredHandler(options, handler) {
                 ip: clientIp,
                 origin: req.headers.origin,
                 success: false,
-                endpoint: req.url
+                endpoint: req.url,
             });
             return res.status(403).json({
                 error: 'Origin not allowed',
-                code: 'CORS_ERROR'
+                code: 'CORS_ERROR',
             });
         }
 
@@ -460,7 +487,7 @@ function createSecuredHandler(options, handler) {
         if (!allowedMethods.includes(req.method)) {
             return res.status(405).json({
                 error: 'Method not allowed',
-                code: 'METHOD_NOT_ALLOWED'
+                code: 'METHOD_NOT_ALLOWED',
             });
         }
 
@@ -488,13 +515,13 @@ function createSecuredHandler(options, handler) {
                     ip: clientIp,
                     success: false,
                     endpoint: req.url,
-                    method: req.method
+                    method: req.method,
                 });
 
                 return res.status(429).json({
                     error: 'Too many requests. Please slow down.',
                     code: 'RATE_LIMITED',
-                    retryAfter: Math.ceil(rateLimitResult.retryAfterMs / 1000)
+                    retryAfter: Math.ceil(rateLimitResult.retryAfterMs / 1000),
                 });
             }
         }
@@ -511,12 +538,12 @@ function createSecuredHandler(options, handler) {
                     success: false,
                     endpoint: req.url,
                     method: req.method,
-                    reason: authResult.error
+                    reason: authResult.error,
                 });
 
                 return res.status(401).json({
                     error: authResult.error,
-                    code: 'UNAUTHORIZED'
+                    code: 'UNAUTHORIZED',
                 });
             }
         }
@@ -533,12 +560,12 @@ function createSecuredHandler(options, handler) {
                     success: false,
                     endpoint: req.url,
                     method: req.method,
-                    reason: validation.error
+                    reason: validation.error,
                 });
 
                 return res.status(400).json({
                     error: validation.error,
-                    code: 'VALIDATION_ERROR'
+                    code: 'VALIDATION_ERROR',
                 });
             }
 
@@ -550,7 +577,7 @@ function createSecuredHandler(options, handler) {
             const result = await handler(req, res, {
                 clientIp,
                 requestId,
-                validatedBody: validatedBody || req.body
+                validatedBody: validatedBody || req.body,
             });
 
             // Log successful request
@@ -560,7 +587,7 @@ function createSecuredHandler(options, handler) {
                 success: true,
                 endpoint: req.url,
                 method: req.method,
-                duration: Date.now() - startTime
+                duration: Date.now() - startTime,
             });
 
             return result;
@@ -573,12 +600,12 @@ function createSecuredHandler(options, handler) {
                 success: false,
                 endpoint: req.url,
                 method: req.method,
-                error: error.message
+                error: error.message,
             });
 
             return res.status(500).json({
                 error: 'Internal server error',
-                code: 'INTERNAL_ERROR'
+                code: 'INTERNAL_ERROR',
             });
         }
     };
@@ -620,5 +647,5 @@ module.exports = {
     auditLog, // Exposed for testing
 
     // Middleware
-    createSecuredHandler
+    createSecuredHandler,
 };

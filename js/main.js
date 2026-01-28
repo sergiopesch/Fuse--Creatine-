@@ -15,23 +15,23 @@
         intervals: [],
         timeouts: [],
         eventListeners: [],
-        gsapAnimations: []
+        gsapAnimations: [],
     };
 
     // Register interval for cleanup
-    function registerInterval(id) {
+    function _registerInterval(id) {
         cleanupRegistry.intervals.push(id);
         return id;
     }
 
     // Register timeout for cleanup
-    function registerTimeout(id) {
+    function _registerTimeout(id) {
         cleanupRegistry.timeouts.push(id);
         return id;
     }
 
     // Register event listener for cleanup
-    function registerEventListener(element, event, handler, options) {
+    function _registerEventListener(element, event, handler, options) {
         element.addEventListener(event, handler, options);
         cleanupRegistry.eventListeners.push({ element, event, handler, options });
     }
@@ -94,14 +94,14 @@
     if (!prefersReducedMotion && window.Lenis) {
         lenis = new Lenis({
             duration: 1.15,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
             smoothWheel: true,
             wheelMultiplier: 1,
             smoothTouch: false,
         });
 
         lenis.on('scroll', ScrollTrigger.update);
-        gsap.ticker.add((time) => lenis.raf(time * 1000));
+        gsap.ticker.add(time => lenis.raf(time * 1000));
         gsap.ticker.lagSmoothing(0);
     }
 
@@ -115,7 +115,8 @@
         if (!navbar) return;
         // Use the largest observed height (non-scrolled state is usually tallest)
         maxNavHeight = Math.max(maxNavHeight, navbar.offsetHeight || 0);
-        if (maxNavHeight) document.documentElement.style.setProperty('--nav-height', `${maxNavHeight}px`);
+        if (maxNavHeight)
+            document.documentElement.style.setProperty('--nav-height', `${maxNavHeight}px`);
     }
 
     // Scroll progress
@@ -134,18 +135,33 @@
         updateNavHeightVar();
         ScrollTrigger.create({
             start: 'top -100',
-            onUpdate: (self) => {
+            onUpdate: self => {
                 // Keep nav fully readable at the very top (no hiding/fading)
                 if (self.scroll() < 24) {
-                    gsap.to(navbar, { yPercent: 0, autoAlpha: 1, duration: 0.2, ease: 'power2.out' });
+                    gsap.to(navbar, {
+                        yPercent: 0,
+                        autoAlpha: 1,
+                        duration: 0.2,
+                        ease: 'power2.out',
+                    });
                     navbar.classList.remove('scrolled');
                     return;
                 }
 
                 if (self.direction === 1) {
-                    gsap.to(navbar, { yPercent: -100, autoAlpha: 1, duration: 0.4, ease: 'power2.inOut' });
+                    gsap.to(navbar, {
+                        yPercent: -100,
+                        autoAlpha: 1,
+                        duration: 0.4,
+                        ease: 'power2.inOut',
+                    });
                 } else {
-                    gsap.to(navbar, { yPercent: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out' });
+                    gsap.to(navbar, {
+                        yPercent: 0,
+                        autoAlpha: 1,
+                        duration: 0.4,
+                        ease: 'power2.out',
+                    });
                 }
 
                 if (self.scroll() > 100) navbar.classList.add('scrolled');
@@ -161,7 +177,12 @@
         .from('.hero-title span', { yPercent: 120, autoAlpha: 0, stagger: 0.16 }, 0.45)
         .from('.hero-messaging', { y: 18, autoAlpha: 0 }, 0.9)
         .from('.hero-cta-group', { y: 16, autoAlpha: 0 }, 1.05)
-        .fromTo('.hero-visual-wrapper', { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 1.5 }, 0.8)
+        .fromTo(
+            '.hero-visual-wrapper',
+            { x: 40, autoAlpha: 0 },
+            { x: 0, autoAlpha: 1, duration: 1.5 },
+            0.8
+        )
         .from('.nav', { y: -40, autoAlpha: 0 }, 0.2);
 
     // Hero scroll-linked depth + orbs
@@ -191,9 +212,30 @@
         });
 
         // Ambient orbital drift (low-frequency to reduce motion sickness)
-        gsap.to('.orb-1', { x: -20, y: 30, duration: 16, ease: 'sine.inOut', repeat: -1, yoyo: true });
-        gsap.to('.orb-2', { x: 25, y: -25, duration: 18, ease: 'sine.inOut', repeat: -1, yoyo: true });
-        gsap.to('.orb-3', { x: 18, y: 20, duration: 14, ease: 'sine.inOut', repeat: -1, yoyo: true });
+        gsap.to('.orb-1', {
+            x: -20,
+            y: 30,
+            duration: 16,
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+        });
+        gsap.to('.orb-2', {
+            x: 25,
+            y: -25,
+            duration: 18,
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+        });
+        gsap.to('.orb-3', {
+            x: 18,
+            y: 20,
+            duration: 14,
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+        });
 
         gsap.fromTo(
             '.scroll-hint-line',
@@ -203,31 +245,29 @@
     }
 
     // Reveal system (works both directions)
-    gsap.utils.toArray('.fade-in, .fade-in-left, .fade-in-right, [data-reveal]').forEach((el) => {
+    gsap.utils.toArray('.fade-in, .fade-in-left, .fade-in-right, [data-reveal]').forEach(el => {
         const mode = el.getAttribute('data-reveal');
         let fromVars = { autoAlpha: 0, y: 24 };
-        if (el.classList.contains('fade-in-left') || mode === 'left') fromVars = { autoAlpha: 0, x: -28 };
-        if (el.classList.contains('fade-in-right') || mode === 'right') fromVars = { autoAlpha: 0, x: 28 };
+        if (el.classList.contains('fade-in-left') || mode === 'left')
+            fromVars = { autoAlpha: 0, x: -28 };
+        if (el.classList.contains('fade-in-right') || mode === 'right')
+            fromVars = { autoAlpha: 0, x: 28 };
         if (mode === 'up') fromVars = { autoAlpha: 0, y: 24 };
 
-        gsap.fromTo(
-            el,
-            fromVars,
-            {
-                immediateRender: false,
-                autoAlpha: 1,
-                x: 0,
-                y: 0,
-                duration: prefersReducedMotion ? 0 : 0.9,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: el,
-                    start: 'top 86%',
-                    end: 'bottom 60%',
-                    toggleActions: 'play none none reverse',
-                },
-            }
-        );
+        gsap.fromTo(el, fromVars, {
+            immediateRender: false,
+            autoAlpha: 1,
+            x: 0,
+            y: 0,
+            duration: prefersReducedMotion ? 0 : 0.9,
+            ease: 'power3.out',
+            scrollTrigger: {
+                trigger: el,
+                start: 'top 86%',
+                end: 'bottom 60%',
+                toggleActions: 'play none none reverse',
+            },
+        });
     });
 
     // Hero: 4 evidence-based core messages (longer hold time)
@@ -236,20 +276,19 @@
 
     const heroMessages = [
         {
-            message:
-                'Your morning coffee has been missing something. Until now.',
+            message: 'Your morning coffee has been missing something. Until now.',
             footnote:
                 'The first creatine engineered to vanish into hot coffee — backed by 500+ peer-reviewed studies.',
         },
         {
             message:
-                '6:47 AM. Steam rising. One scoop. Three seconds later — it\'s gone. Your coffee tastes exactly the same. But you\'re not.',
+                "6:47 AM. Steam rising. One scoop. Three seconds later — it's gone. Your coffee tastes exactly the same. But you're not.",
             footnote:
                 'Backed by 500+ peer-reviewed studies. Now optimised for your morning ritual.',
         },
         {
             message:
-                'Most creatine sinks. Clumps. Ruins your coffee. We asked: what if it didn\'t have to?',
+                "Most creatine sinks. Clumps. Ruins your coffee. We asked: what if it didn't have to?",
             footnote:
                 'Micro-encapsulation technology developed for hot beverages. No compromise. No grit. No excuses.',
         },
@@ -282,7 +321,12 @@
                         { autoAlpha: 1, y: 0, duration: 0.55, ease: 'power3.out' }
                     )
                     .to({}, { duration: 3.2 }) // hold (longer)
-                    .to([heroMessageEl, heroFootnoteEl], { autoAlpha: 0, y: -8, duration: 0.4, ease: 'power2.in' });
+                    .to([heroMessageEl, heroFootnoteEl], {
+                        autoAlpha: 0,
+                        y: -8,
+                        duration: 0.4,
+                        ease: 'power2.in',
+                    });
             });
 
             // Pause the cycle once user scrolls past the hero
@@ -299,7 +343,7 @@
     }
 
     // Stat counters – preserve suffix span markup
-    document.querySelectorAll('.stat-number').forEach((stat) => {
+    document.querySelectorAll('.stat-number').forEach(stat => {
         const value = parseInt(stat.innerText, 10);
         if (!Number.isFinite(value) || prefersReducedMotion) return;
 
@@ -323,12 +367,37 @@
     // Science visuals – engineered motion
     if (!prefersReducedMotion) {
         // Continuous rings (fusion + activation)
-        gsap.to('[data-visual="fusion"] .ring-1', { rotation: 360, duration: 14, ease: 'none', repeat: -1 });
-        gsap.to('[data-visual="fusion"] .ring-2', { rotation: -360, duration: 20, ease: 'none', repeat: -1 });
-        gsap.to('[data-visual="fusion"] .ring-3', { rotation: 360, duration: 28, ease: 'none', repeat: -1 });
+        gsap.to('[data-visual="fusion"] .ring-1', {
+            rotation: 360,
+            duration: 14,
+            ease: 'none',
+            repeat: -1,
+        });
+        gsap.to('[data-visual="fusion"] .ring-2', {
+            rotation: -360,
+            duration: 20,
+            ease: 'none',
+            repeat: -1,
+        });
+        gsap.to('[data-visual="fusion"] .ring-3', {
+            rotation: 360,
+            duration: 28,
+            ease: 'none',
+            repeat: -1,
+        });
 
-        gsap.to('[data-visual="activation"] .ring-1', { rotation: 360, duration: 10, ease: 'none', repeat: -1 });
-        gsap.to('[data-visual="activation"] .ring-2', { rotation: -360, duration: 16, ease: 'none', repeat: -1 });
+        gsap.to('[data-visual="activation"] .ring-1', {
+            rotation: 360,
+            duration: 10,
+            ease: 'none',
+            repeat: -1,
+        });
+        gsap.to('[data-visual="activation"] .ring-2', {
+            rotation: -360,
+            duration: 16,
+            ease: 'none',
+            repeat: -1,
+        });
 
         // Fusion nodes pulse
         gsap.to('[data-visual="fusion"] .fusion-nodes span', {
@@ -357,21 +426,22 @@
         });
 
         // Direction-aware emphasis on science steps
-        gsap.utils.toArray('.science-step').forEach((step) => {
+        gsap.utils.toArray('.science-step').forEach(step => {
             ScrollTrigger.create({
                 trigger: step,
                 start: 'top 65%',
                 end: 'bottom 35%',
                 onEnter: () => gsap.to(step, { scale: 1.015, duration: 0.5, ease: 'power2.out' }),
                 onLeave: () => gsap.to(step, { scale: 1, duration: 0.5, ease: 'power2.out' }),
-                onEnterBack: () => gsap.to(step, { scale: 1.015, duration: 0.5, ease: 'power2.out' }),
+                onEnterBack: () =>
+                    gsap.to(step, { scale: 1.015, duration: 0.5, ease: 'power2.out' }),
                 onLeaveBack: () => gsap.to(step, { scale: 1, duration: 0.5, ease: 'power2.out' }),
             });
         });
     }
 
     // Science comparison bars
-    document.querySelectorAll('.science-compare-bar').forEach((bar) => {
+    document.querySelectorAll('.science-compare-bar').forEach(bar => {
         const fill = bar.querySelector('.science-compare-fill');
         const progress = parseFloat(bar.dataset.progress || '0');
         if (!fill) return;
@@ -398,11 +468,16 @@
         const strength = 18;
         const reset = () => gsap.to(el, { x: 0, y: 0, duration: 0.35, ease: motion.easeOut });
 
-        el.addEventListener('mousemove', (e) => {
+        el.addEventListener('mousemove', e => {
             const r = el.getBoundingClientRect();
             const relX = (e.clientX - r.left) / r.width - 0.5;
             const relY = (e.clientY - r.top) / r.height - 0.5;
-            gsap.to(el, { x: relX * strength, y: relY * strength, duration: 0.25, ease: motion.easeOut });
+            gsap.to(el, {
+                x: relX * strength,
+                y: relY * strength,
+                duration: 0.25,
+                ease: motion.easeOut,
+            });
         });
         el.addEventListener('mouseleave', reset);
         el.addEventListener('blur', reset);
@@ -413,11 +488,12 @@
 
     // Premium card tilt + highlight tracking
     if (!prefersReducedMotion && !isCoarsePointer) {
-        document.querySelectorAll('[data-tilt]').forEach((card) => {
+        document.querySelectorAll('[data-tilt]').forEach(card => {
             const maxTilt = 7;
-            const reset = () => gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.5, ease: motion.easeOut });
+            const reset = () =>
+                gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.5, ease: motion.easeOut });
 
-            card.addEventListener('mousemove', (e) => {
+            card.addEventListener('mousemove', e => {
                 const r = card.getBoundingClientRect();
                 const px = (e.clientX - r.left) / r.width;
                 const py = (e.clientY - r.top) / r.height;
@@ -427,13 +503,18 @@
 
                 card.style.setProperty('--mx', `${px * 100}%`);
                 card.style.setProperty('--my', `${py * 100}%`);
-                gsap.to(card, { rotationX: rotX, rotationY: rotY, transformPerspective: 900, duration: 0.25, ease: motion.easeOut });
+                gsap.to(card, {
+                    rotationX: rotX,
+                    rotationY: rotY,
+                    transformPerspective: 900,
+                    duration: 0.25,
+                    ease: motion.easeOut,
+                });
             });
             card.addEventListener('mouseleave', reset);
             card.addEventListener('blur', reset);
         });
     }
-
 
     // Bottom CTA configurator
     const doseRange = document.getElementById('doseRange');
@@ -480,11 +561,22 @@
         gsap.fromTo(
             '#doseValue',
             { scale: 1, filter: 'brightness(1)' },
-            { scale: 1.18, filter: 'brightness(1.25)', duration: 0.16, ease: 'power2.out', yoyo: true, repeat: 1 }
+            {
+                scale: 1.18,
+                filter: 'brightness(1.25)',
+                duration: 0.16,
+                ease: 'power2.out',
+                yoyo: true,
+                repeat: 1,
+            }
         );
         gsap.to('.dose-core', { scale: p.intensity, duration: 0.35, ease: 'power3.out' });
         gsap.to('.dose-orbit', { rotation: g * 9, duration: 0.6, ease: 'power2.out' });
-        gsap.to('.dose-ticks span', { opacity: Math.min(0.7, 0.25 + (g - 5) / 30), duration: 0.3, ease: 'power2.out' });
+        gsap.to('.dose-ticks span', {
+            opacity: Math.min(0.7, 0.25 + (g - 5) / 30),
+            duration: 0.3,
+            ease: 'power2.out',
+        });
     }
 
     if (doseRange) {
@@ -498,12 +590,12 @@
     const mainInterestValue = document.getElementById('mainInterestValue');
 
     if (interestPills && mainInterestValue) {
-        interestPills.addEventListener('click', (e) => {
+        interestPills.addEventListener('click', e => {
             const pill = e.target.closest('.interest-pill');
             if (!pill) return;
 
             // Remove selected from all pills
-            interestPills.querySelectorAll('.interest-pill').forEach((p) => {
+            interestPills.querySelectorAll('.interest-pill').forEach(p => {
                 p.classList.remove('selected');
             });
 
@@ -527,7 +619,7 @@
 
         // Reset interest pills when opening
         if (interestPills) {
-            interestPills.querySelectorAll('.interest-pill').forEach((p) => {
+            interestPills.querySelectorAll('.interest-pill').forEach(p => {
                 p.classList.remove('selected');
             });
         }
@@ -537,7 +629,13 @@
 
         modalOverlay.style.display = 'flex';
         gsap.to(modalOverlay, { opacity: 1, duration: 0.45, ease: 'power2.out' });
-        gsap.from('.modal-content', { y: 30, opacity: 0, duration: 0.5, delay: 0.05, ease: 'power3.out' });
+        gsap.from('.modal-content', {
+            y: 30,
+            opacity: 0,
+            duration: 0.5,
+            delay: 0.05,
+            ease: 'power3.out',
+        });
         document.body.style.overflow = 'hidden';
     };
 
@@ -556,12 +654,12 @@
 
     // Close modal on overlay click
     if (modalOverlay) {
-        modalOverlay.addEventListener('click', (e) => {
+        modalOverlay.addEventListener('click', e => {
             if (e.target === modalOverlay) window.closeWaitlist();
         });
     }
     // Close modal on Escape
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
         if (e.key === 'Escape') window.closeWaitlist();
     });
 
@@ -574,7 +672,13 @@
         const isOpen = mobileMenu.classList.contains('active');
 
         if (isOpen) {
-            gsap.to('.mobile-menu a', { x: -20, opacity: 0, stagger: 0.05, duration: 0.25, ease: 'power2.out' });
+            gsap.to('.mobile-menu a', {
+                x: -20,
+                opacity: 0,
+                stagger: 0.05,
+                duration: 0.25,
+                ease: 'power2.out',
+            });
             gsap.to(mobileMenu, {
                 opacity: 0,
                 duration: 0.3,
@@ -590,7 +694,11 @@
             mobileToggle.classList.add('active');
             mobileToggle.setAttribute('aria-expanded', 'true');
             gsap.to(mobileMenu, { opacity: 1, duration: 0.25, ease: 'power2.out' });
-            gsap.fromTo('.mobile-menu a', { x: -20, opacity: 0 }, { x: 0, opacity: 1, stagger: 0.09, delay: 0.05 });
+            gsap.fromTo(
+                '.mobile-menu a',
+                { x: -20, opacity: 0 },
+                { x: 0, opacity: 1, stagger: 0.09, delay: 0.05 }
+            );
         }
     };
 
@@ -601,12 +709,12 @@
         const submitLabel = submitBtn.innerText;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        const setSubmitState = (isLoading) => {
+        const setSubmitState = isLoading => {
             submitBtn.disabled = isLoading;
             submitBtn.innerText = isLoading ? 'JOINING...' : submitLabel;
         };
 
-        const setFormError = (message) => {
+        const setFormError = message => {
             if (!formError) return;
             if (!message) {
                 formError.textContent = '';
@@ -625,7 +733,11 @@
                     waitlistForm.style.display = 'none';
                     successMessage.classList.add('active');
 
-                    gsap.fromTo(successMessage, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+                    gsap.fromTo(
+                        successMessage,
+                        { opacity: 0, y: 14 },
+                        { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' }
+                    );
 
                     // Auto-refresh after 5 seconds (longer for sharing)
                     setTimeout(() => {
@@ -635,7 +747,7 @@
             });
         };
 
-        waitlistForm.addEventListener('submit', async (e) => {
+        waitlistForm.addEventListener('submit', async e => {
             e.preventDefault();
             setFormError('');
 
@@ -643,10 +755,13 @@
             const consentValue = formData.get('consentToContact');
             const data = {
                 fullName: String(formData.get('fullName') || '').trim(),
-                email: String(formData.get('email') || '').trim().toLowerCase(),
+                email: String(formData.get('email') || '')
+                    .trim()
+                    .toLowerCase(),
                 mainInterest: String(formData.get('mainInterest') || '').trim(),
                 policyVersion: String(formData.get('policyVersion') || '').trim(),
-                consentToContact: consentValue === 'on' || consentValue === 'true' || consentValue === true,
+                consentToContact:
+                    consentValue === 'on' || consentValue === 'true' || consentValue === true,
                 company: String(formData.get('company') || '').trim(),
             };
 
@@ -683,16 +798,21 @@
 
                 if (!response.ok) {
                     const payload = await response.json().catch(() => ({}));
-                    const message = payload && payload.error
-                        ? payload.error
-                        : 'Unable to save your details. Please try again.';
+                    const message =
+                        payload && payload.error
+                            ? payload.error
+                            : 'Unable to save your details. Please try again.';
                     throw new Error(message);
                 }
 
                 showSuccess();
             } catch (error) {
                 console.warn('Signup failed:', error);
-                setFormError(error && error.message ? error.message : 'Unable to save your details. Please try again.');
+                setFormError(
+                    error && error.message
+                        ? error.message
+                        : 'Unable to save your details. Please try again.'
+                );
                 setSubmitState(false);
             }
         });
@@ -703,7 +823,7 @@
         lenis,
         openWaitlist: window.openWaitlist,
         closeWaitlist: window.closeWaitlist,
-        scrollTo: (selector) => {
+        scrollTo: selector => {
             if (lenis) return lenis.scrollTo(selector);
             const el = document.querySelector(selector);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
