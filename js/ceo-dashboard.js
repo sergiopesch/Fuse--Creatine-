@@ -1026,6 +1026,25 @@ async function startTeamOrchestration(teamId) {
             body: JSON.stringify({ teamId, action: 'start' }),
         });
 
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.code) {
+                    errorMessage += ` (${errorData.code})`;
+                }
+            } catch {
+                // Response might not be JSON
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage += `: ${text.substring(0, 100)}`;
+            }
+            console.error('[Orchestration] Start failed:', response.status, errorMessage);
+            showToast('error', 'Start Failed', errorMessage);
+            return false;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -1042,12 +1061,21 @@ async function startTeamOrchestration(teamId) {
             updateTeamUI(teamId);
             return true;
         } else {
-            showToast('error', 'Start Failed', data.error || 'Failed to start orchestration');
+            const errorMsg = data.error || 'Failed to start orchestration';
+            console.error('[Orchestration] Start failed:', errorMsg);
+            showToast('error', 'Start Failed', errorMsg);
             return false;
         }
     } catch (error) {
         console.error('[Orchestration] Start error:', error);
-        showToast('error', 'Connection Error', 'Failed to start orchestration');
+        // Provide more specific error messages
+        let errorMessage = 'Failed to start orchestration';
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Network error - check your connection';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        showToast('error', 'Connection Error', errorMessage);
         return false;
     }
 }
@@ -1068,6 +1096,24 @@ async function stopTeamOrchestration(teamId) {
             body: JSON.stringify({ teamId, action: 'stop' }),
         });
 
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.code) {
+                    errorMessage += ` (${errorData.code})`;
+                }
+            } catch {
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage += `: ${text.substring(0, 100)}`;
+            }
+            console.error('[Orchestration] Stop failed:', response.status, errorMessage);
+            showToast('error', 'Stop Failed', errorMessage);
+            return false;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -1084,12 +1130,20 @@ async function stopTeamOrchestration(teamId) {
             updateTeamUI(teamId);
             return true;
         } else {
-            showToast('error', 'Stop Failed', data.error || 'Failed to stop orchestration');
+            const errorMsg = data.error || 'Failed to stop orchestration';
+            console.error('[Orchestration] Stop failed:', errorMsg);
+            showToast('error', 'Stop Failed', errorMsg);
             return false;
         }
     } catch (error) {
         console.error('[Orchestration] Stop error:', error);
-        showToast('error', 'Connection Error', 'Failed to stop orchestration');
+        let errorMessage = 'Failed to stop orchestration';
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Network error - check your connection';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        showToast('error', 'Connection Error', errorMessage);
         return false;
     }
 }
@@ -1121,6 +1175,24 @@ async function startAllTeams() {
             body: JSON.stringify({ action: 'startAll' }),
         });
 
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.code) {
+                    errorMessage += ` (${errorData.code})`;
+                }
+            } catch {
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage += `: ${text.substring(0, 100)}`;
+            }
+            console.error('[Orchestration] Start all failed:', response.status, errorMessage);
+            showToast('error', 'Start Failed', errorMessage);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -1146,11 +1218,19 @@ async function startAllTeams() {
                 `${data.data.teamsStarted || Object.keys(AgentTeams).length} teams now active`
             );
         } else {
-            showToast('error', 'Start Failed', data.error || 'Failed to start all teams');
+            const errorMsg = data.error || 'Failed to start all teams';
+            console.error('[Orchestration] Start all failed:', errorMsg);
+            showToast('error', 'Start Failed', errorMsg);
         }
     } catch (error) {
         console.error('[Orchestration] Start all error:', error);
-        showToast('error', 'Connection Error', 'Failed to start all teams');
+        let errorMessage = 'Failed to start all teams';
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Network error - check your connection';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        showToast('error', 'Connection Error', errorMessage);
     }
 }
 
@@ -1171,6 +1251,24 @@ async function pauseAllTeams() {
             },
             body: JSON.stringify({ action: 'stopAll' }),
         });
+
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.code) {
+                    errorMessage += ` (${errorData.code})`;
+                }
+            } catch {
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage += `: ${text.substring(0, 100)}`;
+            }
+            console.error('[Orchestration] Pause all failed:', response.status, errorMessage);
+            showToast('error', 'Pause Failed', errorMessage);
+            return;
+        }
 
         const data = await response.json();
 
@@ -1204,11 +1302,19 @@ async function pauseAllTeams() {
                 `${data.data.teamsPaused || Object.keys(AgentTeams).length} teams paused`
             );
         } else {
-            showToast('error', 'Pause Failed', data.error || 'Failed to pause all teams');
+            const errorMsg = data.error || 'Failed to pause all teams';
+            console.error('[Orchestration] Pause all failed:', errorMsg);
+            showToast('error', 'Pause Failed', errorMsg);
         }
     } catch (error) {
         console.error('[Orchestration] Pause all error:', error);
-        showToast('error', 'Connection Error', 'Failed to pause all teams');
+        let errorMessage = 'Failed to pause all teams';
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Network error - check your connection';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        showToast('error', 'Connection Error', errorMessage);
     }
 }
 
@@ -1457,6 +1563,24 @@ async function executeTeams(teamIds) {
             }),
         });
 
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.code) {
+                    errorMessage += ` (${errorData.code})`;
+                }
+            } catch {
+                const text = await response.text().catch(() => '');
+                if (text) errorMessage += `: ${text.substring(0, 100)}`;
+            }
+            console.error('[Orchestration] Execute failed:', response.status, errorMessage);
+            showToast('error', 'Execution Failed', errorMessage);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -1472,11 +1596,19 @@ async function executeTeams(teamIds) {
             updateAllTeamUI();
             showToast('success', 'Execution Complete', `${activities.length} activities generated`);
         } else {
-            showToast('error', 'Execution Failed', data.error || 'Failed to execute teams');
+            const errorMsg = data.error || 'Failed to execute teams';
+            console.error('[Orchestration] Execute failed:', errorMsg);
+            showToast('error', 'Execution Failed', errorMsg);
         }
     } catch (error) {
         console.error('[Orchestration] Execute teams error:', error);
-        showToast('error', 'Execution Error', 'Failed to execute teams');
+        let errorMessage = 'Failed to execute teams';
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'Network error - check your connection';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        showToast('error', 'Execution Error', errorMessage);
     } finally {
         state.executionInProgress = false;
         updateExecuteButtonState(false);

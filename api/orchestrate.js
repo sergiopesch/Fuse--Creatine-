@@ -712,7 +712,7 @@ async function handlePost(req, res, clientIp) {
     }
 
     // Rate limit
-    const rateLimit = checkRateLimit(
+    const rateLimit = await checkRateLimit(
         `orchestrate:post:${clientIp}`,
         CONFIG.RATE_LIMIT_WRITE,
         60000
