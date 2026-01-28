@@ -1,25 +1,22 @@
 /**
  * FUSE Magic Link Authentication API
- * Allows CEO/admin to authenticate via email magic link
- * Enables multi-device access without requiring biometric on every device
+ * Simple email-based authentication for dashboard access.
  *
  * Flow:
- * 1. User requests magic link → server sends email with token
+ * 1. User clicks "Send Magic Link" → server emails a one-time link
  * 2. User clicks link → dashboard loads with token in URL
- * 3. Dashboard verifies token → device gets authorized + session created
+ * 3. Dashboard verifies token → gets session token → access granted
  *
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 const crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
 const { createSecuredHandler, addAuditEntry } = require('./_lib/security');
 const {
-    createDeviceFingerprint,
-    getOwnerCredential,
-    storeOwnerCredential,
-    addAuthorizedDevice,
-} = require('./_lib/biometric-utils');
+    createSecuredHandler,
+    addAuditEntry
+} = require('./_lib/security');
 
 // ============================================================================
 // CONFIGURATION
@@ -30,107 +27,82 @@ const SESSION_SECRET = process.env.ENCRYPTION_KEY || null;
 const RESEND_API_KEY = process.env.RESEND_API_KEY || null;
 
 const CONFIG = {
-    TOKEN_EXPIRY: 15 * 60 * 1000, // 15 minutes
-    TOKEN_EXPIRY_SECONDS: 900,
-    TOKEN_LENGTH: 48, // bytes
-    MAGIC_LINK_PREFIX: 'magic:token:',
-    RATE_LIMIT: { limit: 5, windowMs: 300000 }, // 5 requests per 5 minutes
-    SESSION_DURATION: 30 * 60 * 1000, // 30 minutes
+    TOKEN_EXPIRY_SECONDS: 900,           // 15 minutes
+    TOKEN_LENGTH: 48,                     // bytes (96 hex chars)
+    REDIS_PREFIX: 'magic:token:',
+    SESSION_DURATION: 30 * 60 * 1000,    // 30 minutes
+    RATE_LIMIT: { limit: 5, windowMs: 300000 }
 };
 
-// Initialize Redis
+// Initialize Redis (required for magic links to work)
 const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
         ? Redis.fromEnv()
         : null;
 
+if (!redis) {
+    console.warn('[MagicLink] Redis not configured — magic links will not work without Redis.');
+}
+
 // ============================================================================
-// HELPERS
+// TOKEN HELPERS
 // ============================================================================
 
 /**
- * Generate a secure magic link token
- * @returns {string} - Hex-encoded token
+ * Generate a cryptographically secure token
  */
-function generateMagicToken() {
+function generateToken() {
     return crypto.randomBytes(CONFIG.TOKEN_LENGTH).toString('hex');
 }
 
 /**
- * Store magic link token in Redis
- * @param {string} token - Magic link token
- * @param {string} email - Email the link was sent to
- * @param {string} ip - Requesting IP address
- * @returns {Promise<boolean>}
+ * Store token in Redis with automatic expiry
  */
-async function storeMagicToken(token, email, ip) {
-    const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${token}`;
-    const data = {
-        email,
-        ip,
-        createdAt: Date.now(),
-        used: false,
-    };
-
-    if (redis) {
-        try {
-            await redis.setex(redisKey, CONFIG.TOKEN_EXPIRY_SECONDS, JSON.stringify(data));
-            return true;
-        } catch (error) {
-            console.error('[MagicLink] Failed to store token:', error.message);
-            return false;
-        }
+async function storeToken(token) {
+    if (!redis) return false;
+    try {
+        await redis.setex(
+            `${CONFIG.REDIS_PREFIX}${token}`,
+            CONFIG.TOKEN_EXPIRY_SECONDS,
+            JSON.stringify({ createdAt: Date.now() })
+        );
+        return true;
+    } catch (error) {
+        console.error('[MagicLink] Failed to store token:', error.message);
+        return false;
     }
-
-    console.error('[MagicLink] Redis not available - magic links require Redis');
-    return false;
 }
 
 /**
- * Verify and consume magic link token from Redis
- * @param {string} token - Magic link token to verify
- * @returns {Promise<object|null>} - Token data or null
+ * Verify and consume a token (one-time use)
+ * Returns true if valid, false otherwise
  */
-async function verifyMagicToken(token) {
-    if (!redis) return null;
-
-    const redisKey = `${CONFIG.MAGIC_LINK_PREFIX}${token}`;
-
+async function consumeToken(token) {
+    if (!redis) return false;
     try {
-        const data = await redis.get(redisKey);
-        if (!data) return null;
-
-        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-
-        if (parsed.used) return null;
-
-        // Mark as used and delete
-        await redis.del(redisKey);
-
-        // Check expiry (belt and suspenders)
-        if (Date.now() - parsed.createdAt > CONFIG.TOKEN_EXPIRY) {
-            return null;
-        }
-
-        return parsed;
+        const key = `${CONFIG.REDIS_PREFIX}${token}`;
+        const data = await redis.get(key);
+        if (!data) return false;
+        // Delete immediately (one-time use)
+        await redis.del(key);
+        return true;
     } catch (error) {
         console.error('[MagicLink] Token verification failed:', error.message);
-        return null;
+        return false;
     }
 }
 
+// ============================================================================
+// SESSION TOKEN
+// ============================================================================
+
 /**
- * Generate a session token (same logic as biometric-authenticate.js)
- * @param {string} userId - User identifier
- * @param {string} deviceFingerprint - Device fingerprint
- * @returns {string|null}
+ * Generate a signed session token
  */
-function generateSessionToken(userId, deviceFingerprint) {
+function generateSessionToken() {
     if (!SESSION_SECRET) return null;
 
     const payload = {
-        userId,
-        deviceFingerprint,
         issuedAt: Date.now(),
         expiresAt: Date.now() + CONFIG.SESSION_DURATION,
         nonce: crypto.randomBytes(16).toString('hex'),
@@ -143,20 +115,21 @@ function generateSessionToken(userId, deviceFingerprint) {
     return Buffer.from(data).toString('base64url') + '.' + hmac;
 }
 
+// ============================================================================
+// EMAIL
+// ============================================================================
+
 /**
- * Send magic link email via Resend API
- * @param {string} email - Recipient email
- * @param {string} magicLinkUrl - The full magic link URL
- * @returns {Promise<boolean>}
+ * Send magic link email via Resend
  */
-async function sendMagicLinkEmail(email, magicLinkUrl) {
+async function sendEmail(magicLinkUrl) {
     if (!RESEND_API_KEY) {
-        console.warn('[MagicLink] RESEND_API_KEY not set - logging magic link to console');
-        console.log('[MagicLink] ===================================');
-        console.log('[MagicLink] MAGIC LINK (copy this URL):');
-        console.log('[MagicLink]', magicLinkUrl);
-        console.log('[MagicLink] ===================================');
-        return true; // Allow flow to continue for testing
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('[MagicLink] DEV MODE — Magic link URL:', magicLinkUrl);
+            return true;
+        }
+        console.warn('[MagicLink] RESEND_API_KEY not set — cannot send email');
+        return false;
     }
 
     try {
@@ -168,8 +141,8 @@ async function sendMagicLinkEmail(email, magicLinkUrl) {
             },
             body: JSON.stringify({
                 from: process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>',
-                to: [email],
-                subject: 'FUSE Dashboard - Your Magic Link',
+                to: [CEO_EMAIL],
+                subject: 'FUSE Dashboard — Your Magic Link',
                 html: `
                     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
                         <div style="text-align: center; margin-bottom: 32px;">
@@ -177,47 +150,39 @@ async function sendMagicLinkEmail(email, magicLinkUrl) {
                             <p style="color: #666; font-size: 14px; margin-top: 4px;">Command Center Access</p>
                         </div>
                         <div style="background: #f9f9f9; border-radius: 16px; padding: 32px 24px; text-align: center;">
-                            <p style="color: #333; font-size: 16px; margin: 0 0 24px;">Click the button below to securely access your FUSE dashboard from this device.</p>
+                            <p style="color: #333; font-size: 16px; margin: 0 0 24px;">Click below to access your dashboard.</p>
                             <a href="${magicLinkUrl}" style="display: inline-block; background: #ff3b30; color: #fff; text-decoration: none; padding: 14px 40px; border-radius: 980px; font-weight: 600; font-size: 15px;">Access Dashboard</a>
-                            <p style="color: #999; font-size: 12px; margin: 24px 0 0;">This link expires in 15 minutes and can only be used once.</p>
+                            <p style="color: #999; font-size: 12px; margin: 24px 0 0;">Expires in 15 minutes. One-time use.</p>
                         </div>
-                        <p style="color: #999; font-size: 11px; text-align: center; margin-top: 24px;">If you didn't request this, you can safely ignore this email.</p>
+                        <p style="color: #999; font-size: 11px; text-align: center; margin-top: 24px;">If you didn't request this, ignore this email.</p>
                     </div>
                 `,
             }),
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('[MagicLink] Resend API error:', response.status, errorData);
+            const err = await response.json().catch(() => ({}));
+            console.error('[MagicLink] Resend error:', response.status, err);
             return false;
         }
 
-        console.log('[MagicLink] Email sent successfully to:', email);
+        console.log('[MagicLink] Email sent to:', CEO_EMAIL);
         return true;
     } catch (error) {
-        console.error('[MagicLink] Email send failed:', error.message);
+        console.error('[MagicLink] Email failed:', error.message);
         return false;
     }
 }
 
-/**
- * Resolve the origin URL for building magic links
- * @param {object} req - HTTP request
- * @returns {string}
- */
+// ============================================================================
+// URL HELPER
+// ============================================================================
+
 function resolveOrigin(req) {
-    const origin = req.headers.origin;
-    if (origin) return origin;
-
-    const forwardedProto = req.headers['x-forwarded-proto'] || 'https';
-    const proto = Array.isArray(forwardedProto)
-        ? forwardedProto[0]
-        : forwardedProto.split(',')[0].trim();
+    if (req.headers.origin) return req.headers.origin;
+    const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
-    const resolvedHost = Array.isArray(host) ? host[0] : host;
-
-    return `${proto}://${resolvedHost}`;
+    return `${proto}://${Array.isArray(host) ? host[0] : host}`;
 }
 
 // ============================================================================
@@ -225,71 +190,41 @@ function resolveOrigin(req) {
 // ============================================================================
 
 const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
-    const { action } = validatedBody;
+    const body = validatedBody && typeof validatedBody === 'object' ? validatedBody : {};
+    const { action } = body;
 
-    // ====================================
-    // SEND MAGIC LINK
-    // ====================================
+    if (!action || !['send', 'verify'].includes(action)) {
+        return res.status(400).json({ success: false, error: 'Invalid action. Use "send" or "verify".' });
+    }
+
+    // ── SEND ────────────────────────────────────────────────────────────
     if (action === 'send') {
-        const { email } = validatedBody;
-
-        if (!email || typeof email !== 'string') {
-            return res.status(400).json({ success: false, error: 'Email address required' });
-        }
-
-        // Normalize and validate email
-        const normalizedEmail = email.trim().toLowerCase();
-        const ceoEmail = CEO_EMAIL.trim().toLowerCase();
-
-        if (normalizedEmail !== ceoEmail) {
-            addAuditEntry({
-                action: 'MAGIC_LINK_UNAUTHORIZED_EMAIL',
-                ip: clientIp,
-                success: false,
-                endpoint: '/api/magic-link',
-                note: 'Non-CEO email attempted magic link',
-            });
-            return res.status(403).json({
-                success: false,
-                error: 'Magic link is only available for authorized administrators',
-            });
-        }
-
         if (!redis) {
-            return res.status(503).json({
-                success: false,
-                error: 'Magic link service requires Redis. Please configure UPSTASH_REDIS_REST_URL.',
-            });
+            return res.status(503).json({ success: false, error: 'Magic links require Redis. Please configure UPSTASH_REDIS_REST_URL.' });
         }
 
-        // Generate token and build magic link URL
-        const token = generateMagicToken();
-        const stored = await storeMagicToken(token, normalizedEmail, clientIp);
-
+        const token = generateToken();
+        const stored = await storeToken(token);
         if (!stored) {
-            return res.status(500).json({ success: false, error: 'Failed to create magic link' });
+            return res.status(500).json({ success: false, error: 'Failed to create magic link.' });
         }
 
-        // Determine which page the user is on to build the right return URL
-        const page = validatedBody.page || 'dashboard';
-        const origin = resolveOrigin(req);
-        const magicLinkUrl = `${origin}/${page}?magic_token=${token}`;
+        // Build the return URL
+        const page = body.page === 'ceo-dashboard' ? 'ceo-dashboard' : 'dashboard';
+        const origin = resolveOrigin(req).replace(/\/$/, '');
+        const magicLinkUrl = `${origin}/${page}?magic_token=${encodeURIComponent(token)}`;
 
-        const emailSent = await sendMagicLinkEmail(normalizedEmail, magicLinkUrl);
+        const sent = await sendEmail(magicLinkUrl);
 
         addAuditEntry({
             action: 'MAGIC_LINK_SENT',
             ip: clientIp,
-            success: emailSent,
-            endpoint: '/api/magic-link',
-            email: normalizedEmail.substring(0, 3) + '***',
+            success: sent,
+            endpoint: '/api/magic-link'
         });
 
-        if (!emailSent && RESEND_API_KEY) {
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to send email. Please try again.',
-            });
+        if (!sent) {
+            return res.status(500).json({ success: false, error: 'Failed to send email. Please try again.' });
         }
 
         return res.status(200).json({
@@ -299,21 +234,23 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         });
     }
 
-    // ====================================
-    // VERIFY MAGIC LINK TOKEN
-    // ====================================
+    // ── VERIFY ──────────────────────────────────────────────────────────
     if (action === 'verify') {
-        const { token } = validatedBody;
+        const token = typeof body.token === 'string' ? body.token.trim() : '';
 
-        if (!token || typeof token !== 'string' || token.length < 32) {
-            return res.status(400).json({ success: false, error: 'Invalid token' });
+        if (!token || token.length < 32) {
+            return res.status(400).json({ success: false, error: 'Invalid token.' });
         }
 
-        const tokenData = await verifyMagicToken(token);
+        if (!redis) {
+            return res.status(503).json({ success: false, error: 'Verification unavailable — Redis not configured.' });
+        }
 
-        if (!tokenData) {
+        const valid = await consumeToken(token);
+
+        if (!valid) {
             addAuditEntry({
-                action: 'MAGIC_LINK_INVALID_TOKEN',
+                action: 'MAGIC_LINK_INVALID',
                 ip: clientIp,
                 success: false,
                 endpoint: '/api/magic-link',
@@ -324,110 +261,49 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
             });
         }
 
-        // Token is valid - authorize this device
-        const deviceFingerprint = createDeviceFingerprint(req, validatedBody.deviceId);
-
-        // Get or create owner credential
-        const { credential: ownerCredential, error: credentialError } = await getOwnerCredential();
-
-        if (credentialError) {
-            return res
-                .status(503)
-                .json({ success: false, error: 'Service temporarily unavailable' });
-        }
-
-        let userId;
-
-        if (ownerCredential) {
-            // Add this device to authorized devices
-            const ua = req.headers['user-agent'] || '';
-            let deviceName = 'Magic Link Device';
-            if (/iPhone|iPad/i.test(ua)) deviceName = 'iPhone/iPad (Magic Link)';
-            else if (/Android/i.test(ua)) deviceName = 'Android (Magic Link)';
-            else if (/Mac/i.test(ua)) deviceName = 'Mac (Magic Link)';
-            else if (/Windows/i.test(ua)) deviceName = 'Windows PC (Magic Link)';
-
-            const addResult = await addAuthorizedDevice(
-                ownerCredential,
-                deviceFingerprint,
-                deviceName
-            );
-
-            if (!addResult.success && addResult.error !== 'Device already authorized') {
-                console.error('[MagicLink] Failed to authorize device:', addResult.error);
-                return res
-                    .status(500)
-                    .json({ success: false, error: 'Failed to authorize device' });
-            }
-
-            userId = ownerCredential.userId;
-        } else {
-            // No owner yet - create a minimal owner record so dashboard works
-            userId = crypto.randomBytes(16).toString('hex');
-            const ownerData = {
-                userId,
-                deviceFingerprint,
-                authorizedDevices: [
-                    {
-                        fingerprint: deviceFingerprint,
-                        name: 'CEO (Magic Link)',
-                        addedAt: new Date().toISOString(),
-                    },
-                ],
-                registeredAt: new Date().toISOString(),
-                registeredFromIp: clientIp,
-                authCount: 0,
-                version: '3.0',
-                magicLinkSetup: true,
-            };
-
-            const stored = await storeOwnerCredential(ownerData);
-            if (!stored) {
-                return res
-                    .status(500)
-                    .json({ success: false, error: 'Failed to initialize dashboard' });
-            }
-        }
-
-        // Generate session token
-        const sessionToken = generateSessionToken(userId, deviceFingerprint);
+        // Token is valid — generate session
+        const sessionToken = generateSessionToken();
 
         addAuditEntry({
             action: 'MAGIC_LINK_VERIFIED',
             ip: clientIp,
             success: true,
             endpoint: '/api/magic-link',
-            userId: userId.substring(0, 8) + '...',
-            authMethod: 'magic-link',
+            authMethod: 'magic-link'
         });
 
-        const responseBody = {
+        const response = {
             success: true,
             verified: true,
-            userId,
-            message: 'Magic link verified. Welcome to your dashboard!',
+            message: 'Magic link verified. Welcome!'
         };
 
         if (sessionToken) {
-            responseBody.sessionToken = sessionToken;
-            responseBody.expiresIn = Math.floor(CONFIG.SESSION_DURATION / 1000);
+            response.sessionToken = sessionToken;
+            response.expiresIn = Math.floor(CONFIG.SESSION_DURATION / 1000);
         }
 
-        return res.status(200).json(responseBody);
+        return res.status(200).json(response);
     }
 
-    return res.status(400).json({ success: false, error: 'Invalid action' });
+    return res.status(400).json({ success: false, error: 'Invalid action.' });
 };
 
-module.exports = createSecuredHandler(
-    {
-        requireAuth: false,
-        allowedMethods: ['POST', 'OPTIONS'],
-        rateLimit: {
-            limit: CONFIG.RATE_LIMIT.limit,
-            windowMs: CONFIG.RATE_LIMIT.windowMs,
-            keyPrefix: 'magic-link',
-        },
+// ============================================================================
+// EXPORT
+// ============================================================================
+
+module.exports = createSecuredHandler({
+    requireAuth: false,
+    allowedMethods: ['POST', 'OPTIONS'],
+    validationSchema: {
+        action: { required: true, type: 'string', enum: ['send', 'verify'] },
+        page: { type: 'string' },
+        token: { type: 'string' }
     },
-    magicLinkHandler
-);
+    rateLimit: {
+        limit: CONFIG.RATE_LIMIT.limit,
+        windowMs: CONFIG.RATE_LIMIT.windowMs,
+        keyPrefix: 'magic-link'
+    }
+}, magicLinkHandler);

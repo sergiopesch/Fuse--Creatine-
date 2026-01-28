@@ -1,0 +1,161 @@
+{
+  // FUSE Creatine — Molt Configuration
+  // Copy this to ~/.clawdbot/moltbot.json after installation
+  // See: https://docs.molt.bot/gateway/configuration
+
+  // =====================================================
+  // AGENT CONFIGURATION
+  // =====================================================
+  "agents": {
+    "defaults": {
+      "workspace": "~/fuse-creatine",
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-20250514"
+      },
+      "contextTokens": 200000,
+      "timeoutSeconds": 120,
+      "maxConcurrent": 2,
+      "thinkingDefault": "medium"
+    },
+    "list": [
+      {
+        "id": "main",
+        "workspace": "~/fuse-creatine"
+      }
+    ]
+  },
+
+  // =====================================================
+  // CHANNEL CONFIGURATION
+  // =====================================================
+  // Uncomment and configure the channels you want to use.
+  // WhatsApp is recommended for CEO mobile access.
+
+  "channels": {
+    // WhatsApp — Primary CEO channel
+    // Run `moltbot onboard` to set up QR-based login
+    "whatsapp": {
+      "dmPolicy": "pairing",
+      "groups": {
+        "*": {
+          "requireMention": true
+        }
+      }
+    }
+
+    // Telegram — Alternative channel
+    // "telegram": {
+    //   "token": "${TELEGRAM_BOT_TOKEN}",
+    //   "dm": {
+    //     "policy": "pairing",
+    //     "allowFrom": ["*"]
+    //   }
+    // }
+
+    // Discord — Team channel
+    // "discord": {
+    //   "token": "${DISCORD_BOT_TOKEN}",
+    //   "dm": {
+    //     "policy": "pairing",
+    //     "allowFrom": ["*"]
+    //   }
+    // }
+  },
+
+  // =====================================================
+  // SKILLS CONFIGURATION
+  // =====================================================
+  "skills": {
+    "load": {
+      // Load FUSE custom skills from the project directory
+      "extraDirs": ["~/fuse-creatine/molt/skills"],
+      "watch": true,
+      "watchDebounceMs": 250
+    },
+    "entries": {
+      "fuse-briefing": {
+        "enabled": true,
+        "env": {
+          "FUSE_API_URL": "https://fuse-creatine.vercel.app",
+          "FUSE_ADMIN_TOKEN": "${FUSE_ADMIN_TOKEN}"
+        }
+      },
+      "fuse-signups": {
+        "enabled": true,
+        "env": {
+          "FUSE_API_URL": "https://fuse-creatine.vercel.app",
+          "FUSE_ADMIN_TOKEN": "${FUSE_ADMIN_TOKEN}"
+        }
+      },
+      "fuse-costs": {
+        "enabled": true,
+        "env": {
+          "FUSE_API_URL": "https://fuse-creatine.vercel.app",
+          "FUSE_ADMIN_TOKEN": "${FUSE_ADMIN_TOKEN}"
+        }
+      },
+      "fuse-health": {
+        "enabled": true,
+        "env": {
+          "FUSE_API_URL": "https://fuse-creatine.vercel.app"
+        }
+      },
+      "fuse-agents": {
+        "enabled": true,
+        "env": {
+          "FUSE_API_URL": "https://fuse-creatine.vercel.app",
+          "FUSE_ADMIN_TOKEN": "${FUSE_ADMIN_TOKEN}"
+        }
+      },
+      "fuse-tasks": {
+        "enabled": true,
+        "env": {
+          "FUSE_API_URL": "https://fuse-creatine.vercel.app",
+          "FUSE_ADMIN_TOKEN": "${FUSE_ADMIN_TOKEN}"
+        }
+      }
+    }
+  },
+
+  // =====================================================
+  // ENVIRONMENT VARIABLES
+  // =====================================================
+  "env": {
+    "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+    "FUSE_API_URL": "https://fuse-creatine.vercel.app",
+    "FUSE_ADMIN_TOKEN": "${FUSE_ADMIN_TOKEN}"
+  },
+
+  // =====================================================
+  // CRON JOBS — Automated CEO briefings
+  // =====================================================
+  // These are set up via CLI after installation.
+  // See SETUP.md for the commands.
+
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 1
+  },
+
+  // =====================================================
+  // MESSAGES
+  // =====================================================
+  "messages": {
+    "queue": {
+      "mode": "collect",
+      "debounceMs": 1000
+    }
+  },
+
+  // =====================================================
+  // SESSION
+  // =====================================================
+  "session": {
+    "scope": "per-sender",
+    "dmScope": "main",
+    "reset": {
+      "mode": "daily",
+      "atHour": 4
+    }
+  }
+}

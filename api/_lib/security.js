@@ -493,8 +493,11 @@ function createSecuredHandler(options, handler) {
 
         // Rate limiting
         if (rateLimit) {
+            const rateLimitKey = rateLimit.keyPrefix
+                ? `${rateLimit.keyPrefix}:${clientIp}`
+                : `${req.url}:${clientIp}`;
             const rateLimitResult = await checkRateLimit(
-                `${req.url}:${clientIp}`,
+                rateLimitKey,
                 rateLimit.limit,
                 rateLimit.windowMs
             );
