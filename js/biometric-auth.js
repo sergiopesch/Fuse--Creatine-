@@ -916,10 +916,8 @@ const BiometricAuth = (() => {
     // ============================================
 
     /**
-     * Request a magic link to be sent to the stored admin email
-     * No email input needed - the server uses the configured CEO_EMAIL
-     * @param {string} page - Current page name (dashboard or ceo-dashboard)
-     * @returns {Promise<object>}
+     * Request a magic link email to the configured admin address
+     * @param {string} page - 'dashboard' or 'ceo-dashboard'
      */
     async function requestMagicLink(page = 'dashboard') {
         try {
@@ -932,22 +930,12 @@ const BiometricAuth = (() => {
                 })
             });
 
-            let data;
-            try {
-                data = await response.json();
-            } catch (_) {
-                throw new Error(response.ok ? 'Invalid response from server' : 'Network or server error. Please try again.');
+            const data = await response.json().catch(() => null);
+            if (!data || !data.success) {
+                throw new Error(data?.error || 'Failed to send magic link.');
             }
 
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to send magic link');
-            }
-
-            return {
-                success: true,
-                message: data.message,
-                expiresIn: data.expiresIn
-            };
+            return { success: true, message: data.message, expiresIn: data.expiresIn };
         } catch (error) {
             console.error('[BiometricAuth] Magic link request failed:', error);
             throw error;
@@ -955,48 +943,29 @@ const BiometricAuth = (() => {
     }
 
     /**
-     * Verify a magic link token and authorize this device
-     * @param {string} token - Magic link token from URL
-     * @returns {Promise<object>}
+     * Verify a magic link token from the URL
+     * @param {string} token - Token from URL query param
      */
     async function verifyMagicLink(token) {
         if (!token || typeof token !== 'string' || token.length < 32) {
             throw new Error('Invalid or expired magic link. Please request a new one.');
         }
+
         try {
             const response = await fetch(`${CONFIG.API_BASE}/magic-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'verify',
-                    token: token.trim(),
-                    deviceId: getDeviceId()
-                })
+                body: JSON.stringify({ action: 'verify', token: token.trim() })
             });
 
-            let data;
-            try {
-                data = await response.json();
-            } catch (_) {
-                throw new Error(response.ok ? 'Invalid response from server' : 'Network or server error. Please request a new magic link.');
+            const data = await response.json().catch(() => null);
+            if (!data || !data.success) {
+                throw new Error(data?.error || 'Magic link expired or invalid. Please request a new one.');
             }
 
-            if (!data.success) {
-                throw new Error(data.error || 'Magic link expired or invalid. Please request a new one.');
-            }
-
-            // Store session token
+            // Store session token from server
             if (data.sessionToken) {
                 storeSessionToken(data.sessionToken);
-            }
-
-            // Store userId
-            if (data.userId) {
-                try {
-                    localStorage.setItem(CONFIG.USER_ID_KEY, data.userId);
-                } catch (e) {
-                    try { sessionStorage.setItem(CONFIG.USER_ID_KEY, data.userId); } catch (e2) { /* ignore */ }
-                }
             }
 
             state.isVerified = true;
@@ -1007,7 +976,7 @@ const BiometricAuth = (() => {
             return {
                 success: true,
                 verified: true,
-                message: data.message || 'Device authorized via magic link!'
+                message: data.message || 'Access granted via magic link!'
             };
         } catch (error) {
             console.error('[BiometricAuth] Magic link verification failed:', error);
@@ -1016,13 +985,11 @@ const BiometricAuth = (() => {
     }
 
     /**
-     * Check if current URL has a magic link token
-     * @returns {string|null} - Token if present
+     * Get magic link token from URL if present
      */
     function getMagicLinkToken() {
         try {
-            const params = new URLSearchParams(window.location.search);
-            const t = params.get('magic_token');
+            const t = new URLSearchParams(window.location.search).get('magic_token');
             return (t && typeof t === 'string') ? t.trim() : null;
         } catch (e) {
             return null;
@@ -1030,7 +997,7 @@ const BiometricAuth = (() => {
     }
 
     /**
-     * Clean magic link token from URL without page reload
+     * Remove magic link token from URL without page reload
      */
     function clearMagicLinkToken() {
         const url = new URL(window.location);
