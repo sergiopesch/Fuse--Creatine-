@@ -1042,9 +1042,7 @@
         const btnMagicLinkAlt = document.getElementById('btnMagicLinkAlt');
 
         // Determine page name for return URL
-        const pageName = window.location.pathname.includes('ceo-dashboard')
-            ? 'ceo-dashboard'
-            : 'dashboard';
+        const pageName = 'dashboard';
 
         if (btnMagicLink) {
             btnMagicLink.addEventListener('click', () => handleSendMagicLink(pageName));

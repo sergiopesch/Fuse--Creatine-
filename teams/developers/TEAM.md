@@ -29,7 +29,7 @@ We build and maintain the FUSE technical infrastructure: marketing website, CEO 
 | File | Purpose |
 |------|---------|
 | `index.html` | Marketing landing page |
-| `ceo-dashboard.html` | CEO executive interface |
+| `cli/` | CEO Console CLI tool (`fuse-ceo`) |
 | `api/orchestrate.js` | Agent orchestration endpoint |
 | `api/_lib/world-controller.js` | Agent state management |
 | `js/main.js` | Marketing page animations |

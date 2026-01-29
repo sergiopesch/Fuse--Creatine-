@@ -50,10 +50,11 @@
     { "source": "/terms.html", "destination": "/terms", "permanent": true },
     { "source": "/agents.html", "destination": "/agents", "permanent": true },
     { "source": "/dashboard.html", "destination": "/dashboard", "permanent": true },
-    { "source": "/ceo-dashboard.html", "destination": "/ceo-dashboard", "permanent": true }
+    { "source": "/ceo-dashboard.html", "destination": "/dashboard", "permanent": false },
+    { "source": "/ceo-dashboard", "destination": "/dashboard", "permanent": false },
+    { "source": "/ceo", "destination": "/dashboard", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/ceo", "destination": "/ceo-dashboard.html" },
     { "source": "/api/health", "destination": "/api/health" },
     { "source": "/api/agents", "destination": "/api/agents" },
     { "source": "/api/costs", "destination": "/api/costs" }

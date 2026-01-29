@@ -15,7 +15,7 @@ Claude (Orchestration Layer)
   ↓
 queue/ (Task Management)
   ↓
-Web UI (View Layer — ceo-dashboard.html, agents.html)
+Web UI (View Layer — dashboard.html, agents.html)
 ```
 
 ## Design Principles
@@ -59,16 +59,16 @@ Vercel Serverless Functions:
 - `orchestrate.js` — Claude-powered agent orchestration
 - `chat.js` — FUSE Agent chat interface
 - `agents.js` — Agent management
-- `ceo-auth.js` — CEO authentication
 - Supporting libraries in `api/_lib/`
 
 ### Web UI
 
 - `index.html` — Marketing landing page
-- `ceo-dashboard.html` — CEO executive dashboard
+- `dashboard.html` — Company dashboard (biometric-protected)
 - `agents.html` — Agent Command Center
-- `dashboard.html` — Company dashboard
 - `admin.html` — Admin analytics
+
+> **Note:** The CEO dashboard web UI has been replaced by the `fuse-ceo` CLI (`cli/`).
 
 ### Research (`research/`)
 

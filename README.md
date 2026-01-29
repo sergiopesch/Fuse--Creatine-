@@ -29,7 +29,6 @@ fuse-creatine/
 ├── index.html              # Marketing landing page
 ├── dashboard.html          # Company Dashboard (biometric-protected)
 ├── agents.html             # Agent Command Center
-├── ceo-dashboard.html      # CEO executive dashboard
 ├── admin.html              # Admin analytics portal
 ├── privacy.html            # Privacy policy
 ├── terms.html              # Terms and conditions
@@ -55,7 +54,6 @@ fuse-creatine/
 │   ├── main.js             # Marketing page animations
 │   ├── agents.js           # Agent Command Center UI
 │   ├── dashboard.js        # Company Dashboard UI
-│   ├── ceo-dashboard.js    # CEO Dashboard UI
 │   ├── admin.js            # Admin portal UI
 │   ├── chat.js             # Chat widget
 │   ├── biometric-auth.js   # WebAuthn client
@@ -64,7 +62,6 @@ fuse-creatine/
 │   ├── style.css           # Marketing page styles
 │   ├── agents.css          # Agent Command Center styles
 │   ├── dashboard.css       # Dashboard styles
-│   ├── ceo-dashboard.css   # CEO Dashboard styles
 │   ├── admin.css           # Admin styles
 │   ├── biometric-gate.css  # Biometric auth UI styles
 │   ├── consent.css         # Consent UI styles
@@ -381,7 +378,7 @@ Client-side cookie consent and preference system.
   - Added `@media (max-width: 420px)` breakpoints across all 8 CSS files
   - Fixed hero orbs overflow (520-680px orbs scaled to 210-340px on mobile)
   - Fixed admin table `min-width: 980px` → `600px` with horizontal scroll container
-  - Made CEO dashboard header, nav tabs, and control bar fully mobile-adaptive
+  - Made dashboard header, nav tabs, and control bar fully mobile-adaptive
   - Added responsive breakpoints to legal.css (previously had none)
   - Chat widget goes full-width on small screens
   - All dashboards collapse to single-column grids on mobile
@@ -413,7 +410,7 @@ Client-side cookie consent and preference system.
 ### Version 2.1.0
 - Added multi-device support for biometric authentication
 - Implemented device linking feature
-- Added CEO Dashboard
+- Added CEO Dashboard (since replaced by `fuse-ceo` CLI)
 
 ## License
 

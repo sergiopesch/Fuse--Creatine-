@@ -206,7 +206,7 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         }
 
         // Build the return URL
-        const page = body.page === 'ceo-dashboard' ? 'ceo-dashboard' : 'dashboard';
+        const page = 'dashboard';
         const origin = resolveOrigin(req).replace(/\/$/, '');
         const magicLinkUrl = `${origin}/${page}?magic_token=${encodeURIComponent(token)}`;
 
