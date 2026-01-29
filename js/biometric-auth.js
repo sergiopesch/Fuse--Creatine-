@@ -942,7 +942,7 @@ const BiometricAuth = (() => {
                 throw new Error(data?.error || 'Failed to send magic link.');
             }
 
-            return { success: true, message: data.message, expiresIn: data.expiresIn };
+            return { success: true, message: data.message, expiresIn: data.expiresIn, magicLinkUrl: data.magicLinkUrl || null };
         } catch (error) {
             console.error('[BiometricAuth] Magic link request failed:', error);
             throw error;

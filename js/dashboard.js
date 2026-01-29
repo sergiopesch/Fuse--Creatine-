@@ -1086,17 +1086,34 @@
                 const magicLinkInput = document.getElementById('magicLinkInput');
                 if (magicLinkInput) {
                     magicLinkInput.style.display = 'block';
-                    magicLinkInput.innerHTML = `
-                        <div class="magic-link-sent">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                <polyline points="22,6 12,13 2,6"/>
-                            </svg>
-                            <p class="link-instruction" style="color:var(--gate-success);font-weight:600;">Magic link sent!</p>
-                            <p class="link-instruction">Check your email and click the link to access this dashboard from this device.</p>
-                            <p class="link-instruction" style="font-size:12px;color:var(--gate-text-subtle);">Link expires in 15 minutes.</p>
-                        </div>
-                    `;
+
+                    if (result.magicLinkUrl) {
+                        // Email failed — show direct link
+                        magicLinkInput.innerHTML = `
+                            <div class="magic-link-sent" style="text-align:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                <p class="link-instruction" style="color:var(--gate-success);font-weight:600;">Magic link ready</p>
+                                <a href="${result.magicLinkUrl}" style="display:inline-block;margin:16px auto;padding:12px 32px;background:var(--gate-success,#22c55e);color:#fff;border-radius:980px;text-decoration:none;font-weight:600;font-size:15px;">Access Dashboard</a>
+                                <p class="link-instruction" style="font-size:12px;color:var(--gate-text-subtle);">Link expires in 15 minutes. One-time use.</p>
+                            </div>
+                        `;
+                    } else {
+                        // Email sent — show check inbox message
+                        magicLinkInput.innerHTML = `
+                            <div class="magic-link-sent">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--gate-success);margin:0 auto 16px;">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <p class="link-instruction" style="color:var(--gate-success);font-weight:600;">Magic link sent!</p>
+                                <p class="link-instruction">Check your email and click the link to access this dashboard from this device.</p>
+                                <p class="link-instruction" style="font-size:12px;color:var(--gate-text-subtle);">Link expires in 15 minutes.</p>
+                            </div>
+                        `;
+                    }
                 }
 
                 // Hide the button since we've shown confirmation

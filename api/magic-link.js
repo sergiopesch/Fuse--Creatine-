@@ -222,9 +222,12 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         });
 
         if (!emailResult.sent) {
-            return res.status(500).json({
-                success: false,
-                error: emailResult.reason || 'Failed to send email. Please try again.',
+            // Email failed — return the magic link URL directly so the user can still log in
+            return res.status(200).json({
+                success: true,
+                message: 'Email unavailable — use the link below to log in.',
+                magicLinkUrl,
+                expiresIn: CONFIG.TOKEN_EXPIRY_SECONDS,
             });
         }
 
