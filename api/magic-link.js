@@ -122,13 +122,14 @@ async function sendEmail(magicLinkUrl) {
     if (!RESEND_API_KEY) {
         if (process.env.NODE_ENV !== 'production') {
             console.log('[MagicLink] DEV MODE — Magic link URL:', magicLinkUrl);
-            return true;
+            return { sent: true };
         }
         console.warn('[MagicLink] RESEND_API_KEY not set — cannot send email');
-        return false;
+        return { sent: false, reason: 'RESEND_API_KEY not configured' };
     }
 
     try {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>';
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -136,7 +137,7 @@ async function sendEmail(magicLinkUrl) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                from: process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>',
+                from: fromEmail,
                 to: [CEO_EMAIL],
                 subject: 'FUSE Dashboard — Your Magic Link',
                 html: `
@@ -159,14 +160,15 @@ async function sendEmail(magicLinkUrl) {
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             console.error('[MagicLink] Resend error:', response.status, err);
-            return false;
+            const detail = err.message || err.name || `Resend API ${response.status}`;
+            return { sent: false, reason: `Email provider error: ${detail}` };
         }
 
         console.log('[MagicLink] Email sent to:', CEO_EMAIL);
-        return true;
+        return { sent: true };
     } catch (error) {
         console.error('[MagicLink] Email failed:', error.message);
-        return false;
+        return { sent: false, reason: `Email send exception: ${error.message}` };
     }
 }
 
@@ -210,17 +212,20 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         const origin = resolveOrigin(req).replace(/\/$/, '');
         const magicLinkUrl = `${origin}/${page}?magic_token=${encodeURIComponent(token)}`;
 
-        const sent = await sendEmail(magicLinkUrl);
+        const emailResult = await sendEmail(magicLinkUrl);
 
         addAuditEntry({
             action: 'MAGIC_LINK_SENT',
             ip: clientIp,
-            success: sent,
+            success: emailResult.sent,
             endpoint: '/api/magic-link'
         });
 
-        if (!sent) {
-            return res.status(500).json({ success: false, error: 'Failed to send email. Please try again.' });
+        if (!emailResult.sent) {
+            return res.status(500).json({
+                success: false,
+                error: emailResult.reason || 'Failed to send email. Please try again.',
+            });
         }
 
         return res.status(200).json({
