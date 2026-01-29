@@ -21,7 +21,7 @@ We build and maintain the FUSE technical infrastructure: marketing website, CEO 
 - Frontend: Vanilla JS, CSS3, HTML5, GSAP, ScrollTrigger, Lenis
 - Backend: Vercel Serverless Functions (Node.js 18+)
 - Storage: Vercel Blob, Upstash Redis
-- AI: Anthropic Claude API (claude-3.5-sonnet)
+- AI: OpenAI Codex API (gpt-5.2-2025-12-11)
 - Auth: WebAuthn passkeys
 
 ## Key Files

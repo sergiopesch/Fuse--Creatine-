@@ -43,6 +43,44 @@ const CONFIG = {
 };
 
 // ============================================================================
+// PER-TEAM PROVIDER / MODEL CONFIGURATION
+// ============================================================================
+
+const TEAM_PROVIDERS = {
+    developer:      { provider: 'openai',    model: 'gpt-5.2-2025-12-11' },
+    design:         { provider: 'anthropic',  model: 'claude-3-5-haiku-latest' },
+    communications: { provider: 'anthropic',  model: 'claude-3-5-haiku-latest' },
+    legal:          { provider: 'anthropic',  model: 'claude-3-5-haiku-latest' },
+    marketing:      { provider: 'anthropic',  model: 'claude-3-5-haiku-latest' },
+    gtm:            { provider: 'anthropic',  model: 'claude-3-5-haiku-latest' },
+    sales:          { provider: 'anthropic',  model: 'claude-3-5-haiku-latest' },
+};
+
+/**
+ * Resolve the API key for a given provider.
+ * @param {string} provider - 'anthropic' or 'openai'
+ * @returns {string|undefined} The trimmed API key
+ */
+function resolveApiKey(provider) {
+    switch (provider) {
+        case 'openai':
+            return process.env.OPENAI_API_KEY?.trim();
+        case 'anthropic':
+        default:
+            return process.env.ANTHROPIC_API_KEY?.trim();
+    }
+}
+
+/**
+ * Get provider config for a team, with fallback to anthropic defaults.
+ * @param {string} teamId
+ * @returns {{ provider: string, model: string }}
+ */
+function getTeamProviderConfig(teamId) {
+    return TEAM_PROVIDERS[teamId] || { provider: 'anthropic', model: CONFIG.MODEL };
+}
+
+// ============================================================================
 // WORLD STATES
 // ============================================================================
 
@@ -251,9 +289,11 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
         throw new Error(`Unknown team: ${teamId}`);
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
-        throw new Error('Anthropic API key not configured');
+    // Resolve provider/model/key for this team
+    const { provider, model } = getTeamProviderConfig(teamId);
+    const apiKey = resolveApiKey(provider);
+    if (!apiKey) {
+        throw new Error(`API key not configured for provider: ${provider}`);
     }
 
     // Enhanced prompt with context
@@ -269,28 +309,70 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
     const requestStartTime = Date.now();
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-            },
-            body: JSON.stringify({
-                model: CONFIG.MODEL,
-                max_tokens: CONFIG.MAX_TOKENS_PER_CALL,
-                system: team.systemPrompt,
-                messages: [{ role: 'user', content: userPrompt }],
-            }),
-        });
+        let data;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Orchestrate] API error:', response.status, errorText);
-            throw new Error(`API error: ${response.status}`);
+        if (provider === 'openai') {
+            // OpenAI Responses API
+            const response = await fetch('https://api.openai.com/v1/responses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model,
+                    instructions: team.systemPrompt,
+                    input: userPrompt,
+                    max_output_tokens: CONFIG.MAX_TOKENS_PER_CALL,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[Orchestrate] OpenAI API error:', response.status, errorText);
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const raw = await response.json();
+            // Normalize to Anthropic-like shape for downstream code
+            const outputText = (raw.output || [])
+                .filter(item => item.type === 'message')
+                .flatMap(item => (item.content || []).filter(c => c.type === 'output_text').map(c => c.text))
+                .join('\n') || (typeof raw.output === 'string' ? raw.output : '');
+
+            data = {
+                content: [{ type: 'text', text: outputText }],
+                usage: {
+                    input_tokens: raw.usage?.input_tokens || 0,
+                    output_tokens: raw.usage?.output_tokens || 0,
+                },
+            };
+        } else {
+            // Anthropic Messages API (default)
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01',
+                },
+                body: JSON.stringify({
+                    model,
+                    max_tokens: CONFIG.MAX_TOKENS_PER_CALL,
+                    system: team.systemPrompt,
+                    messages: [{ role: 'user', content: userPrompt }],
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[Orchestrate] Anthropic API error:', response.status, errorText);
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            data = await response.json();
         }
 
-        const data = await response.json();
         const latencyMs = Date.now() - requestStartTime;
 
         // Record usage
@@ -299,8 +381,8 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
         const outputTokens = data.usage?.output_tokens || 50;
 
         recordUsage({
-            provider: 'anthropic',
-            model: CONFIG.MODEL,
+            provider,
+            model,
             inputTokens,
             outputTokens,
             endpoint: '/api/orchestrate',
@@ -336,8 +418,8 @@ async function executeOrchestration(teamId, task, clientIp, context = {}) {
 
         // Record failed usage
         recordUsage({
-            provider: 'anthropic',
-            model: CONFIG.MODEL,
+            provider,
+            model,
             inputTokens: estimateTokens(team.systemPrompt + (task || '')),
             outputTokens: 0,
             endpoint: '/api/orchestrate',
@@ -855,10 +937,15 @@ async function handlePost(req, res, clientIp) {
             orchestrationState.executionInProgress = true;
 
             try {
-                const agenticApiKey = process.env.ANTHROPIC_API_KEY?.trim();
-                if (!agenticApiKey || !agenticApiKey.startsWith('sk-ant-')) {
+                // Resolve provider/model/key for this team
+                const agenticProviderConfig = getTeamProviderConfig(teamId);
+                const agenticProvider = agenticProviderConfig.provider;
+                const agenticModel = req.body?.model || agenticProviderConfig.model;
+                const agenticApiKey = resolveApiKey(agenticProvider);
+
+                if (!agenticApiKey) {
                     return res.status(503).json({
-                        error: 'Anthropic API key not configured',
+                        error: `API key not configured for provider: ${agenticProvider}`,
                         code: 'NOT_CONFIGURED'
                     });
                 }
@@ -888,7 +975,8 @@ async function handlePost(req, res, clientIp) {
                     stateContext,
                     {
                         apiKey: agenticApiKey,
-                        model: req.body?.model || CONFIG.MODEL,
+                        provider: agenticProvider,
+                        model: agenticModel,
                         maxIterations: Math.min(req.body?.maxIterations || 6, 10),
                         clientIp,
                     }
@@ -971,15 +1059,6 @@ async function handlePost(req, res, clientIp) {
             // ================================================================
             orchestrationState.executionInProgress = true;
 
-            const agenticAllApiKey = process.env.ANTHROPIC_API_KEY?.trim();
-            if (!agenticAllApiKey || !agenticAllApiKey.startsWith('sk-ant-')) {
-                orchestrationState.executionInProgress = false;
-                return res.status(503).json({
-                    error: 'Anthropic API key not configured',
-                    code: 'NOT_CONFIGURED'
-                });
-            }
-
             const allTeamsResults = {
                 success: true,
                 mode: 'agentic',
@@ -1009,14 +1088,31 @@ async function handlePost(req, res, clientIp) {
 
                     if (!tidTeamPrompt) continue;
 
+                    // Resolve provider/model/key per team
+                    const tidProviderConfig = getTeamProviderConfig(tid);
+                    const tidProvider = tidProviderConfig.provider;
+                    const tidModel = req.body?.model || tidProviderConfig.model;
+                    const tidApiKey = resolveApiKey(tidProvider);
+
+                    if (!tidApiKey) {
+                        allTeamsResults.teams.push({
+                            teamId: tid,
+                            success: false,
+                            error: `API key not configured for provider: ${tidProvider}`,
+                        });
+                        allTeamsResults.failed = (allTeamsResults.failed || 0) + 1;
+                        continue;
+                    }
+
                     const tidResult = await runAgentLoop(
                         tid,
                         task || 'Assess current priorities and take appropriate action for your team.',
                         tidTeamPrompt,
                         tidStateContext,
                         {
-                            apiKey: agenticAllApiKey,
-                            model: req.body?.model || CONFIG.MODEL,
+                            apiKey: tidApiKey,
+                            provider: tidProvider,
+                            model: tidModel,
                             maxIterations: Math.min(req.body?.maxIterations || 4, 6),
                             clientIp,
                         }

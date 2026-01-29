@@ -61,8 +61,16 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
   const enableCheckpoint = options.enableCheckpoint !== false; // Default: true
   const onEvent = options.onEvent || (() => {}); // Event callback for SSE
 
-  if (!apiKey || !apiKey.startsWith('sk-ant-')) {
+  const provider = options.provider || 'anthropic';
+
+  if (!apiKey) {
+    throw new Error(`API key required for provider: ${provider}`);
+  }
+  if (provider === 'anthropic' && !apiKey.startsWith('sk-ant-')) {
     throw new Error('Valid Anthropic API key required (sk-ant-...)');
+  }
+  if (provider === 'openai' && !apiKey.startsWith('sk-')) {
+    throw new Error('Valid OpenAI API key required (sk-...)');
   }
 
   // Build context-rich system prompt
@@ -119,8 +127,8 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
     // Call Claude API with tools
     let response;
     try {
-      onEvent({ type: 'thinking', message: `Iteration ${iteration + 1}: Calling Claude API...` });
-      response = await callClaudeAPI(apiKey, model, systemPrompt, messages, AGENT_TOOLS);
+      onEvent({ type: 'thinking', message: `Iteration ${iteration + 1}: Calling ${provider} API...` });
+      response = await callLLMAPI(provider, apiKey, model, systemPrompt, messages, AGENT_TOOLS);
     } catch (error) {
       // If API call fails, log and stop
       result.completionSummary = `API error on iteration ${iteration + 1}: ${error.message}`;
@@ -143,7 +151,7 @@ async function runAgentLoop(teamId, task, teamPrompt, stateContext, options = {}
     // Record cost
     try {
       const costResult = recordUsage({
-        provider: 'anthropic',
+        provider,
         model,
         inputTokens,
         outputTokens,
@@ -422,6 +430,192 @@ async function callClaudeAPI(apiKey, model, systemPrompt, messages, tools) {
     return data;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+// =============================================================================
+// OPENAI API CALLER (Responses API)
+// =============================================================================
+
+/**
+ * Call the OpenAI Responses API with tools.
+ *
+ * Maps Anthropic-style messages and tool definitions to OpenAI format,
+ * then normalizes the response back to the { content: [...] } shape
+ * the agent loop expects.
+ *
+ * @param {string} apiKey - OpenAI API key
+ * @param {string} model - Model ID (e.g. 'codex-mini-latest')
+ * @param {string} systemPrompt - System prompt
+ * @param {Array} messages - Conversation messages (Anthropic format)
+ * @param {Array} tools - Tool definitions (Anthropic format)
+ * @returns {Promise<object>} Normalized response matching Anthropic shape
+ */
+async function callOpenAIAPI(apiKey, model, systemPrompt, messages, tools) {
+  const startTime = Date.now();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LOOP_CONFIG.API_TIMEOUT_MS);
+
+  try {
+    // Map Anthropic tool definitions → OpenAI function-calling format
+    const openaiTools = (tools || []).map(tool => ({
+      type: 'function',
+      name: tool.name,
+      description: tool.description || '',
+      parameters: tool.input_schema || { type: 'object', properties: {} },
+    }));
+
+    // Build OpenAI input items from messages
+    const input = [];
+
+    // Add system message
+    input.push({ role: 'system', content: systemPrompt });
+
+    // Map Anthropic messages → OpenAI format
+    for (const msg of messages) {
+      if (msg.role === 'user') {
+        // User messages: could be string or array of content blocks
+        if (typeof msg.content === 'string') {
+          input.push({ role: 'user', content: msg.content });
+        } else if (Array.isArray(msg.content)) {
+          // Anthropic tool_result blocks → OpenAI function call outputs
+          const toolResults = msg.content.filter(b => b.type === 'tool_result');
+          if (toolResults.length > 0) {
+            for (const tr of toolResults) {
+              input.push({
+                type: 'function_call_output',
+                call_id: tr.tool_use_id,
+                output: typeof tr.content === 'string' ? tr.content : JSON.stringify(tr.content),
+              });
+            }
+          } else {
+            // Plain text content blocks
+            const text = msg.content.map(b => b.text || '').join('\n');
+            if (text) input.push({ role: 'user', content: text });
+          }
+        }
+      } else if (msg.role === 'assistant') {
+        // Assistant messages: array of content blocks
+        if (Array.isArray(msg.content)) {
+          const textParts = msg.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+          const toolUses = msg.content.filter(b => b.type === 'tool_use');
+
+          if (textParts) {
+            input.push({ role: 'assistant', content: textParts });
+          }
+          for (const tu of toolUses) {
+            input.push({
+              type: 'function_call',
+              id: tu.id,
+              call_id: tu.id,
+              name: tu.name,
+              arguments: JSON.stringify(tu.input || {}),
+            });
+          }
+        } else if (typeof msg.content === 'string') {
+          input.push({ role: 'assistant', content: msg.content });
+        }
+      }
+    }
+
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        instructions: systemPrompt,
+        input,
+        tools: openaiTools.length > 0 ? openaiTools : undefined,
+        max_output_tokens: LOOP_CONFIG.MAX_TOKENS,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => 'Unable to read error body');
+      throw new Error(`OpenAI API error ${response.status}: ${errorBody}`);
+    }
+
+    const data = await response.json();
+
+    // Normalize OpenAI response → Anthropic-compatible shape
+    const content = [];
+    const outputItems = data.output || [];
+
+    for (const item of outputItems) {
+      if (item.type === 'message') {
+        // Extract text from message content
+        for (const part of (item.content || [])) {
+          if (part.type === 'output_text') {
+            content.push({ type: 'text', text: part.text });
+          }
+        }
+      } else if (item.type === 'function_call') {
+        // Map to Anthropic tool_use shape
+        let parsedInput = {};
+        try {
+          parsedInput = JSON.parse(item.arguments || '{}');
+        } catch (_e) { /* keep empty object */ }
+
+        content.push({
+          type: 'tool_use',
+          id: item.call_id || item.id || `call_${Date.now()}`,
+          name: item.name,
+          input: parsedInput,
+        });
+      }
+    }
+
+    // If no content was extracted, add empty text
+    if (content.length === 0) {
+      const fallbackText = typeof data.output === 'string' ? data.output : '';
+      if (fallbackText) {
+        content.push({ type: 'text', text: fallbackText });
+      }
+    }
+
+    // Build normalized response
+    const normalized = {
+      content,
+      usage: {
+        input_tokens: data.usage?.input_tokens || 0,
+        output_tokens: data.usage?.output_tokens || 0,
+      },
+      _latencyMs: Date.now() - startTime,
+    };
+
+    return normalized;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// =============================================================================
+// LLM API DISPATCHER
+// =============================================================================
+
+/**
+ * Route API calls to the correct provider.
+ *
+ * @param {string} provider - 'anthropic' or 'openai'
+ * @param {string} apiKey - Provider API key
+ * @param {string} model - Model ID
+ * @param {string} systemPrompt - System prompt
+ * @param {Array} messages - Conversation messages
+ * @param {Array} tools - Tool definitions
+ * @returns {Promise<object>} Normalized API response
+ */
+async function callLLMAPI(provider, apiKey, model, systemPrompt, messages, tools) {
+  switch (provider) {
+    case 'openai':
+      return callOpenAIAPI(apiKey, model, systemPrompt, messages, tools);
+    case 'anthropic':
+    default:
+      return callClaudeAPI(apiKey, model, systemPrompt, messages, tools);
   }
 }
 

@@ -28,6 +28,16 @@ const PRICING = {
         },
     },
     openai: {
+        'codex-mini-latest': {
+            inputPer1K: 0.0015,  // $1.50 per 1M input tokens
+            outputPer1K: 0.006,  // $6.00 per 1M output tokens
+            name: 'Codex Mini',
+        },
+        'gpt-5.2-2025-12-11': {
+            inputPer1K: 0.002,   // $2.00 per 1M input tokens
+            outputPer1K: 0.008,  // $8.00 per 1M output tokens
+            name: 'GPT-5.2',
+        },
         'gpt-4-turbo': {
             inputPer1K: 0.01,
             outputPer1K: 0.03,

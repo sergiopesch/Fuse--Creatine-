@@ -48,8 +48,8 @@ const AgentTeams = {
         name: 'Developer Team',
         badge: 'DEV',
         color: '#3b82f6',
-        model: 'claude-3-5-sonnet-latest',
-        provider: 'anthropic',
+        model: 'gpt-5.2-2025-12-11',
+        provider: 'openai',
         description: 'Building and architecting the core platform',
         orchestrationStatus: 'paused',
         agents: [
