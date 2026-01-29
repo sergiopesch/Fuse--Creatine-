@@ -129,7 +129,7 @@ async function sendEmail(magicLinkUrl) {
     }
 
     try {
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'FUSE <noreply@fusecreatine.com>';
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'FUSE <onboarding@resend.dev>';
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
