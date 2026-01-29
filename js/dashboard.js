@@ -1082,8 +1082,8 @@
             if (result.success) {
                 showStatus(result.message || 'Magic link sent! Check your email.', 'success');
 
-                // Show confirmation UI
-                const magicLinkInput = document.getElementById('magicLinkInput');
+                // Show confirmation UI — use the alt container when in the not-supported flow
+                const magicLinkInput = document.getElementById('magicLinkInputAlt') || document.getElementById('magicLinkInput');
                 if (magicLinkInput) {
                     magicLinkInput.style.display = 'block';
 
