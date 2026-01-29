@@ -686,8 +686,8 @@
                     '[Dashboard] Service error during access check:',
                     accessStatus.message
                 );
-                btnAuth.style.display = 'none';
-                btnSetup.style.display = 'none';
+                if (btnAuth) btnAuth.style.display = 'none';
+                if (btnSetup) btnSetup.style.display = 'none';
                 if (gateSubtitle) {
                     gateSubtitle.textContent = 'Service Unavailable';
                 }
@@ -706,8 +706,8 @@
             if (accessStatus.hasOwner) {
                 if (accessStatus.isOwnerDevice) {
                     // Owner device - show auth button
-                    btnAuth.style.display = 'flex';
-                    btnSetup.style.display = 'none';
+                    if (btnAuth) btnAuth.style.display = 'flex';
+                    if (btnSetup) btnSetup.style.display = 'none';
                     if (gateSubtitle) {
                         gateSubtitle.innerHTML = `Welcome back. Use <span class="biometric-type">${state.authenticatorType}</span> to unlock.`;
                     }
@@ -719,8 +719,8 @@
                 } else {
                     // Non-owner device - show locked state with link option
                     gate.classList.add('locked');
-                    btnAuth.style.display = 'none';
-                    btnSetup.style.display = 'none';
+                    if (btnAuth) btnAuth.style.display = 'none';
+                    if (btnSetup) btnSetup.style.display = 'none';
                     showLockedIcon();
                     if (gateSubtitle) {
                         gateSubtitle.textContent = 'Access Denied';
@@ -748,8 +748,8 @@
                 }
             } else {
                 // No owner yet - show setup for first registration
-                btnAuth.style.display = 'none';
-                btnSetup.style.display = 'flex';
+                if (btnAuth) btnAuth.style.display = 'none';
+                if (btnSetup) btnSetup.style.display = 'flex';
                 if (gateSubtitle) {
                     gateSubtitle.innerHTML = `Secure this dashboard with <span class="biometric-type">${state.authenticatorType}</span>`;
                 }
@@ -928,7 +928,7 @@
         const gateMessage = document.getElementById('gateMessage');
 
         try {
-            btnSetup.disabled = true;
+            if (btnSetup) btnSetup.disabled = true;
             if (btnSetupText) btnSetupText.textContent = 'Setting up...';
             iconContainer?.classList.add('scanning');
             iconContainer?.classList.remove('error', 'success');
@@ -951,8 +951,8 @@
 
                 // Switch to authenticate mode after brief delay
                 setTimeout(() => {
-                    btnSetup.style.display = 'none';
-                    btnAuth.style.display = 'flex';
+                    if (btnSetup) btnSetup.style.display = 'none';
+                    if (btnAuth) btnAuth.style.display = 'flex';
                     updateAuthButton(`Unlock with ${state.authenticatorType}`, false);
                     iconContainer?.classList.remove('success');
                     updateBiometricIcon(state.authenticatorType);
@@ -964,7 +964,7 @@
             iconContainer?.classList.remove('scanning');
             iconContainer?.classList.add('error');
             showStatus(error.message || 'Setup failed', 'error');
-            btnSetup.disabled = false;
+            if (btnSetup) btnSetup.disabled = false;
             if (btnSetupText) btnSetupText.textContent = 'Secure This Dashboard';
 
             // Reset icon state after delay
