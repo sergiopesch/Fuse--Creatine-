@@ -5,59 +5,173 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.anthropic.com https://*.vercel.app https://vercel.live https://*.vercel-insights.com https://cdn.jsdelivr.net; frame-ancestors 'self' https://www.sergiopesch.com https://sergiopesch.com; base-uri 'self'; form-action 'self'" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-        { "key": "X-DNS-Prefetch-Control", "value": "on" }
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.anthropic.com https://*.vercel.app https://vercel.live https://*.vercel-insights.com https://cdn.jsdelivr.net; frame-ancestors 'self' https://www.sergiopesch.com https://sergiopesch.com; base-uri 'self'; form-action 'self'"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        }
       ]
     },
     {
       "source": "/css/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/js/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
       ]
     },
     {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" },
-        { "key": "Surrogate-Control", "value": "no-store" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        },
+        {
+          "key": "Surrogate-Control",
+          "value": "no-store"
+        }
       ]
     }
   ],
   "redirects": [
-    { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/admin.html", "destination": "/admin", "permanent": true },
-    { "source": "/privacy.html", "destination": "/privacy", "permanent": true },
-    { "source": "/terms.html", "destination": "/terms", "permanent": true },
-    { "source": "/agents.html", "destination": "/agents", "permanent": true },
-    { "source": "/dashboard.html", "destination": "/dashboard", "permanent": true },
-    { "source": "/ceo-dashboard.html", "destination": "/dashboard", "permanent": false },
-    { "source": "/ceo-dashboard", "destination": "/dashboard", "permanent": false },
-    { "source": "/ceo", "destination": "/dashboard", "permanent": false }
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/admin",
+      "permanent": true
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/agents.html",
+      "destination": "/agents",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard.html",
+      "destination": "/dashboard",
+      "permanent": true
+    },
+    {
+      "source": "/ceo-dashboard.html",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/ceo-dashboard",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/ceo",
+      "destination": "/dashboard",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/health" },
-    { "source": "/api/agents", "destination": "/api/agents" },
-    { "source": "/api/costs", "destination": "/api/costs" }
+    {
+      "source": "/api/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/api/agents",
+      "destination": "/api/agents"
+    },
+    {
+      "source": "/api/costs",
+      "destination": "/api/costs"
+    },
+    {
+      "source": "/api/passkey-register",
+      "destination": "/api/passkey?__fuseRoute=register"
+    },
+    {
+      "source": "/api/passkey-authenticate",
+      "destination": "/api/passkey?__fuseRoute=authenticate"
+    },
+    {
+      "source": "/api/biometric-register",
+      "destination": "/api/biometric?__fuseRoute=register"
+    },
+    {
+      "source": "/api/biometric-authenticate",
+      "destination": "/api/biometric?__fuseRoute=authenticate"
+    },
+    {
+      "source": "/api/orchestrate-stream",
+      "destination": "/api/orchestrator?__fuseRoute=stream"
+    },
+    {
+      "source": "/api/orchestrator-chat",
+      "destination": "/api/orchestrator?__fuseRoute=chat"
+    }
   ],
   "functions": {
     "api/**/*.js": {
