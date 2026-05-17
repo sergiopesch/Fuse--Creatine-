@@ -20,6 +20,7 @@ Website live at fuse-creatine.vercel.app. Agent orchestration system functional 
 - ✅ Main homepage CTA added for FUSE Research Lab Live
 - ✅ Research Lab upgraded into layered digital world with generated lab assets and moving scientist sprites
 - ✅ Research Lab agent society layer added: memory stream, planning, reflection, social graph, replay frames, and selected-agent needs
+- ✅ Research Lab world reworked into Generative Agents-style sandbox map with rooms, corridors, route traces, nameplates, and active action bubbles
 - ✅ Full responsive redesign (v2.5.0)
 - ✅ Biometric authentication working
 - ✅ Agent Command Center functional

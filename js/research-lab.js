@@ -26,6 +26,16 @@
 
     const scientistSpriteOrder = ['mira', 'theo', 'ava', 'max', 'nina', 'jules', 'pipette'];
 
+    const stationCoordinates = {
+        'Encapsulation Bench': { x: 22, y: 47 },
+        'Coffee Matrix Bar': { x: 73, y: 29 },
+        'Sensory Tongue Lab': { x: 69, y: 70 },
+        'Absorption Evidence Desk': { x: 39, y: 24 },
+        'Claims Gate': { x: 84, y: 53 },
+        'Pilot Mixer': { x: 28, y: 75 },
+        'Central Sample Rail': { x: 50, y: 52 },
+    };
+
     const fallbackState = {
         version: 1,
         labClock: 0,
@@ -285,6 +295,31 @@
         `;
     }
 
+    function stationPoint(station, fallback) {
+        return stationCoordinates[station] || fallback || { x: 50, y: 50 };
+    }
+
+    function agentMapPoint(scientist, agentState, index) {
+        const active = state.data.activeExperiment || {};
+        const destination = stationPoint(
+            agentState?.nextLocation || scientist.station,
+            stationPoint(scientist.station)
+        );
+        const home = stationPoint(scientist.station, { x: scientist.x || 50, y: scientist.y || 50 });
+        const isActive = active.scientistId === scientist.id;
+        const phase = (state.localTick + index) % 6;
+        const routeRatio = isActive ? 0.7 : 0.18 + phase * 0.05;
+        const x = Math.max(
+            7,
+            Math.min(93, home.x + (destination.x - home.x) * routeRatio + Math.sin(phase) * 1.4)
+        );
+        const y = Math.max(
+            9,
+            Math.min(91, home.y + (destination.y - home.y) * routeRatio + Math.cos(phase) * 1.2)
+        );
+        return { x, y, home, destination };
+    }
+
     function renderScientists() {
         const scientists = state.data.scientists || [];
         els.agentCount.textContent = String(scientists.length);
@@ -315,32 +350,24 @@
         const active = state.data.activeExperiment || {};
         els.agentStage.innerHTML = (state.data.scientists || [])
             .map((scientist, index) => {
-                const shift =
-                    active.scientistId === scientist.id ? 4 : (state.localTick + index) % 5;
-                const x = Math.max(
-                    7,
-                    Math.min(
-                        93,
-                        Number(scientist.x || 50) + Math.sin(state.localTick + index) * shift
-                    )
-                );
-                const y = Math.max(
-                    9,
-                    Math.min(
-                        91,
-                        Number(scientist.y || 50) + Math.cos(state.localTick + index) * shift
-                    )
-                );
+                const agentState = getAgentState(scientist.id) || {};
+                const point = agentMapPoint(scientist, agentState, index);
+                const x = point.x;
+                const y = point.y;
+                const isActive = active.scientistId === scientist.id;
+                const plan = agentState.currentPlan || active.kind || 'observing';
                 return `
                     <span
-                        class="world-agent ${spriteClass(scientist.id)}"
+                        class="world-agent sandbox-agent ${spriteClass(scientist.id)}${isActive ? ' is-active' : ''}"
                         data-name="${escapeHtml(scientist.name)}"
-                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
+                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; --home-x: ${point.home.x}; --home-y: ${point.home.y}; --dest-x: ${point.destination.x}; --dest-y: ${point.destination.y}; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
                     >
                         <span class="agent-route"></span>
                         <span class="agent-shadow"></span>
                         <span class="agent-sprite" aria-hidden="true"></span>
                         <span class="agent-pin">${escapeHtml(initials(scientist.name))}</span>
+                        <span class="agent-nameplate">${escapeHtml(shortName(scientist.id))}</span>
+                        <span class="agent-thought">${escapeHtml(plan)}</span>
                     </span>
                 `;
             })
@@ -350,6 +377,12 @@
             station.classList.toggle(
                 'is-active',
                 station.getAttribute('data-station') === active.station
+            );
+        });
+        document.querySelectorAll('.map-room').forEach(room => {
+            room.classList.toggle(
+                'is-active',
+                room.getAttribute('data-station') === active.station
             );
         });
     }

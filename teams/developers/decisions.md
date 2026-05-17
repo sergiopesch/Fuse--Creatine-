@@ -16,6 +16,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-17 | Research Lab Sandbox Map
+
+**Decision**: Rework the Research Lab world view from a cinematic lab backdrop into a Generative Agents-style sandbox map with named rooms, corridors, persistent scientist nameplates, route traces, active-room highlighting, and one visible active action bubble.
+
+**Rationale**: The expected experience is closer to the Generative Agents Smallville simulator than a dashboard. The map-first view makes scientists feel like agents living in a world rather than markers on a background.
+
+**Impact**: `research-lab.html`, `css/research-lab.css`, and `js/research-lab.js` now render a walkable FUSE lab map while preserving the existing evidence, formula, memory, and replay panels.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).
