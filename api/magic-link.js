@@ -12,7 +12,13 @@
 
 const crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
-const { createSecuredHandler, addAuditEntry } = require('./_lib/security');
+const {
+    ALLOWED_ORIGINS,
+    createSecuredHandler,
+    addAuditEntry,
+    getCorsOrigin,
+    getRequestHost,
+} = require('./_lib/security');
 
 // ============================================================================
 // CONFIGURATION
@@ -66,6 +72,15 @@ async function storeToken(token) {
     } catch (error) {
         console.error('[MagicLink] Failed to store token:', error.message);
         return false;
+    }
+}
+
+async function deleteToken(token) {
+    if (!redis || !token) return;
+    try {
+        await redis.del(`${CONFIG.REDIS_PREFIX}${token}`);
+    } catch (error) {
+        console.error('[MagicLink] Failed to delete token:', error.message);
     }
 }
 
@@ -176,11 +191,54 @@ async function sendEmail(magicLinkUrl) {
 // URL HELPER
 // ============================================================================
 
+function normalizeConfiguredOrigin(value) {
+    if (!value) return null;
+    try {
+        const url = new URL(value.startsWith('http') ? value : `https://${value}`);
+        return url.origin;
+    } catch {
+        return null;
+    }
+}
+
+function isTrustedMagicLinkOrigin(origin) {
+    if (ALLOWED_ORIGINS.includes(origin)) return true;
+    try {
+        const { hostname } = new URL(origin);
+        return (
+            hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '::1' ||
+            hostname.endsWith('.vercel.app')
+        );
+    } catch {
+        return false;
+    }
+}
+
 function resolveOrigin(req) {
-    if (req.headers.origin) return req.headers.origin;
+    const configuredOrigin = normalizeConfiguredOrigin(
+        process.env.FUSE_PUBLIC_URL ||
+            process.env.PUBLIC_APP_URL ||
+            process.env.SITE_URL ||
+            process.env.VERCEL_URL
+    );
+    if (configuredOrigin) return configuredOrigin;
+
+    if (req.headers.origin) {
+        const origin = getCorsOrigin(req.headers.origin, getRequestHost(req));
+        if (origin) return origin;
+    }
+
     const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
-    return `${proto}://${Array.isArray(host) ? host[0] : host}`;
+    const requestOrigin = `${proto}://${Array.isArray(host) ? host[0] : host}`;
+
+    if (isTrustedMagicLinkOrigin(requestOrigin)) {
+        return requestOrigin;
+    }
+
+    throw new Error('Unable to resolve a trusted magic link origin');
 }
 
 // ============================================================================
@@ -209,7 +267,17 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
 
         // Build the return URL
         const page = 'dashboard';
-        const origin = resolveOrigin(req).replace(/\/$/, '');
+        let origin;
+        try {
+            origin = resolveOrigin(req).replace(/\/$/, '');
+        } catch (error) {
+            await deleteToken(token);
+            console.error('[MagicLink] Origin resolution failed:', error.message);
+            return res.status(400).json({
+                success: false,
+                error: 'Unable to create magic link for this request origin.',
+            });
+        }
         const magicLinkUrl = `${origin}/${page}?magic_token=${encodeURIComponent(token)}`;
 
         const emailResult = await sendEmail(magicLinkUrl);
@@ -222,12 +290,16 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
         });
 
         if (!emailResult.sent) {
-            // Email failed — return the magic link URL directly so the user can still log in
-            return res.status(200).json({
-                success: true,
-                message: 'Email unavailable — use the link below to log in.',
-                magicLinkUrl,
-                expiresIn: CONFIG.TOKEN_EXPIRY_SECONDS,
+            await deleteToken(token);
+            addAuditEntry({
+                action: 'MAGIC_LINK_DELIVERY_FAILED',
+                ip: clientIp,
+                success: false,
+                endpoint: '/api/magic-link',
+            });
+            return res.status(503).json({
+                success: false,
+                error: 'Magic link email is temporarily unavailable. Please try again later.',
             });
         }
 

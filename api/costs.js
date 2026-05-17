@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     }
 
     // Rate limiting
-    const rateLimit = checkRateLimit(
+    const rateLimit = await checkRateLimit(
         `costs:${clientIp}`,
         CONFIG.RATE_LIMIT_REQUESTS,
         CONFIG.RATE_LIMIT_WINDOW_MS

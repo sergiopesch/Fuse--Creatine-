@@ -619,7 +619,7 @@ module.exports = async (req, res) => {
 
     // Rate limiting
     const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(
+    const rateLimit = await checkRateLimit(
         `chat:${clientIp}`,
         RATE_LIMIT_MAX_REQUESTS,
         RATE_LIMIT_WINDOW_MS

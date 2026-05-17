@@ -988,31 +988,38 @@ const path = require('path');
 
 // Workspace root - configurable via environment
 const WORKSPACE_ROOT = process.env.AGENT_WORKSPACE_ROOT || path.join(process.cwd(), 'agent-workspace');
+const RESOLVED_WORKSPACE_ROOT = path.resolve(WORKSPACE_ROOT);
 
 /**
- * Sanitize path to prevent directory traversal attacks
+ * Resolve a path inside the agent workspace and reject directory traversal.
  */
-function sanitizePath(inputPath) {
-  // Remove any .. segments and normalize
-  const normalized = path.normalize(inputPath).replace(/^(\.\.[\/\\])+/, '');
-  // Ensure the path doesn't start with /
-  const cleaned = normalized.replace(/^[\/\\]+/, '');
-  return cleaned;
-}
+function getWorkspacePath(relativePath = '') {
+  if (typeof relativePath !== 'string') {
+    throw new Error('Path must be a string');
+  }
+  if (relativePath.includes('\0')) {
+    throw new Error('Path contains invalid characters');
+  }
 
-/**
- * Get full path within workspace
- */
-function getWorkspacePath(relativePath) {
-  const sanitized = sanitizePath(relativePath);
-  const fullPath = path.join(WORKSPACE_ROOT, sanitized);
+  const withoutRoot = relativePath.replace(/^[/\\]+/, '');
+  const resolvedPath = path.resolve(RESOLVED_WORKSPACE_ROOT, withoutRoot);
+  const boundary = RESOLVED_WORKSPACE_ROOT.endsWith(path.sep)
+    ? RESOLVED_WORKSPACE_ROOT
+    : `${RESOLVED_WORKSPACE_ROOT}${path.sep}`;
 
-  // Ensure the resolved path is still within workspace
-  if (!fullPath.startsWith(WORKSPACE_ROOT)) {
+  if (resolvedPath !== RESOLVED_WORKSPACE_ROOT && !resolvedPath.startsWith(boundary)) {
     throw new Error('Path escapes workspace boundary');
   }
 
-  return fullPath;
+  return resolvedPath;
+}
+
+/**
+ * Escape a glob-style file pattern for safe RegExp construction.
+ */
+function patternToRegex(pattern) {
+  const escaped = String(pattern).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escaped.replace(/\*/g, '.*')}$`);
 }
 
 async function handleReadWorkspaceFile(input, callingTeamId, ctx) {
@@ -1141,8 +1148,7 @@ async function handleListWorkspaceFiles(input, callingTeamId, ctx) {
       } else if (entry.isFile()) {
         // Apply pattern filter if provided
         if (input.pattern) {
-          const pattern = input.pattern.replace(/\*/g, '.*');
-          const regex = new RegExp(`^${pattern}$`);
+          const regex = patternToRegex(input.pattern);
           if (!regex.test(entry.name)) continue;
         }
 
@@ -1180,61 +1186,7 @@ async function handleSearchWorkspace(input, callingTeamId, ctx) {
     const fileTypes = input.fileTypes || ['md', 'txt', 'json'];
     const query = input.query.toLowerCase();
 
-    // Recursive search function
-    async function searchDir(dirPath, relativePath = '') {
-      try {
-        const entries = await fs.readdir(dirPath, { withFileTypes: true });
-
-        for (const entry of entries) {
-          if (results.length >= limit) return;
-
-          const fullPath = path.join(dirPath, entry.name);
-          const relPath = path.join(relativePath, entry.name);
-
-          if (entry.isDirectory()) {
-            // Skip hidden directories
-            if (!entry.name.startsWith('.')) {
-              await searchDir(fullPath, relPath);
-            }
-          } else if (entry.isFile()) {
-            // Check file extension
-            const ext = entry.name.split('.').pop()?.toLowerCase();
-            if (!fileTypes.includes(ext)) continue;
-
-            try {
-              const content = await fs.readFile(fullPath, 'utf-8');
-              const lowerContent = content.toLowerCase();
-
-              if (lowerContent.includes(query)) {
-                // Find matching lines
-                const lines = content.split('\n');
-                const matchingLines = [];
-
-                for (let i = 0; i < lines.length && matchingLines.length < 3; i++) {
-                  if (lines[i].toLowerCase().includes(query)) {
-                    matchingLines.push({
-                      line: i + 1,
-                      text: lines[i].substring(0, 200),
-                    });
-                  }
-                }
-
-                results.push({
-                  path: relPath,
-                  matches: matchingLines,
-                });
-              }
-            } catch {
-              // Skip files that can't be read
-            }
-          }
-        }
-      } catch {
-        // Skip directories that can't be read
-      }
-    }
-
-    await searchDir(WORKSPACE_ROOT);
+    await searchWorkspaceDir(RESOLVED_WORKSPACE_ROOT, '', results, limit, fileTypes, query);
 
     return {
       success: true,
@@ -1251,6 +1203,56 @@ async function handleSearchWorkspace(input, callingTeamId, ctx) {
       message: `Search failed: ${error.message}`,
       data: null,
     };
+  }
+}
+
+async function searchWorkspaceDir(dirPath, relativePath, results, limit, fileTypes, query) {
+  try {
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (results.length >= limit) return;
+
+      const fullPath = path.join(dirPath, entry.name);
+      const relPath = path.join(relativePath, entry.name);
+
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith('.')) {
+          await searchWorkspaceDir(fullPath, relPath, results, limit, fileTypes, query);
+        }
+      } else if (entry.isFile()) {
+        const ext = entry.name.split('.').pop()?.toLowerCase();
+        if (!fileTypes.includes(ext)) continue;
+
+        try {
+          const content = await fs.readFile(fullPath, 'utf-8');
+          const lowerContent = content.toLowerCase();
+
+          if (lowerContent.includes(query)) {
+            const lines = content.split('\n');
+            const matchingLines = [];
+
+            for (let i = 0; i < lines.length && matchingLines.length < 3; i++) {
+              if (lines[i].toLowerCase().includes(query)) {
+                matchingLines.push({
+                  line: i + 1,
+                  text: lines[i].substring(0, 200),
+                });
+              }
+            }
+
+            results.push({
+              path: relPath,
+              matches: matchingLines,
+            });
+          }
+        } catch {
+          // Skip files that can't be read
+        }
+      }
+    }
+  } catch {
+    // Skip directories that can't be read
   }
 }
 
@@ -1288,4 +1290,8 @@ function addActivityToContext(ctx, teamId, agent, message, tag) {
 module.exports = {
   AGENT_TOOLS,
   executeAgentTool,
+  _test: {
+    getWorkspacePath,
+    patternToRegex,
+  },
 };

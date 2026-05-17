@@ -1172,7 +1172,7 @@ async function handlePost(req, res, clientIp) {
             });
         }
 
-        case 'executeMultiple':
+        case 'executeMultiple': {
             // Execute multiple teams at once
             const { teamIds: multiTeamIds, parallel } = req.body || {};
 
@@ -1228,7 +1228,7 @@ async function handlePost(req, res, clientIp) {
             }
         }
 
-        case 'executeAll':
+        case 'executeAll': {
             // Execute ALL teams (company-wide orchestration)
             orchestrationState.executionInProgress = true;
 
@@ -1272,6 +1272,7 @@ async function handlePost(req, res, clientIp) {
                     details: error.message,
                 });
             }
+        }
 
         case 'setWorldState': {
             // Set world state (paused, manual, semi_auto, autonomous)

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Britain's first coffee-optimized creatine with Instant Fusion Technology.",
   "main": "index.js",
+  "workspaces": [
+    "cli"
+  ],
   "scripts": {
     "test": "jest",
     "test:integration": "node scripts/test-signup-integration.js",

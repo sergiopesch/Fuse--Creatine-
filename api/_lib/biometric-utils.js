@@ -195,11 +195,10 @@ async function getOwnerCredential() {
             return { credential: null, error: null }; // No owner yet
         }
 
-        const response = await fetch(blob.url);
+        const response = await fetch(blob.downloadUrl || blob.url);
         if (!response.ok) {
             console.error('[BiometricUtils] Blob fetch failed:', response.status);
-            // Blob had a file but couldn't fetch - still return null to allow re-registration
-            return { credential: null, error: null };
+            return { credential: null, error: 'OWNER_CREDENTIAL_UNAVAILABLE' };
         }
 
         const credential = await response.json();
@@ -218,7 +217,9 @@ async function getOwnerCredential() {
         return { credential, error: null };
     } catch (error) {
         console.warn('[BiometricUtils] Blob unavailable:', error.message);
-        // Blob storage not configured - that's OK, we'll use Redis only
+        if (process.env.BLOB_READ_WRITE_TOKEN && process.env.NODE_ENV === 'production') {
+            return { credential: null, error: 'OWNER_STORE_UNAVAILABLE' };
+        }
         return { credential: null, error: null };
     }
 }
@@ -255,7 +256,7 @@ async function storeOwnerCredential(credentialData) {
     try {
         const blobPath = `${CONFIG.BLOB_PREFIX}${CONFIG.OWNER_CREDENTIAL_KEY}`;
         await put(blobPath, dataString, {
-            access: 'public',
+            access: 'private',
             contentType: 'application/json',
             addRandomSuffix: false,
         });
