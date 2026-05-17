@@ -158,6 +158,15 @@
                 message: 'Local simulation is running while the live research API initializes.',
             },
         ],
+        cognition: {
+            model: 'Generative research society',
+            loop: ['perceive', 'retrieve', 'plan', 'reflect', 'execute'],
+            router: 'Plan-Execute lab router with read-only ask and controlled intervention modes',
+        },
+        agentStates: [],
+        socialGraph: [],
+        memoryStream: [],
+        replayFrames: [],
     };
 
     const state = {
@@ -205,6 +214,13 @@
         return (state.data.scientists || []).find(scientist => scientist.id === id);
     }
 
+    function getAgentState(id) {
+        return (
+            (state.data.agentStates || []).find(agentState => agentState.id === id) ||
+            buildClientAgentState(getScientist(id), 0)
+        );
+    }
+
     function spriteClass(scientistId) {
         const index = scientistSpriteOrder.indexOf(scientistId);
         return `sprite-${index >= 0 ? index : 0}`;
@@ -220,6 +236,53 @@
         if (type === 'Needs sensory panel') return '#f5b56b';
         if (type === 'Needs wet-lab validation') return '#e2f06f';
         return '#ff3b30';
+    }
+
+    function shortName(scientistId) {
+        const scientist = getScientist(scientistId);
+        if (!scientist) return scientistId || 'Lab';
+        return scientist.name.replace(/^Dr\.\s+/, '').split(' ')[0];
+    }
+
+    function buildClientAgentState(scientist, index) {
+        if (!scientist) return null;
+        const active = state.data.activeExperiment?.scientistId === scientist.id;
+        const seed = Number(state.data.labClock || 0) + index + scientist.id.length;
+        return {
+            id: scientist.id,
+            mood: active ? 'locked-in' : 'observing',
+            currentPlan: active
+                ? state.data.activeExperiment?.kind || 'Active experiment'
+                : 'retrieve relevant memories',
+            currentAction: active ? 'executing active experiment' : 'observing lab state',
+            nextLocation: scientist.station,
+            needs: {
+                focus: Math.min(100, 58 + (active ? 18 : 0) + (seed % 17)),
+                energy: Math.max(38, 76 - (seed % 19)),
+                evidenceNeed: Math.min(100, 44 + (active ? 20 : 0) + (seed % 13)),
+                collaborationNeed: 46 + (seed % 22),
+            },
+            reflection: `${scientist.name} is maintaining a local plan until the live state arrives.`,
+        };
+    }
+
+    function effectiveAgentStates() {
+        const agentStates = state.data.agentStates || [];
+        if (agentStates.length) return agentStates;
+        return (state.data.scientists || [])
+            .map((scientist, index) => buildClientAgentState(scientist, index))
+            .filter(Boolean);
+    }
+
+    function barRow(label, value) {
+        const safeValue = Math.max(0, Math.min(100, Number(value || 0)));
+        return `
+            <div class="need-row">
+                <span>${escapeHtml(label)}</span>
+                <span class="need-track"><i style="--need-value: ${safeValue}%"></i></span>
+                <strong>${safeValue}</strong>
+            </div>
+        `;
     }
 
     function renderScientists() {
@@ -389,6 +452,76 @@
             .join('');
     }
 
+    function renderSocietyLayer() {
+        if (!els.memoryStreamList) return;
+        const cognition = state.data.cognition || fallbackState.cognition || {};
+        const loop = cognition.loop || ['perceive', 'retrieve', 'plan', 'reflect', 'execute'];
+        const agentStates = effectiveAgentStates();
+        const memories = state.data.memoryStream || [];
+        const socialGraph = state.data.socialGraph || [];
+        const replayFrames = state.data.replayFrames || [];
+
+        els.routerSummary.textContent = cognition.router ? 'Router online' : 'Plan-Execute';
+        els.cognitionLoop.innerHTML = loop
+            .map(step => `<span>${escapeHtml(step)}</span>`)
+            .join('');
+
+        els.planList.innerHTML = agentStates.length
+            ? agentStates
+                  .slice(0, 5)
+                  .map(agentState => {
+                      const scientist = getScientist(agentState.id);
+                      return `
+                        <article class="plan-item" style="--agent-color: ${escapeHtml(scientist?.color || '#44d7b6')}">
+                            <strong>${escapeHtml(shortName(agentState.id))}</strong>
+                            <span>${escapeHtml(agentState.currentPlan || 'Observing lab')}</span>
+                            <small>${escapeHtml(agentState.mood || 'observing')}</small>
+                        </article>
+                    `;
+                  })
+                  .join('')
+            : '<article class="plan-item"><strong>Boot</strong><span>Waiting for agent plans.</span></article>';
+
+        els.memoryStreamList.innerHTML = memories.length
+            ? memories
+                  .slice(0, 5)
+                  .map(memory => `
+                    <article class="memory-item">
+                        <strong>${escapeHtml(shortName(memory.scientistId))} - ${escapeHtml(memory.type || 'event')}</strong>
+                        <span>${escapeHtml(memory.summary || 'Memory captured.')}</span>
+                        <small>Importance ${escapeHtml(memory.importance || '--')} / Poignancy ${escapeHtml(memory.poignancy || '--')}</small>
+                    </article>
+                `)
+                  .join('')
+            : '<article class="memory-item"><strong>Memory stream ready</strong><span>Lab events will be retained here.</span></article>';
+
+        els.socialGraphList.innerHTML = socialGraph.length
+            ? socialGraph
+                  .slice(0, 4)
+                  .map(edge => `
+                    <article class="social-edge">
+                        <strong>${escapeHtml(shortName(edge.from))} -> ${escapeHtml(shortName(edge.to))}</strong>
+                        <span>${escapeHtml(edge.topic || 'shared context')}</span>
+                        <small>Trust ${escapeHtml(edge.trust || '--')}</small>
+                    </article>
+                `)
+                  .join('')
+            : '<article class="social-edge"><strong>Social space ready</strong><span>No active collaboration edge yet.</span></article>';
+
+        els.replayList.innerHTML = replayFrames.length
+            ? replayFrames
+                  .slice(0, 4)
+                  .map(frame => `
+                    <article class="replay-frame">
+                        <strong>Tick ${String(frame.tick || 0).padStart(3, '0')}</strong>
+                        <span>${escapeHtml(frame.action || frame.mode || 'Replay captured')}</span>
+                        <small>${escapeHtml(shortName(frame.scientistId))} @ ${escapeHtml(frame.station || 'Lab')}</small>
+                    </article>
+                `)
+                  .join('')
+            : '<article class="replay-frame"><strong>Replay ready</strong><span>Frames are captured after each tick.</span></article>';
+    }
+
     function renderSelectedScientist() {
         const scientist =
             getScientist(state.selectedScientistId) || (state.data.scientists || [])[0];
@@ -396,6 +529,11 @@
             els.selectedScientist.innerHTML = '<p>No scientist selected.</p>';
             return;
         }
+        const agentState = getAgentState(scientist.id) || {};
+        const needs = agentState.needs || {};
+        const memories = (state.data.memoryStream || [])
+            .filter(memory => memory.scientistId === scientist.id)
+            .slice(0, 2);
         els.selectedStation.textContent = scientist.station;
         els.selectedScientist.innerHTML = `
             <div class="selected-visual" style="--agent-color: ${escapeHtml(scientist.color)}">
@@ -405,10 +543,25 @@
             <p><strong>${escapeHtml(scientist.role)}</strong></p>
             <p>${escapeHtml(scientist.personality)}</p>
             <p>${escapeHtml(scientist.speciality)}</p>
+            <div class="agent-cognition">
+                <strong>${escapeHtml(agentState.currentPlan || 'Observing lab')}</strong>
+                <span>${escapeHtml(agentState.reflection || 'No reflection captured yet.')}</span>
+                <div class="need-grid">
+                    ${barRow('Focus', needs.focus)}
+                    ${barRow('Energy', needs.energy)}
+                    ${barRow('Evidence', needs.evidenceNeed)}
+                    ${barRow('Social', needs.collaborationNeed)}
+                </div>
+            </div>
+            <div class="selected-memory">
+                ${memories
+                    .map(memory => `<span>${escapeHtml(memory.summary || 'Memory captured.')}</span>`)
+                    .join('')}
+            </div>
             <div class="selected-tags">
                 <span>${escapeHtml(scientist.station)}</span>
-                <span>Evidence gated</span>
-                <span>24/7 agent loop</span>
+                <span>${escapeHtml(agentState.mood || 'Evidence gated')}</span>
+                <span>Memory stream</span>
             </div>
         `;
     }
@@ -437,6 +590,7 @@
         renderFormulas();
         renderEvents();
         renderPapers();
+        renderSocietyLayer();
         renderSelectedScientist();
     }
 
@@ -487,6 +641,63 @@
             },
             ...(data.events || []),
         ].slice(0, 90);
+        const latestEvent = data.events[0];
+        const localMemory = {
+            id: `mem-${latestEvent.id}`,
+            timestamp: latestEvent.timestamp,
+            scientistId: latestEvent.scientistId,
+            type: 'event',
+            formulaId: latestEvent.formulaId,
+            location: scientist?.station || 'Central Table',
+            importance: 64 + (state.localTick % 5),
+            poignancy: latestEvent.type === 'Needs wet-lab validation' ? 78 : 54,
+            summary: latestEvent.message,
+            evidence: [latestEvent.id],
+        };
+        data.memoryStream = [localMemory, ...(data.memoryStream || [])].slice(0, 80);
+        data.agentStates = (data.scientists || []).map(agent => {
+            const isActive = agent.id === scientist?.id;
+            return {
+                id: agent.id,
+                mood: isActive ? 'locked-in' : 'observing',
+                currentPlan: isActive ? data.activeExperiment.kind : 'retrieve relevant memories',
+                currentAction: isActive ? 'executing local experiment' : 'observing lab state',
+                nextLocation: agent.station,
+                needs: {
+                    focus: Math.min(100, 62 + (isActive ? 18 : 0) + ((state.localTick + agent.id.length) % 12)),
+                    energy: Math.max(35, 76 - ((state.localTick + agent.id.length) % 18)),
+                    evidenceNeed: Math.min(100, 44 + (isActive ? 20 : 0)),
+                    collaborationNeed: 48 + ((state.localTick + agent.station.length) % 22),
+                },
+                reflection: isActive
+                    ? `${agent.name} turns this tick into a memory before the next plan.`
+                    : `${agent.name} is waiting for a relevant event to retrieve.`,
+            };
+        });
+        data.socialGraph = [
+            {
+                from: scientist?.id,
+                to: 'pipette',
+                trust: 76 + (state.localTick % 8),
+                topic: `${data.activeExperiment.kind} sample routing`,
+                lastInteraction: data.updatedAt,
+            },
+            ...(data.socialGraph || []),
+        ].slice(0, 12);
+        data.replayFrames = [
+            {
+                tick: data.labClock,
+                timestamp: data.updatedAt,
+                mode: 'local-plan-execute',
+                scientistId: scientist?.id,
+                station: scientist?.station,
+                action: data.activeExperiment.kind,
+                formulaId: formula?.id,
+                plan: data.activeExperiment.kind,
+                outcome: latestEvent.message,
+            },
+            ...(data.replayFrames || []),
+        ].slice(0, 48);
 
         state.localTick += 1;
         state.data = data;
@@ -564,6 +775,12 @@
             'paperList',
             'selectedStation',
             'selectedScientist',
+            'routerSummary',
+            'cognitionLoop',
+            'planList',
+            'memoryStreamList',
+            'socialGraphList',
+            'replayList',
         ].forEach(id => {
             els[id] = document.getElementById(id);
         });

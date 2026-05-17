@@ -2,6 +2,8 @@ const { Redis } = require('@upstash/redis');
 
 const STATE_KEY = 'research-lab:state:v1';
 const MAX_EVENTS = 90;
+const MAX_MEMORIES = 80;
+const MAX_REPLAY_FRAMES = 48;
 const MAX_PAPERS = 30;
 const PAPER_TIMEOUT_MS = 6500;
 
@@ -185,6 +187,57 @@ const experimentTemplates = [
     },
 ];
 
+const cognitionBlueprint = {
+    model: 'Generative research society',
+    loop: ['perceive', 'retrieve', 'plan', 'reflect', 'execute'],
+    router: 'Plan-Execute lab router with read-only ask and controlled intervention modes',
+    memoryPolicy:
+        'Events become scored memories; high-importance clusters trigger reflections and update future plans.',
+    replayPolicy: 'Every lab tick stores a compact replay frame for later audit and debugging.',
+};
+
+const labEnvironmentModules = [
+    {
+        id: 'coffee-matrix',
+        name: 'Coffee Matrix Space',
+        capability: 'observe',
+        tools: ['measure dispersion', 'compare crema', 'score aroma masking'],
+    },
+    {
+        id: 'evidence-gate',
+        name: 'Evidence Gate',
+        capability: 'intervene',
+        tools: ['downgrade claim', 'request human review', 'attach source'],
+    },
+    {
+        id: 'social-space',
+        name: 'Scientist Social Space',
+        capability: 'observe',
+        tools: ['route sample', 'share memory', 'raise collaboration edge'],
+    },
+];
+
+const schedulePlans = {
+    mira: ['Carrier screen', 'Dissolution review', 'Reflection on dose integrity'],
+    theo: ['Espresso matrix run', 'Aroma check', 'Crema preservation review'],
+    ava: ['Tongue feel panel', 'Bitterness threshold review', 'Aftertaste reflection'],
+    max: ['Evidence retrieval', 'Absorption claim audit', 'Source triage'],
+    nina: ['Claims boundary review', 'Label language audit', 'Compliance intervention'],
+    jules: ['Pilot batch feasibility', 'Moisture risk review', 'Manufacturing route'],
+    pipette: ['Sample relay', 'Timestamp cleanup', 'Replay capture'],
+};
+
+const collaboratorByMetric = {
+    dissolutionSpeed: 'mira',
+    tastePreservation: 'ava',
+    mouthfeelCleanliness: 'theo',
+    doseIntegrity: 'jules',
+    absorptionEvidence: 'nina',
+    heatStability: 'jules',
+    manufacturability: 'mira',
+    regulatorySafety: 'max',
+};
+
 const initialFormulas = [
     {
         id: 'FUSE-CM-001',
@@ -274,11 +327,218 @@ function enrichFormula(formula) {
     };
 }
 
+function clampPercent(value) {
+    return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function cognitionSignal(scientist, labClock, isActive = false) {
+    const seed = labClock + scientist.id.length + scientist.station.length;
+    return {
+        focus: clampPercent(62 + Math.sin(seed / 2.1) * 18 + (isActive ? 12 : 0)),
+        energy: clampPercent(68 + Math.cos(seed / 2.8) * 16 - (isActive ? 5 : 0)),
+        evidenceNeed: clampPercent(38 + Math.sin(seed / 3.2) * 20 + (isActive ? 16 : 0)),
+        collaborationNeed: clampPercent(42 + Math.cos(seed / 3.8) * 18),
+    };
+}
+
+function planForScientist(scientistId, labClock) {
+    const plan = schedulePlans[scientistId] || ['Observe lab', 'Update memory', 'Review result'];
+    return plan[labClock % plan.length];
+}
+
+function createAgentStates(labClock = 0, activeScientistId = 'mira') {
+    return scientists.map(scientist => {
+        const isActive = scientist.id === activeScientistId;
+        const signal = cognitionSignal(scientist, labClock, isActive);
+        return {
+            id: scientist.id,
+            mood:
+                signal.evidenceNeed > 68
+                    ? 'evidence-hungry'
+                    : signal.energy < 58
+                      ? 'conserving'
+                      : isActive
+                        ? 'locked-in'
+                        : 'observing',
+            currentPlan: planForScientist(scientist.id, labClock),
+            currentAction: isActive ? 'executing active experiment' : 'observing and retrieving',
+            nextLocation: scientist.station,
+            needs: signal,
+            reflection: `${scientist.name} is balancing ${planForScientist(scientist.id, labClock).toLowerCase()} against evidence-gated claims.`,
+        };
+    });
+}
+
+function createSocialGraph(timestamp) {
+    return [
+        {
+            from: 'mira',
+            to: 'theo',
+            trust: 76,
+            topic: 'carrier ratios in hot coffee',
+            lastInteraction: timestamp,
+        },
+        {
+            from: 'ava',
+            to: 'theo',
+            trust: 82,
+            topic: 'flavour and mouthfeel tradeoffs',
+            lastInteraction: timestamp,
+        },
+        {
+            from: 'max',
+            to: 'nina',
+            trust: 88,
+            topic: 'evidence-backed claim boundaries',
+            lastInteraction: timestamp,
+        },
+        {
+            from: 'jules',
+            to: 'pipette',
+            trust: 74,
+            topic: 'pilot sample routing',
+            lastInteraction: timestamp,
+        },
+    ];
+}
+
+function buildMemoryFromEvent(event, index = 0) {
+    return {
+        id: `mem-${event.id || `${event.scientistId}-${index}`}`,
+        timestamp: event.timestamp || nowIso(),
+        scientistId: event.scientistId || 'mira',
+        type: event.type === 'Reflection' ? 'thought' : 'event',
+        formulaId: event.formulaId || null,
+        location:
+            scientists.find(scientist => scientist.id === event.scientistId)?.station ||
+            'Central Table',
+        importance: clampPercent(58 + (event.type === 'Regulatory control' ? 20 : 0) + index * 4),
+        poignancy: clampPercent(48 + (event.type === 'Needs wet-lab validation' ? 24 : 0)),
+        summary: event.message || 'Lab state changed.',
+        evidence: [event.id].filter(Boolean),
+    };
+}
+
+function createMemoryStream(events) {
+    return (events || []).map((event, index) => buildMemoryFromEvent(event, index));
+}
+
+function createReplayFrames(startedAt) {
+    return [
+        {
+            tick: 0,
+            timestamp: startedAt,
+            mode: 'boot',
+            scientistId: 'mira',
+            station: 'Central Table',
+            action: 'initialize memory stream',
+            outcome: 'Control formula and claims guardrails loaded.',
+        },
+    ];
+}
+
+function buildReflection(scientist, memories, labClock) {
+    const recent = (memories || []).filter(memory => memory.scientistId === scientist.id).slice(0, 3);
+    if (!recent.length) return null;
+    const signal = recent.map(memory => memory.summary.split('.')[0]).join('; ');
+    return {
+        id: `ref-${labClock}-${scientist.id}-${Date.now()}`,
+        timestamp: nowIso(),
+        scientistId: scientist.id,
+        type: 'Reflection',
+        formulaId: recent[0].formulaId,
+        message: `${scientist.name} reflects: ${signal}. Next plan should protect evidence quality before speed.`,
+    };
+}
+
+function updateSocialGraph(graph, template, timestamp) {
+    const collaboratorId = collaboratorByMetric[template.metric] || 'pipette';
+    const nextGraph = Array.isArray(graph) ? [...graph] : createSocialGraph(timestamp);
+    const existingIndex = nextGraph.findIndex(
+        edge =>
+            (edge.from === template.scientistId && edge.to === collaboratorId) ||
+            (edge.from === collaboratorId && edge.to === template.scientistId)
+    );
+    const edge = {
+        from: template.scientistId,
+        to: collaboratorId,
+        trust: 70 + ((template.metric.length + template.scientistId.length) % 24),
+        topic: `${template.kind.toLowerCase()} via ${template.station}`,
+        lastInteraction: timestamp,
+    };
+    if (existingIndex >= 0) {
+        nextGraph[existingIndex] = {
+            ...nextGraph[existingIndex],
+            trust: clampPercent(nextGraph[existingIndex].trust + 2),
+            topic: edge.topic,
+            lastInteraction: timestamp,
+        };
+    } else if (template.scientistId !== collaboratorId) {
+        nextGraph.unshift(edge);
+    }
+    return nextGraph.slice(0, 12);
+}
+
+function migrateState(state) {
+    if (!state || typeof state !== 'object') return createInitialState();
+    const events = Array.isArray(state.events) ? state.events : [];
+    const activeScientistId = state.activeExperiment?.scientistId || 'mira';
+    return {
+        ...state,
+        version: 2,
+        scientists: scientists.map(scientist => ({
+            ...scientist,
+            ...(state.scientists || []).find(item => item.id === scientist.id),
+        })),
+        formulas: (state.formulas || initialFormulas).map(enrichFormula),
+        cognition: state.cognition || cognitionBlueprint,
+        environmentModules: state.environmentModules || labEnvironmentModules,
+        agentStates: state.agentStates || createAgentStates(state.labClock || 0, activeScientistId),
+        socialGraph: state.socialGraph || createSocialGraph(state.startedAt || nowIso()),
+        memoryStream: (state.memoryStream || createMemoryStream(events)).slice(0, MAX_MEMORIES),
+        replayFrames:
+            state.replayFrames ||
+            createReplayFrames(state.startedAt || state.updatedAt || nowIso()).slice(
+                0,
+                MAX_REPLAY_FRAMES
+            ),
+    };
+}
+
 function createInitialState() {
     const startedAt = nowIso();
     const formulas = initialFormulas.map(enrichFormula).sort((a, b) => b.overall - a.overall);
+    const events = [
+        {
+            id: 'evt-boot',
+            timestamp: startedAt,
+            scientistId: 'mira',
+            type: 'Evidence-backed',
+            formulaId: 'FUSE-CM-001',
+            message:
+                'sets creatine monohydrate as the control before testing any coffee-compatible delivery system.',
+        },
+        {
+            id: 'evt-palate',
+            timestamp: startedAt,
+            scientistId: 'ava',
+            type: 'Needs sensory panel',
+            formulaId: 'FUSE-IF-014',
+            message:
+                'opens the tongue-feel protocol: grit, bitterness, aroma masking, and aftertaste get separate scores.',
+        },
+        {
+            id: 'evt-claims',
+            timestamp: startedAt,
+            scientistId: 'nina',
+            type: 'Regulatory control',
+            formulaId: 'FUSE-IF-014',
+            message:
+                'marks “maximum absorption” as an internal research target, not a public claim.',
+        },
+    ];
     return {
-        version: 1,
+        version: 2,
         labClock: 0,
         startedAt,
         updatedAt: startedAt,
@@ -294,6 +554,12 @@ function createInitialState() {
         scientists,
         formulas,
         evidenceSources,
+        cognition: cognitionBlueprint,
+        environmentModules: labEnvironmentModules,
+        agentStates: createAgentStates(0, 'mira'),
+        socialGraph: createSocialGraph(startedAt),
+        memoryStream: createMemoryStream(events),
+        replayFrames: createReplayFrames(startedAt),
         papers: [],
         activeExperiment: {
             id: 'EXP-000',
@@ -304,35 +570,7 @@ function createInitialState() {
             evidenceGate: 'Hypothesis',
             progress: 38,
         },
-        events: [
-            {
-                id: 'evt-boot',
-                timestamp: startedAt,
-                scientistId: 'mira',
-                type: 'Evidence-backed',
-                formulaId: 'FUSE-CM-001',
-                message:
-                    'sets creatine monohydrate as the control before testing any coffee-compatible delivery system.',
-            },
-            {
-                id: 'evt-palate',
-                timestamp: startedAt,
-                scientistId: 'ava',
-                type: 'Needs sensory panel',
-                formulaId: 'FUSE-IF-014',
-                message:
-                    'opens the tongue-feel protocol: grit, bitterness, aroma masking, and aftertaste get separate scores.',
-            },
-            {
-                id: 'evt-claims',
-                timestamp: startedAt,
-                scientistId: 'nina',
-                type: 'Regulatory control',
-                formulaId: 'FUSE-IF-014',
-                message:
-                    'marks “maximum absorption” as an internal research target, not a public claim.',
-            },
-        ],
+        events,
     };
 }
 
@@ -341,7 +579,7 @@ async function getState() {
         try {
             const stored = await redis.get(STATE_KEY);
             if (stored) {
-                return typeof stored === 'string' ? JSON.parse(stored) : stored;
+                return migrateState(typeof stored === 'string' ? JSON.parse(stored) : stored);
             }
         } catch (error) {
             console.warn('[ResearchLab] Redis read failed:', error.message);
@@ -351,11 +589,12 @@ async function getState() {
     if (!memoryState) {
         memoryState = createInitialState();
     }
+    memoryState = migrateState(memoryState);
     return memoryState;
 }
 
 async function saveState(state) {
-    const nextState = { ...state, updatedAt: nowIso() };
+    const nextState = migrateState({ ...state, updatedAt: nowIso() });
     if (redis) {
         try {
             await redis.set(STATE_KEY, JSON.stringify(nextState));
@@ -420,7 +659,19 @@ async function advanceLabState(reason = 'scheduled') {
         .sort((a, b) => b.overall - a.overall);
     const updatedFormula = formulas.find(item => item.id === formula.id) || formula;
     const event = buildTickEvent({ ...state, labClock: labClock - 1 }, template, updatedFormula);
+    const memory = buildMemoryFromEvent(event);
+    const memories = [memory, ...(state.memoryStream || [])].slice(0, MAX_MEMORIES);
+    const scientist = scientists.find(item => item.id === template.scientistId) || scientists[0];
+    const reflectionEvent =
+        labClock % 3 === 0 || memory.importance >= 82
+            ? buildReflection(scientist, memories, labClock)
+            : null;
+    const reflectionMemories = reflectionEvent
+        ? [buildMemoryFromEvent(reflectionEvent), ...memories].slice(0, MAX_MEMORIES)
+        : memories;
+    const events = [event, ...(reflectionEvent ? [reflectionEvent] : []), ...(state.events || [])];
     const progress = 18 + ((labClock * 17) % 76);
+    const timestamp = event.timestamp;
 
     return saveState({
         ...state,
@@ -436,7 +687,32 @@ async function advanceLabState(reason = 'scheduled') {
             progress,
             reason,
         },
-        events: [event, ...(state.events || [])].slice(0, MAX_EVENTS),
+        agentStates: createAgentStates(labClock, template.scientistId).map(agentState =>
+            agentState.id === template.scientistId && reflectionEvent
+                ? {
+                      ...agentState,
+                      reflection: reflectionEvent.message,
+                      currentAction: `executing ${template.kind.toLowerCase()}`,
+                  }
+                : agentState
+        ),
+        socialGraph: updateSocialGraph(state.socialGraph, template, timestamp),
+        memoryStream: reflectionMemories,
+        replayFrames: [
+            {
+                tick: labClock,
+                timestamp,
+                mode: 'plan-execute',
+                scientistId: template.scientistId,
+                station: template.station,
+                action: template.kind,
+                formulaId: updatedFormula.id,
+                plan: planForScientist(template.scientistId, labClock),
+                outcome: event.message,
+            },
+            ...(state.replayFrames || []),
+        ].slice(0, MAX_REPLAY_FRAMES),
+        events: events.slice(0, MAX_EVENTS),
     });
 }
 
@@ -507,6 +783,10 @@ async function refreshPapers(query) {
     return saveState({
         ...state,
         papers: merged.slice(0, MAX_PAPERS),
+        memoryStream: [buildMemoryFromEvent(event), ...(state.memoryStream || [])].slice(
+            0,
+            MAX_MEMORIES
+        ),
         events: [event, ...(state.events || [])].slice(0, MAX_EVENTS),
     });
 }

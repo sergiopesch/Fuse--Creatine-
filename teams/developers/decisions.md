@@ -6,6 +6,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-17 | Research Lab Agent Society Model
+
+**Decision**: Extend the Research Lab tick loop with a deterministic agent-society layer: scored memory stream, active plans, periodic reflections, social graph links, and compact replay frames.
+
+**Rationale**: Generative agent simulations need visible cognition, not just animated sprites. Keeping the model inside the existing Vercel Node state avoids a heavy Python runtime while adopting the strongest patterns from Generative Agents and AgentSociety.
+
+**Impact**: `api/_lib/research-lab-state.js` now emits cognitive state with every lab state response; `research-lab.html`, `css/research-lab.css`, and `js/research-lab.js` render the new society layer and selected-scientist need bars.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).

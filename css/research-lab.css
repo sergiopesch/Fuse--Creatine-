@@ -165,6 +165,7 @@ body.research-lab-page {
 .scientist-panel,
 .formula-panel,
 .world-panel,
+.society-panel,
 .event-panel,
 .evidence-panel,
 .selected-panel {
@@ -207,6 +208,7 @@ body.research-lab-page {
 .scientist-panel,
 .formula-panel,
 .world-panel,
+.society-panel,
 .event-panel,
 .evidence-panel,
 .selected-panel {
@@ -827,11 +829,14 @@ body.research-lab-page {
 
 .lower-grid {
     display: grid;
-    grid-template-columns: minmax(320px, 1.25fr) minmax(320px, 1fr) minmax(280px, 0.76fr);
+    grid-template-columns:
+        minmax(360px, 1.22fr) minmax(300px, 1fr) minmax(300px, 0.95fr)
+        minmax(280px, 0.78fr);
     gap: 16px;
     margin-top: 16px;
 }
 
+.society-panel,
 .event-panel,
 .evidence-panel,
 .selected-panel {
@@ -839,6 +844,10 @@ body.research-lab-page {
     min-height: 370px;
 }
 
+.memory-stream,
+.plan-list,
+.social-graph,
+.replay-list,
 .event-list,
 .paper-list {
     max-height: 320px;
@@ -849,6 +858,92 @@ body.research-lab-page {
 .event-item,
 .paper-item {
     padding: 12px;
+}
+
+.society-panel {
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    gap: 12px;
+}
+
+.cognition-loop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cognition-loop span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 9px;
+    border: 1px solid rgba(68, 215, 182, 0.24);
+    border-radius: 999px;
+    background: rgba(68, 215, 182, 0.08);
+    color: var(--lab-cyan);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.society-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.society-columns > div {
+    min-width: 0;
+}
+
+.memory-stream,
+.plan-list,
+.social-graph,
+.replay-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+    max-height: 160px;
+}
+
+.plan-item,
+.memory-item,
+.social-edge,
+.replay-frame {
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.plan-item {
+    border-left: 3px solid var(--agent-color, var(--lab-cyan));
+}
+
+.plan-item strong,
+.memory-item strong,
+.social-edge strong,
+.replay-frame strong {
+    display: block;
+    color: var(--lab-text);
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.plan-item span,
+.memory-item span,
+.social-edge span,
+.replay-frame span,
+.plan-item small,
+.memory-item small,
+.social-edge small,
+.replay-frame small {
+    display: block;
+    margin-top: 4px;
+    color: var(--lab-muted);
+    font-size: 10px;
+    line-height: 1.35;
 }
 
 .event-item {
@@ -987,6 +1082,69 @@ body.research-lab-page {
     line-height: 1.55;
 }
 
+.agent-cognition {
+    display: grid;
+    gap: 9px;
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid rgba(68, 215, 182, 0.16);
+    border-radius: 8px;
+    background: rgba(68, 215, 182, 0.055);
+}
+
+.agent-cognition > strong {
+    color: var(--lab-text);
+    font-size: 12px;
+}
+
+.agent-cognition > span,
+.selected-memory span {
+    color: var(--lab-muted);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.need-grid {
+    display: grid;
+    gap: 7px;
+}
+
+.need-row {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 8px;
+    color: var(--lab-muted);
+    font-size: 10px;
+}
+
+.need-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.need-track i {
+    display: block;
+    width: var(--need-value);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--lab-red), var(--lab-amber), var(--lab-cyan));
+}
+
+.need-row strong {
+    color: var(--lab-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+}
+
+.selected-memory {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+}
+
 .selected-tags {
     display: flex;
     flex-wrap: wrap;
@@ -1092,6 +1250,10 @@ body.research-lab-page {
     .scientist-list {
         grid-template-columns: 1fr;
     }
+
+    .society-columns {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 520px) {
@@ -1107,6 +1269,7 @@ body.research-lab-page {
     .world-panel,
     .scientist-panel,
     .formula-panel,
+    .society-panel,
     .event-panel,
     .evidence-panel,
     .selected-panel {

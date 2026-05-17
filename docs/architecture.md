@@ -66,6 +66,7 @@ Vercel Serverless Functions:
 - `index.html` — Marketing landing page
 - `dashboard.html` — Company dashboard (biometric-protected)
 - `agents.html` — Agent Command Center
+- `research-lab.html` — Live formulation lab with animated scientists, memory stream, planning, reflection, social graph, and replay frames
 - `admin.html` — Admin analytics
 
 > **Note:** The CEO dashboard web UI has been replaced by the `fuse-ceo` CLI (`cli/`).
@@ -109,3 +110,14 @@ Teams communicate via shared markdown files:
 | Auth | WebAuthn passkeys |
 | Hosting | Vercel |
 | Source Control | GitHub |
+
+## Research Lab Simulation
+
+The FUSE Research Lab is a Vercel-hosted, evidence-gated simulation. The frontend is a layered digital lab world, while `/api/research-lab` is routed through the consolidated orchestrator endpoint and backed by `api/_lib/research-lab-state.js`.
+
+Each tick updates formula scores and emits agent cognition data:
+- memory stream entries with importance and poignancy scores
+- active plans and selected-agent needs
+- periodic reflections
+- scientist social graph edges
+- compact replay frames for audit and debugging
