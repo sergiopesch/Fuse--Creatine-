@@ -11,7 +11,7 @@
         <meta name="theme-color" content="#050505" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://www.sergiopesch.com https://sergiopesch.com;"
+            content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self';"
         />
         <title>FUSE Research Lab Live</title>
         <link rel="canonical" href="https://fusecreatine.com/research-lab" />
@@ -91,14 +91,18 @@
                     </div>
 
                     <div class="lab-world" id="labWorld">
-                        <img
-                            class="concept-projection"
-                            src="assets/research-lab-concept.png"
-                            alt=""
-                            aria-hidden="true"
-                            decoding="async"
-                        />
+                        <div class="lab-layer lab-layer-wall" aria-hidden="true"></div>
+                        <div class="lab-layer lab-layer-master" aria-hidden="true"></div>
+                        <div class="lab-layer lab-layer-floor" aria-hidden="true"></div>
+                        <div class="world-depth-mask" aria-hidden="true"></div>
                         <div class="world-grid-lines" aria-hidden="true"></div>
+                        <div class="lab-effect effect-holo" aria-hidden="true"></div>
+                        <div class="lab-effect effect-particles" aria-hidden="true"></div>
+                        <div class="lab-effect effect-scan" aria-hidden="true"></div>
+                        <div class="prop-asset prop-command" aria-hidden="true"></div>
+                        <div class="prop-asset prop-tank" aria-hidden="true"></div>
+                        <div class="prop-asset prop-coffee" aria-hidden="true"></div>
+                        <div class="prop-asset prop-pod" aria-hidden="true"></div>
                         <div
                             class="station station-encapsulation"
                             data-station="Encapsulation Bench"
@@ -128,6 +132,10 @@
                         <div class="station station-pilot" data-station="Pilot Mixer">
                             <span>Pilot Mixer</span>
                             <small>Batch feasibility</small>
+                        </div>
+                        <div class="station station-rail" data-station="Central Sample Rail">
+                            <span>Sample Rail</span>
+                            <small>Agent routing</small>
                         </div>
                         <div class="sample-rail" aria-hidden="true"></div>
                         <div class="agent-stage" id="agentStage" aria-hidden="true"></div>

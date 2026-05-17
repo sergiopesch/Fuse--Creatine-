@@ -24,6 +24,8 @@
         regulatorySafety: '#ffffff',
     };
 
+    const scientistSpriteOrder = ['mira', 'theo', 'ava', 'max', 'nina', 'jules', 'pipette'];
+
     const fallbackState = {
         version: 1,
         labClock: 0,
@@ -81,6 +83,39 @@
                 color: '#44d7b6',
                 x: 42,
                 y: 26,
+            },
+            {
+                id: 'nina',
+                name: 'Dr. Nina Claims',
+                role: 'Regulatory Scientist',
+                speciality: 'sports nutrition claims, substantiation, labels, compliance risk',
+                personality: 'Friendly until a claim outruns the evidence.',
+                station: 'Claims Gate',
+                color: '#8fb8ff',
+                x: 84,
+                y: 58,
+            },
+            {
+                id: 'jules',
+                name: 'Jules Batch',
+                role: 'Manufacturing Engineer',
+                speciality: 'pilot batches, flow, dose uniformity, packaging, moisture stability',
+                personality: 'Turns elegant science into something that can ship.',
+                station: 'Pilot Mixer',
+                color: '#b890ff',
+                x: 30,
+                y: 78,
+            },
+            {
+                id: 'pipette',
+                name: 'Pipette',
+                role: 'Lab Assistant Agent',
+                speciality: 'sample routing, bench timing, evidence labels, instrument logs',
+                personality: 'Fast, literal, tireless, and obsessed with clean timestamps.',
+                station: 'Central Sample Rail',
+                color: '#e2f06f',
+                x: 50,
+                y: 50,
             },
         ],
         formulas: [
@@ -170,6 +205,11 @@
         return (state.data.scientists || []).find(scientist => scientist.id === id);
     }
 
+    function spriteClass(scientistId) {
+        const index = scientistSpriteOrder.indexOf(scientistId);
+        return `sprite-${index >= 0 ? index : 0}`;
+    }
+
     function getFormula(id) {
         return (state.data.formulas || []).find(formula => formula.id === id);
     }
@@ -190,7 +230,7 @@
                 const selected = scientist.id === state.selectedScientistId ? ' is-selected' : '';
                 return `
                     <button class="scientist-card${selected}" type="button" data-scientist="${escapeHtml(scientist.id)}" style="--agent-color: ${escapeHtml(scientist.color)}">
-                        <span class="scientist-avatar">${escapeHtml(initials(scientist.name))}</span>
+                        <span class="scientist-avatar scientist-portrait ${spriteClass(scientist.id)}" aria-hidden="true"></span>
                         <span>
                             <strong>${escapeHtml(scientist.name)}</strong>
                             <span>${escapeHtml(scientist.role)} at ${escapeHtml(scientist.station)}</span>
@@ -230,10 +270,15 @@
                 );
                 return `
                     <span
-                        class="world-agent"
+                        class="world-agent ${spriteClass(scientist.id)}"
                         data-name="${escapeHtml(scientist.name)}"
-                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; animation-delay: -${index * 0.55}s"
-                    >${escapeHtml(initials(scientist.name))}</span>
+                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
+                    >
+                        <span class="agent-route"></span>
+                        <span class="agent-shadow"></span>
+                        <span class="agent-sprite" aria-hidden="true"></span>
+                        <span class="agent-pin">${escapeHtml(initials(scientist.name))}</span>
+                    </span>
                 `;
             })
             .join('');
@@ -353,7 +398,9 @@
         }
         els.selectedStation.textContent = scientist.station;
         els.selectedScientist.innerHTML = `
-            <div class="scientist-avatar selected-avatar" style="--agent-color: ${escapeHtml(scientist.color)}">${escapeHtml(initials(scientist.name))}</div>
+            <div class="selected-visual" style="--agent-color: ${escapeHtml(scientist.color)}">
+                <span class="selected-avatar selected-sprite ${spriteClass(scientist.id)}" aria-hidden="true"></span>
+            </div>
             <h2>${escapeHtml(scientist.name)}</h2>
             <p><strong>${escapeHtml(scientist.role)}</strong></p>
             <p>${escapeHtml(scientist.personality)}</p>
