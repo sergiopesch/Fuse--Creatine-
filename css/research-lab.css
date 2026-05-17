@@ -1,0 +1,881 @@
+:root {
+    --lab-bg: #050505;
+    --lab-panel: rgba(16, 18, 20, 0.86);
+    --lab-panel-solid: #101214;
+    --lab-border: rgba(255, 255, 255, 0.11);
+    --lab-muted: #9da3aa;
+    --lab-text: #f7f4ef;
+    --lab-red: #ff3b30;
+    --lab-cyan: #44d7b6;
+    --lab-amber: #f5b56b;
+    --lab-blue: #8fb8ff;
+    --lab-violet: #b890ff;
+    --lab-lime: #e2f06f;
+    --lab-header-height: 72px;
+}
+
+body.research-lab-page {
+    min-height: 100vh;
+    margin: 0;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 59, 48, 0.16), transparent 28rem),
+        radial-gradient(circle at 78% 18%, rgba(68, 215, 182, 0.12), transparent 28rem),
+        linear-gradient(180deg, #080808 0%, var(--lab-bg) 45%, #090807 100%);
+    color: var(--lab-text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+.research-lab-page * {
+    box-sizing: border-box;
+}
+
+.research-lab-page section {
+    padding: 0;
+}
+
+.lab-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    min-height: var(--lab-header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 14px clamp(18px, 4vw, 44px);
+    border-bottom: 1px solid var(--lab-border);
+    background: rgba(5, 5, 5, 0.88);
+    backdrop-filter: blur(18px);
+}
+
+.lab-logo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--lab-text);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.lab-logo span {
+    color: var(--lab-red);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+}
+
+.lab-logo small {
+    color: var(--lab-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.lab-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid var(--lab-border);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+}
+
+.lab-nav a {
+    color: var(--lab-muted);
+    text-decoration: none;
+    padding: 9px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.lab-nav a:hover,
+.lab-nav a[aria-current='page'] {
+    color: var(--lab-text);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.lab-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 224px;
+    gap: 9px;
+    color: var(--lab-cyan);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+}
+
+.status-light {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--lab-cyan);
+    box-shadow: 0 0 16px rgba(68, 215, 182, 0.8);
+}
+
+.lab-shell {
+    width: min(1720px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 16px 0 42px;
+}
+
+.lab-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 460px);
+    gap: 22px;
+    align-items: end;
+    padding: 4px 0 14px;
+}
+
+.lab-kicker {
+    margin: 0 0 8px;
+    color: var(--lab-cyan);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.lab-intro h1 {
+    margin: 0;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(44px, 5.2vw, 72px);
+    line-height: 0.92;
+    letter-spacing: 0;
+    color: var(--lab-text);
+}
+
+.lab-intro p {
+    max-width: 760px;
+    margin: 8px 0 0;
+    color: #c5c8cc;
+    font-size: clamp(15px, 1.2vw, 18px);
+    line-height: 1.6;
+}
+
+.mission-card,
+.scientist-panel,
+.formula-panel,
+.world-panel,
+.event-panel,
+.evidence-panel,
+.selected-panel {
+    border: 1px solid var(--lab-border);
+    background: var(--lab-panel);
+    backdrop-filter: blur(18px);
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.26);
+}
+
+.mission-card {
+    padding: 20px;
+    min-height: 112px;
+}
+
+.mission-card span,
+.mono-label {
+    display: block;
+    color: var(--lab-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.mission-card strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 17px;
+    line-height: 1.35;
+}
+
+.lab-grid {
+    display: grid;
+    grid-template-columns: minmax(246px, 0.76fr) minmax(520px, 2.2fr) minmax(286px, 0.92fr);
+    gap: 16px;
+    min-height: 680px;
+}
+
+.scientist-panel,
+.formula-panel,
+.world-panel,
+.event-panel,
+.evidence-panel,
+.selected-panel {
+    min-width: 0;
+}
+
+.scientist-panel,
+.formula-panel {
+    padding: 16px;
+    overflow: hidden;
+}
+
+.panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 32px;
+    margin-bottom: 14px;
+}
+
+.panel-heading span {
+    color: var(--lab-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.panel-heading strong {
+    color: var(--lab-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+
+.scientist-list,
+.formula-list,
+.event-list,
+.paper-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.scientist-card {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--lab-text);
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.scientist-card:hover,
+.scientist-card.is-selected {
+    border-color: color-mix(in srgb, var(--agent-color) 58%, transparent);
+    background: color-mix(in srgb, var(--agent-color) 14%, rgba(255, 255, 255, 0.035));
+}
+
+.scientist-avatar,
+.world-agent {
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: #050505;
+    background: var(--agent-color);
+    font-weight: 900;
+    box-shadow: 0 0 18px color-mix(in srgb, var(--agent-color) 42%, transparent);
+}
+
+.scientist-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+}
+
+.scientist-card strong,
+.formula-card strong,
+.event-item strong,
+.paper-item strong {
+    display: block;
+    min-width: 0;
+    color: var(--lab-text);
+    font-size: 13px;
+    line-height: 1.25;
+}
+
+.scientist-card span,
+.formula-card span,
+.event-item span,
+.paper-item span {
+    display: block;
+    margin-top: 4px;
+    color: var(--lab-muted);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.world-panel {
+    display: grid;
+    grid-template-rows: auto minmax(480px, 1fr) auto;
+    padding: 14px;
+    overflow: hidden;
+}
+
+.world-toolbar {
+    display: grid;
+    grid-template-columns: minmax(98px, 0.5fr) minmax(180px, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 4px 2px 14px;
+}
+
+.world-toolbar strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+.icon-button,
+.text-button {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--lab-text);
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.icon-button {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 14px;
+}
+
+.button-icon {
+    display: grid;
+    place-items: center;
+    min-width: 30px;
+    height: 22px;
+    border-radius: 999px;
+    color: #050505;
+    background: var(--lab-cyan);
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.text-button {
+    padding: 8px 10px;
+    color: var(--lab-cyan);
+    font-size: 12px;
+}
+
+.icon-button:hover,
+.text-button:hover {
+    border-color: rgba(68, 215, 182, 0.55);
+    background: rgba(68, 215, 182, 0.11);
+}
+
+.lab-world {
+    position: relative;
+    min-height: 480px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 8px;
+    background:
+        linear-gradient(140deg, rgba(12, 18, 20, 0.96), rgba(7, 7, 8, 0.94)),
+        radial-gradient(circle at 52% 52%, rgba(68, 215, 182, 0.12), transparent 34%);
+    isolation: isolate;
+}
+
+.concept-projection {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.18;
+    filter: saturate(1.08) contrast(1.04);
+    z-index: 0;
+}
+
+.world-grid-lines {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    transform: perspective(500px) rotateX(54deg) scale(1.2);
+    transform-origin: 50% 70%;
+    opacity: 0.5;
+}
+
+.station {
+    position: absolute;
+    z-index: 3;
+    width: clamp(132px, 15vw, 194px);
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-left: 3px solid var(--station-color);
+    background: rgba(9, 12, 14, 0.72);
+    border-radius: 8px;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+}
+
+.station.is-active {
+    border-color: color-mix(in srgb, var(--station-color) 62%, rgba(255, 255, 255, 0.16));
+    box-shadow: 0 0 28px color-mix(in srgb, var(--station-color) 26%, transparent);
+}
+
+.station span {
+    color: var(--lab-text);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.station small {
+    color: var(--lab-muted);
+    font-size: 11px;
+}
+
+.station-encapsulation {
+    --station-color: var(--lab-red);
+    left: 7%;
+    top: 45%;
+}
+
+.station-coffee {
+    --station-color: #c58b59;
+    right: 10%;
+    top: 18%;
+}
+
+.station-sensory {
+    --station-color: var(--lab-amber);
+    right: 18%;
+    bottom: 12%;
+}
+
+.station-absorption {
+    --station-color: var(--lab-cyan);
+    left: 32%;
+    top: 14%;
+}
+
+.station-claims {
+    --station-color: var(--lab-blue);
+    right: 4%;
+    top: 48%;
+}
+
+.station-pilot {
+    --station-color: var(--lab-violet);
+    left: 15%;
+    bottom: 9%;
+}
+
+.sample-rail {
+    position: absolute;
+    left: 18%;
+    right: 17%;
+    top: 48%;
+    height: 2px;
+    z-index: 2;
+    background: linear-gradient(90deg, transparent, rgba(226, 240, 111, 0.8), transparent);
+    transform: rotate(-8deg);
+    box-shadow: 0 0 18px rgba(226, 240, 111, 0.34);
+}
+
+.world-agent {
+    position: absolute;
+    left: calc(var(--agent-x) * 1%);
+    top: calc(var(--agent-y) * 1%);
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    font-size: 11px;
+    border: 2px solid rgba(5, 5, 5, 0.72);
+    transform: translate(-50%, -50%);
+    animation: agent-float 5.8s ease-in-out infinite;
+}
+
+.world-agent::after {
+    content: attr(data-name);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 7px);
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 118px;
+    padding: 4px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.72);
+    color: var(--lab-text);
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.world-agent:hover::after {
+    opacity: 1;
+}
+
+.experiment-strip {
+    display: grid;
+    grid-template-columns: minmax(130px, 190px) minmax(160px, 1fr) minmax(220px, 0.92fr);
+    gap: 14px;
+    align-items: center;
+    padding: 14px 2px 2px;
+}
+
+.experiment-strip strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+}
+
+.experiment-strip p {
+    margin: 0;
+    color: #c6c8ca;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.progress-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.progress-track span {
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--lab-red), var(--lab-amber), var(--lab-cyan));
+    border-radius: inherit;
+    transition: width 0.45s ease;
+}
+
+.formula-card,
+.event-item,
+.paper-item,
+.selected-scientist {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.045);
+    border-radius: 8px;
+}
+
+.formula-card {
+    padding: 12px;
+}
+
+.formula-topline {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.formula-score {
+    color: var(--lab-cyan);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.formula-bars {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 8px;
+    color: var(--lab-muted);
+    font-size: 10px;
+}
+
+.metric-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.metric-track i {
+    display: block;
+    height: 100%;
+    width: var(--metric-value);
+    background: var(--metric-color, var(--lab-cyan));
+    border-radius: inherit;
+}
+
+.lower-grid {
+    display: grid;
+    grid-template-columns: minmax(320px, 1.25fr) minmax(320px, 1fr) minmax(280px, 0.76fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.event-panel,
+.evidence-panel,
+.selected-panel {
+    padding: 16px;
+    min-height: 370px;
+}
+
+.event-list,
+.paper-list {
+    max-height: 320px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.event-item,
+.paper-item {
+    padding: 12px;
+}
+
+.event-item {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr);
+    gap: 10px;
+}
+
+.event-dot {
+    width: 8px;
+    height: 8px;
+    margin-top: 4px;
+    border-radius: 999px;
+    background: var(--event-color);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--event-color) 54%, transparent);
+}
+
+.event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 5px;
+    color: var(--lab-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+}
+
+.evidence-heading {
+    align-items: center;
+}
+
+.paper-search {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.paper-search label {
+    color: var(--lab-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.paper-search input {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.34);
+    color: var(--lab-text);
+    padding: 0 12px;
+    font:
+        500 13px 'Inter',
+        sans-serif;
+}
+
+.paper-item a {
+    display: inline-flex;
+    margin-top: 8px;
+    color: var(--lab-cyan);
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.selected-scientist {
+    min-height: 288px;
+    padding: 18px;
+}
+
+.selected-avatar {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 16px;
+    font-size: 20px;
+}
+
+.selected-scientist h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.selected-scientist p {
+    margin: 10px 0 0;
+    color: #c8cbd0;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.selected-tags span {
+    display: inline-flex;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: var(--lab-muted);
+    font-size: 11px;
+}
+
+@keyframes agent-float {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-8px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .world-agent {
+        animation: none;
+    }
+
+    .progress-track span,
+    .world-agent::after {
+        transition: none;
+    }
+}
+
+@media (max-width: 1260px) {
+    .lab-grid,
+    .lower-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .world-panel {
+        min-height: 650px;
+    }
+
+    .scientist-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 840px) {
+    .lab-header {
+        position: relative;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .lab-nav {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .lab-status {
+        justify-content: flex-start;
+        min-width: 0;
+    }
+
+    .lab-shell {
+        width: min(100vw - 20px, 760px);
+        padding-top: 18px;
+    }
+
+    .lab-intro {
+        grid-template-columns: 1fr;
+    }
+
+    .world-toolbar,
+    .experiment-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .lab-world {
+        min-height: 560px;
+    }
+
+    .station {
+        width: 132px;
+        padding: 11px;
+    }
+
+    .station span {
+        font-size: 11px;
+    }
+
+    .scientist-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .lab-intro h1 {
+        font-size: 46px;
+    }
+
+    .lab-nav a {
+        padding: 8px 9px;
+        font-size: 11px;
+    }
+
+    .world-panel,
+    .scientist-panel,
+    .formula-panel,
+    .event-panel,
+    .evidence-panel,
+    .selected-panel {
+        padding: 12px;
+    }
+
+    .lab-world {
+        min-height: 520px;
+    }
+
+    .station {
+        width: 118px;
+        min-height: 66px;
+    }
+
+    .station small {
+        display: none;
+    }
+
+    .metric-row {
+        grid-template-columns: 82px minmax(0, 1fr) 24px;
+    }
+}

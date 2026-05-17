@@ -115,6 +115,11 @@
       "permanent": true
     },
     {
+      "source": "/research-lab.html",
+      "destination": "/research-lab",
+      "permanent": true
+    },
+    {
       "source": "/dashboard.html",
       "destination": "/dashboard",
       "permanent": true
@@ -149,6 +154,14 @@
       "destination": "/api/costs"
     },
     {
+      "source": "/api/research-lab",
+      "destination": "/api/research-lab"
+    },
+    {
+      "source": "/api/research-lab-tick",
+      "destination": "/api/research-lab-tick"
+    },
+    {
       "source": "/api/passkey-register",
       "destination": "/api/passkey?__fuseRoute=register"
     },
@@ -178,5 +191,11 @@
       "maxDuration": 15,
       "memory": 1024
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/research-lab-tick",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

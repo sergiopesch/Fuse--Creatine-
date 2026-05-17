@@ -34,6 +34,19 @@
         <priority>0.9</priority>
     </url>
 
+    <!-- Research Lab Live -->
+    <url>
+        <loc>https://fusecreatine.com/research-lab</loc>
+        <lastmod>2026-05-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.7</priority>
+        <image:image>
+            <image:loc>https://fusecreatine.com/assets/research-lab-concept.png</image:loc>
+            <image:title>FUSE Research Lab Live</image:title>
+            <image:caption>Scientist agents researching coffee-compatible creatine formulation concepts</image:caption>
+        </image:image>
+    </url>
+
     <!-- Privacy Policy -->
     <url>
         <loc>https://fusecreatine.com/privacy</loc>

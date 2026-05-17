@@ -1,6 +1,6 @@
 # R&D Team — Current Context
 
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-05-17
 **Team Code**: R&D
 **Orchestration Mode**: manual
 
@@ -10,6 +10,7 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 
 ## Active Work
 
+- [ ] Validate FUSE Research Lab simulation outputs against wet-lab evidence before using them in claims
 - [ ] Await FTO analysis results from Legal
 - [ ] Evaluate alternative encapsulation methods
 - [ ] Create supplier shortlist for creatine monohydrate
@@ -17,6 +18,7 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 
 ## Recent Completions
 
+- ✅ Public FUSE Research Lab Live vertical slice launched for evidence-gated formulation simulation
 - ✅ Scientific feasibility assessment complete
 - ✅ Creatine stability research documented
 - ✅ Patent landscape analysis (14 AnaBio patents identified)
@@ -37,12 +39,12 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 
 ## Formulation Status
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Creatine monohydrate | Sourcing | Multiple suppliers identified |
+| Component            | Status      | Notes                                    |
+| -------------------- | ----------- | ---------------------------------------- |
+| Creatine monohydrate | Sourcing    | Multiple suppliers identified            |
 | Encapsulation method | Pending FTO | Alternatives to AnaBio patent documented |
-| Carrier matrix | Research | Coffee-neutral options identified |
-| Dissolution target | Defined | <3 seconds |
+| Carrier matrix       | Research    | Coffee-neutral options identified        |
+| Dissolution target   | Defined     | <3 seconds                               |
 
 ## Alternative Encapsulation Methods (Not Patented by AnaBio)
 
