@@ -847,7 +847,7 @@ body.research-lab-page {
     color: #050505;
     transform: translate(-50%, -74%) scale(var(--depth-scale, 1));
     transform-origin: 50% 100%;
-    animation: agent-walk 5.8s ease-in-out infinite;
+    animation: agent-travel 9.5s ease-in-out infinite;
 }
 
 .agent-sprite {
@@ -888,10 +888,10 @@ body.research-lab-page {
     left: 50%;
     top: 72%;
     z-index: 0;
-    width: 96px;
+    width: var(--route-length, 96px);
     height: 2px;
     background: linear-gradient(90deg, transparent, var(--agent-color), transparent);
-    opacity: 0.7;
+    opacity: 0.42;
     transform: translateX(-50%) rotate(-18deg);
     box-shadow: 0 0 16px color-mix(in srgb, var(--agent-color) 55%, transparent);
 }
@@ -935,7 +935,8 @@ body.research-lab-page {
 }
 
 .agent-nameplate,
-.agent-thought {
+.agent-thought,
+.agent-chat {
     position: absolute;
     left: 50%;
     z-index: 4;
@@ -970,6 +971,46 @@ body.research-lab-page {
     transition:
         opacity 0.18s ease,
         transform 0.18s ease;
+}
+
+.agent-chat {
+    bottom: calc(100% + 28px);
+    display: none;
+    padding: 7px 9px;
+    border: 1px solid color-mix(in srgb, var(--agent-color) 44%, rgba(255, 255, 255, 0.18));
+    border-radius: 8px;
+    background: rgba(8, 10, 12, 0.92);
+    color: var(--lab-text);
+    font-size: 10px;
+    line-height: 1.3;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.38);
+}
+
+.agent-chat::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 9px;
+    height: 9px;
+    border-right: 1px solid color-mix(in srgb, var(--agent-color) 44%, rgba(255, 255, 255, 0.18));
+    border-bottom: 1px solid color-mix(in srgb, var(--agent-color) 44%, rgba(255, 255, 255, 0.18));
+    background: rgba(8, 10, 12, 0.92);
+    transform: translate(-50%, -5px) rotate(45deg);
+}
+
+.agent-chat strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--agent-color);
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+}
+
+.sandbox-agent.is-chatting .agent-chat {
+    display: block;
+    animation: chat-pop 9.5s ease-in-out infinite;
 }
 
 .sandbox-agent.is-active .agent-thought {
@@ -1439,8 +1480,41 @@ body.research-lab-page {
     }
 }
 
+@keyframes agent-travel {
+    0%,
+    100% {
+        transform: translate(-50%, -74%) scale(var(--depth-scale, 1)) translate(0, 0);
+    }
+    42% {
+        transform: translate(-50%, -74%) scale(var(--depth-scale, 1))
+            translate(calc(var(--route-x) * 0.2), calc(var(--route-y) * 0.2 - 5px));
+    }
+    72% {
+        transform: translate(-50%, -74%) scale(var(--depth-scale, 1))
+            translate(calc(var(--route-x) * -0.12), calc(var(--route-y) * -0.12 + 4px));
+    }
+}
+
+@keyframes chat-pop {
+    0%,
+    18%,
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(4px) scale(0.96);
+    }
+    28%,
+    74% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .world-agent {
+        animation: none;
+    }
+
+    .sandbox-agent.is-chatting .agent-chat {
         animation: none;
     }
 
@@ -1519,7 +1593,8 @@ body.research-lab-page {
     }
 
     .map-room small,
-    .agent-thought {
+    .agent-thought,
+    .agent-chat {
         font-size: 8px;
     }
 
@@ -1601,6 +1676,13 @@ body.research-lab-page {
 
     .agent-thought {
         display: none;
+    }
+
+    .agent-chat {
+        bottom: calc(100% + 21px);
+        max-width: 112px;
+        padding: 5px 7px;
+        font-size: 8px;
     }
 
     .agent-nameplate {

@@ -4,6 +4,7 @@ const STATE_KEY = 'research-lab:state:v1';
 const MAX_EVENTS = 90;
 const MAX_MEMORIES = 80;
 const MAX_REPLAY_FRAMES = 48;
+const MAX_CHATS = 36;
 const MAX_PAPERS = 30;
 const PAPER_TIMEOUT_MS = 6500;
 
@@ -227,6 +228,16 @@ const schedulePlans = {
     pipette: ['Sample relay', 'Timestamp cleanup', 'Replay capture'],
 };
 
+const routeStations = [
+    'Central Sample Rail',
+    'Encapsulation Bench',
+    'Coffee Matrix Bar',
+    'Sensory Tongue Lab',
+    'Absorption Evidence Desk',
+    'Claims Gate',
+    'Pilot Mixer',
+];
+
 const collaboratorByMetric = {
     dissolutionSpeed: 'mira',
     tastePreservation: 'ava',
@@ -236,6 +247,37 @@ const collaboratorByMetric = {
     heatStability: 'jules',
     manufacturability: 'mira',
     regulatorySafety: 'max',
+};
+
+const chatScripts = {
+    'theo:mira': [
+        'I can see less grit when the carrier wets before the crema breaks.',
+        'Good. I will keep the ratio below the clumping threshold.',
+    ],
+    'ava:theo': [
+        'The coffee aroma survives, but the finish is still too long.',
+        'I will rerun it hotter and watch the acidity drift.',
+    ],
+    'max:nina': [
+        'The monohydrate evidence is solid; the delivery claim is still internal.',
+        'Then no public absorption language until direct comparative data exists.',
+    ],
+    'jules:pipette': [
+        'Send the heated sample through the batch bay before it cools.',
+        'Sample routed. Timestamp, temperature, and batch ID are attached.',
+    ],
+    'ava:pipette': [
+        'Bring me the sample with the highest tongue-cleanliness score.',
+        'Routing the cleanest cup to the sensory booths now.',
+    ],
+    'mira:jules': [
+        'This screen only matters if manufacturing can dose it evenly.',
+        'I will flag flow risk before we scale anything.',
+    ],
+    'nina:pipette': [
+        'Tag unsupported conclusions before they enter the feed.',
+        'Every hypothesis is labelled before it leaves the rail.',
+    ],
 };
 
 const initialFormulas = [
@@ -346,6 +388,14 @@ function planForScientist(scientistId, labClock) {
     return plan[labClock % plan.length];
 }
 
+function nextLocationForScientist(scientist, labClock, isActive) {
+    if (isActive) return scientist.station;
+    const index = (labClock + scientist.id.length + scientist.station.length) % routeStations.length;
+    const candidate = routeStations[index];
+    if (candidate !== scientist.station) return candidate;
+    return routeStations[(index + 2) % routeStations.length];
+}
+
 function createAgentStates(labClock = 0, activeScientistId = 'mira') {
     return scientists.map(scientist => {
         const isActive = scientist.id === activeScientistId;
@@ -362,7 +412,7 @@ function createAgentStates(labClock = 0, activeScientistId = 'mira') {
                         : 'observing',
             currentPlan: planForScientist(scientist.id, labClock),
             currentAction: isActive ? 'executing active experiment' : 'observing and retrieving',
-            nextLocation: scientist.station,
+            nextLocation: nextLocationForScientist(scientist, labClock, isActive),
             needs: signal,
             reflection: `${scientist.name} is balancing ${planForScientist(scientist.id, labClock).toLowerCase()} against evidence-gated claims.`,
         };
@@ -437,6 +487,37 @@ function createReplayFrames(startedAt) {
     ];
 }
 
+function normalizePair(a, b) {
+    return [a, b].sort().join(':');
+}
+
+function buildChatTurn(fromId, toId, labClock, timestamp, topic) {
+    const pairKey = normalizePair(fromId, toId);
+    const script = chatScripts[pairKey] || [
+        'Can you cross-check this observation against your station data?',
+        'Yes. I will compare it with the latest memory stream before the next tick.',
+    ];
+    const firstSpeaker = pairKey.split(':')[0];
+    const ordered = firstSpeaker === fromId ? script : [...script].reverse();
+    return {
+        id: `chat-${labClock}-${fromId}-${toId}-${Date.now()}`,
+        timestamp,
+        from: fromId,
+        to: toId,
+        topic,
+        lines: [
+            {
+                speakerId: fromId,
+                text: ordered[labClock % ordered.length],
+            },
+            {
+                speakerId: toId,
+                text: ordered[(labClock + 1) % ordered.length],
+            },
+        ],
+    };
+}
+
 function buildReflection(scientist, memories, labClock) {
     const recent = (memories || []).filter(memory => memory.scientistId === scientist.id).slice(0, 3);
     if (!recent.length) return null;
@@ -483,6 +564,9 @@ function migrateState(state) {
     if (!state || typeof state !== 'object') return createInitialState();
     const events = Array.isArray(state.events) ? state.events : [];
     const activeScientistId = state.activeExperiment?.scientistId || 'mira';
+    const socialGraph = state.socialGraph || createSocialGraph(state.startedAt || nowIso());
+    const primaryEdge = socialGraph[0] || { from: 'mira', to: 'theo', topic: 'boot sequence' };
+    const timestamp = state.updatedAt || state.startedAt || nowIso();
     return {
         ...state,
         version: 2,
@@ -494,7 +578,20 @@ function migrateState(state) {
         cognition: state.cognition || cognitionBlueprint,
         environmentModules: state.environmentModules || labEnvironmentModules,
         agentStates: state.agentStates || createAgentStates(state.labClock || 0, activeScientistId),
-        socialGraph: state.socialGraph || createSocialGraph(state.startedAt || nowIso()),
+        socialGraph,
+        chatMessages: (
+            state.chatMessages?.length
+                ? state.chatMessages
+                : [
+                      buildChatTurn(
+                          primaryEdge.from,
+                          primaryEdge.to,
+                          state.labClock || 0,
+                          timestamp,
+                          primaryEdge.topic
+                      ),
+                  ]
+        ).slice(0, MAX_CHATS),
         memoryStream: (state.memoryStream || createMemoryStream(events)).slice(0, MAX_MEMORIES),
         replayFrames:
             state.replayFrames ||
@@ -558,6 +655,15 @@ function createInitialState() {
         environmentModules: labEnvironmentModules,
         agentStates: createAgentStates(0, 'mira'),
         socialGraph: createSocialGraph(startedAt),
+        chatMessages: [
+            buildChatTurn(
+                'mira',
+                'theo',
+                0,
+                startedAt,
+                'control formula and coffee matrix alignment'
+            ),
+        ],
         memoryStream: createMemoryStream(events),
         replayFrames: createReplayFrames(startedAt),
         papers: [],
@@ -672,6 +778,14 @@ async function advanceLabState(reason = 'scheduled') {
     const events = [event, ...(reflectionEvent ? [reflectionEvent] : []), ...(state.events || [])];
     const progress = 18 + ((labClock * 17) % 76);
     const timestamp = event.timestamp;
+    const collaboratorId = collaboratorByMetric[template.metric] || 'pipette';
+    const chatTurn = buildChatTurn(
+        template.scientistId,
+        collaboratorId,
+        labClock,
+        timestamp,
+        `${template.kind.toLowerCase()} for ${updatedFormula.id}`
+    );
 
     return saveState({
         ...state,
@@ -697,6 +811,7 @@ async function advanceLabState(reason = 'scheduled') {
                 : agentState
         ),
         socialGraph: updateSocialGraph(state.socialGraph, template, timestamp),
+        chatMessages: [chatTurn, ...(state.chatMessages || [])].slice(0, MAX_CHATS),
         memoryStream: reflectionMemories,
         replayFrames: [
             {

@@ -26,6 +26,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-17 | Research Lab Movement and Chat
+
+**Decision**: Add deterministic scientist movement routes and live chat turns between collaborating scientists.
+
+**Rationale**: The lab needs to show agents living in the world, not only standing in rooms. Conversations make handoffs, claims checks, and sample routing visible in the map itself.
+
+**Impact**: `api/_lib/research-lab-state.js` emits `chatMessages`; `js/research-lab.js` renders chat bubbles and route variables; `css/research-lab.css` animates travel and chat pop-in states.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).

@@ -36,6 +36,8 @@
         'Central Sample Rail': { x: 50, y: 52 },
     };
 
+    const routeStations = Object.keys(stationCoordinates);
+
     const fallbackState = {
         version: 1,
         labClock: 0,
@@ -175,6 +177,7 @@
         },
         agentStates: [],
         socialGraph: [],
+        chatMessages: [],
         memoryStream: [],
         replayFrames: [],
     };
@@ -258,6 +261,11 @@
         if (!scientist) return null;
         const active = state.data.activeExperiment?.scientistId === scientist.id;
         const seed = Number(state.data.labClock || 0) + index + scientist.id.length;
+        const routeIndex = (seed + scientist.station.length) % routeStations.length;
+        const routeStation =
+            routeStations[routeIndex] === scientist.station
+                ? routeStations[(routeIndex + 2) % routeStations.length]
+                : routeStations[routeIndex];
         return {
             id: scientist.id,
             mood: active ? 'locked-in' : 'observing',
@@ -265,7 +273,7 @@
                 ? state.data.activeExperiment?.kind || 'Active experiment'
                 : 'retrieve relevant memories',
             currentAction: active ? 'executing active experiment' : 'observing lab state',
-            nextLocation: scientist.station,
+            nextLocation: active ? scientist.station : routeStation,
             needs: {
                 focus: Math.min(100, 58 + (active ? 18 : 0) + (seed % 17)),
                 energy: Math.max(38, 76 - (seed % 19)),
@@ -324,6 +332,17 @@
         return { x, y, home, destination };
     }
 
+    function activeChatFor(scientistId) {
+        return (state.data.chatMessages || []).find(
+            chat => chat.from === scientistId || chat.to === scientistId
+        );
+    }
+
+    function chatLineFor(scientistId, chat) {
+        if (!chat) return null;
+        return (chat.lines || []).find(line => line.speakerId === scientistId) || null;
+    }
+
     function renderScientists() {
         const scientists = state.data.scientists || [];
         els.agentCount.textContent = String(scientists.length);
@@ -360,11 +379,18 @@
                 const y = point.y;
                 const isActive = active.scientistId === scientist.id;
                 const plan = agentState.currentPlan || active.kind || 'observing';
+                const chat = activeChatFor(scientist.id);
+                const chatLine = chatLineFor(scientist.id, chat);
+                const chatWith =
+                    chat && chat.from === scientist.id ? shortName(chat.to) : shortName(chat?.from);
+                const routeX = (point.destination.x - point.home.x) * 7.2;
+                const routeY = (point.destination.y - point.home.y) * 4.9;
+                const routeLength = Math.max(72, Math.min(190, Math.hypot(routeX, routeY)));
                 return `
                     <span
-                        class="world-agent sandbox-agent ${spriteClass(scientist.id)}${isActive ? ' is-active' : ''}"
+                        class="world-agent sandbox-agent ${spriteClass(scientist.id)}${isActive ? ' is-active' : ''}${chatLine ? ' is-chatting' : ''}"
                         data-name="${escapeHtml(scientist.name)}"
-                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; --home-x: ${point.home.x}; --home-y: ${point.home.y}; --dest-x: ${point.destination.x}; --dest-y: ${point.destination.y}; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
+                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; --home-x: ${point.home.x}; --home-y: ${point.home.y}; --dest-x: ${point.destination.x}; --dest-y: ${point.destination.y}; --route-x: ${routeX}px; --route-y: ${routeY}px; --route-length: ${routeLength}px; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
                     >
                         <span class="agent-route"></span>
                         <span class="agent-shadow"></span>
@@ -372,6 +398,11 @@
                         <span class="agent-pin">${escapeHtml(initials(scientist.name))}</span>
                         <span class="agent-nameplate">${escapeHtml(shortName(scientist.id))}</span>
                         <span class="agent-thought">${escapeHtml(plan)}</span>
+                        ${
+                            chatLine
+                                ? `<span class="agent-chat"><strong>${escapeHtml(chatWith)}</strong>${escapeHtml(chatLine.text)}</span>`
+                                : ''
+                        }
                     </span>
                 `;
             })
@@ -692,14 +723,41 @@
             evidence: [latestEvent.id],
         };
         data.memoryStream = [localMemory, ...(data.memoryStream || [])].slice(0, 80);
+        const chatTarget = scientist?.id === 'pipette' ? 'mira' : 'pipette';
+        data.chatMessages = [
+            {
+                id: `local-chat-${Date.now()}`,
+                timestamp: data.updatedAt,
+                from: scientist?.id,
+                to: chatTarget,
+                topic: `${data.activeExperiment.kind} handoff`,
+                lines: [
+                    {
+                        speakerId: scientist?.id,
+                        text: 'Can you route this result to the next station?',
+                    },
+                    {
+                        speakerId: chatTarget,
+                        text: 'Routing it now with the evidence label attached.',
+                    },
+                ],
+            },
+            ...(data.chatMessages || []),
+        ].slice(0, 36);
         data.agentStates = (data.scientists || []).map(agent => {
             const isActive = agent.id === scientist?.id;
+            const routeIndex =
+                (state.localTick + agent.id.length + agent.station.length) % routeStations.length;
+            const routeStation =
+                routeStations[routeIndex] === agent.station
+                    ? routeStations[(routeIndex + 2) % routeStations.length]
+                    : routeStations[routeIndex];
             return {
                 id: agent.id,
                 mood: isActive ? 'locked-in' : 'observing',
                 currentPlan: isActive ? data.activeExperiment.kind : 'retrieve relevant memories',
                 currentAction: isActive ? 'executing local experiment' : 'observing lab state',
-                nextLocation: agent.station,
+                nextLocation: isActive ? agent.station : routeStation,
                 needs: {
                     focus: Math.min(100, 62 + (isActive ? 18 : 0) + ((state.localTick + agent.id.length) % 12)),
                     energy: Math.max(35, 76 - ((state.localTick + agent.id.length) % 18)),
