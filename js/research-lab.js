@@ -299,6 +299,10 @@
         return stationCoordinates[station] || fallback || { x: 50, y: 50 };
     }
 
+    function visibleStationName(station) {
+        return station === 'Central Table' ? 'Central Sample Rail' : station;
+    }
+
     function agentMapPoint(scientist, agentState, index) {
         const active = state.data.activeExperiment || {};
         const destination = stationPoint(
@@ -376,13 +380,13 @@
         document.querySelectorAll('.station').forEach(station => {
             station.classList.toggle(
                 'is-active',
-                station.getAttribute('data-station') === active.station
+                station.getAttribute('data-station') === visibleStationName(active.station)
             );
         });
         document.querySelectorAll('.map-room').forEach(room => {
             room.classList.toggle(
                 'is-active',
-                room.getAttribute('data-station') === active.station
+                room.getAttribute('data-station') === visibleStationName(active.station)
             );
         });
     }
