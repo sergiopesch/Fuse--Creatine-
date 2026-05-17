@@ -191,11 +191,5 @@
       "maxDuration": 15,
       "memory": 1024
     }
-  },
-  "crons": [
-    {
-      "path": "/api/research-lab-tick",
-      "schedule": "0 * * * *"
-    }
-  ]
+  }
 }

@@ -491,6 +491,19 @@ body::before {
     transform: scale(0.98);
 }
 
+.btn-lab {
+    border-color: rgba(68, 215, 182, 0.55);
+    background: rgba(68, 215, 182, 0.08);
+    color: var(--white);
+    text-decoration: none;
+}
+
+.btn-lab:hover {
+    border-color: #44d7b6;
+    background: rgba(68, 215, 182, 0.14);
+    box-shadow: 0 16px 32px rgba(68, 215, 182, 0.16);
+}
+
 /* Sections */
 section {
     padding: 7rem 5%;
