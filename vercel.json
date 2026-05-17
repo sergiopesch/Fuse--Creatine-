@@ -155,11 +155,7 @@
     },
     {
       "source": "/api/research-lab",
-      "destination": "/api/research-lab"
-    },
-    {
-      "source": "/api/research-lab-tick",
-      "destination": "/api/research-lab-tick"
+      "destination": "/api/orchestrator?__fuseRoute=research-lab"
     },
     {
       "source": "/api/passkey-register",
