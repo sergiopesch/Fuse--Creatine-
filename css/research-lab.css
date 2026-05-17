@@ -1882,6 +1882,10 @@ body.research-lab-page {
         font-size: 8px;
     }
 
+    .sandbox-agent.is-chatting:not(.is-active) .agent-chat {
+        display: none;
+    }
+
     .agent-nameplate {
         bottom: -16px;
         font-size: 8px;
