@@ -11,6 +11,13 @@
     --lab-blue: #8fb8ff;
     --lab-violet: #b890ff;
     --lab-lime: #e2f06f;
+    --room-encapsulation-color: var(--lab-red);
+    --room-coffee-color: #c58b59;
+    --room-sensory-color: var(--lab-amber);
+    --room-absorption-color: var(--lab-cyan);
+    --room-claims-color: var(--lab-blue);
+    --room-pilot-color: var(--lab-violet);
+    --room-rail-color: var(--lab-lime);
     --lab-header-height: 72px;
 }
 
@@ -633,7 +640,7 @@ body.research-lab-page {
 }
 
 .room-encapsulation {
-    --room-color: var(--lab-red);
+    --room-color: var(--room-encapsulation-color);
     left: 4%;
     top: 10%;
     width: 30%;
@@ -641,7 +648,7 @@ body.research-lab-page {
 }
 
 .room-coffee {
-    --room-color: #c58b59;
+    --room-color: var(--room-coffee-color);
     left: 39%;
     top: 8%;
     width: 24%;
@@ -649,7 +656,7 @@ body.research-lab-page {
 }
 
 .room-sensory {
-    --room-color: var(--lab-amber);
+    --room-color: var(--room-sensory-color);
     right: 5%;
     bottom: 7%;
     width: 28%;
@@ -657,7 +664,7 @@ body.research-lab-page {
 }
 
 .room-absorption {
-    --room-color: var(--lab-cyan);
+    --room-color: var(--room-absorption-color);
     left: 6%;
     bottom: 9%;
     width: 26%;
@@ -665,7 +672,7 @@ body.research-lab-page {
 }
 
 .room-claims {
-    --room-color: var(--lab-blue);
+    --room-color: var(--room-claims-color);
     right: 4%;
     top: 8%;
     width: 26%;
@@ -673,7 +680,7 @@ body.research-lab-page {
 }
 
 .room-pilot {
-    --room-color: var(--lab-violet);
+    --room-color: var(--room-pilot-color);
     left: 33%;
     bottom: 9%;
     width: 24%;
@@ -681,7 +688,7 @@ body.research-lab-page {
 }
 
 .room-rail {
-    --room-color: var(--lab-lime);
+    --room-color: var(--room-rail-color);
     left: 37%;
     top: 38%;
     width: 24%;
@@ -843,43 +850,43 @@ body.research-lab-page {
 }
 
 .station-encapsulation {
-    --station-color: var(--lab-red);
+    --station-color: var(--room-encapsulation-color);
     left: 7%;
     top: 45%;
 }
 
 .station-coffee {
-    --station-color: #c58b59;
+    --station-color: var(--room-coffee-color);
     right: 10%;
     top: 18%;
 }
 
 .station-sensory {
-    --station-color: var(--lab-amber);
+    --station-color: var(--room-sensory-color);
     right: 18%;
     bottom: 12%;
 }
 
 .station-absorption {
-    --station-color: var(--lab-cyan);
+    --station-color: var(--room-absorption-color);
     left: 32%;
     top: 14%;
 }
 
 .station-claims {
-    --station-color: var(--lab-blue);
+    --station-color: var(--room-claims-color);
     right: 4%;
     top: 48%;
 }
 
 .station-pilot {
-    --station-color: var(--lab-violet);
+    --station-color: var(--room-pilot-color);
     left: 15%;
     bottom: 9%;
 }
 
 .station-rail {
-    --station-color: var(--lab-lime);
+    --station-color: var(--room-rail-color);
     left: 43%;
     top: 58%;
 }

@@ -26,15 +26,22 @@
 
     const scientistSpriteOrder = ['mira', 'theo', 'ava', 'max', 'nina', 'jules', 'pipette'];
 
-    const stationCoordinates = {
-        'Encapsulation Bench': { x: 20, y: 24 },
-        'Coffee Matrix Bar': { x: 51, y: 20 },
-        'Sensory Tongue Lab': { x: 75, y: 72 },
-        'Absorption Evidence Desk': { x: 21, y: 74 },
-        'Claims Gate': { x: 78, y: 24 },
-        'Pilot Mixer': { x: 45, y: 73 },
-        'Central Sample Rail': { x: 50, y: 51 },
+    const stationTheme = {
+        'Encapsulation Bench': { x: 20, y: 24, color: '#ff3b30' },
+        'Coffee Matrix Bar': { x: 51, y: 20, color: '#c58b59' },
+        'Sensory Tongue Lab': { x: 75, y: 72, color: '#f5b56b' },
+        'Absorption Evidence Desk': { x: 21, y: 74, color: '#44d7b6' },
+        'Claims Gate': { x: 78, y: 24, color: '#8fb8ff' },
+        'Pilot Mixer': { x: 45, y: 73, color: '#b890ff' },
+        'Central Sample Rail': { x: 50, y: 51, color: '#e2f06f' },
     };
+
+    const stationCoordinates = Object.fromEntries(
+        Object.entries(stationTheme).map(([station, theme]) => [
+            station,
+            { x: theme.x, y: theme.y },
+        ])
+    );
 
     const routeStations = Object.keys(stationCoordinates);
 
@@ -311,6 +318,10 @@
         return station === 'Central Table' ? 'Central Sample Rail' : station;
     }
 
+    function stationColor(station, fallback = '#44d7b6') {
+        return stationTheme[visibleStationName(station)]?.color || fallback;
+    }
+
     function agentMapPoint(scientist, agentState, index) {
         const active = state.data.activeExperiment || {};
         const destination = stationPoint(
@@ -349,8 +360,9 @@
         els.scientistList.innerHTML = scientists
             .map(scientist => {
                 const selected = scientist.id === state.selectedScientistId ? ' is-selected' : '';
+                const color = stationColor(scientist.station, scientist.color);
                 return `
-                    <button class="scientist-card${selected}" type="button" data-scientist="${escapeHtml(scientist.id)}" style="--agent-color: ${escapeHtml(scientist.color)}">
+                    <button class="scientist-card${selected}" type="button" data-scientist="${escapeHtml(scientist.id)}" style="--agent-color: ${escapeHtml(color)}">
                         <span class="scientist-avatar scientist-portrait ${spriteClass(scientist.id)}" aria-hidden="true"></span>
                         <span>
                             <strong>${escapeHtml(scientist.name)}</strong>
@@ -381,6 +393,7 @@
                 const plan = agentState.currentPlan || active.kind || 'observing';
                 const chat = activeChatFor(scientist.id);
                 const chatLine = chatLineFor(scientist.id, chat);
+                const color = stationColor(scientist.station, scientist.color);
                 const chatWith =
                     chat && chat.from === scientist.id ? shortName(chat.to) : shortName(chat?.from);
                 const routeX = (point.destination.x - point.home.x) * 7.2;
@@ -390,7 +403,7 @@
                     <span
                         class="world-agent sandbox-agent ${spriteClass(scientist.id)}${isActive ? ' is-active' : ''}${chatLine ? ' is-chatting' : ''}"
                         data-name="${escapeHtml(scientist.name)}"
-                        style="--agent-color: ${escapeHtml(scientist.color)}; --agent-x: ${x}; --agent-y: ${y}; --home-x: ${point.home.x}; --home-y: ${point.home.y}; --dest-x: ${point.destination.x}; --dest-y: ${point.destination.y}; --route-x: ${routeX}px; --route-y: ${routeY}px; --route-length: ${routeLength}px; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
+                        style="--agent-color: ${escapeHtml(color)}; --agent-x: ${x}; --agent-y: ${y}; --home-x: ${point.home.x}; --home-y: ${point.home.y}; --dest-x: ${point.destination.x}; --dest-y: ${point.destination.y}; --route-x: ${routeX}px; --route-y: ${routeY}px; --route-length: ${routeLength}px; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
                     >
                         <span class="agent-route"></span>
                         <span class="agent-shadow"></span>
@@ -539,8 +552,9 @@
                   .slice(0, 5)
                   .map(agentState => {
                       const scientist = getScientist(agentState.id);
+                      const color = stationColor(scientist?.station, scientist?.color);
                       return `
-                        <article class="plan-item" style="--agent-color: ${escapeHtml(scientist?.color || '#44d7b6')}">
+                        <article class="plan-item" style="--agent-color: ${escapeHtml(color)}">
                             <strong>${escapeHtml(shortName(agentState.id))}</strong>
                             <span>${escapeHtml(agentState.currentPlan || 'Observing lab')}</span>
                             <small>${escapeHtml(agentState.mood || 'observing')}</small>
@@ -598,13 +612,14 @@
             return;
         }
         const agentState = getAgentState(scientist.id) || {};
+        const color = stationColor(scientist.station, scientist.color);
         const needs = agentState.needs || {};
         const memories = (state.data.memoryStream || [])
             .filter(memory => memory.scientistId === scientist.id)
             .slice(0, 2);
         els.selectedStation.textContent = scientist.station;
         els.selectedScientist.innerHTML = `
-            <div class="selected-visual" style="--agent-color: ${escapeHtml(scientist.color)}">
+            <div class="selected-visual" style="--agent-color: ${escapeHtml(color)}">
                 <span class="selected-avatar selected-sprite ${spriteClass(scientist.id)}" aria-hidden="true"></span>
             </div>
             <h2>${escapeHtml(scientist.name)}</h2>

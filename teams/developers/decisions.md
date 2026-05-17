@@ -56,6 +56,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-17 | Research Lab Room Palette Consistency
+
+**Decision**: Consolidate room identity into a consistent station palette and exact station names across the lab map and agent UI.
+
+**Rationale**: The sandbox needs stable visual language: an agent attached to a room should keep that room's color everywhere, and labels should not switch between alternate names like “Evidence Archive” and “Absorption Evidence Desk.”
+
+**Impact**: `css/research-lab.css` defines room color tokens; `research-lab.html` uses exact station labels; `js/research-lab.js` derives agent, plan, and selected-scientist colors from the same station theme.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).
