@@ -24,6 +24,7 @@ Website live at fuse-creatine.vercel.app. Agent orchestration system functional 
 - ✅ Research Lab world reworked into Generative Agents-style sandbox map with rooms, corridors, route traces, nameplates, and active action bubbles
 - ✅ Research Lab agents now animate along room routes and display live chat bubbles between collaborating scientists
 - ✅ Research Lab reframed as a top-down sandbox-first view with dashboard panels pushed below the map and mobile-fit room layout
+- ✅ Research Lab visual hierarchy updated to use the photoreal/isometric lab render as the primary sandbox floor, with schematic overlays reduced to subtle labels and mobile clutter trimmed
 - ✅ Full responsive redesign (v2.5.0)
 - ✅ Biometric authentication working
 - ✅ Agent Command Center functional

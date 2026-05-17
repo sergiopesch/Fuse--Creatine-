@@ -475,10 +475,8 @@ body.research-lab-page {
     min-height: min(760px, calc(100vh - 230px));
     aspect-ratio: 16 / 9;
     background:
-        radial-gradient(circle at 50% 53%, rgba(68, 215, 182, 0.08), transparent 34%),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%) 0 0 / 28px 28px,
-        linear-gradient(315deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%) 0 0 / 28px 28px,
-        #070908;
+        radial-gradient(circle at 50% 52%, rgba(68, 215, 182, 0.08), transparent 38%),
+        #050607;
 }
 
 .lab-layer,
@@ -499,7 +497,7 @@ body.research-lab-page {
 .lab-layer-wall {
     background-image: url('../assets/lab/lab-parallax-wall.png');
     z-index: 0;
-    opacity: 0.06;
+    opacity: 0;
     transform: scale(1.05);
     filter: saturate(1.08) contrast(1.08) brightness(0.9);
 }
@@ -507,30 +505,29 @@ body.research-lab-page {
 .lab-layer-master {
     background-image: url('../assets/lab/lab-master-world.png');
     z-index: 1;
-    opacity: 0.05;
+    opacity: 0;
     filter: saturate(1.12) contrast(1.06) brightness(0.78);
 }
 
 .lab-layer-floor {
-    inset: auto 0 0;
-    height: 76%;
+    inset: 0;
+    height: auto;
     z-index: 2;
     background-image: url('../assets/lab/lab-walkable-floor.png');
-    background-position: center bottom;
-    opacity: 0.04;
-    mix-blend-mode: screen;
-    filter: saturate(1.05) contrast(1.04) brightness(0.72);
-    transform: perspective(900px) rotateX(13deg) scale(1.04);
-    transform-origin: 50% 100%;
+    background-position: center;
+    opacity: 0.96;
+    mix-blend-mode: normal;
+    filter: saturate(1.08) contrast(1.04) brightness(0.98);
+    transform: none;
+    transform-origin: center;
 }
 
 .world-depth-mask {
     inset: 0;
     z-index: 3;
     background:
-        radial-gradient(circle at 50% 52%, rgba(68, 215, 182, 0.08), transparent 34%),
-        linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 28%, rgba(0, 0, 0, 0.32)),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.32), transparent 20%, transparent 80%, rgba(0, 0, 0, 0.34));
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 22%, rgba(0, 0, 0, 0.2)),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.22), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.24));
 }
 
 .world-grid-lines {
@@ -543,7 +540,7 @@ body.research-lab-page {
     background-size: 62px 62px;
     transform: none;
     transform-origin: center;
-    opacity: 0.28;
+    opacity: 0.06;
 }
 
 .sandbox-map {
@@ -552,24 +549,17 @@ body.research-lab-page {
     z-index: 6;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    background:
-        linear-gradient(90deg, transparent 49%, rgba(68, 215, 182, 0.11) 49% 51%, transparent 51%),
-        linear-gradient(180deg, transparent 49%, rgba(68, 215, 182, 0.09) 49% 51%, transparent 51%),
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 44px),
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 44px),
-        rgba(7, 11, 11, 0.9);
+    background: transparent;
     box-shadow:
         inset 0 0 0 1px rgba(68, 215, 182, 0.08),
-        inset 0 0 70px rgba(0, 0, 0, 0.55);
+        inset 0 0 46px rgba(0, 0, 0, 0.28);
 }
 
 .map-corridor {
     position: absolute;
     z-index: 1;
-    border: 1px solid rgba(68, 215, 182, 0.16);
-    background:
-        repeating-linear-gradient(90deg, rgba(68, 215, 182, 0.08) 0 10px, transparent 10px 20px),
-        rgba(255, 255, 255, 0.045);
+    border: 0;
+    background: transparent;
 }
 
 .corridor-main {
@@ -593,114 +583,115 @@ body.research-lab-page {
     flex-direction: column;
     justify-content: space-between;
     gap: 8px;
-    padding: 13px;
-    border: 2px solid color-mix(in srgb, var(--room-color) 34%, rgba(255, 255, 255, 0.12));
-    border-radius: 3px;
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--room-color) 12%, transparent), transparent),
-        rgba(13, 17, 18, 0.94);
-    box-shadow:
-        inset 0 0 32px rgba(0, 0, 0, 0.32),
-        0 12px 22px rgba(0, 0, 0, 0.32);
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--room-color) 18%, transparent);
+    border-radius: 6px;
+    background: rgba(5, 7, 8, 0.03);
+    box-shadow: none;
 }
 
 .map-room::after {
-    content: '';
-    position: absolute;
-    inset: 10px;
-    border: 1px dashed color-mix(in srgb, var(--room-color) 28%, transparent);
-    opacity: 0.56;
-    pointer-events: none;
+    display: none;
 }
 
 .map-room.is-active {
     border-color: color-mix(in srgb, var(--room-color) 78%, white);
+    background: color-mix(in srgb, var(--room-color) 8%, transparent);
     box-shadow:
-        inset 0 0 34px color-mix(in srgb, var(--room-color) 16%, transparent),
-        0 0 34px color-mix(in srgb, var(--room-color) 35%, transparent);
+        inset 0 0 28px color-mix(in srgb, var(--room-color) 10%, transparent),
+        0 0 28px color-mix(in srgb, var(--room-color) 28%, transparent);
 }
 
 .map-room span {
     position: relative;
     z-index: 1;
-    color: var(--lab-text);
-    font-size: 12px;
+    width: fit-content;
+    max-width: min(100%, 178px);
+    padding: 5px 7px;
+    border: 1px solid color-mix(in srgb, var(--room-color) 48%, rgba(255, 255, 255, 0.16));
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.62);
+    color: #ffffff;
+    font-size: 11px;
     font-weight: 900;
     line-height: 1.15;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
 }
 
 .map-room small {
     position: relative;
     z-index: 1;
-    color: var(--lab-muted);
-    font-size: 10px;
+    width: fit-content;
+    max-width: min(100%, 160px);
+    padding: 3px 5px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.42);
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 9px;
     font-family: 'JetBrains Mono', monospace;
     text-transform: uppercase;
 }
 
 .room-encapsulation {
     --room-color: var(--lab-red);
-    left: 5%;
-    top: 34%;
-    width: 27%;
-    height: 27%;
+    left: 4%;
+    top: 10%;
+    width: 30%;
+    height: 28%;
 }
 
 .room-coffee {
     --room-color: #c58b59;
-    right: 6%;
+    left: 39%;
     top: 8%;
-    width: 27%;
-    height: 25%;
+    width: 24%;
+    height: 23%;
 }
 
 .room-sensory {
     --room-color: var(--lab-amber);
-    right: 9%;
-    bottom: 8%;
-    width: 27%;
-    height: 25%;
+    right: 5%;
+    bottom: 7%;
+    width: 28%;
+    height: 28%;
 }
 
 .room-absorption {
     --room-color: var(--lab-cyan);
-    left: 27%;
-    top: 7%;
-    width: 27%;
-    height: 23%;
+    left: 6%;
+    bottom: 9%;
+    width: 26%;
+    height: 25%;
 }
 
 .room-claims {
     --room-color: var(--lab-blue);
-    right: 2%;
-    top: 38%;
-    width: 22%;
-    height: 22%;
+    right: 4%;
+    top: 8%;
+    width: 26%;
+    height: 28%;
 }
 
 .room-pilot {
     --room-color: var(--lab-violet);
-    left: 9%;
-    bottom: 7%;
-    width: 28%;
-    height: 24%;
+    left: 33%;
+    bottom: 9%;
+    width: 24%;
+    height: 22%;
 }
 
 .room-rail {
     --room-color: var(--lab-lime);
-    left: 38%;
-    top: 40%;
-    width: 27%;
-    height: 25%;
+    left: 37%;
+    top: 38%;
+    width: 24%;
+    height: 26%;
 }
 
 .map-prop {
     position: absolute;
     z-index: 3;
-    border: 1px solid rgba(255, 255, 255, 0.11);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.075);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+    display: none;
 }
 
 .prop-desk {
@@ -738,7 +729,7 @@ body.research-lab-page {
     background-repeat: no-repeat;
     background-size: 420% auto;
     mix-blend-mode: screen;
-    opacity: 0.36;
+    opacity: 0.14;
     filter: saturate(1.24);
 }
 
@@ -777,7 +768,7 @@ body.research-lab-page {
     background-repeat: no-repeat;
     background-size: 420% auto;
     filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.46));
-    opacity: 0.34;
+    opacity: 0;
 }
 
 .prop-command {
@@ -1731,53 +1722,57 @@ body.research-lab-page {
         font-size: 8px;
     }
 
+    .map-room small {
+        display: none;
+    }
+
     .room-encapsulation {
-        left: 5%;
-        top: 31%;
-        width: 34%;
+        left: 4%;
+        top: 7%;
+        width: 42%;
         height: 20%;
     }
 
     .room-coffee {
-        right: 5%;
-        top: 8%;
-        width: 35%;
-        height: 18%;
+        right: 4%;
+        top: 7%;
+        width: 42%;
+        height: 20%;
     }
 
     .room-sensory {
-        right: 5%;
-        bottom: 10%;
+        right: 4%;
+        bottom: 8%;
         width: 35%;
-        height: 19%;
+        height: 22%;
     }
 
     .room-absorption {
-        left: 6%;
-        top: 8%;
-        width: 35%;
-        height: 18%;
+        left: 4%;
+        bottom: 8%;
+        width: 34%;
+        height: 22%;
     }
 
     .room-claims {
-        right: 5%;
-        top: 34%;
-        width: 29%;
-        height: 17%;
+        right: 4%;
+        top: 31%;
+        width: 36%;
+        height: 18%;
     }
 
     .room-pilot {
-        left: 6%;
-        bottom: 10%;
-        width: 35%;
-        height: 19%;
+        left: 39%;
+        bottom: 8%;
+        width: 22%;
+        height: 22%;
     }
 
     .room-rail {
-        left: 32%;
-        top: 50%;
-        width: 36%;
-        height: 18%;
+        left: 31%;
+        top: 39%;
+        width: 38%;
+        height: 19%;
     }
 
     .corridor-main {
@@ -1875,6 +1870,30 @@ body.research-lab-page {
         display: none;
     }
 
+    .map-room {
+        border-color: transparent;
+        background: transparent;
+    }
+
+    .map-room span,
+    .agent-nameplate {
+        display: none;
+    }
+
+    .map-room.is-active {
+        border-color: color-mix(in srgb, var(--room-color) 62%, transparent);
+        background: color-mix(in srgb, var(--room-color) 7%, transparent);
+    }
+
+    .map-room.is-active span {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        display: block;
+        max-width: 118px;
+        font-size: 9px;
+    }
+
     .agent-chat {
         bottom: calc(100% + 18px);
         max-width: 104px;
@@ -1886,7 +1905,8 @@ body.research-lab-page {
         display: none;
     }
 
-    .agent-nameplate {
+    .sandbox-agent.is-active .agent-nameplate {
+        display: block;
         bottom: -16px;
         font-size: 8px;
     }

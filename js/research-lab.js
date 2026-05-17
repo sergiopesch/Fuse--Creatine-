@@ -27,13 +27,13 @@
     const scientistSpriteOrder = ['mira', 'theo', 'ava', 'max', 'nina', 'jules', 'pipette'];
 
     const stationCoordinates = {
-        'Encapsulation Bench': { x: 22, y: 47 },
-        'Coffee Matrix Bar': { x: 73, y: 29 },
-        'Sensory Tongue Lab': { x: 69, y: 70 },
-        'Absorption Evidence Desk': { x: 39, y: 24 },
-        'Claims Gate': { x: 84, y: 53 },
-        'Pilot Mixer': { x: 28, y: 75 },
-        'Central Sample Rail': { x: 50, y: 52 },
+        'Encapsulation Bench': { x: 20, y: 24 },
+        'Coffee Matrix Bar': { x: 51, y: 20 },
+        'Sensory Tongue Lab': { x: 75, y: 72 },
+        'Absorption Evidence Desk': { x: 21, y: 74 },
+        'Claims Gate': { x: 78, y: 24 },
+        'Pilot Mixer': { x: 45, y: 73 },
+        'Central Sample Rail': { x: 50, y: 51 },
     };
 
     const routeStations = Object.keys(stationCoordinates);

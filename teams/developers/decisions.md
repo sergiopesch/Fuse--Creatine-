@@ -46,6 +46,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-17 | Research Lab Photoreal Floor
+
+**Decision**: Make the existing photoreal/isometric lab render the primary sandbox floor and reduce schematic room overlays to transparent interaction zones.
+
+**Rationale**: The desired reference is an open cutaway lab, not a neon blueprint. The raster lab scene provides the correct read immediately, while lightweight labels preserve station identity without obscuring the environment.
+
+**Impact**: `css/research-lab.css` now renders `lab-walkable-floor.png` at high opacity, hides competing schematic textures, and trims labels on mobile; `js/research-lab.js` aligns station coordinates to the new visual floor.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).
