@@ -48,8 +48,8 @@
             </div>
         </header>
 
-        <main class="lab-shell" id="lab-main">
-            <section class="lab-intro" aria-label="Research lab mission">
+        <main class="lab-shell sandbox-shell" id="lab-main">
+            <section class="lab-intro sandbox-intro" aria-label="Research lab mission">
                 <div>
                     <p class="lab-kicker">Live world</p>
                     <h1>FUSE Research Lab Live</h1>
@@ -66,7 +66,7 @@
             </section>
 
             <section class="lab-grid" aria-label="Research lab simulation">
-                <aside class="scientist-panel" aria-label="Scientist agents">
+                <aside class="scientist-panel sandbox-roster" aria-label="Scientist agents">
                     <div class="panel-heading">
                         <span>Scientist Agents</span>
                         <strong id="agentCount">0</strong>
@@ -74,7 +74,7 @@
                     <div class="scientist-list" id="scientistList"></div>
                 </aside>
 
-                <section class="world-panel" aria-label="Animated research lab world">
+                <section class="world-panel sandbox-stage-panel" aria-label="Top-down animated research lab sandbox">
                     <div class="world-toolbar">
                         <div>
                             <span class="mono-label">Lab clock</span>
@@ -84,7 +84,7 @@
                             <span class="mono-label">Active experiment</span>
                             <strong id="activeExperiment">Booting lab...</strong>
                         </div>
-                        <button class="icon-button" id="localTickBtn" type="button">
+                        <button class="icon-button sandbox-run-button" id="localTickBtn" type="button">
                             <span class="button-icon" aria-hidden="true">Run</span>
                             <span>Advance</span>
                         </button>

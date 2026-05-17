@@ -36,6 +36,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-17 | Research Lab Top-Down View
+
+**Decision**: Reframe the Research Lab page as a top-down sandbox-first scene instead of a dashboard with an embedded map.
+
+**Rationale**: Sergio expected the Generative Agents simulator model: the map should be the main object on screen, especially on mobile. Removing the intro from the first viewport and rendering agents as map pawns makes the world easier to understand.
+
+**Impact**: `research-lab.html` adds sandbox-specific hooks; `css/research-lab.css` promotes the map to the first screen, removes perspective-heavy character rendering, and adds mobile-specific room geometry.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).
