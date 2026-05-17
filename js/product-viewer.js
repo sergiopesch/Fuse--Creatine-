@@ -2,10 +2,41 @@
     'use strict';
 
     const viewerNodes = document.querySelectorAll('[data-product-viewer]');
-    if (!viewerNodes.length || !window.THREE) return;
+    if (!viewerNodes.length) return;
 
-    const THREE = window.THREE;
+    const THREE_SRC = 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js';
+    let THREE = window.THREE;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function markFallback() {
+        viewerNodes.forEach(node => node.classList.add('viewer-fallback'));
+    }
+
+    function loadThree() {
+        if (window.THREE) return Promise.resolve(window.THREE);
+
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            const timeout = window.setTimeout(() => {
+                script.remove();
+                reject(new Error('Three.js load timed out'));
+            }, 5000);
+
+            script.src = THREE_SRC;
+            script.async = true;
+            script.onload = () => {
+                window.clearTimeout(timeout);
+                if (window.THREE) resolve(window.THREE);
+                else reject(new Error('Three.js loaded without global THREE'));
+            };
+            script.onerror = () => {
+                window.clearTimeout(timeout);
+                reject(new Error('Three.js failed to load'));
+            };
+
+            document.head.appendChild(script);
+        });
+    }
 
     function createRoundedRectShape(width, height, radius) {
         const x = -width / 2;
@@ -142,7 +173,6 @@
         const renderer = new THREE.WebGLRenderer({
             alpha: true,
             antialias: true,
-            preserveDrawingBuffer: true,
             powerPreference: 'high-performance',
         });
         renderer.setClearColor(0x000000, 0);
@@ -260,5 +290,36 @@
         animate();
     }
 
-    viewerNodes.forEach(mountViewer);
+    function init() {
+        const start = () => {
+            loadThree()
+                .then(three => {
+                    THREE = three;
+                    viewerNodes.forEach((node, index) => {
+                        try {
+                            mountViewer(node, index);
+                        } catch (error) {
+                            console.warn(
+                                '[FUSE Product Viewer] Falling back to product image.',
+                                error
+                            );
+                            node.classList.add('viewer-fallback');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.warn('[FUSE Product Viewer] Falling back to product image.', error);
+                    markFallback();
+                });
+        };
+
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(start, { timeout: 1200 });
+        } else {
+            window.setTimeout(start, 0);
+        }
+    }
+
+    if (document.readyState === 'complete') init();
+    else window.addEventListener('load', init, { once: true });
 })();
