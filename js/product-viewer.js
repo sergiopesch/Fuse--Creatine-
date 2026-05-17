@@ -228,6 +228,9 @@
             const rect = shell.getBoundingClientRect();
             const width = Math.max(1, Math.floor(rect.width));
             const height = Math.max(1, Math.floor(rect.height));
+            const scale = width < 260 ? 0.58 : width < 340 ? 0.66 : 0.9;
+            product.scale.setScalar(scale);
+            shadow.visible = width >= 260;
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
             renderer.setSize(width, height, false);

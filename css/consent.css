@@ -117,13 +117,51 @@
 }
 
 @media (max-width: 767px) {
+    .consent-banner {
+        max-height: 44svh;
+        overflow-y: auto;
+    }
+
+    .consent-banner-content {
+        padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+        gap: 10px;
+    }
+
+    .consent-banner-title {
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .consent-banner-message {
+        font-size: 12px;
+        line-height: 1.35;
+        margin-bottom: 4px;
+    }
+
+    .consent-banner-link {
+        font-size: 12px;
+    }
+
     .consent-banner-actions {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
     }
 
     .consent-banner-actions .consent-btn {
         width: 100%;
         justify-content: center;
+        min-height: 42px;
+        padding: 9px 10px;
+        font-size: 12px;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .consent-banner-actions .consent-btn-tertiary {
+        grid-column: 1 / -1;
+        min-height: 34px;
+        padding: 6px 10px;
     }
 }
 
