@@ -255,8 +255,9 @@ body::before {
         display: flex;
         order: -1;
         margin-bottom: 2rem;
-        max-width: 280px;
-        height: 350px;
+        width: min(72vw, 380px);
+        max-width: 380px;
+        height: auto;
     }
 }
 
@@ -276,19 +277,20 @@ body::before {
     z-index: 1;
 }
 
-/* Ambient glow for hero product — enhances the red underglow effect */
+/* Ambient studio light for the hero product */
 .hero-visual-wrapper::before {
     content: '';
     position: absolute;
     inset: -18%;
     background: radial-gradient(
-        ellipse at center bottom,
-        rgba(255, 59, 48, 0.1) 0%,
-        transparent 65%
+        ellipse at center,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 59, 48, 0.04) 36%,
+        transparent 68%
     );
     pointer-events: none;
     z-index: 0;
-    opacity: 0.7;
+    opacity: 0.78;
     animation: pulse-glow 4s ease-in-out infinite;
 }
 
@@ -745,21 +747,61 @@ input[type='range'] {
     isolation: isolate;
 }
 
+.product-viewer-shell {
+    aspect-ratio: 1;
+    cursor: grab;
+    touch-action: none;
+}
+
+.product-viewer-shell:active {
+    cursor: grabbing;
+}
+
+.product-viewer-shell:focus-within {
+    outline: 1px solid rgba(255, 59, 48, 0.5);
+    outline-offset: 0.75rem;
+    border-radius: 1rem;
+}
+
+.product-viewer-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.45s var(--ease-out-expo);
+}
+
+.product-viewer-canvas canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.product-viewer-shell.viewer-ready .product-viewer-canvas {
+    opacity: 1;
+}
+
+.product-viewer-shell.viewer-ready .product-image--fallback {
+    opacity: 0;
+}
+
 .product-image {
     width: 100%;
     height: auto;
     object-fit: contain;
     position: relative;
     z-index: 2;
-    /* Depth shadow for 3D textured tablet on dark background */
-    filter: drop-shadow(0 12px 40px rgba(0, 0, 0, 0.6)) drop-shadow(0 4px 16px rgba(0, 0, 0, 0.4))
-        drop-shadow(0 0 20px rgba(255, 59, 48, 0.08));
+    filter: drop-shadow(0 28px 46px rgba(0, 0, 0, 0.72)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.46));
     will-change: transform, filter;
     transition:
         filter 0.6s var(--ease-out-expo),
         transform 0.6s var(--ease-out-expo);
     /* Floating animation */
     animation: product-float 6s ease-in-out infinite;
+}
+
+.product-image--block {
+    max-height: 620px;
 }
 
 @keyframes product-float {
@@ -772,47 +814,46 @@ input[type='range'] {
     }
 }
 
-/* Red underglow element — signature brand glow beneath the tablet */
+/* Studio contact shadow beneath the product */
 .product-glow {
     position: absolute;
-    bottom: 2%;
+    bottom: 5%;
     left: 50%;
     transform: translateX(-50%);
-    width: 70%;
-    height: 40%;
+    width: 76%;
+    height: 24%;
     background: radial-gradient(
         ellipse at center,
-        rgba(255, 59, 48, 0.4) 0%,
-        rgba(255, 59, 48, 0.22) 30%,
-        rgba(255, 59, 48, 0.1) 55%,
-        rgba(255, 59, 48, 0.03) 75%,
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 59, 48, 0.12) 24%,
+        rgba(0, 0, 0, 0.46) 56%,
         transparent 100%
     );
     z-index: 1;
     pointer-events: none;
-    filter: blur(18px);
+    filter: blur(22px);
     animation: glow-pulse 4s ease-in-out infinite;
 }
 
-/* Secondary diffused glow for broader ambient effect */
+/* Secondary diffused studio light for broader ambient depth */
 .product-image-container::after {
     content: '';
     position: absolute;
-    bottom: -8%;
+    bottom: 1%;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    height: 50%;
+    width: 86%;
+    height: 24%;
     background: radial-gradient(
         ellipse at center,
-        rgba(255, 59, 48, 0.12) 0%,
-        rgba(255, 59, 48, 0.04) 50%,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 59, 48, 0.05) 42%,
         transparent 80%
     );
     z-index: 0;
     pointer-events: none;
-    filter: blur(30px);
-    opacity: 0.8;
+    filter: blur(36px);
+    opacity: 0.72;
 }
 
 @keyframes glow-pulse {
@@ -829,8 +870,8 @@ input[type='range'] {
 
 /* Hover state — amplified glow and lift */
 .product-image-container:hover .product-image {
-    filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.65)) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.45))
-        drop-shadow(0 0 35px rgba(255, 59, 48, 0.18));
+    filter: drop-shadow(0 34px 58px rgba(0, 0, 0, 0.78)) drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5))
+        drop-shadow(0 0 26px rgba(255, 255, 255, 0.08));
     transform: translateY(-8px) scale(1.02);
     animation-play-state: paused;
 }
@@ -841,10 +882,9 @@ input[type='range'] {
     transform: translateX(-50%) scale(1.18);
     background: radial-gradient(
         ellipse at center,
-        rgba(255, 59, 48, 0.5) 0%,
-        rgba(255, 59, 48, 0.28) 30%,
-        rgba(255, 59, 48, 0.12) 55%,
-        rgba(255, 59, 48, 0.04) 75%,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 59, 48, 0.13) 28%,
+        rgba(0, 0, 0, 0.52) 60%,
         transparent 100%
     );
 }
@@ -855,14 +895,15 @@ input[type='range'] {
 
 /* Hero product sizing */
 .hero-product {
-    width: 380px;
+    width: min(44vw, 520px);
     max-width: 100%;
+    min-width: 320px;
 }
 
 /* Showcase product sizing */
 .showcase-product {
     width: 100%;
-    max-width: 460px;
+    max-width: 520px;
 }
 
 html.js .fade-in,
@@ -2158,16 +2199,16 @@ html.js .fade-in-right {
 /* --- Product Image Responsive --- */
 @media (max-width: 1024px) {
     .hero-product {
-        width: 320px;
+        width: min(72vw, 380px);
     }
 }
 
 @media (max-width: 768px) {
     .hero-product {
-        width: 260px;
+        width: min(78vw, 320px);
     }
     .showcase-product {
-        max-width: 340px;
+        max-width: min(82vw, 360px);
     }
     .product-image {
         animation-duration: 8s;

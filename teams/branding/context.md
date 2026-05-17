@@ -1,6 +1,6 @@
 # Branding Team — Current Context
 
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-05-17
 **Team Code**: BRD
 **Orchestration Mode**: manual
 
@@ -16,6 +16,8 @@ Core brand identity established. Website design live. Design system needs docume
 
 ## Recent Completions
 
+- ✅ Product block form translated into an interactive 3D website viewer
+- ✅ Product block V2 created and applied to homepage hero/product showcase (hyperrealistic standalone creatine block)
 - ✅ Website visual design (responsive)
 - ✅ Logo and color palette defined
 - ✅ Product hero imagery created
@@ -36,12 +38,12 @@ Core brand identity established. Website design live. Design system needs docume
 
 ## Brand Colors
 
-| Name | Hex | Usage |
-|------|-----|-------|
+| Name     | Hex     | Usage               |
+| -------- | ------- | ------------------- |
 | FUSE Red | #ff3b30 | Primary brand, CTAs |
-| White | #ffffff | Text, backgrounds |
-| Dark | #1a1a1a | Text, dark mode |
-| Gray | #666666 | Secondary text |
+| White    | #ffffff | Text, backgrounds   |
+| Dark     | #1a1a1a | Text, dark mode     |
+| Gray     | #666666 | Secondary text      |
 
 ## Cross-References
 

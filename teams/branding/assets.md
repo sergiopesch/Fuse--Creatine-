@@ -4,29 +4,30 @@
 
 ### Images
 
-| Asset | File | Format | Purpose |
-|-------|------|--------|---------|
-| OG Image | `assets/og-image.png` | PNG | Social sharing preview |
-| OG Image | `assets/og-image.webp` | WebP | Social sharing (optimized) |
-| Product Hero | `assets/product-hero.png` | PNG | Homepage hero section |
-| Product Hero | `assets/product-hero.webp` | WebP | Homepage hero (optimized) |
-| Product Showcase | `assets/product-showcase.png` | PNG | Product detail section |
-| Product Showcase | `assets/product-showcase.webp` | WebP | Product detail (optimized) |
-| Favicon | `assets/favicon-*.png` | PNG | Browser tab icons |
-| Apple Touch | `assets/apple-touch-icon.png` | PNG | iOS home screen |
+| Asset                   | File                                 | Format | Purpose                                                        |
+| ----------------------- | ------------------------------------ | ------ | -------------------------------------------------------------- |
+| OG Image                | `assets/og-image.png`                | PNG    | Social sharing preview                                         |
+| OG Image                | `assets/og-image.webp`               | WebP   | Social sharing (optimized)                                     |
+| Product Hero            | `assets/product-hero.png`            | PNG    | Homepage hero section                                          |
+| Product Hero            | `assets/product-hero.webp`           | WebP   | Homepage hero (optimized)                                      |
+| Product Showcase        | `assets/product-showcase.png`        | PNG    | Product detail section                                         |
+| Product Showcase        | `assets/product-showcase.webp`       | WebP   | Product detail (optimized)                                     |
+| Product Block V2 Cutout | `assets/product-block-v2-cutout.png` | PNG    | Transparent cutout used for homepage hero and product showcase |
+| Favicon                 | `assets/favicon-*.png`               | PNG    | Browser tab icons                                              |
+| Apple Touch             | `assets/apple-touch-icon.png`        | PNG    | iOS home screen                                                |
 
 ### Icons
 
-| Asset | Location | Purpose |
-|-------|----------|---------|
-| Favicon 16x16 | `assets/favicon-16x16.png` | Small browser icon |
-| Favicon 32x32 | `assets/favicon-32x32.png` | Standard browser icon |
-| Apple Touch Icon | `assets/apple-touch-icon.png` | iOS/macOS icon |
+| Asset            | Location                      | Purpose               |
+| ---------------- | ----------------------------- | --------------------- |
+| Favicon 16x16    | `assets/favicon-16x16.png`    | Small browser icon    |
+| Favicon 32x32    | `assets/favicon-32x32.png`    | Standard browser icon |
+| Apple Touch Icon | `assets/apple-touch-icon.png` | iOS/macOS icon        |
 
 ### Web Manifest
 
-| File | Purpose |
-|------|---------|
+| File               | Purpose                 |
+| ------------------ | ----------------------- |
 | `site.webmanifest` | PWA manifest with icons |
 
 ## Missing Assets (To Create)
@@ -45,3 +46,5 @@
 - Minimum resolution: 2x for retina displays
 - File naming: `{subject}-{variant}.{ext}` (e.g., `product-hero.webp`)
 - Store all assets in `assets/` directory
+
+Note: `product-block-v2-cutout.png` is currently PNG-only because local WebP conversion was unavailable; generate a WebP companion before broad production asset expansion.

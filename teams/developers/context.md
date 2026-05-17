@@ -16,6 +16,7 @@ Website live at fuse-creatine.vercel.app. Agent orchestration system functional 
 
 ## Recent Completions
 
+- ✅ Interactive Three.js product viewer added to homepage hero and product showcase
 - ✅ Research Lab production deployment blocker removed (Vercel cron config)
 - ✅ Main homepage CTA added for FUSE Research Lab Live
 - ✅ Research Lab upgraded into layered digital world with generated lab assets and moving scientist sprites
