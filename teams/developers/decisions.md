@@ -66,6 +66,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-18 | Research Lab Public Visibility
+
+**Decision**: Hide public navigation and CTA entry points to the Research Lab while keeping the route available by direct URL for internal iteration.
+
+**Rationale**: The lab experience needs more product/design work before it should be discoverable by public visitors.
+
+**Impact**: `index.html`, `dashboard.html`, and `agents.html` no longer link to the lab; `research-lab.html` is marked `noindex, nofollow`; `sitemap.xml` omits the lab; `robots.txt` disallows lab paths.
+
+---
+
 ## 2026-01-28 | CLI-first Architecture Refactor
 
 **Decision**: Refactor from UI-first to CLI-first architecture using TypeScript CLI tool (`fuse-ceo`).

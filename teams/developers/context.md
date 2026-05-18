@@ -26,6 +26,7 @@ Website live at fuse-creatine.vercel.app. Agent orchestration system functional 
 - ✅ Research Lab reframed as a top-down sandbox-first view with dashboard panels pushed below the map and mobile-fit room layout
 - ✅ Research Lab visual hierarchy updated to use the photoreal/isometric lab render as the primary sandbox floor, with schematic overlays reduced to subtle labels and mobile clutter trimmed
 - ✅ Research Lab room names and colors consolidated so map rooms, scientist agents, selected panels, and plan rows use the same station palette
+- ✅ Research Lab public entry points hidden from homepage, mobile menu, dashboard, agents navigation, sitemap, and robots-indexable surfaces while the lab remains available by direct URL for internal iteration
 - ✅ Full responsive redesign (v2.5.0)
 - ✅ Biometric authentication working
 - ✅ Agent Command Center functional
