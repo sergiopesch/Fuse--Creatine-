@@ -52,109 +52,87 @@
         </header>
 
         <main class="world-shell" id="world-main">
-            <section class="world-layout" aria-label="Living research lab">
-                <aside class="side-panel roster-panel" aria-label="Research agents">
-                    <div class="panel-title">
-                        <span>Research agents</span>
-                        <strong id="agentCount">0</strong>
-                    </div>
-                    <div class="agent-roster" id="agentRoster"></div>
-                    <div class="agent-roster-footer">
-                        <span>Show inactive</span>
-                        <i></i>
-                    </div>
-                </aside>
-
-                <section class="lab-stage-panel" aria-label="Top-down research lab world">
-                    <div class="lab-world" id="labWorld">
-                        <img
-                            class="lab-world-map"
-                            src="assets/lab/research-lab-world-map.png"
-                            alt=""
-                            aria-hidden="true"
-                        />
-                        <div class="station-grid" id="stationGrid"></div>
-                        <div class="agent-layer" id="agentLayer"></div>
-                    </div>
-
-                    <div class="stage-footer">
-                        <div class="experiment-progress" aria-label="Experiment progress">
-                            <span id="experimentProgress"></span>
-                        </div>
-                        <p id="guardrailText">
-                            Agent findings are internal hypotheses until wet-lab and legal review
-                            upgrade the evidence level.
+            <section class="lab-stage-panel game-stage" aria-label="FUSE AI research lab world">
+                <div class="game-hud">
+                    <div class="game-objective">
+                        <span>Current research objective</span>
+                        <p id="missionText">
+                            Find a manufacturable way to make creatine monohydrate dissolve quickly
+                            in hot coffee while keeping the coffee experience clean and maximising
+                            supplement absorption and performance.
                         </p>
                     </div>
-                </section>
-
-                <aside class="side-panel mission-panel" aria-label="Mission control">
-                    <div class="panel-title">
-                        <span>Mission control</span>
-                        <strong id="missionStatus">Nominal</strong>
+                    <div class="game-status-card">
+                        <span>Active experiment</span>
+                        <strong id="activeExperiment">Loading</strong>
                     </div>
-                    <p class="mission-copy" id="missionText">
-                        Find a manufacturable way to make creatine monohydrate dissolve quickly in
-                        hot coffee while keeping the coffee experience clean and maximising
-                        supplement absorption and performance.
-                    </p>
-                    <div class="command-strip" aria-label="Simulation controls">
+                    <div class="game-status-card compact">
+                        <span>Evidence gate</span>
+                        <strong id="evidenceGate">Hypothesis</strong>
+                    </div>
+                    <div class="command-strip game-controls" aria-label="Simulation controls">
                         <button class="control-button primary" id="advanceWorld" type="button">
                             Advance world
                         </button>
                         <button class="control-button" id="toggleWorld" type="button">Pause</button>
                         <button class="control-button" id="resetWorld" type="button">Reset</button>
                     </div>
-                    <div class="mission-summary-grid">
-                        <article>
-                            <span>Active experiment</span>
-                            <strong id="activeExperiment">Loading</strong>
-                        </article>
-                        <article>
-                            <span>Evidence gate</span>
-                            <strong id="evidenceGate">Hypothesis</strong>
-                        </article>
-                        <article class="is-alert">
-                            <span>Current dispute</span>
-                            <strong id="activeDispute">None</strong>
-                        </article>
+                </div>
+
+                <div class="lab-world" id="labWorld">
+                    <img
+                        class="lab-world-map"
+                        src="assets/lab/research-lab-world-map.png"
+                        alt=""
+                        aria-hidden="true"
+                    />
+                    <div class="station-grid" id="stationGrid"></div>
+                    <div class="agent-layer" id="agentLayer"></div>
+                </div>
+
+                <div class="game-overlay-row" aria-label="Agent world state">
+                    <section class="side-panel roster-panel" aria-label="Research agents">
+                        <div class="panel-title">
+                            <span>Scientists in world</span>
+                            <strong id="agentCount">0</strong>
+                        </div>
+                        <div class="agent-roster" id="agentRoster"></div>
+                    </section>
+
+                    <section class="lower-panel conversation-panel">
+                        <div class="panel-title">
+                            <span>Live conversation</span>
+                            <strong id="conversationCount">0</strong>
+                        </div>
+                        <div class="conversation-feed" id="conversationFeed"></div>
+                    </section>
+                </div>
+
+                <div class="game-footer">
+                    <div class="experiment-progress" aria-label="Experiment progress">
+                        <span id="experimentProgress"></span>
                     </div>
+                    <p id="guardrailText">
+                        Agent findings are internal hypotheses until wet-lab and legal review
+                        upgrade the evidence level.
+                    </p>
+                    <p class="game-dispute">
+                        <span>Current dispute</span>
+                        <strong id="activeDispute">None</strong>
+                    </p>
+                </div>
+
+                <div class="offscreen-world-data" aria-hidden="true">
+                    <strong id="missionStatus">Nominal</strong>
                     <div class="hypothesis-list" id="hypothesisList"></div>
-                </aside>
-            </section>
-
-            <section class="world-bottom" aria-label="Research cognition and social layer">
-                <section class="lower-panel selected-agent-panel">
-                    <div class="panel-title">
-                        <span id="selectedAgentName">Selected agent</span>
-                        <strong id="selectedAgentStation">--</strong>
-                    </div>
+                    <span id="selectedAgentName">Selected agent</span>
+                    <strong id="selectedAgentStation">--</strong>
                     <div id="selectedAgentDetail"></div>
-                </section>
-
-                <section class="lower-panel conversation-panel">
-                    <div class="panel-title">
-                        <span>Live conversations</span>
-                        <strong id="conversationCount">0</strong>
-                    </div>
-                    <div class="conversation-feed" id="conversationFeed"></div>
-                </section>
-
-                <section class="lower-panel memory-panel">
-                    <div class="panel-title">
-                        <span>Memory stream</span>
-                        <strong id="memoryCount">0</strong>
-                    </div>
+                    <strong id="memoryCount">0</strong>
                     <div class="memory-feed" id="memoryFeed"></div>
-                </section>
-
-                <section class="lower-panel queue-panel">
-                    <div class="panel-title">
-                        <span>Next experiments</span>
-                        <strong id="queueCount">0</strong>
-                    </div>
+                    <strong id="queueCount">0</strong>
                     <div class="experiment-queue" id="experimentQueue"></div>
-                </section>
+                </div>
             </section>
         </main>
     </body>

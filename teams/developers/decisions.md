@@ -8,11 +8,11 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ## 2026-05-20 | Research Lab Generated World Art
 
-**Decision**: Replace the abstract grid lab stage with Sergio's preferred generated premium lab-world map and keep the controls, agents, hypotheses, memory, and conversation feeds code-native.
+**Decision**: Replace the abstract grid lab stage with Sergio's preferred generated premium lab-world map, then simplify the surface into an AI Town-style game view.
 
 **Rationale**: The grid-style world still felt like the old implementation. Sergio wants the new Research Lab World to match the generated control-room/lab image that made the concept feel alive.
 
-**Impact**: `/research-lab` now uses `assets/lab/research-lab-world-map.png` as the central stage, with moving scientist markers, live conversations, station highlights, mission controls, and evidence panels layered over and around the image. Station coordinates in `api/_lib/research-lab-state.js` were realigned to the generated map zones.
+**Impact**: `/research-lab` now uses `assets/lab/research-lab-world-map.png` as the central stage, with moving scientist markers and live speech bubbles layered over the image. Station cards, mission sidebars, hypothesis walls, and dense control-room panels were removed from the primary view so the lab reads as a game world first. Station coordinates in `api/_lib/research-lab-state.js` were realigned to the generated map zones.
 
 ---
 

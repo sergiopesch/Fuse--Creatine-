@@ -912,6 +912,333 @@ body.research-world-page {
     }
 }
 
+/* AI Town-inspired game view: the world is the product, panels are lightweight HUD. */
+.game-stage {
+    min-height: calc(100vh - 84px);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 10px;
+    padding: 10px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 59, 48, 0.08), transparent 34%),
+        rgba(6, 7, 8, 0.96);
+}
+
+.game-hud {
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) minmax(150px, 0.28fr) minmax(250px, auto);
+    gap: 8px;
+    align-items: stretch;
+    z-index: 10;
+}
+
+.game-objective {
+    display: none;
+}
+
+.game-objective,
+.game-status-card,
+.game-controls {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: rgba(8, 10, 11, 0.86);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.game-objective,
+.game-status-card {
+    padding: 10px 12px;
+}
+
+.game-objective span,
+.game-status-card span,
+.game-dispute span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--world-muted);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.game-objective p,
+.game-status-card strong,
+.game-dispute strong {
+    display: block;
+    margin: 0;
+    overflow: hidden;
+    color: #f0f3f4;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.game-objective p {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.game-status-card strong {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 7px;
+}
+
+.game-controls .control-button {
+    min-height: 40px;
+    padding: 0 10px;
+}
+
+.game-stage .lab-world {
+    width: min(100%, calc((100vh - 190px) * 1.287));
+    min-width: min(100%, 720px);
+    min-height: 0;
+    height: auto;
+    aspect-ratio: 978 / 760;
+    place-self: center;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: #08090a;
+    box-shadow:
+        0 30px 100px rgba(0, 0, 0, 0.48),
+        0 0 0 1px rgba(255, 59, 48, 0.08);
+}
+
+.game-stage .lab-world-map {
+    object-fit: cover;
+}
+
+.game-stage .station-room {
+    display: none;
+}
+
+.game-stage .world-agent {
+    transition:
+        left 2600ms cubic-bezier(0.22, 1, 0.36, 1),
+        top 2600ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: agent-walk-bob 1.1s ease-in-out infinite;
+}
+
+.game-stage .world-agent-core {
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
+    border-width: 2px;
+    background:
+        radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.78), transparent 18%),
+        color-mix(in srgb, var(--agent-color) 70%, #090a0b);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.5),
+        0 0 0 6px color-mix(in srgb, var(--agent-color) 16%, transparent),
+        0 0 24px color-mix(in srgb, var(--agent-color) 42%, transparent);
+}
+
+.game-stage .world-agent.is-active .world-agent-core {
+    width: 36px;
+    height: 36px;
+}
+
+.game-stage .world-agent::before {
+    display: none;
+}
+
+.game-stage .agent-label {
+    top: 33px;
+    display: block;
+    padding: 4px 7px;
+    border-radius: 999px;
+    font-size: 8px;
+}
+
+.game-stage .agent-bubble {
+    bottom: 42px;
+    max-width: 260px;
+    padding: 9px 11px;
+    border-color: rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    background: rgba(5, 6, 7, 0.92);
+    font-size: 12px;
+}
+
+.game-overlay-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.92fr) minmax(360px, 1.08fr);
+    gap: 8px;
+}
+
+.game-overlay-row .side-panel,
+.game-overlay-row .lower-panel {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 6px;
+    background: rgba(8, 10, 11, 0.84);
+}
+
+.game-overlay-row .panel-title {
+    margin-bottom: 8px;
+}
+
+.game-stage .agent-roster {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.game-stage .agent-card {
+    width: auto;
+    min-width: 168px;
+    grid-template-columns: 30px minmax(0, 1fr);
+    min-height: 48px;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.game-stage .agent-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    font-size: 9px;
+}
+
+.game-stage .agent-card strong {
+    font-size: 11px;
+}
+
+.game-stage .agent-card span:not(.agent-avatar) span {
+    font-size: 10px;
+}
+
+.game-stage .agent-intent {
+    display: none;
+}
+
+.game-stage .conversation-feed {
+    max-height: 84px;
+    overflow: auto;
+}
+
+.game-stage .conversation-feed .conversation-item:not(:first-child) {
+    display: none;
+}
+
+.game-stage .conversation-item {
+    padding: 9px;
+}
+
+.game-stage .conversation-lines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.game-footer {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(280px, 0.7fr);
+    gap: 8px;
+    align-items: center;
+    padding: 0 2px;
+}
+
+.game-footer .experiment-progress {
+    grid-column: 1 / -1;
+    height: 7px;
+}
+
+.game-footer p {
+    margin: 0;
+    color: #abb1b5;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.game-dispute {
+    text-align: right;
+}
+
+.offscreen-world-data {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+@keyframes agent-walk-bob {
+    0%,
+    100% {
+        margin-top: 0;
+    }
+    50% {
+        margin-top: -4px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .game-stage {
+        min-height: auto;
+    }
+
+    .game-hud,
+    .game-overlay-row,
+    .game-footer {
+        grid-template-columns: 1fr;
+    }
+
+    .game-status-card.compact {
+        display: none;
+    }
+
+    .game-stage .lab-world {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .game-dispute {
+        text-align: left;
+    }
+}
+
+@media (max-width: 760px) {
+    .game-stage {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .game-objective {
+        display: none;
+    }
+
+    .game-controls {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .game-controls .control-button {
+        min-height: 36px;
+        font-size: 9px;
+    }
+
+    .game-stage .agent-label,
+    .game-stage .agent-bubble {
+        display: none;
+    }
+
+    .game-overlay-row {
+        display: block;
+    }
+
+    .game-overlay-row .conversation-panel {
+        margin-top: 8px;
+    }
+}
+
 /* Premium generated lab-world skin, based on the accepted FUSE control-room concept. */
 body.research-world-page {
     background:
@@ -1365,5 +1692,219 @@ body.research-world-page {
 
     .agent-roster {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Final simplification pass: AI Town-style world first, dashboard detail second. */
+.research-world-page .game-stage {
+    min-height: calc(100vh - 84px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 10px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.research-world-page .game-hud {
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) minmax(150px, 0.28fr) minmax(250px, auto);
+    gap: 8px;
+    min-width: 0;
+}
+
+.research-world-page .game-hud > * {
+    min-width: 0;
+}
+
+.research-world-page .game-objective {
+    display: none;
+}
+
+.research-world-page .game-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 7px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+}
+
+.research-world-page .game-controls .control-button {
+    min-height: 40px;
+    min-width: 0;
+}
+
+.research-world-page .game-stage .lab-world {
+    width: min(100%, calc((100vh - 190px) * 1.287));
+    max-width: 100%;
+    min-width: min(100%, 720px);
+    aspect-ratio: 978 / 760;
+    min-height: 0;
+    place-self: center;
+}
+
+.research-world-page .game-stage .station-room {
+    display: none;
+}
+
+.research-world-page .game-stage .world-agent {
+    transition:
+        left 2600ms cubic-bezier(0.22, 1, 0.36, 1),
+        top 2600ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: agent-walk-bob 1.1s ease-in-out infinite;
+}
+
+.research-world-page .game-stage .world-agent-core {
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
+}
+
+.research-world-page .game-stage .world-agent.is-active .world-agent-core {
+    width: 36px;
+    height: 36px;
+}
+
+.research-world-page .game-stage .world-agent::before {
+    display: none;
+}
+
+.research-world-page .game-overlay-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.92fr) minmax(360px, 1.08fr);
+    gap: 8px;
+    min-width: 0;
+}
+
+.research-world-page .game-overlay-row .side-panel,
+.research-world-page .game-overlay-row .lower-panel {
+    min-width: 0;
+    min-height: 0;
+    padding: 10px;
+}
+
+.research-world-page .game-stage .agent-roster {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.research-world-page .game-stage .agent-card {
+    width: auto;
+    min-width: 168px;
+    grid-template-columns: 30px minmax(0, 1fr);
+    min-height: 48px;
+    padding: 8px;
+}
+
+.research-world-page .game-stage .agent-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    font-size: 9px;
+}
+
+.research-world-page .game-stage .agent-card strong {
+    font-size: 11px;
+}
+
+.research-world-page .game-stage .agent-card span:not(.agent-avatar) span {
+    font-size: 10px;
+}
+
+.research-world-page .game-stage .agent-intent {
+    display: none;
+}
+
+.research-world-page .game-stage .conversation-feed {
+    max-height: 84px;
+    overflow: auto;
+}
+
+.research-world-page .game-stage .conversation-feed .conversation-item:not(:first-child) {
+    display: none;
+}
+
+.research-world-page .game-footer {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(280px, 0.7fr);
+    gap: 8px;
+    align-items: center;
+    padding: 0 2px;
+}
+
+.research-world-page .game-footer .experiment-progress {
+    grid-column: 1 / -1;
+    height: 7px;
+}
+
+.research-world-page .game-footer p {
+    margin: 0;
+    color: #abb1b5;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.research-world-page .game-dispute {
+    text-align: right;
+}
+
+.research-world-page .offscreen-world-data {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+@media (max-width: 1100px) {
+    .research-world-page .game-stage {
+        min-height: auto;
+    }
+
+    .research-world-page .game-hud,
+    .research-world-page .game-overlay-row,
+    .research-world-page .game-footer {
+        grid-template-columns: 1fr;
+    }
+
+    .research-world-page .game-status-card.compact {
+        display: none;
+    }
+
+    .research-world-page .game-stage .lab-world {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .research-world-page .game-dispute {
+        text-align: left;
+    }
+}
+
+@media (max-width: 760px) {
+    .research-world-page .game-objective {
+        display: none;
+    }
+
+    .research-world-page .game-controls {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .research-world-page .game-stage .agent-label,
+    .research-world-page .game-stage .agent-bubble {
+        display: none;
+    }
+
+    .research-world-page .game-overlay-row {
+        display: block;
+    }
+
+    .research-world-page .game-overlay-row .conversation-panel {
+        margin-top: 8px;
     }
 }
