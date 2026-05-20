@@ -39,11 +39,11 @@
     const welcomeConfig = {
         title: "Hey! I'm the FUSE Agent",
         subtitle:
-            'Your guide to the FUSE product experimentation and research idea: a coffee-first creatine monohydrate format for daily routines.',
+            "I'm here for Sergio Peschiera's FUSE experiment: a coffee-first creatine monohydrate idea, explained with a bit more spark than a standard FAQ.",
         features: [
-            { icon: 'zap', text: 'Research idea context' },
+            { icon: 'zap', text: 'Creator-led experiment' },
             { icon: 'shield', text: 'Evidence-led information' },
-            { icon: 'clock', text: 'Experimentation status' },
+            { icon: 'clock', text: 'What is being tested' },
         ],
     };
 
@@ -62,8 +62,8 @@
             message: 'Why is FUSE exploring creatine monohydrate for coffee drinkers?',
         },
         {
-            label: 'What is the research idea?',
-            message: 'What is the FUSE product experimentation and research idea?',
+            label: 'Who created FUSE?',
+            message: 'Who created FUSE and why is this an experiment?',
         },
     ];
 
@@ -315,7 +315,7 @@
                 const hour = new Date().getHours();
                 const timeGreeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
                 addMessage(
-                    `Good ${timeGreeting}! I'm here to explain the FUSE product experimentation idea: a coffee-first creatine monohydrate format for daily routines. What would you like to know?`,
+                    `Good ${timeGreeting}! I'm the FUSE Agent: part product guide, part little AI experiment from Sergio Peschiera, known as sergiopesch. Want the coffee-first creatine idea in plain English?`,
                     'assistant'
                 );
 

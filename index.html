@@ -88,7 +88,7 @@
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
 
         <!-- Preload Critical Assets -->
-        <link rel="preload" href="css/style.css?v=mobile-product-fix-20260517" as="style" />
+        <link rel="preload" href="css/style.css?v=product-view-polish-20260520" as="style" />
         <link
             rel="preload"
             href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap"
@@ -118,7 +118,7 @@
         ></script>
 
         <!-- Styles -->
-        <link rel="stylesheet" href="css/style.css?v=mobile-product-fix-20260517" />
+        <link rel="stylesheet" href="css/style.css?v=product-view-polish-20260520" />
         <link rel="stylesheet" href="css/consent.css?v=mobile-product-fix-20260517" />
 
         <!-- JSON-LD Structured Data -->
@@ -777,19 +777,13 @@
                     <div class="product-showcase fade-in">
                         <div class="product-visual">
                             <div
-                                class="product-image-container product-viewer-shell showcase-product"
+                                class="product-image-container showcase-product"
                                 id="showcaseProduct"
-                                data-product-viewer
                             >
+                                <div class="product-stage-lines" aria-hidden="true"></div>
                                 <div class="product-glow"></div>
-                                <div
-                                    class="product-viewer-canvas"
-                                    role="img"
-                                    tabindex="0"
-                                    aria-label="Interactive 3D view of the FUSE creatine block"
-                                ></div>
                                 <img
-                                    class="product-image product-image--block product-image--fallback"
+                                    class="product-image product-image--block"
                                     src="assets/product-block-v2-cutout.png"
                                     alt="FUSE creatine block designed for fast dispersion in hot coffee"
                                     loading="lazy"
@@ -800,15 +794,32 @@
                             </div>
                         </div>
                         <div class="showcase-content">
-                            <div class="hero-british-badge">
+                            <div class="hero-british-badge product-kicker">
                                 <span class="text">Research concept</span>
                             </div>
-                            <h2>YOUR MORNING <br /><span class="red">IN DEVELOPMENT.</span></h2>
+                            <h2>
+                                <span class="product-title-line">YOUR MORNING</span>
+                                <span class="product-title-line red">IN DEVELOPMENT.</span>
+                            </h2>
                             <p class="hero-subtitle">
                                 FUSE is exploring a new supplement presentation built around
                                 creatine monohydrate, one of the world's most researched sports
                                 supplements, and the coffee routines people already have.
                             </p>
+                            <div class="product-specs" aria-label="Product development focus">
+                                <div class="product-spec">
+                                    <span>Format</span>
+                                    <strong>Coffee-first</strong>
+                                </div>
+                                <div class="product-spec">
+                                    <span>Ingredient</span>
+                                    <strong>Creatine monohydrate</strong>
+                                </div>
+                                <div class="product-spec">
+                                    <span>Validation</span>
+                                    <strong>Taste + texture</strong>
+                                </div>
+                            </div>
                             <ul class="showcase-features">
                                 <li>
                                     Creatine monohydrate format currently in formulation testing
@@ -1228,7 +1239,7 @@
 
         <!-- Scripts -->
         <script defer src="js/main.js"></script>
-        <script defer src="js/product-viewer.js?v=mobile-product-fix-20260517"></script>
+        <script defer src="js/product-viewer.js?v=product-view-polish-20260520"></script>
         <script defer src="js/chat.js"></script>
 
         <!-- Vercel Analytics & Speed Insights -->

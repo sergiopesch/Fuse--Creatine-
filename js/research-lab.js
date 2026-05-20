@@ -24,6 +24,26 @@
         claims: '#8fb8ff',
     };
 
+    const bootstrapStations = [
+        { id: 'central-rail', name: 'Central Sample Rail', color: '#d7ed69', x: 39, y: 38, w: 24, h: 22 },
+        { id: 'encapsulation', name: 'Encapsulation Bench', color: '#ff3b30', x: 10, y: 7, w: 24, h: 20 },
+        { id: 'coffee', name: 'Coffee Matrix Bar', color: '#c58b59', x: 42, y: 6, w: 23, h: 22 },
+        { id: 'claims', name: 'Claims Gate', color: '#8fb8ff', x: 75, y: 42, w: 20, h: 18 },
+        { id: 'evidence', name: 'Evidence Desk', color: '#44d7b6', x: 6, y: 36, w: 24, h: 23 },
+        { id: 'sensory', name: 'Sensory Booth', color: '#f5b56b', x: 76, y: 6, w: 20, h: 22 },
+        { id: 'pilot', name: 'Pilot Mixer', color: '#b890ff', x: 43, y: 64, w: 28, h: 22 },
+    ];
+
+    const bootstrapAgents = [
+        ['mira', 'Dr. Mira Solvay', 'Encapsulation Scientist', 'encapsulation', '#ff3b30', 24, 17],
+        ['theo', 'Dr. Theo Roast', 'Coffee Matrix Chemist', 'coffee', '#c58b59', 51, 17],
+        ['ava', 'Dr. Ava Palate', 'Sensory Scientist', 'sensory', '#f5b56b', 86, 17],
+        ['max', 'Dr. Max Flux', 'Creatine Evidence Lead', 'evidence', '#44d7b6', 18, 48],
+        ['nina', 'Dr. Nina Claims', 'Regulatory Scientist', 'claims', '#8fb8ff', 85, 52],
+        ['jules', 'Jules Batch', 'Manufacturing Engineer', 'pilot', '#b890ff', 57, 75],
+        ['pipette', 'Pipette', 'Lab Assistant Agent', 'central-rail', '#d7ed69', 51, 50],
+    ];
+
     const state = {
         data: null,
         selectedAgentId: 'mira',
@@ -81,6 +101,92 @@
         return String(value)
             .split('')
             .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    }
+
+    function motionFor(agentId, labClock = 0) {
+        const seed = stableSeed(agentId);
+        const walkDuration = 920 + (seed % 9) * 170;
+        const stepDuration = 620 + (seed % 6) * 120;
+        return {
+            walkDuration,
+            stepDuration,
+            delay: -((seed * 41 + labClock * 97) % walkDuration),
+            stepDelay: -((seed * 67 + labClock * 53) % stepDuration),
+        };
+    }
+
+    function createBootstrapState() {
+        const timestamp = new Date().toISOString();
+        const currentExperiment = {
+            title: 'Hot coffee disappearance run',
+            stationId: 'coffee',
+            leadAgentId: 'theo',
+            supportAgentId: 'mira',
+            hypothesisId: 'FUSE-POR-01',
+            evidenceLevel: 'Simulation',
+            progress: 38,
+        };
+        const agents = bootstrapAgents.map(([id, name, role, stationId, color, x, y]) => ({
+            id,
+            name,
+            role,
+            stationId,
+            color,
+            x,
+            y,
+            targetStationId: stationId,
+            intent: id === 'theo' || id === 'mira' ? currentExperiment.title : 'Working independently at station.',
+            reflection: `${name} is operating inside the FUSE research world.`,
+            motion: motionFor(id),
+            needs: { focus: 70, evidence: 64, social: 48, caution: 58 },
+        }));
+
+        return {
+            version: 2,
+            mode: 'living research world',
+            labClock: 0,
+            mission:
+                'Find a manufacturable way to make creatine monohydrate dissolve quickly in hot coffee while keeping the coffee experience clean and maximising supplement absorption and performance.',
+            guardrail:
+                'Agent findings are internal hypotheses until wet-lab and legal review upgrade the evidence level.',
+            stations: bootstrapStations,
+            agents,
+            hypotheses: [
+                {
+                    id: 'FUSE-POR-01',
+                    name: 'Porous Monohydrate Agglomerate',
+                    summary: 'Fast wetting route under active review.',
+                    evidenceLevel: 'Simulation',
+                    scores: { dissolve: 72, taste: 75, mouthfeel: 68, dose: 91, heat: 86, make: 76, claims: 84 },
+                },
+            ],
+            currentExperiment,
+            conversations: [
+                {
+                    id: 'bootstrap-conversation',
+                    timestamp,
+                    from: 'theo',
+                    to: 'mira',
+                    hypothesisId: 'FUSE-POR-01',
+                    topic: currentExperiment.title,
+                    lines: [
+                        { speakerId: 'theo', text: 'Checking coffee clarity against the latest cup run.' },
+                        { speakerId: 'mira', text: 'I am tuning the carrier so wetting improves without grit.' },
+                    ],
+                },
+            ],
+            memories: [],
+            disputes: [
+                {
+                    id: 'bootstrap-dispute',
+                    timestamp,
+                    title: 'Does faster wetting disturb crema before the powder disappears?',
+                    hypothesisId: 'FUSE-POR-01',
+                    status: 'open',
+                },
+            ],
+            experimentQueue: [],
+        };
     }
 
     function getAgent(agentId) {
@@ -241,7 +347,7 @@
             });
         });
 
-        els.agentLayer.innerHTML = state.data.agents
+        const renderedAgents = state.data.agents
             .map(agent => {
                 const target = getStation(agent.targetStationId) || getStation(agent.stationId);
                 const x = clamp(agent.x, 4, 96);
@@ -255,29 +361,57 @@
                 const active = state.data.currentExperiment?.leadAgentId === agent.id;
                 const seed = stableSeed(agent.id);
                 const motion = agent.motion || {};
-                const walkDuration = clamp(motion.walkDuration || 760 + (seed % 7) * 115, 620, 1600);
-                const stepDuration = clamp(motion.stepDuration || 520 + (seed % 5) * 95, 420, 1200);
+                const fallbackMotion = motionFor(agent.id, state.data.labClock);
+                const walkDuration = clamp(motion.walkDuration || fallbackMotion.walkDuration, 700, 2600);
+                const stepDuration = clamp(motion.stepDuration || fallbackMotion.stepDuration, 520, 1500);
                 const walkDelay = clamp(motion.delay || -(seed * 37), -1600, 0);
                 const stepDelay = clamp(motion.stepDelay || -(seed * 53), -1200, 0);
-                const walkAmplitude = 2.4 + (seed % 5) * 0.42;
                 const facing = pathX < -1 ? -1 : 1;
 
                 return `
                     <div
                         class="world-agent${active ? ' is-active' : ''}${isSpeaking ? ' is-speaking' : ''}"
-                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad; --walk-duration: ${walkDuration}ms; --step-duration: ${stepDuration}ms; --walk-delay: ${walkDelay}ms; --step-delay: ${stepDelay}ms; --walk-bob: ${walkAmplitude}px; --facing: ${facing}"
+                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad; --walk-duration: ${walkDuration}ms; --step-duration: ${stepDuration}ms; --walk-delay: ${walkDelay}ms; --step-delay: ${stepDelay}ms; --facing: ${facing}"
                     >
                         <span class="world-agent-core">${labCharacterMarkup(agent, 'world')}</span>
                         <span class="agent-label">${escapeHtml(agent.name.replace(/^Dr\\.\\s+/, '').split(' ')[0])}</span>
-                        ${
-                            isSpeaking
-                                ? `<span class="agent-bubble">${escapeHtml(line.text)}</span>`
-                                : ''
-                        }
                     </div>
                 `;
             })
             .join('');
+
+        els.agentLayer.innerHTML = `${renderInteractionLink(activeConversation)}${renderedAgents}`;
+    }
+
+    function renderInteractionLink(conversation) {
+        if (!conversation) return '';
+        const from = getAgent(conversation.from);
+        const to = getAgent(conversation.to);
+        if (!from || !to) return '';
+
+        const x1 = clamp(from.x, 4, 96);
+        const y1 = clamp(from.y, 4, 96);
+        const x2 = clamp(to.x, 4, 96);
+        const y2 = clamp(to.y, 4, 96);
+        const mx = (x1 + x2) / 2;
+        const my = Math.max(9, Math.min(86, (y1 + y2) / 2 - 5));
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const distance = clamp(Math.hypot(dx, dy), 6, 42);
+        const angle = Math.atan2(dy, dx);
+        const fromName = from.name.replace(/^Dr\.\s+/, '').split(' ')[0];
+        const toName = to.name.replace(/^Dr\.\s+/, '').split(' ')[0];
+
+        return `
+            <div
+                class="interaction-link"
+                style="--x1: ${x1}; --y1: ${y1}; --mx: ${mx}; --my: ${my}; --distance: ${distance}; --link-angle: ${angle}rad; --agent-color: ${escapeHtml(from.color)}"
+                aria-label="${escapeHtml(from.name)} talking with ${escapeHtml(to.name)}"
+            >
+                <span class="interaction-line"></span>
+                <span class="interaction-chip">${escapeHtml(fromName)} &lt;-&gt; ${escapeHtml(toName)}</span>
+            </div>
+        `;
     }
 
     function renderHypotheses() {
@@ -507,9 +641,11 @@
     async function init() {
         cacheElements();
         bindEvents();
+        state.data = createBootstrapState();
+        render();
+        startTimer();
         try {
             await requestState('state');
-            startTimer();
         } catch (error) {
             showError(error);
         }
