@@ -12,7 +12,7 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 **Rationale**: The previous product view leaned on the Three.js render in a large showcase context, where the material appeared too blank and visually weak. The dedicated rendered asset better communicates the physical product texture while preserving a premium dark FUSE layout.
 
-**Impact**: `index.html` now uses the static product cutout for the product showcase, keeps the interactive viewer in the hero, and adds compact product-focus metadata. `css/style.css` adds the new product-stage composition, responsive title treatment, and spec tile styling. `js/product-viewer.js` keeps a calmer material setup for the remaining interactive hero viewer.
+**Impact**: `index.html` now uses the static product cutout for both hero and product showcase, removes the old interactive product viewer from the page, and adds compact product-focus metadata. `css/style.css` adds the new product-stage composition, responsive title treatment, and spec tile styling. `js/product-viewer.js` was removed because the weaker generated product render is no longer used.
 
 ---
 
