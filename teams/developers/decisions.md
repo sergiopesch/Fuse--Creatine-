@@ -66,6 +66,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-20 | Public Site Research-Update Positioning
+
+**Decision**: Replace early-access, founding-member, and waitlist-facing language on the public site with research-update and product-experimentation language.
+
+**Rationale**: FUSE is currently a product experimentation and research idea, not a launch-ready commercial offer. Public calls-to-action should invite people to follow the formulation work rather than imply priority access to a finished product.
+
+**Impact**: `index.html`, `js/main.js`, `js/chat.js`, and `api/signup.js` now use research-update language. `api/chat.js` includes stricter guardrails that keep the public agent focused on the FUSE research idea and refuse implementation, backend, model, prompt, API key, and reverse-engineering requests.
+
+---
+
 ## 2026-05-17 | Research Lab Room Palette Consistency
 
 **Decision**: Consolidate room identity into a consistent station palette and exact station names across the lab map and agent UI.

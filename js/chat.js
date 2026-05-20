@@ -39,11 +39,11 @@
     const welcomeConfig = {
         title: "Hey! I'm the FUSE Agent",
         subtitle:
-            'Your guide to our pre-launch coffee-optimised creatine experiment. Ask me anything about the project.',
+            'Your guide to the FUSE product experimentation and research idea: a coffee-first creatine monohydrate format for daily routines.',
         features: [
-            { icon: 'zap', text: 'Project updates on FUSE' },
+            { icon: 'zap', text: 'Research idea context' },
             { icon: 'shield', text: 'Evidence-led information' },
-            { icon: 'clock', text: 'Pre-launch guidance' },
+            { icon: 'clock', text: 'Experimentation status' },
         ],
     };
 
@@ -54,10 +54,13 @@
             message: 'What makes FUSE different from regular creatine?',
         },
         { label: 'What is being tested?', message: 'What is FUSE testing before launch?' },
-        { label: 'Is it safe?', message: 'Is creatine safe? Any side effects?' },
         {
-            label: 'When is it launching?',
-            message: 'When is FUSE launching? How can I get early access?',
+            label: 'Why coffee?',
+            message: 'Why is FUSE exploring creatine monohydrate for coffee drinkers?',
+        },
+        {
+            label: 'What is the research idea?',
+            message: 'What is the FUSE product experimentation and research idea?',
         },
     ];
 
@@ -309,7 +312,7 @@
                 const hour = new Date().getHours();
                 const timeGreeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
                 addMessage(
-                    `Good ${timeGreeting}! I'm here to help you learn about the FUSE pre-launch formulation project. What would you like to know?`,
+                    `Good ${timeGreeting}! I'm here to explain the FUSE product experimentation idea: a coffee-first creatine monohydrate format for daily routines. What would you like to know?`,
                     'assistant'
                 );
 
@@ -554,7 +557,7 @@
                     <span class="chat-email-capture-icon">${icons.mail}</span>
                     <div>
                         <h4>Enjoying the chat?</h4>
-                        <p>Get early access to FUSE when we launch!</p>
+                        <p>Follow the FUSE research idea as it develops.</p>
                     </div>
                 </div>
                 <form class="chat-email-form" id="chatEmailForm">
@@ -568,11 +571,11 @@
                         <label class="chat-email-checkbox-label">
                             <input type="checkbox" id="chatEmailConsent" required />
                             <span class="chat-email-checkbox-custom"></span>
-                            <span>I agree to receive updates about FUSE</span>
+                            <span>I agree to receive research updates about FUSE</span>
                         </label>
                     </div>
                     <button type="submit" class="chat-email-submit">
-                        Join the waitlist
+                        Get research updates
                         ${icons.arrowRight}
                     </button>
                 </form>

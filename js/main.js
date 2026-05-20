@@ -276,9 +276,9 @@
 
     const heroMessages = [
         {
-            message: 'A better daily creatine ritual is in development.',
+            message: 'A coffee-first creatine monohydrate format is in development.',
             footnote:
-                'FUSE is a pre-launch formulation project built around creatine monohydrate, coffee compatibility, and taste-first validation.',
+                'FUSE is a product experimentation and research idea built around creatine monohydrate, coffee compatibility, and taste-first validation.',
         },
         {
             message:
@@ -289,7 +289,7 @@
         {
             message: 'Most creatine was not designed for coffee. We asked: what if it could be?',
             footnote:
-                'Micro-encapsulation concepts developed for hot beverages, with sensory validation still in progress.',
+                'We are exploring a new supplement presentation designed to blend naturally into coffee routines, with sensory validation still in progress.',
         },
         {
             message:

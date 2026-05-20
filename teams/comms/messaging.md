@@ -2,11 +2,11 @@
 
 ## Core Message
 
-**FUSE is developing a coffee-optimised creatine monohydrate format designed to make daily supplementation easier while preserving the coffee ritual.**
+**FUSE is a product experimentation and research idea developing a coffee-optimised creatine monohydrate format designed to make daily supplementation easier while preserving the coffee ritual.**
 
 ## Elevator Pitch (30 seconds)
 
-"FUSE is a pre-launch coffee-optimised creatine monohydrate project. We're testing a micro-encapsulated format designed to blend smoothly into hot coffee, preserve the taste of the cup, and make daily creatine easier to remember."
+"FUSE is a pre-launch product experimentation and research idea exploring a coffee-first creatine monohydrate format. We're testing whether a new supplement presentation can blend smoothly into hot coffee, preserve the taste of the cup, and make daily creatine easier for coffee drinkers to remember."
 
 ## Message Matrix by Audience
 
@@ -71,9 +71,11 @@
 - "Creatine monohydrate" (specific form)
 - "Science-backed" or "peer-reviewed" (credibility)
 - "Pre-launch", "being developed", "designed to", and "in validation" for product-specific claims
+- "Product experimentation", "research idea", and "research updates" when describing the current public project status
 
 ### Never Use
 
+- "Early access", "founding member", or sales-led launch language while the site is framed as experimentation
 - "Miracle" or "magic" (hype language)
 - "Guaranteed results" (unsubstantiated)
 - Final claims like "zero taste impact", "<3 seconds", or "GMP certified" until Legal marks them approved

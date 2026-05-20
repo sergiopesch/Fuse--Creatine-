@@ -144,7 +144,7 @@ const signupHandler = async (req, res, { clientIp, validatedBody }) => {
         });
 
         return res.status(200).json({
-            message: 'Successfully joined the waitlist',
+            message: 'Successfully registered for FUSE research updates',
         });
     } catch (error) {
         console.error('Vercel Blob Error:', error);

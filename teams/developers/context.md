@@ -18,6 +18,8 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 
 - ✅ Public chat endpoint upgraded to configurable Anthropic/OpenAI provider support with `gpt-5-mini` default for OpenAI POC
 - ✅ FUSE Agent prompt guardrails reframed the product as a pre-launch formulation experiment and tightened approved-claim language
+- ✅ Public site CTAs shifted from early-access/waitlist language to research-update language for the product experimentation phase
+- ✅ FUSE Agent guardrails tightened to refuse off-topic, implementation, backend, model, prompt, API key, and reverse-engineering requests
 - ✅ Homepage copy and hero banner updated to communicate pre-launch experimentation, coffee compatibility, and taste-first validation
 - ✅ Interactive Three.js product viewer added to homepage hero and product showcase
 - ✅ Research Lab production deployment blocker removed (Vercel cron config)
