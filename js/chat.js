@@ -643,7 +643,7 @@
                 captureEl.innerHTML = `
                     <div class="chat-email-success">
                         <span class="chat-email-success-icon">${icons.check}</span>
-                        <h4>You're on the list!</h4>
+                        <h4>Research updates confirmed.</h4>
                         <p>We'll send research updates as the idea develops.</p>
                     </div>
                 `;

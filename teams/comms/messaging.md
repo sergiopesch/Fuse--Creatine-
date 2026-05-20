@@ -75,7 +75,7 @@
 
 ### Never Use
 
-- Launch-stage, early-access, founding-member, or sales-led language while the site is framed as experimentation
+- Launch-stage or sales-conversion language while the site is framed as experimentation
 - "Miracle" or "magic" (hype language)
 - "Guaranteed results" (unsubstantiated)
 - Final claims like "zero taste impact", "<3 seconds", or "GMP certified" until Legal marks them approved

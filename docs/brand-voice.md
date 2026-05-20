@@ -20,7 +20,7 @@ We respect the research but speak in plain language.
 - ✅ "Creatine helps your muscles produce more energy during intense exercise"
 - ❌ "Creatine supplementation augments the phosphocreatine system's capacity for rapid ATP resynthesis"
 
-### 3. Premium, Not Exclusive
+### 3. Premium, Not Gatekeeping
 
 We signal quality without gatekeeping.
 
