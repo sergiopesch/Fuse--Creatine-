@@ -70,7 +70,7 @@ Vercel Serverless Functions:
 - `index.html` — Marketing landing page
 - `dashboard.html` — Company dashboard (biometric-protected)
 - `agents.html` — Agent Command Center
-- `research-lab.html` — Live formulation lab with animated scientists, memory stream, planning, reflection, social graph, and replay frames
+- `research-lab.html` — Living research lab world with moving scientist agents, social conversations, formulation hypotheses, disputes, evidence gates, memory stream, and experiment queue
 - `admin.html` — Admin analytics
 
 > **Note:** The CEO dashboard web UI has been replaced by the `fuse-ceo` CLI (`cli/`).
@@ -117,14 +117,19 @@ Teams communicate via shared markdown files:
 | Hosting        | Vercel                                                                                    |
 | Source Control | GitHub                                                                                    |
 
-## Research Lab Simulation
+## Research Lab World
 
-The FUSE Research Lab is a Vercel-hosted, evidence-gated simulation. The frontend is a layered digital lab world, while `/api/research-lab` is routed through the consolidated orchestrator endpoint and backed by `api/_lib/research-lab-state.js`.
+The FUSE Research Lab World is a Vercel-hosted, evidence-gated agent world. It keeps the existing lightweight FUSE stack while adopting AI Town-style product behaviour: agents live in a spatial lab, move between workstations, talk when their work overlaps, form memories, surface disputes, and keep public claims behind evidence gates.
 
-Each tick updates formula scores and emits agent cognition data:
+The frontend is `research-lab.html`, `css/research-lab.css`, and `js/research-lab.js`. The `/api/research-lab` route is routed through the consolidated orchestrator endpoint and backed by `api/_lib/research-lab-state.js`.
 
-- memory stream entries with importance and poignancy scores
-- active plans and selected-agent needs
-- periodic reflections
-- scientist social graph edges
-- compact replay frames for audit and debugging
+Each tick updates:
+
+- scientist agent positions, current intent, selected-agent needs, and reflections
+- formulation hypothesis scores across dissolution, taste, mouthfeel, dose, heat, manufacturability, and claims safety
+- social conversations between relevant agents
+- active formulation disputes and evidence gate status
+- memory stream entries with importance scores
+- next experiment queue
+
+The lab world has no auth or music-generation layer. It remains `noindex` and internal-facing; outputs are hypotheses until R&D and Legal upgrade them with wet-lab evidence and claims review.

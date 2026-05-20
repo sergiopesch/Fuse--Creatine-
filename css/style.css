@@ -197,8 +197,8 @@ body::before {
 }
 
 .nav-cta {
-    background: var(--white);
-    color: var(--black);
+    background: var(--fuse-red);
+    color: var(--white);
     padding: 0.65rem 1.5rem;
     border-radius: 980px;
     font-weight: 600;
@@ -212,7 +212,7 @@ body::before {
 
 .nav-cta:hover {
     transform: scale(1.03);
-    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 28px rgba(255, 59, 48, 0.28);
 }
 
 /* Hero */

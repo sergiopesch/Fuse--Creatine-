@@ -2,211 +2,50 @@
     'use strict';
 
     const API_URL = '/api/research-lab';
+    const TICK_INTERVAL_MS = 8500;
+
     const metricLabels = {
-        dissolutionSpeed: 'Dissolve',
-        tastePreservation: 'Taste',
-        mouthfeelCleanliness: 'Tongue',
-        doseIntegrity: 'Dose',
-        absorptionEvidence: 'Absorb',
-        heatStability: 'Heat',
-        manufacturability: 'Make',
-        regulatorySafety: 'Claims',
+        dissolve: 'Dissolve',
+        taste: 'Taste',
+        mouthfeel: 'Texture',
+        dose: 'Dose',
+        heat: 'Heat',
+        make: 'Make',
+        claims: 'Claims',
     };
 
     const metricColors = {
-        dissolutionSpeed: '#44d7b6',
-        tastePreservation: '#f5b56b',
-        mouthfeelCleanliness: '#ffb1c5',
-        doseIntegrity: '#ff3b30',
-        absorptionEvidence: '#8fb8ff',
-        heatStability: '#e2f06f',
-        manufacturability: '#b890ff',
-        regulatorySafety: '#ffffff',
-    };
-
-    const scientistSpriteOrder = ['mira', 'theo', 'ava', 'max', 'nina', 'jules', 'pipette'];
-
-    const stationTheme = {
-        'Encapsulation Bench': { x: 20, y: 24, color: '#ff3b30' },
-        'Coffee Matrix Bar': { x: 51, y: 20, color: '#c58b59' },
-        'Sensory Tongue Lab': { x: 75, y: 72, color: '#f5b56b' },
-        'Absorption Evidence Desk': { x: 21, y: 74, color: '#44d7b6' },
-        'Claims Gate': { x: 78, y: 24, color: '#8fb8ff' },
-        'Pilot Mixer': { x: 45, y: 73, color: '#b890ff' },
-        'Central Sample Rail': { x: 50, y: 51, color: '#e2f06f' },
-    };
-
-    const stationCoordinates = Object.fromEntries(
-        Object.entries(stationTheme).map(([station, theme]) => [
-            station,
-            { x: theme.x, y: theme.y },
-        ])
-    );
-
-    const routeStations = Object.keys(stationCoordinates);
-
-    const fallbackState = {
-        version: 1,
-        labClock: 0,
-        mode: 'evidence-gated simulation',
-        mission:
-            'Discover a coffee-compatible creatine delivery system that disperses fast, protects taste, and stays honest about absorption evidence.',
-        guardrails: [
-            'Simulations inform hypotheses; wet-lab validation controls claims.',
-            'Taste, tongue feel, aroma, and grit are scored separately.',
-            'Absorption language stays internal until direct comparative evidence exists.',
-        ],
-        scientists: [
-            {
-                id: 'mira',
-                name: 'Dr. Mira Solvay',
-                role: 'Encapsulation Scientist',
-                speciality: 'micronisation, granulation, wetting systems, instant dispersion',
-                personality: 'Precise, skeptical, relentlessly practical.',
-                station: 'Encapsulation Bench',
-                color: '#ff3b30',
-                x: 20,
-                y: 55,
-            },
-            {
-                id: 'theo',
-                name: 'Dr. Theo Roast',
-                role: 'Coffee Matrix Chemist',
-                speciality: 'espresso chemistry, acidity, heat, crema, milk coffee interactions',
-                personality: 'Calm, sensory-aware, protective of the coffee ritual.',
-                station: 'Coffee Matrix Bar',
-                color: '#c58b59',
-                x: 73,
-                y: 33,
-            },
-            {
-                id: 'ava',
-                name: 'Dr. Ava Palate',
-                role: 'Sensory & Oral Perception Scientist',
-                speciality:
-                    'tongue feel, bitterness thresholds, aroma release, aftertaste, mouth coating',
-                personality: 'Exacting, poetic about flavour, impossible to fool with grit.',
-                station: 'Sensory Tongue Lab',
-                color: '#f5b56b',
-                x: 62,
-                y: 70,
-            },
-            {
-                id: 'max',
-                name: 'Dr. Max Flux',
-                role: 'Absorption Scientist',
-                speciality:
-                    'creatine uptake evidence, dose integrity, kinetics, bioavailability claims',
-                personality: 'Evidence-first, blocks overclaiming, likes clean pharmacokinetics.',
-                station: 'Absorption Evidence Desk',
-                color: '#44d7b6',
-                x: 42,
-                y: 26,
-            },
-            {
-                id: 'nina',
-                name: 'Dr. Nina Claims',
-                role: 'Regulatory Scientist',
-                speciality: 'sports nutrition claims, substantiation, labels, compliance risk',
-                personality: 'Friendly until a claim outruns the evidence.',
-                station: 'Claims Gate',
-                color: '#8fb8ff',
-                x: 84,
-                y: 58,
-            },
-            {
-                id: 'jules',
-                name: 'Jules Batch',
-                role: 'Manufacturing Engineer',
-                speciality: 'pilot batches, flow, dose uniformity, packaging, moisture stability',
-                personality: 'Turns elegant science into something that can ship.',
-                station: 'Pilot Mixer',
-                color: '#b890ff',
-                x: 30,
-                y: 78,
-            },
-            {
-                id: 'pipette',
-                name: 'Pipette',
-                role: 'Lab Assistant Agent',
-                speciality: 'sample routing, bench timing, evidence labels, instrument logs',
-                personality: 'Fast, literal, tireless, and obsessed with clean timestamps.',
-                station: 'Central Sample Rail',
-                color: '#e2f06f',
-                x: 50,
-                y: 50,
-            },
-        ],
-        formulas: [
-            {
-                id: 'FUSE-IF-014',
-                name: 'Instant Fusion Carrier Screen',
-                status: 'active',
-                summary: 'Coffee-compatible dispersion system under taste and sediment testing.',
-                overall: 76,
-                evidenceLevel: 'Simulation result',
-                scores: {
-                    dissolutionSpeed: 79,
-                    tastePreservation: 76,
-                    mouthfeelCleanliness: 73,
-                    doseIntegrity: 86,
-                    absorptionEvidence: 64,
-                    heatStability: 81,
-                    manufacturability: 69,
-                    regulatorySafety: 82,
-                },
-            },
-        ],
-        papers: [],
-        activeExperiment: {
-            id: 'EXP-000',
-            kind: 'Lab boot sequence',
-            station: 'Central Table',
-            scientistId: 'mira',
-            formulaId: 'FUSE-IF-014',
-            evidenceGate: 'Hypothesis',
-            progress: 38,
-        },
-        events: [
-            {
-                id: 'evt-local',
-                timestamp: new Date().toISOString(),
-                scientistId: 'mira',
-                type: 'Hypothesis',
-                formulaId: 'FUSE-IF-014',
-                message: 'Local simulation is running while the live research API initializes.',
-            },
-        ],
-        cognition: {
-            model: 'Generative research society',
-            loop: ['perceive', 'retrieve', 'plan', 'reflect', 'execute'],
-            router: 'Plan-Execute lab router with read-only ask and controlled intervention modes',
-        },
-        agentStates: [],
-        socialGraph: [],
-        chatMessages: [],
-        memoryStream: [],
-        replayFrames: [],
+        dissolve: '#44d7b6',
+        taste: '#f5b56b',
+        mouthfeel: '#ffb1c5',
+        dose: '#ff3b30',
+        heat: '#d7ed69',
+        make: '#b890ff',
+        claims: '#8fb8ff',
     };
 
     const state = {
-        data: fallbackState,
-        selectedScientistId: 'ava',
-        localTick: 0,
-        isFetchingPapers: false,
+        data: null,
+        selectedAgentId: 'mira',
+        isRunning: true,
+        timer: null,
+        isBusy: false,
     };
 
     const els = {};
 
+    function $(id) {
+        return document.getElementById(id);
+    }
+
     function escapeHtml(value) {
-        if (value === null || value === undefined) return '';
         const div = document.createElement('div');
-        div.textContent = String(value);
+        div.textContent = value === null || value === undefined ? '' : String(value);
         return div.innerHTML;
     }
 
     function initials(name) {
-        return String(name || 'A')
+        return String(name || 'AI')
             .split(/\s+/)
             .filter(Boolean)
             .slice(-2)
@@ -215,14 +54,33 @@
             .toUpperCase();
     }
 
+    function formatClock(value) {
+        return `Tick ${String(value || 0).padStart(3, '0')}`;
+    }
+
     function formatTime(value) {
-        if (!value) return '--';
         const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return '--';
+        if (Number.isNaN(date.getTime())) return '--:--';
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function formulaAverage(scores) {
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, Number(value) || 0));
+    }
+
+    function getAgent(agentId) {
+        return (state.data?.agents || []).find(agent => agent.id === agentId);
+    }
+
+    function getStation(stationId) {
+        return (state.data?.stations || []).find(station => station.id === stationId);
+    }
+
+    function getHypothesis(hypothesisId) {
+        return (state.data?.hypotheses || []).find(hypothesis => hypothesis.id === hypothesisId);
+    }
+
+    function scoreAverage(scores) {
         const values = Object.values(scores || {});
         if (!values.length) return 0;
         return Math.round(
@@ -230,683 +88,409 @@
         );
     }
 
-    function getScientist(id) {
-        return (state.data.scientists || []).find(scientist => scientist.id === id);
+    function setBusy(isBusy) {
+        state.isBusy = isBusy;
+        ['advanceWorld', 'resetWorld'].forEach(id => {
+            if (els[id]) els[id].disabled = isBusy;
+        });
     }
 
-    function getAgentState(id) {
-        return (
-            (state.data.agentStates || []).find(agentState => agentState.id === id) ||
-            buildClientAgentState(getScientist(id), 0)
-        );
+    async function requestState(action = 'state', body = null) {
+        const options = body
+            ? {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action, ...body }),
+              }
+            : { method: 'GET' };
+
+        const url = body ? API_URL : `${API_URL}?action=${encodeURIComponent(action)}`;
+        const response = await fetch(url, options);
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.error || 'Research lab world request failed');
+        }
+        state.data = payload.data;
+        if (!getAgent(state.selectedAgentId)) {
+            state.selectedAgentId = state.data.agents?.[0]?.id || 'mira';
+        }
+        render();
+        return payload.data;
     }
 
-    function spriteClass(scientistId) {
-        const index = scientistSpriteOrder.indexOf(scientistId);
-        return `sprite-${index >= 0 ? index : 0}`;
+    async function advanceWorld() {
+        if (state.isBusy) return;
+        setBusy(true);
+        try {
+            await requestState('tick', { action: 'tick' });
+        } catch (error) {
+            showError(error);
+        } finally {
+            setBusy(false);
+        }
     }
 
-    function getFormula(id) {
-        return (state.data.formulas || []).find(formula => formula.id === id);
+    async function resetWorld() {
+        if (state.isBusy) return;
+        setBusy(true);
+        try {
+            await requestState('reset', { action: 'reset' });
+        } catch (error) {
+            showError(error);
+        } finally {
+            setBusy(false);
+        }
     }
 
-    function eventColor(type) {
-        if (type === 'Evidence-backed') return '#44d7b6';
-        if (type === 'Regulatory control') return '#8fb8ff';
-        if (type === 'Needs sensory panel') return '#f5b56b';
-        if (type === 'Needs wet-lab validation') return '#e2f06f';
-        return '#ff3b30';
+    function showError(error) {
+        console.error('[ResearchWorld]', error);
+        els.worldMode.textContent = 'World paused: API error';
+        document.body.classList.add('world-error');
     }
 
-    function shortName(scientistId) {
-        const scientist = getScientist(scientistId);
-        if (!scientist) return scientistId || 'Lab';
-        return scientist.name.replace(/^Dr\.\s+/, '').split(' ')[0];
+    function startTimer() {
+        stopTimer();
+        if (!state.isRunning) return;
+        state.timer = window.setInterval(() => {
+            advanceWorld();
+        }, TICK_INTERVAL_MS);
     }
 
-    function buildClientAgentState(scientist, index) {
-        if (!scientist) return null;
-        const active = state.data.activeExperiment?.scientistId === scientist.id;
-        const seed = Number(state.data.labClock || 0) + index + scientist.id.length;
-        const routeIndex = (seed + scientist.station.length) % routeStations.length;
-        const routeStation =
-            routeStations[routeIndex] === scientist.station
-                ? routeStations[(routeIndex + 2) % routeStations.length]
-                : routeStations[routeIndex];
-        return {
-            id: scientist.id,
-            mood: active ? 'locked-in' : 'observing',
-            currentPlan: active
-                ? state.data.activeExperiment?.kind || 'Active experiment'
-                : 'retrieve relevant memories',
-            currentAction: active ? 'executing active experiment' : 'observing lab state',
-            nextLocation: active ? scientist.station : routeStation,
-            needs: {
-                focus: Math.min(100, 58 + (active ? 18 : 0) + (seed % 17)),
-                energy: Math.max(38, 76 - (seed % 19)),
-                evidenceNeed: Math.min(100, 44 + (active ? 20 : 0) + (seed % 13)),
-                collaborationNeed: 46 + (seed % 22),
-            },
-            reflection: `${scientist.name} is maintaining a local plan until the live state arrives.`,
-        };
+    function stopTimer() {
+        if (state.timer) {
+            window.clearInterval(state.timer);
+            state.timer = null;
+        }
     }
 
-    function effectiveAgentStates() {
-        const agentStates = state.data.agentStates || [];
-        if (agentStates.length) return agentStates;
-        return (state.data.scientists || [])
-            .map((scientist, index) => buildClientAgentState(scientist, index))
-            .filter(Boolean);
+    function toggleWorld() {
+        state.isRunning = !state.isRunning;
+        els.toggleWorld.textContent = state.isRunning ? 'Pause' : 'Resume';
+        els.worldMode.textContent = state.isRunning
+            ? state.data?.mode || 'World running'
+            : 'Paused';
+        startTimer();
     }
 
-    function barRow(label, value) {
-        const safeValue = Math.max(0, Math.min(100, Number(value || 0)));
-        return `
-            <div class="need-row">
-                <span>${escapeHtml(label)}</span>
-                <span class="need-track"><i style="--need-value: ${safeValue}%"></i></span>
-                <strong>${safeValue}</strong>
-            </div>
-        `;
-    }
-
-    function stationPoint(station, fallback) {
-        return stationCoordinates[station] || fallback || { x: 50, y: 50 };
-    }
-
-    function visibleStationName(station) {
-        return station === 'Central Table' ? 'Central Sample Rail' : station;
-    }
-
-    function stationColor(station, fallback = '#44d7b6') {
-        return stationTheme[visibleStationName(station)]?.color || fallback;
-    }
-
-    function agentMapPoint(scientist, agentState, index) {
-        const active = state.data.activeExperiment || {};
-        const destination = stationPoint(
-            agentState?.nextLocation || scientist.station,
-            stationPoint(scientist.station)
-        );
-        const home = stationPoint(scientist.station, { x: scientist.x || 50, y: scientist.y || 50 });
-        const isActive = active.scientistId === scientist.id;
-        const phase = (state.localTick + index) % 6;
-        const routeRatio = isActive ? 0.7 : 0.18 + phase * 0.05;
-        const x = Math.max(
-            7,
-            Math.min(93, home.x + (destination.x - home.x) * routeRatio + Math.sin(phase) * 1.4)
-        );
-        const y = Math.max(
-            9,
-            Math.min(91, home.y + (destination.y - home.y) * routeRatio + Math.cos(phase) * 1.2)
-        );
-        return { x, y, home, destination };
-    }
-
-    function activeChatFor(scientistId) {
-        return (state.data.chatMessages || []).find(
-            chat => chat.from === scientistId || chat.to === scientistId
-        );
-    }
-
-    function chatLineFor(scientistId, chat) {
-        if (!chat) return null;
-        return (chat.lines || []).find(line => line.speakerId === scientistId) || null;
-    }
-
-    function renderScientists() {
-        const scientists = state.data.scientists || [];
-        els.agentCount.textContent = String(scientists.length);
-        els.scientistList.innerHTML = scientists
-            .map(scientist => {
-                const selected = scientist.id === state.selectedScientistId ? ' is-selected' : '';
-                const color = stationColor(scientist.station, scientist.color);
+    function renderStations() {
+        els.stationGrid.innerHTML = (state.data.stations || [])
+            .map(station => {
+                const active = station.id === state.data.currentExperiment?.stationId;
                 return `
-                    <button class="scientist-card${selected}" type="button" data-scientist="${escapeHtml(scientist.id)}" style="--agent-color: ${escapeHtml(color)}">
-                        <span class="scientist-avatar scientist-portrait ${spriteClass(scientist.id)}" aria-hidden="true"></span>
+                    <article
+                        class="station-room${active ? ' is-active' : ''}"
+                        style="--x: ${station.x}; --y: ${station.y}; --w: ${station.w}; --h: ${station.h}; --station-color: ${escapeHtml(station.color)}"
+                    >
+                        <strong>${escapeHtml(station.name)}</strong>
+                        <small>${escapeHtml(station.purpose)}</small>
+                    </article>
+                `;
+            })
+            .join('');
+    }
+
+    function renderAgents() {
+        const activeConversation = state.data.conversations?.[0];
+        const speakingIds = new Set();
+        if (activeConversation) {
+            speakingIds.add(activeConversation.from);
+            speakingIds.add(activeConversation.to);
+        }
+
+        els.agentCount.textContent = String(state.data.agents.length);
+        els.agentRoster.innerHTML = state.data.agents
+            .map(agent => {
+                const selected = agent.id === state.selectedAgentId;
+                return `
+                    <button
+                        class="agent-card${selected ? ' is-selected' : ''}"
+                        type="button"
+                        data-agent="${escapeHtml(agent.id)}"
+                        style="--agent-color: ${escapeHtml(agent.color)}"
+                    >
+                        <span class="agent-avatar">${escapeHtml(initials(agent.name))}</span>
                         <span>
-                            <strong>${escapeHtml(scientist.name)}</strong>
-                            <span>${escapeHtml(scientist.role)} at ${escapeHtml(scientist.station)}</span>
+                            <strong>${escapeHtml(agent.name)}</strong>
+                            <span>${escapeHtml(agent.role)}</span>
+                            <em class="agent-intent">${escapeHtml(agent.intent)}</em>
                         </span>
                     </button>
                 `;
             })
             .join('');
 
-        els.scientistList.querySelectorAll('[data-scientist]').forEach(button => {
+        els.agentRoster.querySelectorAll('[data-agent]').forEach(button => {
             button.addEventListener('click', () => {
-                state.selectedScientistId = button.getAttribute('data-scientist');
+                state.selectedAgentId = button.getAttribute('data-agent');
                 render();
             });
         });
-    }
 
-    function renderWorldAgents() {
-        const active = state.data.activeExperiment || {};
-        els.agentStage.innerHTML = (state.data.scientists || [])
-            .map((scientist, index) => {
-                const agentState = getAgentState(scientist.id) || {};
-                const point = agentMapPoint(scientist, agentState, index);
-                const x = point.x;
-                const y = point.y;
-                const isActive = active.scientistId === scientist.id;
-                const plan = agentState.currentPlan || active.kind || 'observing';
-                const chat = activeChatFor(scientist.id);
-                const chatLine = chatLineFor(scientist.id, chat);
-                const color = stationColor(scientist.station, scientist.color);
-                const chatWith =
-                    chat && chat.from === scientist.id ? shortName(chat.to) : shortName(chat?.from);
-                const routeX = (point.destination.x - point.home.x) * 7.2;
-                const routeY = (point.destination.y - point.home.y) * 4.9;
-                const routeLength = Math.max(72, Math.min(190, Math.hypot(routeX, routeY)));
+        els.agentLayer.innerHTML = state.data.agents
+            .map(agent => {
+                const target = getStation(agent.targetStationId) || getStation(agent.stationId);
+                const x = clamp(agent.x, 4, 96);
+                const y = clamp(agent.y, 4, 96);
+                const pathX = target ? target.x + target.w / 2 - x : 0;
+                const pathY = target ? target.y + target.h / 2 - y : 0;
+                const pathLength = clamp(Math.hypot(pathX, pathY) * 7.2, 46, 240);
+                const pathAngle = Math.atan2(pathY, pathX);
+                const line = activeConversation?.lines?.find(item => item.speakerId === agent.id);
+                const isSpeaking = speakingIds.has(agent.id) && line;
+                const active = state.data.currentExperiment?.leadAgentId === agent.id;
+
                 return `
-                    <span
-                        class="world-agent sandbox-agent ${spriteClass(scientist.id)}${isActive ? ' is-active' : ''}${chatLine ? ' is-chatting' : ''}"
-                        data-name="${escapeHtml(scientist.name)}"
-                        style="--agent-color: ${escapeHtml(color)}; --agent-x: ${x}; --agent-y: ${y}; --home-x: ${point.home.x}; --home-y: ${point.home.y}; --dest-x: ${point.destination.x}; --dest-y: ${point.destination.y}; --route-x: ${routeX}px; --route-y: ${routeY}px; --route-length: ${routeLength}px; --depth-scale: ${0.78 + y / 210}; animation-delay: -${index * 0.55}s"
+                    <div
+                        class="world-agent${active ? ' is-active' : ''}${isSpeaking ? ' is-speaking' : ''}"
+                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad"
                     >
-                        <span class="agent-route"></span>
-                        <span class="agent-shadow"></span>
-                        <span class="agent-sprite" aria-hidden="true"></span>
-                        <span class="agent-pin">${escapeHtml(initials(scientist.name))}</span>
-                        <span class="agent-nameplate">${escapeHtml(shortName(scientist.id))}</span>
-                        <span class="agent-thought">${escapeHtml(plan)}</span>
+                        <span class="world-agent-core">${escapeHtml(initials(agent.name))}</span>
+                        <span class="agent-label">${escapeHtml(agent.name.replace(/^Dr\\.\\s+/, '').split(' ')[0])}</span>
                         ${
-                            chatLine
-                                ? `<span class="agent-chat"><strong>${escapeHtml(chatWith)}</strong>${escapeHtml(chatLine.text)}</span>`
+                            isSpeaking
+                                ? `<span class="agent-bubble">${escapeHtml(line.text)}</span>`
                                 : ''
                         }
-                    </span>
+                    </div>
                 `;
             })
             .join('');
-
-        document.querySelectorAll('.station').forEach(station => {
-            station.classList.toggle(
-                'is-active',
-                station.getAttribute('data-station') === visibleStationName(active.station)
-            );
-        });
-        document.querySelectorAll('.map-room').forEach(room => {
-            room.classList.toggle(
-                'is-active',
-                room.getAttribute('data-station') === visibleStationName(active.station)
-            );
-        });
     }
 
-    function renderFormulas() {
-        const formulas = (state.data.formulas || [])
-            .map(formula => ({
-                ...formula,
-                overall: formula.overall || formulaAverage(formula.scores),
-            }))
-            .sort((a, b) => b.overall - a.overall);
+    function renderHypotheses() {
+        const hypotheses = [...(state.data.hypotheses || [])].sort(
+            (a, b) => scoreAverage(b.scores) - scoreAverage(a.scores)
+        );
+        const leading = hypotheses[0];
+        els.leadScore.textContent = leading ? `${scoreAverage(leading.scores)}/100` : '--';
 
-        els.bestScore.textContent = formulas[0] ? `${formulas[0].overall}/100` : '--';
-        els.formulaList.innerHTML = formulas
-            .map(formula => {
-                const metricRows = Object.entries(metricLabels)
+        els.hypothesisList.innerHTML = hypotheses
+            .map((hypothesis, index) => {
+                const rows = Object.entries(metricLabels)
                     .map(([key, label]) => {
-                        const value = Math.max(
-                            0,
-                            Math.min(100, Number(formula.scores?.[key] || 0))
-                        );
+                        const value = clamp(hypothesis.scores[key], 0, 100);
                         return `
-                            <div class="metric-row">
+                            <div class="score-row">
                                 <span>${escapeHtml(label)}</span>
-                                <span class="metric-track"><i style="--metric-value: ${value}%; --metric-color: ${metricColors[key]}"></i></span>
+                                <span class="score-track"><i style="--score: ${value}%; --score-color: ${metricColors[key]}"></i></span>
                                 <span>${value}</span>
                             </div>
                         `;
                     })
                     .join('');
-
                 return `
-                    <article class="formula-card">
-                        <div class="formula-topline">
-                            <div>
-                                <strong>${escapeHtml(formula.name)}</strong>
-                                <span>${escapeHtml(formula.id)} - ${escapeHtml(formula.evidenceLevel)}</span>
-                            </div>
-                            <div class="formula-score">${formula.overall}</div>
+                    <article class="hypothesis-card${index === 0 ? ' is-leading' : ''}">
+                        <div class="hypothesis-meta">
+                            <span>${escapeHtml(hypothesis.id)}</span>
+                            <span>${escapeHtml(hypothesis.evidenceLevel)}</span>
                         </div>
-                        <span>${escapeHtml(formula.summary)}</span>
-                        <div class="formula-bars">${metricRows}</div>
+                        <strong>${escapeHtml(hypothesis.name)}</strong>
+                        <p>${escapeHtml(hypothesis.summary)}</p>
+                        <div class="score-grid">${rows}</div>
                     </article>
                 `;
             })
             .join('');
     }
 
-    function renderEvents() {
-        const events = state.data.events || [];
-        els.eventList.innerHTML = events
-            .slice(0, 18)
-            .map(event => {
-                const scientist = getScientist(event.scientistId);
-                const formula = getFormula(event.formulaId);
+    function renderSelectedAgent() {
+        const agent = getAgent(state.selectedAgentId) || state.data.agents[0];
+        const station = getStation(agent?.stationId);
+        if (!agent) return;
+
+        els.selectedAgentName.textContent = agent.name;
+        els.selectedAgentStation.textContent = station?.name || '--';
+
+        const needs = Object.entries(agent.needs || {})
+            .map(([label, value]) => {
+                const safeValue = clamp(value, 0, 100);
                 return `
-                    <article class="event-item">
-                        <span class="event-dot" style="--event-color: ${eventColor(event.type)}"></span>
-                        <div>
-                            <div class="event-meta">
-                                <span>${escapeHtml(formatTime(event.timestamp))}</span>
-                                <span>${escapeHtml(event.type)}</span>
-                                <span>${escapeHtml(formula?.id || event.formulaId || 'LAB')}</span>
-                            </div>
-                            <strong>${escapeHtml(scientist?.name || 'FUSE Lab')}</strong>
-                            <span>${escapeHtml(event.message)}</span>
-                        </div>
-                    </article>
+                    <div class="need-row">
+                        <span>${escapeHtml(label)}</span>
+                        <span class="need-track"><i style="--need: ${safeValue}%"></i></span>
+                        <strong>${safeValue}</strong>
+                    </div>
                 `;
             })
             .join('');
+
+        els.selectedAgentDetail.innerHTML = `
+            <article class="selected-detail" style="--agent-color: ${escapeHtml(agent.color)}">
+                <strong>${escapeHtml(agent.role)}</strong>
+                <p>${escapeHtml(agent.intent)}</p>
+                <p>${escapeHtml(agent.reflection)}</p>
+                <div class="need-grid">${needs}</div>
+            </article>
+        `;
     }
 
-    function renderPapers() {
-        const papers = state.data.papers || [];
-        if (!papers.length) {
-            els.paperList.innerHTML = `
-                <article class="paper-item">
-                    <strong>Research queue ready</strong>
-                    <span>Fetch papers to pull Crossref metadata into the evidence queue. Every record still needs review before it can support a claim.</span>
-                </article>
-            `;
-            return;
-        }
-
-        els.paperList.innerHTML = papers
-            .slice(0, 8)
-            .map(paper => {
-                const link = paper.url
-                    ? `<a href="${escapeHtml(paper.url)}" target="_blank" rel="noopener noreferrer">Open record</a>`
-                    : '';
-                return `
-                    <article class="paper-item">
-                        <strong>${escapeHtml(paper.title)}</strong>
-                        <span>${escapeHtml(paper.source)}${paper.year ? ` - ${escapeHtml(paper.year)}` : ''} - ${escapeHtml(paper.evidenceLevel || 'Needs review')}</span>
-                        ${link}
-                    </article>
-                `;
-            })
-            .join('');
-    }
-
-    function renderSocietyLayer() {
-        if (!els.memoryStreamList) return;
-        const cognition = state.data.cognition || fallbackState.cognition || {};
-        const loop = cognition.loop || ['perceive', 'retrieve', 'plan', 'reflect', 'execute'];
-        const agentStates = effectiveAgentStates();
-        const memories = state.data.memoryStream || [];
-        const socialGraph = state.data.socialGraph || [];
-        const replayFrames = state.data.replayFrames || [];
-
-        els.routerSummary.textContent = cognition.router ? 'Router online' : 'Plan-Execute';
-        els.cognitionLoop.innerHTML = loop
-            .map(step => `<span>${escapeHtml(step)}</span>`)
-            .join('');
-
-        els.planList.innerHTML = agentStates.length
-            ? agentStates
+    function renderConversations() {
+        const conversations = state.data.conversations || [];
+        els.conversationCount.textContent = String(conversations.length);
+        els.conversationFeed.innerHTML = conversations.length
+            ? conversations
                   .slice(0, 5)
-                  .map(agentState => {
-                      const scientist = getScientist(agentState.id);
-                      const color = stationColor(scientist?.station, scientist?.color);
+                  .map(conversation => {
+                      const from = getAgent(conversation.from);
+                      const to = getAgent(conversation.to);
+                      const hypothesis = getHypothesis(conversation.hypothesisId);
+                      const lines = (conversation.lines || [])
+                          .map(line => {
+                              const speaker = getAgent(line.speakerId);
+                              return `<p><strong>${escapeHtml(speaker?.name || 'Agent')}</strong> ${escapeHtml(line.text)}</p>`;
+                          })
+                          .join('');
                       return `
-                        <article class="plan-item" style="--agent-color: ${escapeHtml(color)}">
-                            <strong>${escapeHtml(shortName(agentState.id))}</strong>
-                            <span>${escapeHtml(agentState.currentPlan || 'Observing lab')}</span>
-                            <small>${escapeHtml(agentState.mood || 'observing')}</small>
+                        <article class="conversation-item">
+                            <div class="conversation-meta">
+                                <span>${escapeHtml(formatTime(conversation.timestamp))}</span>
+                                <span>${escapeHtml(from?.name || conversation.from)} -> ${escapeHtml(to?.name || conversation.to)}</span>
+                                <span>${escapeHtml(hypothesis?.id || 'LAB')}</span>
+                            </div>
+                            <div class="conversation-lines">${lines}</div>
                         </article>
                     `;
                   })
                   .join('')
-            : '<article class="plan-item"><strong>Boot</strong><span>Waiting for agent plans.</span></article>';
+            : '<p class="is-empty">No active conversations yet.</p>';
+    }
 
-        els.memoryStreamList.innerHTML = memories.length
+    function renderMemories() {
+        const memories = state.data.memories || [];
+        els.memoryCount.textContent = String(memories.length);
+        els.memoryFeed.innerHTML = memories.length
             ? memories
-                  .slice(0, 5)
-                  .map(memory => `
-                    <article class="memory-item">
-                        <strong>${escapeHtml(shortName(memory.scientistId))} - ${escapeHtml(memory.type || 'event')}</strong>
-                        <span>${escapeHtml(memory.summary || 'Memory captured.')}</span>
-                        <small>Importance ${escapeHtml(memory.importance || '--')} / Poignancy ${escapeHtml(memory.poignancy || '--')}</small>
-                    </article>
-                `)
+                  .slice(0, 8)
+                  .map(memory => {
+                      const agent = getAgent(memory.agentId);
+                      return `
+                        <article class="memory-item">
+                            <div class="memory-meta">
+                                <span>${escapeHtml(formatTime(memory.timestamp))}</span>
+                                <span>${escapeHtml(memory.evidenceLevel)}</span>
+                                <span>importance ${escapeHtml(memory.importance)}</span>
+                            </div>
+                            <strong>${escapeHtml(agent?.name || 'Lab memory')}</strong>
+                            <p>${escapeHtml(memory.summary)}</p>
+                        </article>
+                    `;
+                  })
                   .join('')
-            : '<article class="memory-item"><strong>Memory stream ready</strong><span>Lab events will be retained here.</span></article>';
-
-        els.socialGraphList.innerHTML = socialGraph.length
-            ? socialGraph
-                  .slice(0, 4)
-                  .map(edge => `
-                    <article class="social-edge">
-                        <strong>${escapeHtml(shortName(edge.from))} -> ${escapeHtml(shortName(edge.to))}</strong>
-                        <span>${escapeHtml(edge.topic || 'shared context')}</span>
-                        <small>Trust ${escapeHtml(edge.trust || '--')}</small>
-                    </article>
-                `)
-                  .join('')
-            : '<article class="social-edge"><strong>Social space ready</strong><span>No active collaboration edge yet.</span></article>';
-
-        els.replayList.innerHTML = replayFrames.length
-            ? replayFrames
-                  .slice(0, 4)
-                  .map(frame => `
-                    <article class="replay-frame">
-                        <strong>Tick ${String(frame.tick || 0).padStart(3, '0')}</strong>
-                        <span>${escapeHtml(frame.action || frame.mode || 'Replay captured')}</span>
-                        <small>${escapeHtml(shortName(frame.scientistId))} @ ${escapeHtml(frame.station || 'Lab')}</small>
-                    </article>
-                `)
-                  .join('')
-            : '<article class="replay-frame"><strong>Replay ready</strong><span>Frames are captured after each tick.</span></article>';
+            : '<p class="is-empty">The world is waiting for its first memory.</p>';
     }
 
-    function renderSelectedScientist() {
-        const scientist =
-            getScientist(state.selectedScientistId) || (state.data.scientists || [])[0];
-        if (!scientist) {
-            els.selectedScientist.innerHTML = '<p>No scientist selected.</p>';
-            return;
+    function renderQueue() {
+        const queue = state.data.experimentQueue || [];
+        els.queueCount.textContent = String(queue.length);
+        els.experimentQueue.innerHTML = queue.length
+            ? queue
+                  .slice(0, 7)
+                  .map(item => {
+                      return `
+                        <article class="queue-item">
+                            <div>
+                                <strong>${escapeHtml(item.title)}</strong>
+                                <p>${escapeHtml(item.reason)}</p>
+                            </div>
+                            <em>${escapeHtml(item.owner)}</em>
+                        </article>
+                    `;
+                  })
+                  .join('')
+            : '<p class="is-empty">No queued experiments.</p>';
+    }
+
+    function renderTopline() {
+        const current = state.data.currentExperiment || {};
+        const station = getStation(current.stationId);
+        const hypothesis = getHypothesis(current.hypothesisId);
+        const dispute = state.data.disputes?.[0];
+
+        els.worldMode.textContent = state.isRunning ? state.data.mode : 'Paused';
+        els.labClock.textContent = formatClock(state.data.labClock);
+        els.missionText.textContent = state.data.mission;
+        els.activeExperiment.textContent = current.title || 'Loading';
+        els.evidenceGate.textContent = current.evidenceLevel || 'Hypothesis';
+        els.activeDispute.textContent = dispute ? dispute.title : 'None';
+        els.guardrailText.textContent = state.data.guardrail;
+        els.experimentProgress.style.setProperty(
+            '--progress',
+            `${clamp(current.progress, 0, 100)}%`
+        );
+
+        if (station && hypothesis) {
+            els.activeExperiment.textContent = `${current.title} at ${station.name} for ${hypothesis.id}`;
         }
-        const agentState = getAgentState(scientist.id) || {};
-        const color = stationColor(scientist.station, scientist.color);
-        const needs = agentState.needs || {};
-        const memories = (state.data.memoryStream || [])
-            .filter(memory => memory.scientistId === scientist.id)
-            .slice(0, 2);
-        els.selectedStation.textContent = scientist.station;
-        els.selectedScientist.innerHTML = `
-            <div class="selected-visual" style="--agent-color: ${escapeHtml(color)}">
-                <span class="selected-avatar selected-sprite ${spriteClass(scientist.id)}" aria-hidden="true"></span>
-            </div>
-            <h2>${escapeHtml(scientist.name)}</h2>
-            <p><strong>${escapeHtml(scientist.role)}</strong></p>
-            <p>${escapeHtml(scientist.personality)}</p>
-            <p>${escapeHtml(scientist.speciality)}</p>
-            <div class="agent-cognition">
-                <strong>${escapeHtml(agentState.currentPlan || 'Observing lab')}</strong>
-                <span>${escapeHtml(agentState.reflection || 'No reflection captured yet.')}</span>
-                <div class="need-grid">
-                    ${barRow('Focus', needs.focus)}
-                    ${barRow('Energy', needs.energy)}
-                    ${barRow('Evidence', needs.evidenceNeed)}
-                    ${barRow('Social', needs.collaborationNeed)}
-                </div>
-            </div>
-            <div class="selected-memory">
-                ${memories
-                    .map(memory => `<span>${escapeHtml(memory.summary || 'Memory captured.')}</span>`)
-                    .join('')}
-            </div>
-            <div class="selected-tags">
-                <span>${escapeHtml(scientist.station)}</span>
-                <span>${escapeHtml(agentState.mood || 'Evidence gated')}</span>
-                <span>Memory stream</span>
-            </div>
-        `;
-    }
-
-    function renderExperiment() {
-        const active = state.data.activeExperiment || {};
-        const progress = Math.max(0, Math.min(100, Number(active.progress || 0)));
-        els.labMode.textContent = state.data.mode || 'Evidence-gated simulation';
-        els.labClock.textContent = `Tick ${String(state.data.labClock || 0).padStart(3, '0')}`;
-        els.activeExperiment.textContent = active.kind || 'Lab idle';
-        els.evidenceGate.textContent = active.evidenceGate || 'Hypothesis';
-        els.experimentProgress.style.width = `${progress}%`;
-        els.missionText.textContent = state.data.mission || fallbackState.mission;
-        els.guardrailText.textContent =
-            (state.data.guardrails || fallbackState.guardrails)[
-                (state.data.labClock || 0) %
-                    (state.data.guardrails || fallbackState.guardrails).length
-            ] || fallbackState.guardrails[0];
-        els.lastUpdated.textContent = formatTime(state.data.updatedAt || new Date().toISOString());
     }
 
     function render() {
-        renderExperiment();
-        renderScientists();
-        renderWorldAgents();
-        renderFormulas();
-        renderEvents();
-        renderPapers();
-        renderSocietyLayer();
-        renderSelectedScientist();
+        if (!state.data) return;
+        renderTopline();
+        renderStations();
+        renderAgents();
+        renderHypotheses();
+        renderSelectedAgent();
+        renderConversations();
+        renderMemories();
+        renderQueue();
     }
 
-    function localAdvance() {
-        const data =
-            typeof structuredClone === 'function'
-                ? structuredClone(state.data)
-                : JSON.parse(JSON.stringify(state.data));
-        const scientists = data.scientists || [];
-        const formulas = data.formulas || [];
-        const scientist = scientists[(state.localTick + 2) % scientists.length] || scientists[0];
-        const formula = formulas[(state.localTick + 1) % formulas.length] || formulas[0];
-        const metricKeys = Object.keys(metricLabels);
-        const metric = metricKeys[state.localTick % metricKeys.length];
-        const score = Number(formula?.scores?.[metric] || 60);
-
-        if (formula?.scores) {
-            formula.scores[metric] = Math.max(
-                34,
-                Math.min(98, score + (state.localTick % 3 === 0 ? 2 : 1))
-            );
-            formula.overall = formulaAverage(formula.scores);
-        }
-
-        data.labClock = Number(data.labClock || 0) + 1;
-        data.updatedAt = new Date().toISOString();
-        data.activeExperiment = {
-            id: `LOCAL-${String(data.labClock).padStart(3, '0')}`,
-            kind:
-                scientist?.station === 'Sensory Tongue Lab'
-                    ? 'Tongue feel panel'
-                    : 'Bench simulation',
-            station: scientist?.station || 'Central Table',
-            formulaId: formula?.id,
-            scientistId: scientist?.id,
-            evidenceGate:
-                metric === 'absorptionEvidence' ? 'Needs wet-lab validation' : 'Simulation result',
-            progress: 20 + ((state.localTick * 19) % 74),
-        };
-        data.events = [
-            {
-                id: `local-${Date.now()}`,
-                timestamp: data.updatedAt,
-                scientistId: scientist?.id,
-                type: data.activeExperiment.evidenceGate,
-                formulaId: formula?.id,
-                message: `${scientist?.name || 'FUSE Lab'} advances a local visitor simulation and marks the result as non-claim evidence.`,
-            },
-            ...(data.events || []),
-        ].slice(0, 90);
-        const latestEvent = data.events[0];
-        const localMemory = {
-            id: `mem-${latestEvent.id}`,
-            timestamp: latestEvent.timestamp,
-            scientistId: latestEvent.scientistId,
-            type: 'event',
-            formulaId: latestEvent.formulaId,
-            location: scientist?.station || 'Central Table',
-            importance: 64 + (state.localTick % 5),
-            poignancy: latestEvent.type === 'Needs wet-lab validation' ? 78 : 54,
-            summary: latestEvent.message,
-            evidence: [latestEvent.id],
-        };
-        data.memoryStream = [localMemory, ...(data.memoryStream || [])].slice(0, 80);
-        const chatTarget = scientist?.id === 'pipette' ? 'mira' : 'pipette';
-        data.chatMessages = [
-            {
-                id: `local-chat-${Date.now()}`,
-                timestamp: data.updatedAt,
-                from: scientist?.id,
-                to: chatTarget,
-                topic: `${data.activeExperiment.kind} handoff`,
-                lines: [
-                    {
-                        speakerId: scientist?.id,
-                        text: 'Can you route this result to the next station?',
-                    },
-                    {
-                        speakerId: chatTarget,
-                        text: 'Routing it now with the evidence label attached.',
-                    },
-                ],
-            },
-            ...(data.chatMessages || []),
-        ].slice(0, 36);
-        data.agentStates = (data.scientists || []).map(agent => {
-            const isActive = agent.id === scientist?.id;
-            const routeIndex =
-                (state.localTick + agent.id.length + agent.station.length) % routeStations.length;
-            const routeStation =
-                routeStations[routeIndex] === agent.station
-                    ? routeStations[(routeIndex + 2) % routeStations.length]
-                    : routeStations[routeIndex];
-            return {
-                id: agent.id,
-                mood: isActive ? 'locked-in' : 'observing',
-                currentPlan: isActive ? data.activeExperiment.kind : 'retrieve relevant memories',
-                currentAction: isActive ? 'executing local experiment' : 'observing lab state',
-                nextLocation: isActive ? agent.station : routeStation,
-                needs: {
-                    focus: Math.min(100, 62 + (isActive ? 18 : 0) + ((state.localTick + agent.id.length) % 12)),
-                    energy: Math.max(35, 76 - ((state.localTick + agent.id.length) % 18)),
-                    evidenceNeed: Math.min(100, 44 + (isActive ? 20 : 0)),
-                    collaborationNeed: 48 + ((state.localTick + agent.station.length) % 22),
-                },
-                reflection: isActive
-                    ? `${agent.name} turns this tick into a memory before the next plan.`
-                    : `${agent.name} is waiting for a relevant event to retrieve.`,
-            };
-        });
-        data.socialGraph = [
-            {
-                from: scientist?.id,
-                to: 'pipette',
-                trust: 76 + (state.localTick % 8),
-                topic: `${data.activeExperiment.kind} sample routing`,
-                lastInteraction: data.updatedAt,
-            },
-            ...(data.socialGraph || []),
-        ].slice(0, 12);
-        data.replayFrames = [
-            {
-                tick: data.labClock,
-                timestamp: data.updatedAt,
-                mode: 'local-plan-execute',
-                scientistId: scientist?.id,
-                station: scientist?.station,
-                action: data.activeExperiment.kind,
-                formulaId: formula?.id,
-                plan: data.activeExperiment.kind,
-                outcome: latestEvent.message,
-            },
-            ...(data.replayFrames || []),
-        ].slice(0, 48);
-
-        state.localTick += 1;
-        state.data = data;
-        render();
-    }
-
-    async function loadState() {
-        try {
-            const response = await fetch(`${API_URL}?action=state`, {
-                headers: { Accept: 'application/json' },
-            });
-            if (!response.ok) throw new Error(`State fetch failed: ${response.status}`);
-            const payload = await response.json();
-            if (payload.success && payload.data) {
-                state.data = payload.data;
-                if (!getScientist(state.selectedScientistId)) {
-                    state.selectedScientistId = payload.data.scientists?.[0]?.id || 'ava';
-                }
-                render();
-            }
-        } catch (error) {
-            console.warn('[ResearchLab] using local fallback state:', error.message);
-            render();
-        }
-    }
-
-    async function fetchPapers() {
-        if (state.isFetchingPapers) return;
-        state.isFetchingPapers = true;
-        els.fetchPapersBtn.textContent = 'Fetching...';
-        els.fetchPapersBtn.disabled = true;
-
-        const query = els.paperQuery.value.trim() || 'creatine monohydrate coffee solubility';
-        try {
-            const response = await fetch(
-                `${API_URL}?action=papers&q=${encodeURIComponent(query)}`,
-                {
-                    headers: { Accept: 'application/json' },
-                }
-            );
-            const payload = await response.json();
-            if (payload.data?.state) {
-                state.data = payload.data.state;
-            }
-            render();
-        } catch (error) {
-            console.warn('[ResearchLab] paper fetch failed:', error.message);
-        } finally {
-            state.isFetchingPapers = false;
-            els.fetchPapersBtn.textContent = 'Fetch papers';
-            els.fetchPapersBtn.disabled = false;
-        }
-    }
-
-    function bindDom() {
+    function cacheElements() {
         [
-            'labMode',
+            'worldMode',
             'missionText',
-            'agentCount',
-            'scientistList',
+            'advanceWorld',
+            'toggleWorld',
+            'resetWorld',
             'labClock',
+            'agentCount',
+            'agentRoster',
             'activeExperiment',
-            'localTickBtn',
-            'labWorld',
-            'agentStage',
             'evidenceGate',
+            'activeDispute',
+            'stationGrid',
+            'agentLayer',
             'experimentProgress',
             'guardrailText',
-            'formulaList',
-            'bestScore',
-            'eventList',
-            'lastUpdated',
-            'fetchPapersBtn',
-            'paperQuery',
-            'paperList',
-            'selectedStation',
-            'selectedScientist',
-            'routerSummary',
-            'cognitionLoop',
-            'planList',
-            'memoryStreamList',
-            'socialGraphList',
-            'replayList',
+            'leadScore',
+            'hypothesisList',
+            'selectedAgentName',
+            'selectedAgentStation',
+            'selectedAgentDetail',
+            'conversationCount',
+            'conversationFeed',
+            'memoryCount',
+            'memoryFeed',
+            'queueCount',
+            'experimentQueue',
         ].forEach(id => {
-            els[id] = document.getElementById(id);
-        });
-
-        els.localTickBtn.addEventListener('click', localAdvance);
-        els.fetchPapersBtn.addEventListener('click', fetchPapers);
-        els.paperQuery.addEventListener('keydown', event => {
-            if (event.key === 'Enter') fetchPapers();
+            els[id] = $(id);
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        bindDom();
-        render();
-        loadState();
-        window.setInterval(localAdvance, 11000);
-        window.setInterval(loadState, 60000);
-    });
+    function bindEvents() {
+        els.advanceWorld.addEventListener('click', advanceWorld);
+        els.toggleWorld.addEventListener('click', toggleWorld);
+        els.resetWorld.addEventListener('click', resetWorld);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
+        });
+    }
+
+    async function init() {
+        cacheElements();
+        bindEvents();
+        try {
+            await requestState('state');
+            startTimer();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
 })();

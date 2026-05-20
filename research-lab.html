@@ -5,268 +5,151 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta
             name="description"
-            content="Enter the FUSE Research Lab, a live simulation of scientist agents researching coffee-compatible creatine dispersion, taste, and evidence."
+            content="FUSE Research Lab World is a living agent simulation where scientist agents investigate coffee-compatible creatine formulation routes."
         />
         <meta name="robots" content="noindex, nofollow" />
         <meta name="theme-color" content="#050505" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self';"
+            content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
         />
-        <title>FUSE Research Lab Live</title>
+        <title>FUSE Research Lab World</title>
         <link rel="canonical" href="https://fusecreatine.com/research-lab" />
         <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="css/style.css" />
         <link rel="stylesheet" href="css/research-lab.css" />
-        <link rel="stylesheet" href="css/consent.css" />
         <script defer src="js/research-lab.js"></script>
-        <script defer src="js/consent-manager.js"></script>
     </head>
-    <body class="research-lab-page">
-        <a href="#lab-main" class="skip-link">Skip to main content</a>
+    <body class="research-world-page">
+        <a href="#world-main" class="skip-link">Skip to main content</a>
 
-        <header class="lab-header" role="banner">
-            <a href="/" class="lab-logo" aria-label="FUSE home">
+        <header class="world-header" role="banner">
+            <a class="world-logo" href="/" aria-label="FUSE home">
                 <span>FUSE</span>
-                <small>Research Lab</small>
+                <strong>Research Lab World</strong>
             </a>
-            <nav class="lab-nav" aria-label="Primary navigation">
+            <nav class="world-nav" aria-label="Research lab navigation">
                 <a href="/">Home</a>
                 <a href="/dashboard">Dashboard</a>
                 <a href="/agents">Agents</a>
             </nav>
-            <div class="lab-status" aria-live="polite">
-                <span class="status-light"></span>
-                <span id="labMode">Evidence-gated simulation</span>
+            <div class="world-status" aria-live="polite">
+                <span class="status-dot"></span>
+                <span id="worldMode">Booting world</span>
             </div>
         </header>
 
-        <main class="lab-shell sandbox-shell" id="lab-main">
-            <section class="lab-intro sandbox-intro" aria-label="Research lab mission">
-                <div>
-                    <p class="lab-kicker">Live world</p>
-                    <h1>FUSE Research Lab Live</h1>
-                    <p>
-                        Scientist agents are testing coffee-compatible creatine concepts across
-                        dispersion, taste, tongue feel, dose integrity, absorption evidence, and
-                        compliance.
+        <main class="world-shell" id="world-main">
+            <section class="world-command" aria-label="Research mission controls">
+                <div class="mission-block">
+                    <h1>FUSE Research Lab World</h1>
+                    <p id="missionText">
+                        Find a legally defensible, manufacturable way to make creatine monohydrate
+                        disappear into hot coffee fast without changing taste or texture.
                     </p>
                 </div>
-                <div class="mission-card">
-                    <span>Mission</span>
-                    <strong id="missionText">Loading research mission...</strong>
+                <div class="command-strip" aria-label="Simulation controls">
+                    <button class="control-button primary" id="advanceWorld" type="button">
+                        Advance world
+                    </button>
+                    <button class="control-button" id="toggleWorld" type="button">Pause</button>
+                    <button class="control-button" id="resetWorld" type="button">Reset</button>
+                    <div class="clock-readout">
+                        <span>Lab clock</span>
+                        <strong id="labClock">Tick 000</strong>
+                    </div>
                 </div>
             </section>
 
-            <section class="lab-grid" aria-label="Research lab simulation">
-                <aside class="scientist-panel sandbox-roster" aria-label="Scientist agents">
-                    <div class="panel-heading">
-                        <span>Scientist Agents</span>
+            <section class="world-layout" aria-label="Living research lab">
+                <aside class="side-panel roster-panel" aria-label="Research agents">
+                    <div class="panel-title">
+                        <span>Research agents</span>
                         <strong id="agentCount">0</strong>
                     </div>
-                    <div class="scientist-list" id="scientistList"></div>
+                    <div class="agent-roster" id="agentRoster"></div>
                 </aside>
 
-                <section class="world-panel sandbox-stage-panel" aria-label="Top-down animated research lab sandbox">
-                    <div class="world-toolbar">
+                <section class="lab-stage-panel" aria-label="Top-down research lab world">
+                    <div class="stage-toolbar">
                         <div>
-                            <span class="mono-label">Lab clock</span>
-                            <strong id="labClock">Tick 000</strong>
+                            <span>Active experiment</span>
+                            <strong id="activeExperiment">Loading</strong>
                         </div>
                         <div>
-                            <span class="mono-label">Active experiment</span>
-                            <strong id="activeExperiment">Booting lab...</strong>
-                        </div>
-                        <button class="icon-button sandbox-run-button" id="localTickBtn" type="button">
-                            <span class="button-icon" aria-hidden="true">Run</span>
-                            <span>Advance</span>
-                        </button>
-                    </div>
-
-                    <div class="lab-world sandbox-world" id="labWorld">
-                        <div class="lab-layer lab-layer-wall" aria-hidden="true"></div>
-                        <div class="lab-layer lab-layer-master" aria-hidden="true"></div>
-                        <div class="lab-layer lab-layer-floor" aria-hidden="true"></div>
-                        <div class="world-depth-mask" aria-hidden="true"></div>
-                        <div class="world-grid-lines" aria-hidden="true"></div>
-                        <div class="lab-effect effect-holo" aria-hidden="true"></div>
-                        <div class="lab-effect effect-particles" aria-hidden="true"></div>
-                        <div class="lab-effect effect-scan" aria-hidden="true"></div>
-                        <div class="prop-asset prop-command" aria-hidden="true"></div>
-                        <div class="prop-asset prop-tank" aria-hidden="true"></div>
-                        <div class="prop-asset prop-coffee" aria-hidden="true"></div>
-                        <div class="prop-asset prop-pod" aria-hidden="true"></div>
-                        <div class="sandbox-map" id="sandboxMap" aria-hidden="true">
-                            <div class="map-corridor corridor-main"></div>
-                            <div class="map-corridor corridor-cross"></div>
-                            <div
-                                class="map-room room-encapsulation"
-                                data-station="Encapsulation Bench"
-                            >
-                                <span>Encapsulation Bench</span>
-                                <small>Carrier Library</small>
-                            </div>
-                            <div class="map-room room-coffee" data-station="Coffee Matrix Bar">
-                                <span>Coffee Matrix Bar</span>
-                                <small>Espresso Rig</small>
-                            </div>
-                            <div class="map-room room-sensory" data-station="Sensory Tongue Lab">
-                                <span>Sensory Tongue Lab</span>
-                                <small>Panel Booths</small>
-                            </div>
-                            <div
-                                class="map-room room-absorption"
-                                data-station="Absorption Evidence Desk"
-                            >
-                                <span>Absorption Evidence Desk</span>
-                                <small>Source Review</small>
-                            </div>
-                            <div class="map-room room-claims" data-station="Claims Gate">
-                                <span>Claims Gate</span>
-                                <small>Compliance Desk</small>
-                            </div>
-                            <div class="map-room room-pilot" data-station="Pilot Mixer">
-                                <span>Pilot Mixer</span>
-                                <small>Batch Bay</small>
-                            </div>
-                            <div class="map-room room-rail" data-station="Central Sample Rail">
-                                <span>Central Sample Rail</span>
-                                <small>Routing Hub</small>
-                            </div>
-                            <div class="map-prop prop-desk"></div>
-                            <div class="map-prop prop-terminal"></div>
-                            <div class="map-prop prop-vat"></div>
-                            <div class="map-prop prop-table"></div>
-                        </div>
-                        <div
-                            class="station station-encapsulation"
-                            data-station="Encapsulation Bench"
-                        >
-                            <span>Encapsulation Bench</span>
-                            <small>Carrier ratios</small>
-                        </div>
-                        <div class="station station-coffee" data-station="Coffee Matrix Bar">
-                            <span>Coffee Matrix Bar</span>
-                            <small>92C espresso</small>
-                        </div>
-                        <div class="station station-sensory" data-station="Sensory Tongue Lab">
-                            <span>Sensory Tongue Lab</span>
-                            <small>Grit and aftertaste</small>
-                        </div>
-                        <div
-                            class="station station-absorption"
-                            data-station="Absorption Evidence Desk"
-                        >
-                            <span>Absorption Evidence Desk</span>
-                            <small>Claims boundary</small>
-                        </div>
-                        <div class="station station-claims" data-station="Claims Gate">
-                            <span>Claims Gate</span>
-                            <small>Substantiation</small>
-                        </div>
-                        <div class="station station-pilot" data-station="Pilot Mixer">
-                            <span>Pilot Mixer</span>
-                            <small>Batch feasibility</small>
-                        </div>
-                        <div class="station station-rail" data-station="Central Sample Rail">
-                            <span>Central Sample Rail</span>
-                            <small>Agent routing</small>
-                        </div>
-                        <div class="sample-rail" aria-hidden="true"></div>
-                        <div class="agent-stage" id="agentStage" aria-hidden="true"></div>
-                    </div>
-
-                    <div class="experiment-strip">
-                        <div>
-                            <span class="mono-label">Evidence gate</span>
+                            <span>Evidence gate</span>
                             <strong id="evidenceGate">Hypothesis</strong>
                         </div>
-                        <div class="progress-track" aria-label="Experiment progress">
+                        <div>
+                            <span>Current dispute</span>
+                            <strong id="activeDispute">None</strong>
+                        </div>
+                    </div>
+
+                    <div class="lab-world" id="labWorld">
+                        <div class="world-grid" aria-hidden="true"></div>
+                        <div class="sample-loop" aria-hidden="true"></div>
+                        <div class="station-grid" id="stationGrid"></div>
+                        <div class="agent-layer" id="agentLayer"></div>
+                    </div>
+
+                    <div class="stage-footer">
+                        <div class="experiment-progress" aria-label="Experiment progress">
                             <span id="experimentProgress"></span>
                         </div>
                         <p id="guardrailText">
-                            Simulations inform hypotheses; wet-lab validation controls claims.
+                            Agent findings are internal hypotheses until wet-lab and legal review
+                            upgrade the evidence level.
                         </p>
                     </div>
                 </section>
 
-                <aside class="formula-panel" aria-label="Formula candidates">
-                    <div class="panel-heading">
-                        <span>Formula Candidates</span>
-                        <strong id="bestScore">--</strong>
+                <aside class="side-panel mission-panel" aria-label="Mission control">
+                    <div class="panel-title">
+                        <span>Mission control</span>
+                        <strong id="leadScore">--</strong>
                     </div>
-                    <div class="formula-list" id="formulaList"></div>
+                    <div class="hypothesis-list" id="hypothesisList"></div>
                 </aside>
             </section>
 
-            <section class="lower-grid" aria-label="Evidence and lab events">
-                <section class="society-panel" aria-label="Agent society cognition layer">
-                    <div class="panel-heading">
-                        <span>Agent Society Layer</span>
-                        <strong id="routerSummary">Plan-Execute</strong>
+            <section class="world-bottom" aria-label="Research cognition and social layer">
+                <section class="lower-panel selected-agent-panel">
+                    <div class="panel-title">
+                        <span id="selectedAgentName">Selected agent</span>
+                        <strong id="selectedAgentStation">--</strong>
                     </div>
-                    <div class="cognition-loop" id="cognitionLoop"></div>
-                    <div class="society-columns">
-                        <div>
-                            <span class="mono-label">Active plans</span>
-                            <div class="plan-list" id="planList"></div>
-                        </div>
-                        <div>
-                            <span class="mono-label">Memory stream</span>
-                            <div class="memory-stream" id="memoryStreamList"></div>
-                        </div>
-                    </div>
-                    <div class="society-columns society-columns-compact">
-                        <div>
-                            <span class="mono-label">Social space</span>
-                            <div class="social-graph" id="socialGraphList"></div>
-                        </div>
-                        <div>
-                            <span class="mono-label">Replay frames</span>
-                            <div class="replay-list" id="replayList"></div>
-                        </div>
-                    </div>
+                    <div id="selectedAgentDetail"></div>
                 </section>
 
-                <section class="event-panel">
-                    <div class="panel-heading">
-                        <span>Live Experiment Feed</span>
-                        <strong id="lastUpdated">--</strong>
+                <section class="lower-panel conversation-panel">
+                    <div class="panel-title">
+                        <span>Live conversations</span>
+                        <strong id="conversationCount">0</strong>
                     </div>
-                    <div class="event-list" id="eventList"></div>
+                    <div class="conversation-feed" id="conversationFeed"></div>
                 </section>
 
-                <section class="evidence-panel">
-                    <div class="panel-heading evidence-heading">
-                        <span>Research Evidence Queue</span>
-                        <button class="text-button" id="fetchPapersBtn" type="button">
-                            Fetch papers
-                        </button>
+                <section class="lower-panel memory-panel">
+                    <div class="panel-title">
+                        <span>Memory stream</span>
+                        <strong id="memoryCount">0</strong>
                     </div>
-                    <div class="paper-search">
-                        <label for="paperQuery">Research query</label>
-                        <input
-                            id="paperQuery"
-                            type="search"
-                            value="creatine monohydrate coffee solubility"
-                            maxlength="160"
-                        />
-                    </div>
-                    <div class="paper-list" id="paperList"></div>
+                    <div class="memory-feed" id="memoryFeed"></div>
                 </section>
 
-                <section class="selected-panel" aria-label="Selected scientist detail">
-                    <div class="panel-heading">
-                        <span>Selected Scientist</span>
-                        <strong id="selectedStation">--</strong>
+                <section class="lower-panel queue-panel">
+                    <div class="panel-title">
+                        <span>Next experiments</span>
+                        <strong id="queueCount">0</strong>
                     </div>
-                    <div class="selected-scientist" id="selectedScientist"></div>
+                    <div class="experiment-queue" id="experimentQueue"></div>
                 </section>
             </section>
         </main>

@@ -1,6 +1,6 @@
 # R&D Team — Current Context
 
-**Last Updated**: 2026-05-17
+**Last Updated**: 2026-05-20
 **Team Code**: R&D
 **Orchestration Mode**: manual
 
@@ -10,15 +10,17 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 
 ## Active Work
 
-- [ ] Validate FUSE Research Lab simulation outputs against wet-lab evidence before using them in claims
+- [ ] Treat FUSE Research Lab World outputs as internal hypotheses until wet-lab evidence and Legal review upgrade them
 - [ ] Await FTO analysis results from Legal
 - [ ] Evaluate alternative encapsulation methods
+- [ ] Prototype hot-water dissolution routes for compact creatine format
 - [ ] Create supplier shortlist for creatine monohydrate
 - [ ] Define prototype testing protocol
 
 ## Recent Completions
 
-- ✅ Public FUSE Research Lab Live vertical slice launched for evidence-gated formulation simulation
+- ✅ Instant-dissolving creatine chemistry research memo completed (`research/science/instant-dissolving-creatine.md`)
+- ✅ FUSE Research Lab World rebuilt as an internal living-agent simulation for formulation hypotheses, disputes, evidence gates, and next experiments
 - ✅ Scientific feasibility assessment complete
 - ✅ Creatine stability research documented
 - ✅ Patent landscape analysis (14 AnaBio patents identified)
@@ -39,12 +41,12 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 
 ## Formulation Status
 
-| Component            | Status      | Notes                                    |
-| -------------------- | ----------- | ---------------------------------------- |
-| Creatine monohydrate | Sourcing    | Multiple suppliers identified            |
-| Encapsulation method | Pending FTO | Alternatives to AnaBio patent documented |
-| Carrier matrix       | Research    | Coffee-neutral options identified        |
-| Dissolution target   | Defined     | <3 seconds                               |
+| Component            | Status      | Notes                                      |
+| -------------------- | ----------- | ------------------------------------------ |
+| Creatine monohydrate | Sourcing    | Multiple suppliers identified              |
+| Encapsulation method | Pending FTO | Alternatives to AnaBio patent documented   |
+| Carrier matrix       | Research    | Coffee-neutral options identified          |
+| Dissolution target   | Defined     | <3 seconds; hot-water test path documented |
 
 ## Alternative Encapsulation Methods (Not Patented by AnaBio)
 
@@ -53,6 +55,16 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 3. **Alginate/pectin shells** — Plant-based polysaccharide coating
 4. **Spray-dried maltodextrin matrix** — Common in instant beverage industry
 5. **Non-hydrolyzed protein sources** — Pea protein, rice protein, casein
+
+## Current R&D Direction: Instant Compact Format
+
+Lead route is **micronized creatine monohydrate in a porous hydrophilic agglomerate/cube**, tested first in hot water before coffee. The research conclusion is that the instant dissolution problem is primarily physical reconstitution engineering, not a need to chemically modify creatine. Priority prototype families:
+
+1. Monohydrate + maltodextrin/modified starch low-compression porous cube
+2. Same route with trace wetting aid, subject to food supplement suitability review
+3. Mild effervescent benchmark cube for fastest possible breakup
+
+Only evaluate creatine HCl/citrate blends if monohydrate routes fail the <3 second dissolution target.
 
 ## Cross-References
 

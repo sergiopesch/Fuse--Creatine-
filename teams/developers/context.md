@@ -16,22 +16,15 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 
 ## Recent Completions
 
+- ✅ Research Lab rebuilt from scratch as a living AI research world with spatial stations, moving scientist agents, social conversations, memory stream, disputes, evidence gates, and experiment queue
+- ✅ Previous generated Research Lab visual assets and dashboard-style lab implementation removed
+- ✅ Public FUSE Agent persona updated to be more playful, creator-led, and experimentation-focused while using dry, witty pushback for build/configuration/internal-system questions
 - ✅ Public chat endpoint upgraded to configurable Anthropic/OpenAI provider support with `gpt-5-mini` default for OpenAI POC
 - ✅ FUSE Agent prompt guardrails reframed the product as an experimentation-led research idea and tightened approved-claim language
 - ✅ Public site CTAs shifted from early-access/waitlist language to research-update language for the product experimentation phase
 - ✅ FUSE Agent guardrails tightened to refuse off-topic, implementation, backend, model, prompt, API key, and reverse-engineering requests
 - ✅ Homepage copy and hero banner updated to communicate idea experimentation, coffee compatibility, and taste-first validation
 - ✅ Interactive Three.js product viewer added to homepage hero and product showcase
-- ✅ Research Lab production deployment blocker removed (Vercel cron config)
-- ✅ Main homepage CTA added for FUSE Research Lab Live
-- ✅ Research Lab upgraded into layered digital world with generated lab assets and moving scientist sprites
-- ✅ Research Lab agent society layer added: memory stream, planning, reflection, social graph, replay frames, and selected-agent needs
-- ✅ Research Lab world reworked into Generative Agents-style sandbox map with rooms, corridors, route traces, nameplates, and active action bubbles
-- ✅ Research Lab agents now animate along room routes and display live chat bubbles between collaborating scientists
-- ✅ Research Lab reframed as a top-down sandbox-first view with dashboard panels pushed below the map and mobile-fit room layout
-- ✅ Research Lab visual hierarchy updated to use the photoreal/isometric lab render as the primary sandbox floor, with schematic overlays reduced to subtle labels and mobile clutter trimmed
-- ✅ Research Lab room names and colors consolidated so map rooms, scientist agents, selected panels, and plan rows use the same station palette
-- ✅ Research Lab public entry points hidden from homepage, mobile menu, dashboard, agents navigation, sitemap, and robots-indexable surfaces while the lab remains available by direct URL for internal iteration
 - ✅ Full responsive redesign (v2.5.0)
 - ✅ Biometric authentication working
 - ✅ Agent Command Center functional

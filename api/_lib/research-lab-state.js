@@ -1,12 +1,9 @@
 const { Redis } = require('@upstash/redis');
 
-const STATE_KEY = 'research-lab:state:v1';
-const MAX_EVENTS = 90;
-const MAX_MEMORIES = 80;
-const MAX_REPLAY_FRAMES = 48;
-const MAX_CHATS = 36;
-const MAX_PAPERS = 30;
-const PAPER_TIMEOUT_MS = 6500;
+const STATE_KEY = 'research-world:state:v1';
+const MAX_MEMORIES = 72;
+const MAX_CONVERSATIONS = 24;
+const MAX_DISPUTES = 12;
 
 const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -15,895 +12,551 @@ const redis =
 
 let memoryState = null;
 
-const scientists = [
+const stations = [
+    {
+        id: 'central-rail',
+        name: 'Central Sample Rail',
+        purpose: 'Routes samples and evidence between teams',
+        color: '#d7ed69',
+        x: 39,
+        y: 42,
+        w: 22,
+        h: 16,
+    },
+    {
+        id: 'encapsulation',
+        name: 'Encapsulation Bench',
+        purpose: 'Carrier structure, wetting, agglomeration',
+        color: '#ff3b30',
+        x: 7,
+        y: 10,
+        w: 27,
+        h: 25,
+    },
+    {
+        id: 'coffee',
+        name: 'Coffee Matrix Bar',
+        purpose: 'Espresso, black coffee, milk coffee stress tests',
+        color: '#c58b59',
+        x: 39,
+        y: 8,
+        w: 24,
+        h: 24,
+    },
+    {
+        id: 'claims',
+        name: 'Claims Gate',
+        purpose: 'Substantiation, label language, public claim control',
+        color: '#8fb8ff',
+        x: 69,
+        y: 10,
+        w: 24,
+        h: 25,
+    },
+    {
+        id: 'evidence',
+        name: 'Evidence Desk',
+        purpose: 'Creatine monohydrate evidence and absorption boundaries',
+        color: '#44d7b6',
+        x: 8,
+        y: 64,
+        w: 27,
+        h: 24,
+    },
+    {
+        id: 'sensory',
+        name: 'Sensory Booth',
+        purpose: 'Grit, bitterness, aroma, tongue coating',
+        color: '#f5b56b',
+        x: 40,
+        y: 68,
+        w: 23,
+        h: 22,
+    },
+    {
+        id: 'pilot',
+        name: 'Pilot Mixer',
+        purpose: 'Dose uniformity, moisture risk, scale-up path',
+        color: '#b890ff',
+        x: 70,
+        y: 63,
+        w: 23,
+        h: 25,
+    },
+];
+
+const agentBlueprints = [
     {
         id: 'mira',
         name: 'Dr. Mira Solvay',
         role: 'Encapsulation Scientist',
-        speciality: 'micronisation, granulation, wetting systems, instant dispersion',
-        personality: 'Precise, skeptical, relentlessly practical.',
-        station: 'Encapsulation Bench',
+        stationId: 'encapsulation',
         color: '#ff3b30',
-        x: 20,
-        y: 55,
+        intent: 'Design carrier structures that wet quickly without clumping.',
     },
     {
         id: 'theo',
         name: 'Dr. Theo Roast',
         role: 'Coffee Matrix Chemist',
-        speciality: 'espresso chemistry, acidity, heat, crema, milk coffee interactions',
-        personality: 'Calm, sensory-aware, protective of the coffee ritual.',
-        station: 'Coffee Matrix Bar',
+        stationId: 'coffee',
         color: '#c58b59',
-        x: 73,
-        y: 33,
+        intent: 'Protect espresso aroma, crema, acidity, and heat stability.',
     },
     {
         id: 'ava',
         name: 'Dr. Ava Palate',
-        role: 'Sensory & Oral Perception Scientist',
-        speciality: 'tongue feel, bitterness thresholds, aroma release, aftertaste, mouth coating',
-        personality: 'Exacting, poetic about flavour, impossible to fool with grit.',
-        station: 'Sensory Tongue Lab',
+        role: 'Sensory Scientist',
+        stationId: 'sensory',
         color: '#f5b56b',
-        x: 62,
-        y: 70,
+        intent: 'Reject grit, chalk, bitterness, and tongue coating.',
     },
     {
         id: 'max',
         name: 'Dr. Max Flux',
-        role: 'Absorption Scientist',
-        speciality: 'creatine uptake evidence, dose integrity, kinetics, bioavailability claims',
-        personality: 'Evidence-first, blocks overclaiming, likes clean pharmacokinetics.',
-        station: 'Absorption Evidence Desk',
+        role: 'Creatine Evidence Lead',
+        stationId: 'evidence',
         color: '#44d7b6',
-        x: 42,
-        y: 26,
+        intent: 'Separate proven creatine evidence from delivery hypotheses.',
     },
     {
         id: 'nina',
         name: 'Dr. Nina Claims',
         role: 'Regulatory Scientist',
-        speciality: 'sports nutrition claims, substantiation, labels, compliance risk',
-        personality: 'Friendly until a claim outruns the evidence.',
-        station: 'Claims Gate',
+        stationId: 'claims',
         color: '#8fb8ff',
-        x: 84,
-        y: 58,
+        intent: 'Block any product claim that outruns evidence.',
     },
     {
         id: 'jules',
         name: 'Jules Batch',
         role: 'Manufacturing Engineer',
-        speciality: 'pilot batches, flow, dose uniformity, packaging, moisture stability',
-        personality: 'Turns elegant science into something that can ship.',
-        station: 'Pilot Mixer',
+        stationId: 'pilot',
         color: '#b890ff',
-        x: 30,
-        y: 78,
+        intent: 'Turn promising bench ideas into doseable, stable pilot batches.',
     },
     {
         id: 'pipette',
         name: 'Pipette',
         role: 'Lab Assistant Agent',
-        speciality: 'sample routing, bench timing, evidence labels, instrument logs',
-        personality: 'Fast, literal, tireless, and obsessed with clean timestamps.',
-        station: 'Central Sample Rail',
-        color: '#e2f06f',
-        x: 50,
-        y: 50,
+        stationId: 'central-rail',
+        color: '#d7ed69',
+        intent: 'Move samples, timestamp evidence, and keep the audit trail clean.',
     },
 ];
 
-const evidenceSources = [
+const hypotheses = [
     {
-        title: 'Creatine monohydrate remains the evidence baseline',
-        source: 'International Society of Sports Nutrition position stand',
-        url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0173-z',
-        type: 'Evidence-backed',
-        confidence: 93,
+        id: 'FUSE-POR-01',
+        name: 'Porous Monohydrate Agglomerate',
+        summary:
+            'Micronised creatine monohydrate held in a low-compression porous matrix for fast wetting.',
+        evidenceLevel: 'Hypothesis',
+        scores: {
+            dissolve: 72,
+            taste: 75,
+            mouthfeel: 68,
+            dose: 91,
+            heat: 86,
+            make: 76,
+            claims: 84,
+        },
     },
     {
-        title: 'Dietary supplement claims need truthful, substantiated language',
-        source: 'FDA dietary supplement labeling guidance',
-        url: 'https://www.fda.gov/food/dietary-supplements-guidance-documents-regulatory-information/dietary-supplement-labeling-guide-chapter-vi-claims',
-        type: 'Regulatory control',
-        confidence: 88,
+        id: 'FUSE-WET-02',
+        name: 'Trace Wetting Aid Route',
+        summary:
+            'Minimal food-suitable wetting support added only if the clean monohydrate route stalls.',
+        evidenceLevel: 'Needs legal review',
+        scores: {
+            dissolve: 78,
+            taste: 70,
+            mouthfeel: 72,
+            dose: 86,
+            heat: 80,
+            make: 70,
+            claims: 66,
+        },
     },
     {
-        title: 'Coffee matrix testing must separate flavour preservation from solubility',
-        source: 'Internal FUSE research protocol',
-        url: '/research/testing/protocols.md',
-        type: 'Needs wet-lab validation',
-        confidence: 66,
+        id: 'FUSE-EFF-03',
+        name: 'Mild Effervescent Benchmark',
+        summary:
+            'Fast-breakup reference cube used to benchmark speed, not yet preferred for coffee ritual fit.',
+        evidenceLevel: 'Benchmark only',
+        scores: {
+            dissolve: 91,
+            taste: 54,
+            mouthfeel: 62,
+            dose: 82,
+            heat: 74,
+            make: 68,
+            claims: 58,
+        },
     },
     {
-        title: 'Encapsulation decisions require FTO review before formulation investment',
-        source: 'FUSE R&D team context',
-        url: '/teams/rnd/context.md',
-        type: 'Regulatory control',
-        confidence: 91,
+        id: 'FUSE-CYC-04',
+        name: 'Cyclodextrin Compatibility Screen',
+        summary:
+            'Molecular-complex route reserved for taste masking questions and FTO-dependent exploration.',
+        evidenceLevel: 'FTO constrained',
+        scores: {
+            dissolve: 67,
+            taste: 81,
+            mouthfeel: 77,
+            dose: 74,
+            heat: 78,
+            make: 57,
+            claims: 52,
+        },
     },
 ];
 
 const experimentTemplates = [
     {
-        kind: 'Hot coffee dispersion',
-        station: 'Coffee Matrix Bar',
-        scientistId: 'theo',
-        metric: 'dissolutionSpeed',
-        evidenceGate: 'Simulation result',
-        message: 'runs a 92C espresso dispersion check and logs visible sediment at 60 seconds.',
+        title: 'Hot coffee disappearance run',
+        stationId: 'coffee',
+        leadAgentId: 'theo',
+        supportAgentId: 'mira',
+        hypothesisId: 'FUSE-POR-01',
+        metric: 'dissolve',
+        evidenceLevel: 'Simulation',
+        effect: { dissolve: 3, taste: -1, mouthfeel: 1 },
+        dispute: 'Does faster wetting disturb crema before the powder disappears?',
     },
     {
-        kind: 'Tongue feel panel',
-        station: 'Sensory Tongue Lab',
-        scientistId: 'ava',
-        metric: 'mouthfeelCleanliness',
-        evidenceGate: 'Needs sensory panel',
-        message:
-            'scores tongue coating, grit detection, bitterness lift, aroma masking, and aftertaste duration.',
+        title: 'Tongue-cleanliness panel',
+        stationId: 'sensory',
+        leadAgentId: 'ava',
+        supportAgentId: 'theo',
+        hypothesisId: 'FUSE-POR-01',
+        metric: 'mouthfeel',
+        evidenceLevel: 'Needs sensory panel',
+        effect: { mouthfeel: 3, taste: 1, dissolve: -1 },
+        dispute: 'Can the cleanest mouthfeel route still hit the <3 second target?',
     },
     {
-        kind: 'Encapsulation screen',
-        station: 'Encapsulation Bench',
-        scientistId: 'mira',
-        metric: 'doseIntegrity',
-        evidenceGate: 'Hypothesis',
-        message: 'tests a carrier ratio for fast wetting without clumping in black coffee.',
+        title: 'Carrier ratio screen',
+        stationId: 'encapsulation',
+        leadAgentId: 'mira',
+        supportAgentId: 'jules',
+        hypothesisId: 'FUSE-WET-02',
+        metric: 'make',
+        evidenceLevel: 'Needs legal review',
+        effect: { dissolve: 2, make: 2, claims: -2 },
+        dispute: 'Any wetting aid must remain suitable for the supplement route.',
     },
     {
-        kind: 'Creatine evidence review',
-        station: 'Absorption Evidence Desk',
-        scientistId: 'max',
-        metric: 'absorptionEvidence',
-        evidenceGate: 'Evidence-backed',
-        message: 'separates proven creatine monohydrate evidence from delivery-system hypotheses.',
+        title: 'Dose integrity audit',
+        stationId: 'evidence',
+        leadAgentId: 'max',
+        supportAgentId: 'nina',
+        hypothesisId: 'FUSE-POR-01',
+        metric: 'dose',
+        evidenceLevel: 'Evidence-backed baseline',
+        effect: { dose: 1, claims: 2, heat: 1 },
+        dispute: 'The monohydrate evidence is strong; the delivery system evidence is not.',
     },
     {
-        kind: 'Claims gate',
-        station: 'Claims Gate',
-        scientistId: 'nina',
-        metric: 'regulatorySafety',
-        evidenceGate: 'Regulatory control',
-        message:
-            'blocks public “maximum absorption” language until direct comparative evidence exists.',
+        title: 'Claims boundary review',
+        stationId: 'claims',
+        leadAgentId: 'nina',
+        supportAgentId: 'max',
+        hypothesisId: 'FUSE-EFF-03',
+        metric: 'claims',
+        evidenceLevel: 'Regulatory control',
+        effect: { claims: 3, taste: -2, mouthfeel: -1 },
+        dispute: 'Speed can be studied internally, but public claims need standardized tests.',
     },
     {
-        kind: 'Pilot batch review',
-        station: 'Pilot Mixer',
-        scientistId: 'jules',
-        metric: 'manufacturability',
-        evidenceGate: 'Simulation result',
-        message: 'checks powder flow, dose uniformity, moisture risk, and packaging feasibility.',
+        title: 'Pilot cube feasibility check',
+        stationId: 'pilot',
+        leadAgentId: 'jules',
+        supportAgentId: 'pipette',
+        hypothesisId: 'FUSE-POR-01',
+        metric: 'make',
+        evidenceLevel: 'Manufacturing hypothesis',
+        effect: { make: 3, dose: 1, heat: -1 },
+        dispute: 'A beautiful bench sample fails if it cannot survive moisture and packing.',
     },
     {
-        kind: 'Sample relay',
-        station: 'Central Sample Rail',
-        scientistId: 'pipette',
-        metric: 'heatStability',
-        evidenceGate: 'Needs wet-lab validation',
-        message:
-            'moves a heated coffee sample to stability logging and flags any unsupported conclusion.',
+        title: 'FTO constrained taste screen',
+        stationId: 'claims',
+        leadAgentId: 'nina',
+        supportAgentId: 'ava',
+        hypothesisId: 'FUSE-CYC-04',
+        metric: 'claims',
+        evidenceLevel: 'FTO constrained',
+        effect: { taste: 2, claims: -3, make: -1 },
+        dispute: 'Taste masking is not useful if the IP path is blocked.',
     },
 ];
 
-const cognitionBlueprint = {
-    model: 'Generative research society',
-    loop: ['perceive', 'retrieve', 'plan', 'reflect', 'execute'],
-    router: 'Plan-Execute lab router with read-only ask and controlled intervention modes',
-    memoryPolicy:
-        'Events become scored memories; high-importance clusters trigger reflections and update future plans.',
-    replayPolicy: 'Every lab tick stores a compact replay frame for later audit and debugging.',
-};
-
-const labEnvironmentModules = [
-    {
-        id: 'coffee-matrix',
-        name: 'Coffee Matrix Space',
-        capability: 'observe',
-        tools: ['measure dispersion', 'compare crema', 'score aroma masking'],
-    },
-    {
-        id: 'evidence-gate',
-        name: 'Evidence Gate',
-        capability: 'intervene',
-        tools: ['downgrade claim', 'request human review', 'attach source'],
-    },
-    {
-        id: 'social-space',
-        name: 'Scientist Social Space',
-        capability: 'observe',
-        tools: ['route sample', 'share memory', 'raise collaboration edge'],
-    },
-];
-
-const schedulePlans = {
-    mira: ['Carrier screen', 'Dissolution review', 'Reflection on dose integrity'],
-    theo: ['Espresso matrix run', 'Aroma check', 'Crema preservation review'],
-    ava: ['Tongue feel panel', 'Bitterness threshold review', 'Aftertaste reflection'],
-    max: ['Evidence retrieval', 'Absorption claim audit', 'Source triage'],
-    nina: ['Claims boundary review', 'Label language audit', 'Compliance intervention'],
-    jules: ['Pilot batch feasibility', 'Moisture risk review', 'Manufacturing route'],
-    pipette: ['Sample relay', 'Timestamp cleanup', 'Replay capture'],
-};
-
-const routeStations = [
-    'Central Sample Rail',
-    'Encapsulation Bench',
-    'Coffee Matrix Bar',
-    'Sensory Tongue Lab',
-    'Absorption Evidence Desk',
-    'Claims Gate',
-    'Pilot Mixer',
-];
-
-const collaboratorByMetric = {
-    dissolutionSpeed: 'mira',
-    tastePreservation: 'ava',
-    mouthfeelCleanliness: 'theo',
-    doseIntegrity: 'jules',
-    absorptionEvidence: 'nina',
-    heatStability: 'jules',
-    manufacturability: 'mira',
-    regulatorySafety: 'max',
-};
-
-const chatScripts = {
+const dialogue = {
     'theo:mira': [
-        'I can see less grit when the carrier wets before the crema breaks.',
-        'Good. I will keep the ratio below the clumping threshold.',
+        'The cup clears faster when the matrix wets before crema collapse.',
+        'Then I will protect the pore structure and lower compression.',
     ],
     'ava:theo': [
-        'The coffee aroma survives, but the finish is still too long.',
-        'I will rerun it hotter and watch the acidity drift.',
+        'I am still detecting a finish after the coffee cools.',
+        'I will rerun black coffee and latte separately before we blame the carrier.',
+    ],
+    'jules:mira': [
+        'This only matters if the dose can stay uniform at pilot scale.',
+        'I will keep the structure simple enough for a sachet line.',
     ],
     'max:nina': [
-        'The monohydrate evidence is solid; the delivery claim is still internal.',
-        'Then no public absorption language until direct comparative data exists.',
+        'Creatine monohydrate evidence can travel; delivery claims cannot yet.',
+        'Good. Keep absorption language internal until direct comparative data exists.',
     ],
     'jules:pipette': [
-        'Send the heated sample through the batch bay before it cools.',
-        'Sample routed. Timestamp, temperature, and batch ID are attached.',
+        'Route the fastest sample through the moisture check before it cools.',
+        'Sample logged with timestamp, station, temperature, and evidence level.',
+    ],
+    'ava:nina': [
+        'Clean mouthfeel is not the same as a validated zero-grit claim.',
+        'Exactly. It stays internal until a sensory panel supports the wording.',
     ],
     'ava:pipette': [
-        'Bring me the sample with the highest tongue-cleanliness score.',
-        'Routing the cleanest cup to the sensory booths now.',
+        'Bring me the cup with the strongest grit objection.',
+        'Moving the worst-case sample to the sensory booth now.',
     ],
-    'mira:jules': [
-        'This screen only matters if manufacturing can dose it evenly.',
-        'I will flag flow risk before we scale anything.',
-    ],
-    'nina:pipette': [
-        'Tag unsupported conclusions before they enter the feed.',
-        'Every hypothesis is labelled before it leaves the rail.',
+    'max:mira': [
+        'Do not trade dose integrity for a nicer disappearance trick.',
+        'Agreed. Monohydrate dose integrity remains the spine of the route.',
     ],
 };
 
-const initialFormulas = [
-    {
-        id: 'FUSE-CM-001',
-        name: 'Micronised Monohydrate Control',
-        status: 'control',
-        summary: 'Evidence baseline for dose integrity, with visible sediment risk in coffee.',
-        scores: {
-            dissolutionSpeed: 58,
-            tastePreservation: 72,
-            mouthfeelCleanliness: 54,
-            doseIntegrity: 95,
-            absorptionEvidence: 91,
-            heatStability: 86,
-            manufacturability: 88,
-            regulatorySafety: 94,
-        },
-        evidenceLevel: 'Evidence-backed',
-    },
-    {
-        id: 'FUSE-IF-014',
-        name: 'Instant Fusion Carrier Screen',
-        status: 'active',
-        summary:
-            'Coffee-compatible dispersion system under taste, tongue feel, and sediment testing.',
-        scores: {
-            dissolutionSpeed: 79,
-            tastePreservation: 76,
-            mouthfeelCleanliness: 73,
-            doseIntegrity: 86,
-            absorptionEvidence: 64,
-            heatStability: 81,
-            manufacturability: 69,
-            regulatorySafety: 82,
-        },
-        evidenceLevel: 'Simulation result',
-    },
-    {
-        id: 'FUSE-LATTE-021',
-        name: 'Milk Coffee Compatibility Blend',
-        status: 'watch',
-        summary: 'Optimised for oat milk and latte systems, still sensitive in black coffee.',
-        scores: {
-            dissolutionSpeed: 74,
-            tastePreservation: 83,
-            mouthfeelCleanliness: 80,
-            doseIntegrity: 82,
-            absorptionEvidence: 61,
-            heatStability: 77,
-            manufacturability: 65,
-            regulatorySafety: 84,
-        },
-        evidenceLevel: 'Hypothesis',
-    },
-    {
-        id: 'FUSE-ESP-033',
-        name: 'Espresso Crema Shield',
-        status: 'explore',
-        summary:
-            'Designed to preserve aroma and crema while hiding bitterness from carrier systems.',
-        scores: {
-            dissolutionSpeed: 70,
-            tastePreservation: 86,
-            mouthfeelCleanliness: 69,
-            doseIntegrity: 78,
-            absorptionEvidence: 58,
-            heatStability: 83,
-            manufacturability: 62,
-            regulatorySafety: 80,
-        },
-        evidenceLevel: 'Hypothesis',
-    },
+const claimBoundaries = [
+    'No public <3 second dissolution claim until standardized test data exists.',
+    'No zero-grit claim until sensory testing supports it.',
+    'No absorption superiority language without direct comparative evidence.',
+    'FTO review controls any encapsulation route before formulation investment.',
 ];
 
 function nowIso() {
     return new Date().toISOString();
 }
 
-function averageScore(scores) {
+function average(scores) {
     const values = Object.values(scores);
     return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
-function enrichFormula(formula) {
+function clamp(value, min = 0, max = 100) {
+    return Math.max(min, Math.min(max, Math.round(Number(value) || 0)));
+}
+
+function stationCenter(stationId) {
+    const station = stations.find(item => item.id === stationId) || stations[0];
     return {
-        ...formula,
-        overall: averageScore(formula.scores),
+        x: station.x + station.w / 2,
+        y: station.y + station.h / 2,
     };
 }
 
-function clampPercent(value) {
-    return Math.max(0, Math.min(100, Math.round(value)));
+function pairKey(firstId, secondId) {
+    return [firstId, secondId].sort().join(':');
 }
 
-function cognitionSignal(scientist, labClock, isActive = false) {
-    const seed = labClock + scientist.id.length + scientist.station.length;
-    return {
-        focus: clampPercent(62 + Math.sin(seed / 2.1) * 18 + (isActive ? 12 : 0)),
-        energy: clampPercent(68 + Math.cos(seed / 2.8) * 16 - (isActive ? 5 : 0)),
-        evidenceNeed: clampPercent(38 + Math.sin(seed / 3.2) * 20 + (isActive ? 16 : 0)),
-        collaborationNeed: clampPercent(42 + Math.cos(seed / 3.8) * 18),
-    };
-}
+function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) {
+    return agentBlueprints.map((agent, index) => {
+        const active =
+            agent.id === currentExperiment.leadAgentId ||
+            agent.id === currentExperiment.supportAgentId;
+        const targetStationId = active
+            ? currentExperiment.stationId
+            : stations[(labClock + index) % stations.length].id;
+        const home = stationCenter(agent.stationId);
+        const target = stationCenter(targetStationId);
+        const phase = ((labClock + index * 2) % 10) / 10;
+        const pull = active ? 0.82 : 0.25 + phase * 0.35;
+        const drift = active ? 0 : Math.sin(labClock + index) * 1.8;
+        const needsSeed = labClock + index * 7;
 
-function planForScientist(scientistId, labClock) {
-    const plan = schedulePlans[scientistId] || ['Observe lab', 'Update memory', 'Review result'];
-    return plan[labClock % plan.length];
-}
-
-function nextLocationForScientist(scientist, labClock, isActive) {
-    if (isActive) return scientist.station;
-    const index = (labClock + scientist.id.length + scientist.station.length) % routeStations.length;
-    const candidate = routeStations[index];
-    if (candidate !== scientist.station) return candidate;
-    return routeStations[(index + 2) % routeStations.length];
-}
-
-function createAgentStates(labClock = 0, activeScientistId = 'mira') {
-    return scientists.map(scientist => {
-        const isActive = scientist.id === activeScientistId;
-        const signal = cognitionSignal(scientist, labClock, isActive);
         return {
-            id: scientist.id,
-            mood:
-                signal.evidenceNeed > 68
-                    ? 'evidence-hungry'
-                    : signal.energy < 58
-                      ? 'conserving'
-                      : isActive
-                        ? 'locked-in'
-                        : 'observing',
-            currentPlan: planForScientist(scientist.id, labClock),
-            currentAction: isActive ? 'executing active experiment' : 'observing and retrieving',
-            nextLocation: nextLocationForScientist(scientist, labClock, isActive),
-            needs: signal,
-            reflection: `${scientist.name} is balancing ${planForScientist(scientist.id, labClock).toLowerCase()} against evidence-gated claims.`,
+            ...agent,
+            x: clamp(home.x + (target.x - home.x) * pull + drift, 4, 96),
+            y: clamp(home.y + (target.y - home.y) * pull + Math.cos(labClock + index) * 1.6, 4, 96),
+            targetStationId,
+            intent: active ? currentExperiment.title : agent.intent,
+            reflection: buildAgentReflection(agent, currentExperiment, active),
+            needs: {
+                focus: clamp(58 + (active ? 24 : 0) + (needsSeed % 13)),
+                evidence: clamp(44 + (active ? 28 : 0) + (needsSeed % 11)),
+                social: clamp(40 + (needsSeed % 23)),
+                caution: clamp(
+                    36 +
+                        (currentExperiment.evidenceLevel.includes('control') ? 28 : 0) +
+                        (needsSeed % 17)
+                ),
+            },
         };
     });
 }
 
-function createSocialGraph(timestamp) {
-    return [
-        {
-            from: 'mira',
-            to: 'theo',
-            trust: 76,
-            topic: 'carrier ratios in hot coffee',
-            lastInteraction: timestamp,
-        },
-        {
-            from: 'ava',
-            to: 'theo',
-            trust: 82,
-            topic: 'flavour and mouthfeel tradeoffs',
-            lastInteraction: timestamp,
-        },
-        {
-            from: 'max',
-            to: 'nina',
-            trust: 88,
-            topic: 'evidence-backed claim boundaries',
-            lastInteraction: timestamp,
-        },
-        {
-            from: 'jules',
-            to: 'pipette',
-            trust: 74,
-            topic: 'pilot sample routing',
-            lastInteraction: timestamp,
-        },
-    ];
-}
-
-function buildMemoryFromEvent(event, index = 0) {
-    return {
-        id: `mem-${event.id || `${event.scientistId}-${index}`}`,
-        timestamp: event.timestamp || nowIso(),
-        scientistId: event.scientistId || 'mira',
-        type: event.type === 'Reflection' ? 'thought' : 'event',
-        formulaId: event.formulaId || null,
-        location:
-            scientists.find(scientist => scientist.id === event.scientistId)?.station ||
-            'Central Table',
-        importance: clampPercent(58 + (event.type === 'Regulatory control' ? 20 : 0) + index * 4),
-        poignancy: clampPercent(48 + (event.type === 'Needs wet-lab validation' ? 24 : 0)),
-        summary: event.message || 'Lab state changed.',
-        evidence: [event.id].filter(Boolean),
-    };
-}
-
-function createMemoryStream(events) {
-    return (events || []).map((event, index) => buildMemoryFromEvent(event, index));
-}
-
-function createReplayFrames(startedAt) {
-    return [
-        {
-            tick: 0,
-            timestamp: startedAt,
-            mode: 'boot',
-            scientistId: 'mira',
-            station: 'Central Table',
-            action: 'initialize memory stream',
-            outcome: 'Control formula and claims guardrails loaded.',
-        },
-    ];
-}
-
-function normalizePair(a, b) {
-    return [a, b].sort().join(':');
-}
-
-function buildChatTurn(fromId, toId, labClock, timestamp, topic) {
-    const pairKey = normalizePair(fromId, toId);
-    const script = chatScripts[pairKey] || [
-        'Can you cross-check this observation against your station data?',
-        'Yes. I will compare it with the latest memory stream before the next tick.',
-    ];
-    const firstSpeaker = pairKey.split(':')[0];
-    const ordered = firstSpeaker === fromId ? script : [...script].reverse();
-    return {
-        id: `chat-${labClock}-${fromId}-${toId}-${Date.now()}`,
-        timestamp,
-        from: fromId,
-        to: toId,
-        topic,
-        lines: [
-            {
-                speakerId: fromId,
-                text: ordered[labClock % ordered.length],
-            },
-            {
-                speakerId: toId,
-                text: ordered[(labClock + 1) % ordered.length],
-            },
-        ],
-    };
-}
-
-function buildReflection(scientist, memories, labClock) {
-    const recent = (memories || []).filter(memory => memory.scientistId === scientist.id).slice(0, 3);
-    if (!recent.length) return null;
-    const signal = recent.map(memory => memory.summary.split('.')[0]).join('; ');
-    return {
-        id: `ref-${labClock}-${scientist.id}-${Date.now()}`,
-        timestamp: nowIso(),
-        scientistId: scientist.id,
-        type: 'Reflection',
-        formulaId: recent[0].formulaId,
-        message: `${scientist.name} reflects: ${signal}. Next plan should protect evidence quality before speed.`,
-    };
-}
-
-function updateSocialGraph(graph, template, timestamp) {
-    const collaboratorId = collaboratorByMetric[template.metric] || 'pipette';
-    const nextGraph = Array.isArray(graph) ? [...graph] : createSocialGraph(timestamp);
-    const existingIndex = nextGraph.findIndex(
-        edge =>
-            (edge.from === template.scientistId && edge.to === collaboratorId) ||
-            (edge.from === collaboratorId && edge.to === template.scientistId)
-    );
-    const edge = {
-        from: template.scientistId,
-        to: collaboratorId,
-        trust: 70 + ((template.metric.length + template.scientistId.length) % 24),
-        topic: `${template.kind.toLowerCase()} via ${template.station}`,
-        lastInteraction: timestamp,
-    };
-    if (existingIndex >= 0) {
-        nextGraph[existingIndex] = {
-            ...nextGraph[existingIndex],
-            trust: clampPercent(nextGraph[existingIndex].trust + 2),
-            topic: edge.topic,
-            lastInteraction: timestamp,
-        };
-    } else if (template.scientistId !== collaboratorId) {
-        nextGraph.unshift(edge);
+function buildAgentReflection(agent, experiment, active) {
+    if (active) {
+        return `${agent.name} is working the ${experiment.title.toLowerCase()} while checking that the conclusion stays inside its evidence level.`;
     }
-    return nextGraph.slice(0, 12);
+    return `${agent.name} is watching for conflicts between formulation progress, sensory quality, manufacturability, and claims control.`;
 }
 
-function migrateState(state) {
-    if (!state || typeof state !== 'object') return createInitialState();
-    const events = Array.isArray(state.events) ? state.events : [];
-    const activeScientistId = state.activeExperiment?.scientistId || 'mira';
-    const socialGraph = state.socialGraph || createSocialGraph(state.startedAt || nowIso());
-    const primaryEdge = socialGraph[0] || { from: 'mira', to: 'theo', topic: 'boot sequence' };
-    const timestamp = state.updatedAt || state.startedAt || nowIso();
+function createExperiment(labClock) {
+    const template = experimentTemplates[labClock % experimentTemplates.length];
     return {
-        ...state,
-        version: 2,
-        scientists: scientists.map(scientist => ({
-            ...scientist,
-            ...(state.scientists || []).find(item => item.id === scientist.id),
-        })),
-        formulas: (state.formulas || initialFormulas).map(enrichFormula),
-        cognition: state.cognition || cognitionBlueprint,
-        environmentModules: state.environmentModules || labEnvironmentModules,
-        agentStates: state.agentStates || createAgentStates(state.labClock || 0, activeScientistId),
-        socialGraph,
-        chatMessages: (
-            state.chatMessages?.length
-                ? state.chatMessages
-                : [
-                      buildChatTurn(
-                          primaryEdge.from,
-                          primaryEdge.to,
-                          state.labClock || 0,
-                          timestamp,
-                          primaryEdge.topic
-                      ),
-                  ]
-        ).slice(0, MAX_CHATS),
-        memoryStream: (state.memoryStream || createMemoryStream(events)).slice(0, MAX_MEMORIES),
-        replayFrames:
-            state.replayFrames ||
-            createReplayFrames(state.startedAt || state.updatedAt || nowIso()).slice(
-                0,
-                MAX_REPLAY_FRAMES
-            ),
+        id: `EXP-${String(labClock).padStart(3, '0')}`,
+        ...template,
+        progress: 22 + ((labClock * 17) % 74),
+        startedAt: nowIso(),
     };
 }
 
 function createInitialState() {
-    const startedAt = nowIso();
-    const formulas = initialFormulas.map(enrichFormula).sort((a, b) => b.overall - a.overall);
-    const events = [
-        {
-            id: 'evt-boot',
-            timestamp: startedAt,
-            scientistId: 'mira',
-            type: 'Evidence-backed',
-            formulaId: 'FUSE-CM-001',
-            message:
-                'sets creatine monohydrate as the control before testing any coffee-compatible delivery system.',
-        },
-        {
-            id: 'evt-palate',
-            timestamp: startedAt,
-            scientistId: 'ava',
-            type: 'Needs sensory panel',
-            formulaId: 'FUSE-IF-014',
-            message:
-                'opens the tongue-feel protocol: grit, bitterness, aroma masking, and aftertaste get separate scores.',
-        },
-        {
-            id: 'evt-claims',
-            timestamp: startedAt,
-            scientistId: 'nina',
-            type: 'Regulatory control',
-            formulaId: 'FUSE-IF-014',
-            message:
-                'marks “maximum absorption” as an internal research target, not a public claim.',
-        },
-    ];
+    const currentExperiment = createExperiment(0);
+    const agents = createAgents(0, currentExperiment);
+    const timestamp = nowIso();
     return {
         version: 2,
+        mode: 'living research world',
         labClock: 0,
-        startedAt,
-        updatedAt: startedAt,
-        mode: 'evidence-gated simulation',
         mission:
-            'Discover a coffee-compatible creatine delivery system that disperses fast, protects taste, and stays honest about absorption evidence.',
-        guardrails: [
-            'Do not treat simulations as clinical proof.',
-            'Creatine monohydrate is the evidence baseline unless new direct data proves otherwise.',
-            'Taste, tongue feel, coffee aroma, and grit must be scored separately.',
-            'Absorption language must stay internal until direct comparative evidence exists.',
+            'Find a legally defensible, manufacturable way to make creatine monohydrate disappear into hot coffee fast without changing taste or texture.',
+        guardrail:
+            'Agent findings are internal hypotheses until wet-lab and legal review upgrade the evidence level.',
+        stations,
+        agents,
+        hypotheses: hypotheses.map(item => ({ ...item, scores: { ...item.scores } })),
+        currentExperiment,
+        conversations: [buildConversation(currentExperiment, timestamp, 0)],
+        memories: [
+            {
+                id: 'mem-boot',
+                timestamp,
+                agentId: 'pipette',
+                evidenceLevel: 'Internal simulation',
+                importance: 72,
+                summary:
+                    'The lab world booted with legal claim boundaries, formulation hypotheses, and station roles loaded.',
+            },
         ],
-        scientists,
-        formulas,
-        evidenceSources,
-        cognition: cognitionBlueprint,
-        environmentModules: labEnvironmentModules,
-        agentStates: createAgentStates(0, 'mira'),
-        socialGraph: createSocialGraph(startedAt),
-        chatMessages: [
-            buildChatTurn(
-                'mira',
-                'theo',
-                0,
-                startedAt,
-                'control formula and coffee matrix alignment'
-            ),
+        disputes: [
+            {
+                id: 'dispute-boot',
+                timestamp,
+                title: currentExperiment.dispute,
+                hypothesisId: currentExperiment.hypothesisId,
+                status: 'open',
+            },
         ],
-        memoryStream: createMemoryStream(events),
-        replayFrames: createReplayFrames(startedAt),
-        papers: [],
-        activeExperiment: {
-            id: 'EXP-000',
-            kind: 'Lab boot sequence',
-            station: 'Central Table',
-            formulaId: 'FUSE-IF-014',
-            scientistId: 'mira',
-            evidenceGate: 'Hypothesis',
-            progress: 38,
-        },
-        events,
+        experimentQueue: buildExperimentQueue(0),
+        claimBoundaries,
+        updatedAt: timestamp,
     };
+}
+
+function buildConversation(experiment, timestamp, labClock) {
+    const key = pairKey(experiment.leadAgentId, experiment.supportAgentId);
+    const script = dialogue[key] || [
+        'Can you challenge this result against your station evidence?',
+        'Yes. I will compare it with the latest memory stream before the next run.',
+    ];
+    const sorted = key.split(':');
+    const leadIsFirst = sorted[0] === experiment.leadAgentId;
+    const lines = leadIsFirst ? script : [...script].reverse();
+
+    return {
+        id: `conv-${labClock}-${experiment.leadAgentId}-${experiment.supportAgentId}`,
+        timestamp,
+        from: experiment.leadAgentId,
+        to: experiment.supportAgentId,
+        hypothesisId: experiment.hypothesisId,
+        topic: experiment.title,
+        lines: [
+            {
+                speakerId: experiment.leadAgentId,
+                text: lines[labClock % lines.length],
+            },
+            {
+                speakerId: experiment.supportAgentId,
+                text: lines[(labClock + 1) % lines.length],
+            },
+        ],
+    };
+}
+
+function buildMemory(experiment, hypothesis, labClock, timestamp) {
+    return {
+        id: `mem-${labClock}-${experiment.leadAgentId}`,
+        timestamp,
+        agentId: experiment.leadAgentId,
+        hypothesisId: experiment.hypothesisId,
+        evidenceLevel: experiment.evidenceLevel,
+        importance: clamp(
+            58 + labClock * 3 + (experiment.evidenceLevel.includes('control') ? 18 : 0)
+        ),
+        summary: `${experiment.title} moved ${hypothesis.id} to ${average(hypothesis.scores)}/100 overall; dispute: ${experiment.dispute}`,
+    };
+}
+
+function buildDispute(experiment, labClock, timestamp) {
+    return {
+        id: `dispute-${labClock}`,
+        timestamp,
+        title: experiment.dispute,
+        hypothesisId: experiment.hypothesisId,
+        status: labClock % 5 === 0 ? 'needs Sergio review' : 'open',
+    };
+}
+
+function buildExperimentQueue(labClock) {
+    return experimentTemplates.slice(0, 7).map((template, index) => {
+        const shifted = experimentTemplates[(labClock + index + 1) % experimentTemplates.length];
+        return {
+            id: `queue-${labClock}-${index}`,
+            title: shifted.title,
+            owner: shifted.leadAgentId.toUpperCase(),
+            reason: shifted.dispute,
+            hypothesisId: shifted.hypothesisId,
+        };
+    });
+}
+
+function applyExperimentEffect(hypothesis, experiment, labClock) {
+    const updated = {
+        ...hypothesis,
+        scores: { ...hypothesis.scores },
+    };
+    Object.entries(experiment.effect || {}).forEach(([metric, delta]) => {
+        const wobble = (labClock + metric.length) % 3 === 0 ? -1 : 1;
+        updated.scores[metric] = clamp((updated.scores[metric] || 0) + delta + wobble, 0, 99);
+    });
+    if (average(updated.scores) >= 82 && updated.evidenceLevel === 'Hypothesis') {
+        updated.evidenceLevel = 'Simulation candidate';
+    }
+    return updated;
 }
 
 async function getState() {
     if (redis) {
-        try {
-            const stored = await redis.get(STATE_KEY);
-            if (stored) {
-                return migrateState(typeof stored === 'string' ? JSON.parse(stored) : stored);
-            }
-        } catch (error) {
-            console.warn('[ResearchLab] Redis read failed:', error.message);
+        const stored = await redis.get(STATE_KEY);
+        if (stored) {
+            memoryState = stored;
+            return stored;
         }
     }
-
     if (!memoryState) {
         memoryState = createInitialState();
+        await saveState(memoryState);
     }
-    memoryState = migrateState(memoryState);
     return memoryState;
 }
 
 async function saveState(state) {
-    const nextState = migrateState({ ...state, updatedAt: nowIso() });
+    memoryState = state;
     if (redis) {
-        try {
-            await redis.set(STATE_KEY, JSON.stringify(nextState));
-        } catch (error) {
-            console.warn('[ResearchLab] Redis write failed:', error.message);
-        }
+        await redis.set(STATE_KEY, state);
     }
-    memoryState = nextState;
-    return nextState;
-}
-
-function chooseFormula(state, labClock) {
-    const nonControls = state.formulas.filter(formula => formula.status !== 'control');
-    return nonControls[labClock % nonControls.length] || state.formulas[0];
-}
-
-function boundedScore(value) {
-    return Math.max(34, Math.min(98, Math.round(value)));
-}
-
-function tickFormula(formula, metric, labClock) {
-    const current = formula.scores[metric] || 60;
-    const wave = Math.sin((labClock + formula.id.length + metric.length) / 2.7);
-    const nudge = wave > 0.55 ? 2 : wave < -0.55 ? -1 : 1;
-    const scores = {
-        ...formula.scores,
-        [metric]: boundedScore(current + nudge),
-    };
-    return enrichFormula({
-        ...formula,
-        scores,
-        evidenceLevel:
-            metric === 'absorptionEvidence' && scores[metric] < 75
-                ? 'Needs wet-lab validation'
-                : formula.evidenceLevel,
-    });
-}
-
-function buildTickEvent(state, template, formula) {
-    const scientist = scientists.find(item => item.id === template.scientistId) || scientists[0];
-    return {
-        id: `evt-${state.labClock + 1}-${template.scientistId}-${Date.now()}`,
-        timestamp: nowIso(),
-        scientistId: scientist.id,
-        type: template.evidenceGate,
-        formulaId: formula.id,
-        message: `${scientist.name} ${template.message}`,
-    };
-}
-
-async function advanceLabState(reason = 'scheduled') {
-    const state = await getState();
-    const labClock = (state.labClock || 0) + 1;
-    const template = experimentTemplates[labClock % experimentTemplates.length];
-    const formula = chooseFormula(state, labClock);
-    const formulas = state.formulas
-        .map(item =>
-            item.id === formula.id
-                ? tickFormula(item, template.metric, labClock)
-                : enrichFormula(item)
-        )
-        .sort((a, b) => b.overall - a.overall);
-    const updatedFormula = formulas.find(item => item.id === formula.id) || formula;
-    const event = buildTickEvent({ ...state, labClock: labClock - 1 }, template, updatedFormula);
-    const memory = buildMemoryFromEvent(event);
-    const memories = [memory, ...(state.memoryStream || [])].slice(0, MAX_MEMORIES);
-    const scientist = scientists.find(item => item.id === template.scientistId) || scientists[0];
-    const reflectionEvent =
-        labClock % 3 === 0 || memory.importance >= 82
-            ? buildReflection(scientist, memories, labClock)
-            : null;
-    const reflectionMemories = reflectionEvent
-        ? [buildMemoryFromEvent(reflectionEvent), ...memories].slice(0, MAX_MEMORIES)
-        : memories;
-    const events = [event, ...(reflectionEvent ? [reflectionEvent] : []), ...(state.events || [])];
-    const progress = 18 + ((labClock * 17) % 76);
-    const timestamp = event.timestamp;
-    const collaboratorId = collaboratorByMetric[template.metric] || 'pipette';
-    const chatTurn = buildChatTurn(
-        template.scientistId,
-        collaboratorId,
-        labClock,
-        timestamp,
-        `${template.kind.toLowerCase()} for ${updatedFormula.id}`
-    );
-
-    return saveState({
-        ...state,
-        labClock,
-        formulas,
-        activeExperiment: {
-            id: `EXP-${String(labClock).padStart(3, '0')}`,
-            kind: template.kind,
-            station: template.station,
-            formulaId: updatedFormula.id,
-            scientistId: template.scientistId,
-            evidenceGate: event.type,
-            progress,
-            reason,
-        },
-        agentStates: createAgentStates(labClock, template.scientistId).map(agentState =>
-            agentState.id === template.scientistId && reflectionEvent
-                ? {
-                      ...agentState,
-                      reflection: reflectionEvent.message,
-                      currentAction: `executing ${template.kind.toLowerCase()}`,
-                  }
-                : agentState
-        ),
-        socialGraph: updateSocialGraph(state.socialGraph, template, timestamp),
-        chatMessages: [chatTurn, ...(state.chatMessages || [])].slice(0, MAX_CHATS),
-        memoryStream: reflectionMemories,
-        replayFrames: [
-            {
-                tick: labClock,
-                timestamp,
-                mode: 'plan-execute',
-                scientistId: template.scientistId,
-                station: template.station,
-                action: template.kind,
-                formulaId: updatedFormula.id,
-                plan: planForScientist(template.scientistId, labClock),
-                outcome: event.message,
-            },
-            ...(state.replayFrames || []),
-        ].slice(0, MAX_REPLAY_FRAMES),
-        events: events.slice(0, MAX_EVENTS),
-    });
-}
-
-function normalizePaper(item) {
-    const title = Array.isArray(item.title)
-        ? item.title[0]
-        : item.title || 'Untitled research record';
-    const dateParts =
-        item.published?.['date-parts'] ||
-        item['published-print']?.['date-parts'] ||
-        item['published-online']?.['date-parts'];
-    const year = Array.isArray(dateParts) && dateParts[0] ? dateParts[0][0] : null;
-    return {
-        id: item.DOI || item.URL || title,
-        title,
-        source: item['container-title']?.[0] || item.publisher || 'Crossref',
-        url: item.URL || (item.DOI ? `https://doi.org/${item.DOI}` : null),
-        year,
-        type: item.type || 'journal-article',
-        evidenceLevel: 'Needs review',
-    };
-}
-
-async function fetchCrossrefPapers(query = 'creatine monohydrate coffee solubility') {
-    const mailto = process.env.RESEARCH_CONTACT_EMAIL || process.env.CEO_EMAIL || '';
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), PAPER_TIMEOUT_MS);
-    const url = new URL('https://api.crossref.org/works');
-    url.searchParams.set('query.bibliographic', query.slice(0, 160));
-    url.searchParams.set('rows', '6');
-    url.searchParams.set('sort', 'published');
-    url.searchParams.set('order', 'desc');
-    if (mailto) url.searchParams.set('mailto', mailto);
-
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': `FUSE-Research-Lab/1.0${mailto ? ` (mailto:${mailto})` : ''}`,
-            },
-        });
-        if (!response.ok) {
-            throw new Error(`Crossref request failed: ${response.status}`);
-        }
-        const payload = await response.json();
-        return (payload.message?.items || []).map(normalizePaper);
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-async function refreshPapers(query) {
-    const state = await getState();
-    const papers = await fetchCrossrefPapers(query);
-    const seen = new Set();
-    const merged = [...papers, ...(state.papers || [])].filter(paper => {
-        if (seen.has(paper.id)) return false;
-        seen.add(paper.id);
-        return true;
-    });
-    const event = {
-        id: `evt-paper-${Date.now()}`,
-        timestamp: nowIso(),
-        scientistId: 'max',
-        type: 'Evidence-backed',
-        message: `Dr. Max Flux fetched ${papers.length} research records for evidence triage. Records still need human review before claims change.`,
-    };
-    return saveState({
-        ...state,
-        papers: merged.slice(0, MAX_PAPERS),
-        memoryStream: [buildMemoryFromEvent(event), ...(state.memoryStream || [])].slice(
-            0,
-            MAX_MEMORIES
-        ),
-        events: [event, ...(state.events || [])].slice(0, MAX_EVENTS),
-    });
+    return state;
 }
 
 async function resetState() {
@@ -911,11 +564,45 @@ async function resetState() {
     return saveState(state);
 }
 
+async function advanceLabState(source = 'world-loop') {
+    const previous = await getState();
+    const labClock = Number(previous.labClock || 0) + 1;
+    const timestamp = nowIso();
+    const currentExperiment = createExperiment(labClock);
+    const hypothesesNext = previous.hypotheses.map(hypothesis => {
+        if (hypothesis.id !== currentExperiment.hypothesisId) return hypothesis;
+        return applyExperimentEffect(hypothesis, currentExperiment, labClock);
+    });
+    const activeHypothesis =
+        hypothesesNext.find(item => item.id === currentExperiment.hypothesisId) ||
+        hypothesesNext[0];
+    const agents = createAgents(labClock, currentExperiment);
+    const conversation = buildConversation(currentExperiment, timestamp, labClock);
+    const memory = buildMemory(currentExperiment, activeHypothesis, labClock, timestamp);
+    const dispute = buildDispute(currentExperiment, labClock, timestamp);
+
+    const state = {
+        ...previous,
+        labClock,
+        agents,
+        hypotheses: hypothesesNext,
+        currentExperiment,
+        conversations: [conversation, ...(previous.conversations || [])].slice(
+            0,
+            MAX_CONVERSATIONS
+        ),
+        memories: [memory, ...(previous.memories || [])].slice(0, MAX_MEMORIES),
+        disputes: [dispute, ...(previous.disputes || [])].slice(0, MAX_DISPUTES),
+        experimentQueue: buildExperimentQueue(labClock),
+        updatedAt: timestamp,
+        lastSource: source,
+    };
+
+    return saveState(state);
+}
+
 module.exports = {
     getState,
-    saveState,
     advanceLabState,
-    refreshPapers,
     resetState,
-    createInitialState,
 };
