@@ -13,6 +13,7 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint js/ api/ --ext .js",
     "lint:fix": "eslint js/ api/ --ext .js --fix",
+    "ci": "npm run lint && npm test",
     "format": "prettier --write \"js/**/*.js\" \"api/**/*.js\"",
     "format:check": "prettier --check \"js/**/*.js\" \"api/**/*.js\"",
     "fuse": "cd cli && npx ts-node src/index.ts",

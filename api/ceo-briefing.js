@@ -22,7 +22,6 @@ const {
 } = require('./_lib/security');
 
 const {
-    getUsageSummary,
     checkBudgetStatus,
     getBudgetLimits,
     formatCurrency

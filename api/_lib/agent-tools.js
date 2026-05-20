@@ -1022,7 +1022,7 @@ function patternToRegex(pattern) {
   return new RegExp(`^${escaped.replace(/\*/g, '.*')}$`);
 }
 
-async function handleReadWorkspaceFile(input, callingTeamId, ctx) {
+async function handleReadWorkspaceFile(input, _callingTeamId, _ctx) {
   try {
     const filePath = getWorkspacePath(input.path);
 
@@ -1106,7 +1106,7 @@ async function handleWriteWorkspaceFile(input, callingTeamId, ctx) {
   }
 }
 
-async function handleListWorkspaceFiles(input, callingTeamId, ctx) {
+async function handleListWorkspaceFiles(input, _callingTeamId, _ctx) {
   try {
     const dirPath = getWorkspacePath(input.directory || '');
 
@@ -1179,7 +1179,7 @@ async function handleListWorkspaceFiles(input, callingTeamId, ctx) {
   }
 }
 
-async function handleSearchWorkspace(input, callingTeamId, ctx) {
+async function handleSearchWorkspace(input, _callingTeamId, _ctx) {
   try {
     const results = [];
     const limit = Math.min(input.limit || 10, 50);

@@ -80,7 +80,7 @@ function buildTeamContext(teamId, teamPrompt, ctx, options = {}) {
   sections.push(buildGuidelinesSection());
 
   // Combine and check total length
-  let fullContext = sections.filter(Boolean).join('\n\n');
+  const fullContext = sections.filter(Boolean).join('\n\n');
 
   // If context is too long and we haven't summarized yet, rebuild with summarization
   if (fullContext.length > CONTEXT_LIMITS.MAX_TOTAL_CONTEXT_CHARS && !summarize) {

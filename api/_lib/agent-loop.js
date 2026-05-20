@@ -18,7 +18,7 @@
 
 const { AGENT_TOOLS, executeAgentTool } = require('./agent-tools');
 const { buildTeamContext } = require('./context-builder');
-const { recordUsage, estimateTokens } = require('./cost-tracker');
+const { recordUsage } = require('./cost-tracker');
 const {
   createCheckpointState,
   checkpointAfterIteration,

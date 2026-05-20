@@ -102,12 +102,10 @@ const SCHEMAS = {
 // Now sourced from unified agent-state.js (single source of truth)
 // ============================================================================
 
-const defaultAgentTeams = agentStateManager.DEFAULT_TEAMS;
-
 // agentState is the shared state object from agent-state.js
 // All reads/writes go through this reference, keeping everything in sync
 // with orchestrate.js and world-controller.js
-let agentState = agentStateManager.getState();
+const agentState = agentStateManager.getState();
 
 // ============================================================================
 // HELPER FUNCTIONS

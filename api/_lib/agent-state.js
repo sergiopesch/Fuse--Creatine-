@@ -24,7 +24,7 @@ const SYNC_DEBOUNCE_MS = 1000; // Debounce writes to avoid excessive DB calls
 
 let db = null;
 let syncTimeout = null;
-let pendingSyncOperations = new Set();
+const pendingSyncOperations = new Set();
 
 /**
  * Lazy-load database module to avoid initialization errors when DB not configured
