@@ -1,12 +1,12 @@
 # Developers Team — Current Context
 
-**Last Updated**: 2026-05-17
+**Last Updated**: 2026-05-20
 **Team Code**: DEV
 **Orchestration Mode**: manual
 
 ## Current State
 
-Website live at fuse-creatine.vercel.app. Agent orchestration system functional but being refactored to CLI-first architecture. CEO Dashboard needs queue integration.
+Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports configurable providers and is set up for an OpenAI mini proof of concept via `FUSE_CHAT_PROVIDER=openai`, `FUSE_CHAT_MODEL=gpt-5-mini`, and `OPENAI_API_KEY`. Agent orchestration system functional but being refactored to CLI-first architecture. CEO Dashboard needs queue integration.
 
 ## Active Work
 
@@ -16,6 +16,9 @@ Website live at fuse-creatine.vercel.app. Agent orchestration system functional 
 
 ## Recent Completions
 
+- ✅ Public chat endpoint upgraded to configurable Anthropic/OpenAI provider support with `gpt-5-mini` default for OpenAI POC
+- ✅ FUSE Agent prompt guardrails reframed the product as a pre-launch formulation experiment and tightened approved-claim language
+- ✅ Homepage copy and hero banner updated to communicate pre-launch experimentation, coffee compatibility, and taste-first validation
 - ✅ Interactive Three.js product viewer added to homepage hero and product showcase
 - ✅ Research Lab production deployment blocker removed (Vercel cron config)
 - ✅ Main homepage CTA added for FUSE Research Lab Live

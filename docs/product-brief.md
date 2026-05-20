@@ -2,11 +2,12 @@
 
 ## What Is FUSE?
 
-FUSE Creatine is Britain's first coffee-optimised creatine supplement. It uses micro-encapsulated creatine monohydrate that dissolves instantly in hot coffee — no grit, no stirring, no taste change.
+FUSE Creatine is a pre-launch coffee-optimised creatine monohydrate project. It is testing a micro-encapsulated format designed to blend smoothly into hot coffee while preserving the taste and ritual of the cup.
 
 ## The Problem
 
-Creatine monohydrate is the world's most studied sports supplement, with 500+ peer-reviewed studies supporting its benefits. Yet most people either:
+Creatine monohydrate is one of the world's most studied sports supplements. Yet many people either:
+
 - Don't take it because it's inconvenient (mixing powder, gritty texture)
 - Forget to take it (separate step from daily routine)
 - Dislike the experience (chalky, doesn't dissolve)
@@ -15,22 +16,23 @@ Meanwhile, most adults already drink coffee every morning — a perfect daily ha
 
 ## The Solution
 
-FUSE micro-encapsulates creatine monohydrate so it:
-- Dissolves in under 3 seconds in hot coffee
-- Has zero impact on taste
-- Requires no stirring
-- Is heat-stable (creatine remains bioavailable)
-- Comes in single-serve sachets for precise dosing
+FUSE is testing micro-encapsulated creatine monohydrate so it can:
+
+- Blend quickly in hot coffee
+- Preserve the coffee's original taste and aroma as the formulation target
+- Reduce stirring and gritty texture
+- Support creatine integrity in a hot beverage context
+- Fit naturally into the existing coffee routine
 
 ## Key Differentiators
 
-| Feature | FUSE | Standard Creatine |
-|---------|------|-------------------|
-| Dissolves in coffee | ✅ <3 seconds | ❌ Doesn't dissolve |
-| Taste impact | None | Gritty, chalky |
-| Format | Individual sachets | Tub + scoop |
-| Routine integration | Add to existing coffee | Separate step |
-| Heat stability | ✅ Validated | Not designed for hot liquids |
+| Feature             | FUSE                   | Standard Creatine            |
+| ------------------- | ---------------------- | ---------------------------- |
+| Coffee blending     | Fast dispersion target | Not designed for coffee      |
+| Taste impact        | Taste-first validation | Can be gritty/chalky         |
+| Format              | Individual sachets     | Tub + scoop                  |
+| Routine integration | Add to existing coffee | Separate step                |
+| Heat stability      | In validation          | Not designed for hot liquids |
 
 ## Target Market
 

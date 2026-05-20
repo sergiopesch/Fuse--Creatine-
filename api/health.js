@@ -28,8 +28,15 @@ module.exports = async (req, res) => {
         });
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    const trimmedKey = apiKey?.trim();
+    const provider = (
+        process.env.FUSE_CHAT_PROVIDER || (process.env.OPENAI_API_KEY ? 'openai' : 'anthropic')
+    ).toLowerCase();
+    const model =
+        process.env.FUSE_CHAT_MODEL ||
+        (provider === 'openai' ? 'gpt-5-mini' : 'claude-3-5-haiku-latest');
+    const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim();
+    const openaiKey = process.env.OPENAI_API_KEY?.trim();
+    const activeKey = provider === 'openai' ? openaiKey : anthropicKey;
 
     const diagnostics = {
         status: 'ok',
@@ -38,13 +45,21 @@ module.exports = async (req, res) => {
         service: {
             name: 'FUSE Chat Agent',
             version: '1.0.0',
-            model: 'claude-3-5-haiku-latest',
+            provider,
+            model,
         },
-        apiKey: {
-            exists: 'ANTHROPIC_API_KEY' in process.env,
-            hasValue: !!apiKey,
-            hasTrimmedValue: !!trimmedKey,
-            validFormat: trimmedKey?.startsWith('sk-ant-') || false,
+        apiKeys: {
+            activeProviderConfigured: !!activeKey,
+            anthropic: {
+                exists: 'ANTHROPIC_API_KEY' in process.env,
+                hasTrimmedValue: !!anthropicKey,
+                validFormat: anthropicKey?.startsWith('sk-ant-') || false,
+            },
+            openai: {
+                exists: 'OPENAI_API_KEY' in process.env,
+                hasTrimmedValue: !!openaiKey,
+                validFormat: openaiKey?.startsWith('sk-') || false,
+            },
         },
         blobStorage: {
             configured: 'BLOB_READ_WRITE_TOKEN' in process.env,
@@ -59,15 +74,29 @@ module.exports = async (req, res) => {
     };
 
     // Determine overall health status
-    if (!diagnostics.apiKey.exists || !diagnostics.apiKey.hasTrimmedValue) {
+    if (provider !== 'openai' && provider !== 'anthropic') {
+        diagnostics.status = 'degraded';
+        diagnostics.issues = diagnostics.issues || [];
+        diagnostics.issues.push('FUSE_CHAT_PROVIDER must be openai or anthropic');
+    }
+
+    if (!activeKey) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];
         diagnostics.issues.push(
-            'ANTHROPIC_API_KEY is not configured - set it in Vercel Environment Variables'
+            provider === 'openai'
+                ? 'OPENAI_API_KEY is not configured - set it in Vercel Environment Variables'
+                : 'ANTHROPIC_API_KEY is not configured - set it in Vercel Environment Variables'
         );
     }
 
-    if (diagnostics.apiKey.hasTrimmedValue && !diagnostics.apiKey.validFormat) {
+    if (provider === 'openai' && openaiKey && !openaiKey.startsWith('sk-')) {
+        diagnostics.status = 'degraded';
+        diagnostics.issues = diagnostics.issues || [];
+        diagnostics.issues.push('OPENAI_API_KEY has invalid format (expected sk-* prefix)');
+    }
+
+    if (provider === 'anthropic' && anthropicKey && !anthropicKey.startsWith('sk-ant-')) {
         diagnostics.status = 'degraded';
         diagnostics.issues = diagnostics.issues || [];
         diagnostics.issues.push('ANTHROPIC_API_KEY has invalid format (expected sk-ant-* prefix)');

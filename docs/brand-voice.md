@@ -2,7 +2,7 @@
 
 ## Voice Overview
 
-FUSE speaks with the confidence of science and the warmth of your morning coffee. We're the knowledgeable friend who happens to know everything about creatine — not the gym bro shouting about gains.
+FUSE speaks with the confidence of science and the warmth of your morning coffee. We're the knowledgeable friend sharing a pre-launch formulation journey — not the gym bro shouting about gains.
 
 ## Voice Attributes
 
@@ -31,7 +31,7 @@ We signal quality without gatekeeping.
 
 We're proud of our heritage without being old-fashioned.
 
-- ✅ "Made in Britain. Built on science."
+- ✅ "Developed in Britain. Built on science."
 - ❌ "Her Majesty's finest creatine supplement"
 
 ### 5. Approachable, Not Casual
@@ -43,47 +43,50 @@ We're friendly without being unprofessional.
 
 ## Tone by Context
 
-| Context | Tone | Example |
-|---------|------|---------|
-| Website headlines | Bold, direct | "Your Coffee. Upgraded." |
-| Product descriptions | Clear, benefit-focused | "Dissolves in under 3 seconds. Zero taste change." |
-| Science content | Informative, trustworthy | "Creatine monohydrate is the most studied form, with..." |
-| Social media | Engaging, conversational | "That gritty creatine texture? Yeah, we fixed that." |
-| Email | Warm, personal | "Here's what we've been working on..." |
-| Press | Professional, factual | "FUSE Creatine today announced..." |
-| Error/support | Empathetic, helpful | "Something went wrong on our end. Here's what to do..." |
+| Context              | Tone                     | Example                                                       |
+| -------------------- | ------------------------ | ------------------------------------------------------------- |
+| Website headlines    | Bold, direct             | "Your Coffee. Upgraded."                                      |
+| Product descriptions | Clear, validation-aware  | "Designed for smooth blending while preserving coffee taste." |
+| Science content      | Informative, trustworthy | "Creatine monohydrate is the most studied form, with..."      |
+| Social media         | Engaging, conversational | "That gritty creatine texture? Yeah, we fixed that."          |
+| Email                | Warm, personal           | "Here's what we've been working on..."                        |
+| Press                | Professional, factual    | "FUSE Creatine today announced..."                            |
+| Error/support        | Empathetic, helpful      | "Something went wrong on our end. Here's what to do..."       |
 
 ## Words We Use
 
-| Word | Why |
-|------|-----|
-| Optimised | British spelling, premium feel |
-| Science-backed | Credibility without jargon |
-| Effortless | Ease of use is our core value |
-| Precision | Quality and accuracy |
-| Ritual | Elevates "routine" to something meaningful |
-| Crafted | Premium manufacturing feel |
+| Word           | Why                                        |
+| -------------- | ------------------------------------------ |
+| Optimised      | British spelling, premium feel             |
+| Science-backed | Credibility without jargon                 |
+| Effortless     | Ease of use is our core value              |
+| Precision      | Quality and accuracy                       |
+| Ritual         | Elevates "routine" to something meaningful |
+| Crafted        | Premium manufacturing feel                 |
+| Validation     | Honest pre-launch science posture          |
 
 ## Words We Avoid
 
-| Word | Why | Use Instead |
-|------|-----|-------------|
-| Hack | Too growth-hacky | Upgrade, enhance |
-| Game-changer | Overused, hype | Meaningful difference |
-| Revolutionary | Overused | First-of-its-kind |
-| Guaranteed | Legal risk | Science-backed |
-| Miracle | Hype | Proven |
-| Bro/dude | Wrong audience | — |
+| Word              | Why                      | Use Instead           |
+| ----------------- | ------------------------ | --------------------- |
+| Hack              | Too growth-hacky         | Upgrade, enhance      |
+| Game-changer      | Overused, hype           | Meaningful difference |
+| Revolutionary     | Overused                 | First-of-its-kind     |
+| Guaranteed        | Legal risk               | Science-backed        |
+| Miracle           | Hype                     | Proven                |
+| Clinically proven | Not product-specific yet | In validation         |
+| Bro/dude          | Wrong audience           | —                     |
 
 ## Headline Formula
 
 **Pattern**: [Benefit]. [Proof/Feature].
 
 Examples:
-- "Your coffee. Upgraded."
-- "Zero grit. Zero stirring. Just results."
-- "Britain's first coffee-optimised creatine."
-- "3 seconds to dissolve. 500+ studies behind it."
+
+- "A better creatine ritual is in development."
+- "Coffee-first creatine, in validation."
+- "Designed for smooth blending. Built around creatine monohydrate."
+- "The evidence is creatine monohydrate. The experiment is coffee compatibility."
 
 ## Claims Rule
 

@@ -38,11 +38,12 @@
     // Welcome messages - make a great first impression
     const welcomeConfig = {
         title: "Hey! I'm the FUSE Agent",
-        subtitle: 'Your personal guide to optimized creatine supplementation. Ask me anything!',
+        subtitle:
+            'Your guide to our pre-launch coffee-optimised creatine experiment. Ask me anything about the project.',
         features: [
-            { icon: 'zap', text: 'Instant answers about FUSE' },
-            { icon: 'shield', text: 'Science-backed information' },
-            { icon: 'clock', text: 'Available 24/7' },
+            { icon: 'zap', text: 'Project updates on FUSE' },
+            { icon: 'shield', text: 'Evidence-led information' },
+            { icon: 'clock', text: 'Pre-launch guidance' },
         ],
     };
 
@@ -52,7 +53,7 @@
             label: 'What makes FUSE different?',
             message: 'What makes FUSE different from regular creatine?',
         },
-        { label: 'How do I take it?', message: 'How should I take FUSE for best results?' },
+        { label: 'What is being tested?', message: 'What is FUSE testing before launch?' },
         { label: 'Is it safe?', message: 'Is creatine safe? Any side effects?' },
         {
             label: 'When is it launching?',
@@ -308,7 +309,7 @@
                 const hour = new Date().getHours();
                 const timeGreeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
                 addMessage(
-                    `Good ${timeGreeting}! I'm here to help you learn about FUSE. What would you like to know?`,
+                    `Good ${timeGreeting}! I'm here to help you learn about the FUSE pre-launch formulation project. What would you like to know?`,
                     'assistant'
                 );
 
@@ -650,7 +651,7 @@
                 // Add a message
                 setTimeout(() => {
                     addMessage(
-                        "Thanks for joining! You'll be among the first to know when FUSE launches. Is there anything else you'd like to know?",
+                        "Thanks for joining! You'll be among the first to know as FUSE moves through formulation and validation. Is there anything else you'd like to know?",
                         'assistant'
                     );
                 }, 500);

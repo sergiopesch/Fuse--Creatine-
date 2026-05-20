@@ -31,6 +31,7 @@ Web UI (View Layer — dashboard.html, agents.html)
 ### CLI (`cli/`)
 
 TypeScript-based CLI tool (`fuse-ceo`) with commands:
+
 - `status` — Team status overview
 - `report` — Daily/weekly reports
 - `task` — Add tasks to queue
@@ -42,6 +43,7 @@ TypeScript-based CLI tool (`fuse-ceo`) with commands:
 ### Teams (`teams/`)
 
 9 specialized team directories, each containing:
+
 - `TEAM.md` — Team identity, capabilities, dependencies
 - `context.md` — Current state, priorities, blockers
 - Additional team-specific documents
@@ -49,6 +51,7 @@ TypeScript-based CLI tool (`fuse-ceo`) with commands:
 ### Queue (`queue/`)
 
 JSON-based task queue:
+
 - `pending.json` — Tasks waiting to be started
 - `active.json` — Tasks currently in progress
 - `completed.json` — Completed tasks with outcomes
@@ -56,6 +59,7 @@ JSON-based task queue:
 ### API (`api/`)
 
 Vercel Serverless Functions:
+
 - `orchestrate.js` — Claude-powered agent orchestration
 - `chat.js` — FUSE Agent chat interface
 - `agents.js` — Agent management
@@ -74,6 +78,7 @@ Vercel Serverless Functions:
 ### Research (`research/`)
 
 Scientific and market research:
+
 - `science/` — Creatine stability, bioavailability, encapsulation
 - `content/` — Content strategy
 - `testing/` — Lab validation
@@ -94,28 +99,30 @@ Changes pushed → git commit + push
 ### Cross-Team Communication
 
 Teams communicate via shared markdown files:
+
 - Legal's `claims-register.md` is read by Marketing, Digital Content, Comms
 - R&D's `formulation.md` is read by Product, Sales
 - Comms' `messaging.md` is read by Digital Content, Branding
 
 ## Technology Stack
 
-| Layer | Technology |
-|-------|-----------|
-| CLI | TypeScript, Commander.js, chalk |
-| Frontend | Vanilla JS, CSS3, HTML5, GSAP |
-| Backend | Vercel Serverless (Node.js 18+) |
-| Storage | Upstash Redis, Vercel Blob |
-| AI | Anthropic Claude API |
-| Auth | WebAuthn passkeys |
-| Hosting | Vercel |
-| Source Control | GitHub |
+| Layer          | Technology                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| CLI            | TypeScript, Commander.js, chalk                                                           |
+| Frontend       | Vanilla JS, CSS3, HTML5, GSAP                                                             |
+| Backend        | Vercel Serverless (Node.js 18+)                                                           |
+| Storage        | Upstash Redis, Vercel Blob                                                                |
+| AI             | OpenAI Responses API for public chat POC; Anthropic Claude API for orchestration/fallback |
+| Auth           | WebAuthn passkeys                                                                         |
+| Hosting        | Vercel                                                                                    |
+| Source Control | GitHub                                                                                    |
 
 ## Research Lab Simulation
 
 The FUSE Research Lab is a Vercel-hosted, evidence-gated simulation. The frontend is a layered digital lab world, while `/api/research-lab` is routed through the consolidated orchestrator endpoint and backed by `api/_lib/research-lab-state.js`.
 
 Each tick updates formula scores and emits agent cognition data:
+
 - memory stream entries with importance and poignancy scores
 - active plans and selected-agent needs
 - periodic reflections

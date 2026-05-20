@@ -6,6 +6,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-20 | Public Chat Provider and Claims Guardrails
+
+**Decision**: Make `/api/chat` provider-configurable with OpenAI Responses API support and default the OpenAI proof of concept to `gpt-5-mini` when `FUSE_CHAT_PROVIDER=openai`.
+
+**Rationale**: The production Anthropic key failed provider authentication, and Sergio wants to test a lower-cost OpenAI mini model for the public site assistant. The chat prompt also needed tighter guardrails so the assistant describes FUSE as a pre-launch formulation experiment rather than a finished, fully substantiated product.
+
+**Impact**: `api/chat.js` now supports OpenAI and Anthropic via environment variables; `api/health.js` reports active provider status; cost tables include `gpt-5-mini`; `.env.example` documents the Vercel variables; homepage copy and the hero banner now use pre-launch, taste-first validation language aligned with Legal's claims register.
+
+---
+
 ## 2026-05-17 | Research Lab Agent Society Model
 
 **Decision**: Extend the Research Lab tick loop with a deterministic agent-society layer: scored memory stream, active plans, periodic reflections, social graph links, and compact replay frames.

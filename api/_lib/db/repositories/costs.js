@@ -19,6 +19,7 @@ const PRICING = {
         'claude-3-opus-latest': { inputPer1K: 0.015, outputPer1K: 0.075 },
     },
     openai: {
+        'gpt-5-mini': { inputPer1K: 0.00025, outputPer1K: 0.002 },
         'gpt-4-turbo': { inputPer1K: 0.01, outputPer1K: 0.03 },
         'gpt-4o': { inputPer1K: 0.005, outputPer1K: 0.015 },
         'gpt-4o-mini': { inputPer1K: 0.00015, outputPer1K: 0.0006 },

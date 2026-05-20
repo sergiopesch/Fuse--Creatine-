@@ -276,27 +276,26 @@
 
     const heroMessages = [
         {
-            message: 'Your morning coffee has been missing something. Until now.',
+            message: 'A better daily creatine ritual is in development.',
             footnote:
-                'The first creatine engineered to vanish into hot coffee — backed by 500+ peer-reviewed studies.',
+                'FUSE is a pre-launch formulation project built around creatine monohydrate, coffee compatibility, and taste-first validation.',
         },
         {
             message:
-                "6:47 AM. Steam rising. One scoop. Three seconds later — it's gone. Your coffee tastes exactly the same. But you're not.",
+                '6:47 AM. Steam rising. Your coffee still tastes like coffee. That is the formulation brief.',
             footnote:
-                'Backed by 500+ peer-reviewed studies. Now optimised for your morning ritual.',
+                'Creatine monohydrate is well studied. FUSE is testing a format designed for your morning ritual.',
+        },
+        {
+            message: 'Most creatine was not designed for coffee. We asked: what if it could be?',
+            footnote:
+                'Micro-encapsulation concepts developed for hot beverages, with sensory validation still in progress.',
         },
         {
             message:
-                "Most creatine sinks. Clumps. Ruins your coffee. We asked: what if it didn't have to?",
+                'Creatine monohydrate has the evidence. Coffee compatibility is the experiment.',
             footnote:
-                'Micro-encapsulation technology developed for hot beverages. No compromise. No grit. No excuses.',
-        },
-        {
-            message:
-                'Creatine is the most researched supplement in history. We just made it work in your coffee.',
-            footnote:
-                'Same proven creatine monohydrate. Engineered for heat. Designed for your routine.',
+                'Same studied creatine monohydrate. Being engineered for heat, taste, and routine.',
         },
     ];
 
@@ -526,27 +525,27 @@
         if (g <= 7) {
             return {
                 mode: 'Daily Maintenance',
-                copy: 'The ISSN-recommended baseline. Supports strength, power, and lean mass over time.',
+                copy: 'Creatine increases physical performance in successive bursts of short-term, high intensity exercise with a daily intake of 3g.',
                 intensity: 0.8,
             };
         }
         if (g <= 11) {
             return {
-                mode: 'Enhanced Support',
-                copy: 'For larger individuals or high training volumes. Maintains optimal muscle saturation.',
+                mode: 'Routine Builder',
+                copy: 'For exploring daily consistency. Speak with a qualified professional for personalised dose guidance.',
                 intensity: 1.05,
             };
         }
         if (g <= 16) {
             return {
-                mode: 'Intensive Training',
-                copy: 'Higher dose for demanding training blocks. Supports recovery between sessions.',
+                mode: 'Training Context',
+                copy: 'Higher intake ranges should be considered with professional guidance and your own training context.',
                 intensity: 1.25,
             };
         }
         return {
-            mode: 'Loading Phase',
-            copy: 'Rapid saturation protocol. Use for 5–7 days, then reduce to maintenance dose.',
+            mode: 'Professional Guidance',
+            copy: 'Loading-style intakes are not general advice. Check suitability with a qualified professional.',
             intensity: 1.45,
         };
     }

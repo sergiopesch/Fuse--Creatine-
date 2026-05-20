@@ -386,6 +386,33 @@ body::before {
     text-transform: uppercase;
 }
 
+.experiment-banner {
+    display: grid;
+    gap: 0.45rem;
+    max-width: 640px;
+    margin: 0 0 1.7rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(255, 149, 0, 0.32);
+    border-left: 3px solid var(--fuse-red);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.12), rgba(255, 255, 255, 0.045));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+.experiment-banner-label {
+    color: var(--fuse-red-light);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.experiment-banner-copy {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
 .hero-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(5rem, 16vw, 13rem);
@@ -3982,6 +4009,16 @@ body {
 
     .hero-british-badge .text {
         font-size: 0.65rem;
+    }
+
+    .experiment-banner {
+        margin: 0 auto 1rem;
+        padding: 0.75rem 0.85rem;
+        text-align: left;
+    }
+
+    .experiment-banner-copy {
+        font-size: 0.78rem;
     }
 
     .hero-title {

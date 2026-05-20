@@ -1,12 +1,12 @@
 # Comms Team — Current Context
 
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-05-20
 **Team Code**: COM
 **Orchestration Mode**: manual
 
 ## Current State
 
-Brand voice defined. No active social media presence yet. Focus is on messaging framework and launch communications planning.
+Brand voice defined and updated for pre-launch formulation/validation language. No active social media presence yet. Focus is on messaging framework and launch communications planning.
 
 ## Active Work
 
@@ -18,6 +18,7 @@ Brand voice defined. No active social media presence yet. Focus is on messaging 
 
 - ✅ Brand voice defined in docs/brand-voice.md
 - ✅ Website copy aligned with brand voice
+- ✅ Public messaging reframed around pre-launch experimentation, coffee compatibility, and taste-first validation
 
 ## Blockers
 
@@ -33,11 +34,11 @@ Brand voice defined. No active social media presence yet. Focus is on messaging 
 
 ## Brand Voice Summary
 
-| Attribute | Expression |
-|-----------|------------|
-| Tone | Confident, scientific, approachable |
-| Personality | British, premium, innovative |
-| Avoid | Hype, unsubstantiated claims, bro-science |
+| Attribute   | Expression                                |
+| ----------- | ----------------------------------------- |
+| Tone        | Confident, scientific, approachable       |
+| Personality | British, premium, innovative              |
+| Avoid       | Hype, unsubstantiated claims, bro-science |
 
 ## Cross-References
 
