@@ -24,6 +24,8 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 **Impact**: `/research-lab` now uses `assets/lab/research-lab-world-map-clean.png` as the central stage, with moving lab-coat scientist sprites and live speech bubbles layered over the image. The map art has been cleaned so baked-in static scientists are removed and only live sprites represent people in the world. Station cards, mission sidebars, hypothesis walls, dense control-room panels, and initials-in-circle markers were removed from the primary view so the lab reads as a game world first. Station coordinates in `api/_lib/research-lab-state.js` were realigned to the generated map zones, and agent motion now uses per-agent patrol cadence, animation speed, phase delay, and facing direction inspired by AI Town's independent character simulation model.
 
+**UX follow-up**: The page now renders a local bootstrap world before the research-lab API resolves, preloads the lab map image, removes long in-world speech banners that overlapped agents and station labels, and replaces them with a compact interaction link while the full dialogue remains in the live conversation panel.
+
 ---
 
 ## 2026-05-20 | Research Lab Reliability and Legacy Agents Page Retirement
