@@ -12,7 +12,7 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 **Rationale**: The grid-style world still felt like the old implementation. Sergio wants the new Research Lab World to match the generated control-room/lab image that made the concept feel alive.
 
-**Impact**: `/research-lab` now uses `assets/lab/research-lab-world-map.png` as the central stage, with moving scientist markers and live speech bubbles layered over the image. Station cards, mission sidebars, hypothesis walls, and dense control-room panels were removed from the primary view so the lab reads as a game world first. Station coordinates in `api/_lib/research-lab-state.js` were realigned to the generated map zones.
+**Impact**: `/research-lab` now uses `assets/lab/research-lab-world-map.png` as the central stage, with moving lab-coat scientist sprites and live speech bubbles layered over the image. Station cards, mission sidebars, hypothesis walls, dense control-room panels, and initials-in-circle markers were removed from the primary view so the lab reads as a game world first. Station coordinates in `api/_lib/research-lab-state.js` were realigned to the generated map zones.
 
 ---
 

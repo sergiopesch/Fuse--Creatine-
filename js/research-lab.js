@@ -44,14 +44,23 @@
         return div.innerHTML;
     }
 
-    function initials(name) {
-        return String(name || 'AI')
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(-2)
-            .map(part => part.charAt(0))
-            .join('')
-            .toUpperCase();
+    function labCharacterMarkup(agent, variant = 'world') {
+        const safeName = escapeHtml(agent.name);
+        return `
+            <span class="lab-character lab-character-${variant}" aria-label="${safeName}">
+                <span class="lab-character-shadow"></span>
+                <span class="lab-character-head"></span>
+                <span class="lab-character-hair"></span>
+                <span class="lab-character-body">
+                    <span class="lab-character-lapel"></span>
+                    <span class="lab-character-badge"></span>
+                </span>
+                <span class="lab-character-arm left"></span>
+                <span class="lab-character-arm right"></span>
+                <span class="lab-character-leg left"></span>
+                <span class="lab-character-leg right"></span>
+            </span>
+        `;
     }
 
     function formatClock(value) {
@@ -208,7 +217,7 @@
                         data-agent="${escapeHtml(agent.id)}"
                         style="--agent-color: ${escapeHtml(agent.color)}"
                     >
-                        <span class="agent-avatar">${escapeHtml(initials(agent.name))}</span>
+                        <span class="agent-avatar">${labCharacterMarkup(agent, 'portrait')}</span>
                         <span>
                             <strong>${escapeHtml(agent.name)}</strong>
                             <span>${escapeHtml(agent.role)}</span>
@@ -244,7 +253,7 @@
                         class="world-agent${active ? ' is-active' : ''}${isSpeaking ? ' is-speaking' : ''}"
                         style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad"
                     >
-                        <span class="world-agent-core">${escapeHtml(initials(agent.name))}</span>
+                        <span class="world-agent-core">${labCharacterMarkup(agent, 'world')}</span>
                         <span class="agent-label">${escapeHtml(agent.name.replace(/^Dr\\.\\s+/, '').split(' ')[0])}</span>
                         ${
                             isSpeaking
