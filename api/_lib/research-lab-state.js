@@ -385,8 +385,9 @@ function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) 
         const pull = active ? 0.82 : 0.18 + phase * 0.68;
         const drift = active ? 0 : Math.sin(labClock * 0.73 + seed) * (0.8 + (seed % 4) * 0.28);
         const needsSeed = labClock + index * 7;
-        const walkDuration = 760 + (seed % 7) * 115;
-        const stepDuration = 520 + (seed % 5) * 95;
+        const walkDuration = 920 + (seed % 9) * 170;
+        const stepDuration = 620 + (seed % 6) * 120;
+        const travelDuration = 1800 + (seed % 8) * 260;
 
         return {
             ...agent,
@@ -406,6 +407,7 @@ function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) 
                 phase: Number(phase.toFixed(2)),
                 walkDuration,
                 stepDuration,
+                travelDuration,
                 delay: -((seed * 37 + labClock * 113) % walkDuration),
                 stepDelay: -((seed * 53 + labClock * 71) % stepDuration),
             },

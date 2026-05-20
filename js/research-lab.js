@@ -110,6 +110,7 @@
         return {
             walkDuration,
             stepDuration,
+            travelDuration: 1800 + (seed % 8) * 260,
             delay: -((seed * 41 + labClock * 97) % walkDuration),
             stepDelay: -((seed * 67 + labClock * 53) % stepDuration),
         };
@@ -364,6 +365,11 @@
                 const fallbackMotion = motionFor(agent.id, state.data.labClock);
                 const walkDuration = clamp(motion.walkDuration || fallbackMotion.walkDuration, 700, 2600);
                 const stepDuration = clamp(motion.stepDuration || fallbackMotion.stepDuration, 520, 1500);
+                const travelDuration = clamp(
+                    motion.travelDuration || fallbackMotion.travelDuration,
+                    1400,
+                    4200
+                );
                 const walkDelay = clamp(motion.delay || -(seed * 37), -1600, 0);
                 const stepDelay = clamp(motion.stepDelay || -(seed * 53), -1200, 0);
                 const facing = pathX < -1 ? -1 : 1;
@@ -371,7 +377,7 @@
                 return `
                     <div
                         class="world-agent${active ? ' is-active' : ''}${isSpeaking ? ' is-speaking' : ''}"
-                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad; --walk-duration: ${walkDuration}ms; --step-duration: ${stepDuration}ms; --walk-delay: ${walkDelay}ms; --step-delay: ${stepDelay}ms; --facing: ${facing}"
+                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad; --walk-duration: ${walkDuration}ms; --step-duration: ${stepDuration}ms; --travel-duration: ${travelDuration}ms; --walk-delay: ${walkDelay}ms; --step-delay: ${stepDelay}ms; --facing: ${facing}"
                     >
                         <span class="world-agent-core">${labCharacterMarkup(agent, 'world')}</span>
                         <span class="agent-label">${escapeHtml(agent.name.replace(/^Dr\\.\\s+/, '').split(' ')[0])}</span>
