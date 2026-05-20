@@ -77,6 +77,12 @@
         return Math.max(min, Math.min(max, Number(value) || 0));
     }
 
+    function stableSeed(value) {
+        return String(value)
+            .split('')
+            .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    }
+
     function getAgent(agentId) {
         return (state.data?.agents || []).find(agent => agent.id === agentId);
     }
@@ -247,11 +253,19 @@
                 const line = activeConversation?.lines?.find(item => item.speakerId === agent.id);
                 const isSpeaking = speakingIds.has(agent.id) && line;
                 const active = state.data.currentExperiment?.leadAgentId === agent.id;
+                const seed = stableSeed(agent.id);
+                const motion = agent.motion || {};
+                const walkDuration = clamp(motion.walkDuration || 760 + (seed % 7) * 115, 620, 1600);
+                const stepDuration = clamp(motion.stepDuration || 520 + (seed % 5) * 95, 420, 1200);
+                const walkDelay = clamp(motion.delay || -(seed * 37), -1600, 0);
+                const stepDelay = clamp(motion.stepDelay || -(seed * 53), -1200, 0);
+                const walkAmplitude = 2.4 + (seed % 5) * 0.42;
+                const facing = pathX < -1 ? -1 : 1;
 
                 return `
                     <div
                         class="world-agent${active ? ' is-active' : ''}${isSpeaking ? ' is-speaking' : ''}"
-                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad"
+                        style="--x: ${x}; --y: ${y}; --depth: ${Math.round(y)}; --agent-color: ${escapeHtml(agent.color)}; --path-length: ${pathLength}px; --path-angle: ${pathAngle}rad; --walk-duration: ${walkDuration}ms; --step-duration: ${stepDuration}ms; --walk-delay: ${walkDelay}ms; --step-delay: ${stepDelay}ms; --walk-bob: ${walkAmplitude}px; --facing: ${facing}"
                     >
                         <span class="world-agent-core">${labCharacterMarkup(agent, 'world')}</span>
                         <span class="agent-label">${escapeHtml(agent.name.replace(/^Dr\\.\\s+/, '').split(' ')[0])}</span>

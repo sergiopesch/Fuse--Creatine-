@@ -1177,7 +1177,7 @@ body.research-world-page {
         margin-top: 0;
     }
     50% {
-        margin-top: -4px;
+        margin-top: calc(var(--walk-bob, 4px) * -1);
     }
 }
 
@@ -2089,27 +2089,54 @@ body.research-world-page {
 
 .research-world-page .game-stage .world-agent {
     animation:
-        agent-walk-bob 1.1s ease-in-out infinite,
-        scientist-step 620ms steps(2) infinite;
+        agent-walk-bob var(--walk-duration, 1.1s) ease-in-out infinite,
+        scientist-step var(--step-duration, 620ms) steps(2) infinite;
+    animation-delay:
+        var(--walk-delay, 0ms),
+        var(--step-delay, 0ms);
 }
 
 .research-world-page .game-stage .world-agent .lab-character-arm.left,
 .research-world-page .game-stage .world-agent .lab-character-leg.right {
-    animation: scientist-limb-a 620ms steps(2) infinite;
+    animation: scientist-limb-a var(--step-duration, 620ms) steps(2) infinite;
+    animation-delay: var(--step-delay, 0ms);
 }
 
 .research-world-page .game-stage .world-agent .lab-character-arm.right,
 .research-world-page .game-stage .world-agent .lab-character-leg.left {
-    animation: scientist-limb-b 620ms steps(2) infinite;
+    animation: scientist-limb-b var(--step-duration, 620ms) steps(2) infinite;
+    animation-delay: var(--step-delay, 0ms);
+}
+
+.research-world-page .game-stage .world-agent.is-speaking .world-agent-core {
+    filter:
+        drop-shadow(0 10px 10px rgba(0, 0, 0, 0.56))
+        drop-shadow(0 0 16px color-mix(in srgb, var(--agent-color) 62%, transparent));
+}
+
+.research-world-page .game-stage .world-agent.is-speaking::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 36%;
+    width: 46px;
+    height: 18px;
+    transform: translate(-50%, -50%);
+    border: 1px solid color-mix(in srgb, var(--agent-color) 72%, transparent);
+    border-radius: 999px;
+    opacity: 0.7;
+    pointer-events: none;
+    animation: interaction-pulse 1450ms ease-in-out infinite;
+    animation-delay: var(--walk-delay, 0ms);
 }
 
 @keyframes scientist-step {
     0%,
     100% {
-        transform: translate(-50%, -50%) scaleX(1);
+        transform: translate(-50%, -50%) scaleX(var(--facing, 1));
     }
     50% {
-        transform: translate(-50%, -50%) scaleX(0.98);
+        transform: translate(-50%, -50%) scaleX(calc(var(--facing, 1) * 0.98));
     }
 }
 
@@ -2130,6 +2157,18 @@ body.research-world-page {
     }
     50% {
         transform: rotate(10deg);
+    }
+}
+
+@keyframes interaction-pulse {
+    0%,
+    100% {
+        opacity: 0.25;
+        transform: translate(-50%, -50%) scale(0.86);
+    }
+    45% {
+        opacity: 0.82;
+        transform: translate(-50%, -50%) scale(1.12);
     }
 }
 

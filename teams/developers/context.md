@@ -19,6 +19,8 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 - ✅ Research Lab rebuilt from scratch as a living AI research world with spatial stations, moving scientist agents, social conversations, memory stream, disputes, evidence gates, and experiment queue
 - ✅ Research Lab visual world simplified into an AI Town-style game view: generated lab map first, visible moving scientist agents, lightweight HUD controls, and live conversation overlay
 - ✅ Research Lab agent markers replaced with moving lab-coat scientist sprites so agents look like characters in the world rather than circles with initials
+- ✅ Research Lab background map cleaned so baked-in static scientists are removed; only live agent sprites now represent people in the lab world
+- ✅ Research Lab movement now uses per-agent patrol cadence, animation duration, phase delay, and facing direction so scientists no longer bounce in one synchronized rhythm
 - ✅ Previous generated Research Lab visual assets and dashboard-style lab implementation removed
 - ✅ Legacy standalone Agent Command Center page retired; `/agents` now redirects to the dashboard while `/api/agents` remains for backend/dashboard tooling
 - ✅ Public FUSE Agent persona updated to be more playful, creator-led, and experimentation-focused while using dry, witty pushback for build/configuration/internal-system questions

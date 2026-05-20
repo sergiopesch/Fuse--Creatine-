@@ -358,32 +358,57 @@ function stationCenter(stationId) {
     };
 }
 
+function agentSeed(agentId) {
+    return String(agentId)
+        .split('')
+        .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
+
 function pairKey(firstId, secondId) {
     return [firstId, secondId].sort().join(':');
 }
 
 function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) {
     return agentBlueprints.map((agent, index) => {
+        const seed = agentSeed(agent.id);
         const active =
             agent.id === currentExperiment.leadAgentId ||
             agent.id === currentExperiment.supportAgentId;
+        const cadence = 2 + (seed % 4);
+        const patrolStep = Math.floor((labClock + seed) / cadence);
         const targetStationId = active
             ? currentExperiment.stationId
-            : stations[(labClock + index) % stations.length].id;
+            : stations[(patrolStep + index + seed) % stations.length].id;
         const home = stationCenter(agent.stationId);
         const target = stationCenter(targetStationId);
-        const phase = ((labClock + index * 2) % 10) / 10;
-        const pull = active ? 0.82 : 0.25 + phase * 0.35;
-        const drift = active ? 0 : Math.sin(labClock + index) * 1.8;
+        const phase = ((labClock + seed) % cadence) / cadence;
+        const pull = active ? 0.82 : 0.18 + phase * 0.68;
+        const drift = active ? 0 : Math.sin(labClock * 0.73 + seed) * (0.8 + (seed % 4) * 0.28);
         const needsSeed = labClock + index * 7;
+        const walkDuration = 760 + (seed % 7) * 115;
+        const stepDuration = 520 + (seed % 5) * 95;
 
         return {
             ...agent,
             x: clamp(home.x + (target.x - home.x) * pull + drift, 4, 96),
-            y: clamp(home.y + (target.y - home.y) * pull + Math.cos(labClock + index) * 1.6, 4, 96),
+            y: clamp(
+                home.y +
+                    (target.y - home.y) * pull +
+                    Math.cos(labClock * 0.61 + seed) * (0.7 + (seed % 5) * 0.24),
+                4,
+                96
+            ),
             targetStationId,
             intent: active ? currentExperiment.title : agent.intent,
             reflection: buildAgentReflection(agent, currentExperiment, active),
+            motion: {
+                cadence,
+                phase: Number(phase.toFixed(2)),
+                walkDuration,
+                stepDuration,
+                delay: -((seed * 37 + labClock * 113) % walkDuration),
+                stepDelay: -((seed * 53 + labClock * 71) % stepDuration),
+            },
             needs: {
                 focus: clamp(58 + (active ? 24 : 0) + (needsSeed % 13)),
                 evidence: clamp(44 + (active ? 28 : 0) + (needsSeed % 11)),
