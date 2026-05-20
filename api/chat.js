@@ -578,7 +578,9 @@ function buildProviderRequest({ provider, model, apiKey, messages }) {
                     model,
                     instructions: FUSE_KNOWLEDGE,
                     input: messages,
-                    max_output_tokens: 300,
+                    reasoning: { effort: 'minimal' },
+                    text: { verbosity: 'low' },
+                    max_output_tokens: 600,
                 }),
             },
         };
@@ -614,6 +616,8 @@ function extractAssistantMessage(data, provider) {
             if (item.type !== 'message') continue;
             for (const part of item.content || []) {
                 if (part.type === 'output_text' && typeof part.text === 'string') {
+                    textParts.push(part.text);
+                } else if (typeof part.text === 'string') {
                     textParts.push(part.text);
                 }
             }
