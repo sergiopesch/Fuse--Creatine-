@@ -908,6 +908,462 @@ body.research-world-page {
     }
 
     .agent-bubble {
-        max-width: 180px;
+        display: none;
+    }
+}
+
+/* Premium generated lab-world skin, based on the accepted FUSE control-room concept. */
+body.research-world-page {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 59, 48, 0.08), transparent 34%),
+        linear-gradient(180deg, #050505 0%, #090a0a 100%);
+}
+
+.world-header {
+    min-height: 56px;
+    padding: 10px 16px;
+    gap: 16px;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    background: rgba(3, 3, 3, 0.94);
+}
+
+.world-logo span {
+    font-size: 31px;
+    letter-spacing: 0.09em;
+}
+
+.world-logo strong {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+}
+
+.lab-meta-strip {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.lab-meta-strip span {
+    padding: 9px 16px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    color: #d9dde0;
+    font:
+        700 10px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lab-meta-strip span:last-child {
+    border-right: 0;
+}
+
+.lab-meta-strip strong {
+    color: #ffffff;
+}
+
+.world-nav {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.world-nav a {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.world-status {
+    min-width: 170px;
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.035);
+    font-size: 10px;
+}
+
+.world-shell {
+    width: min(100vw - 20px, 1520px);
+    padding: 10px 0 28px;
+}
+
+.world-layout {
+    grid-template-columns: minmax(220px, 238px) minmax(660px, 1fr) minmax(270px, 292px);
+    gap: 8px;
+    align-items: start;
+}
+
+.side-panel,
+.lower-panel,
+.lab-stage-panel {
+    border-color: rgba(255, 255, 255, 0.13);
+    border-radius: 6px;
+    background: rgba(7, 9, 10, 0.92);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.38);
+}
+
+.side-panel,
+.lower-panel {
+    padding: 12px;
+}
+
+.panel-title {
+    margin-bottom: 12px;
+}
+
+.panel-title span,
+.clock-readout span,
+.stage-toolbar span,
+.agent-intent,
+.memory-meta,
+.conversation-meta,
+.hypothesis-meta {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+}
+
+.agent-roster {
+    gap: 8px;
+}
+
+.agent-card {
+    min-height: 72px;
+    grid-template-columns: 44px minmax(0, 1fr);
+    border-color: rgba(255, 255, 255, 0.09);
+    border-radius: 5px;
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--agent-color) 12%, transparent), transparent),
+        rgba(255, 255, 255, 0.025);
+}
+
+.agent-avatar {
+    width: 44px;
+    height: 44px;
+    border-width: 1px;
+    border-radius: 5px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.14), transparent 38%),
+        color-mix(in srgb, var(--agent-color) 28%, #111416);
+}
+
+.agent-card strong {
+    font-size: 12px;
+}
+
+.agent-card span:not(.agent-avatar) span {
+    font-size: 11px;
+}
+
+.agent-intent {
+    color: #8c939a;
+}
+
+.agent-roster-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 18px;
+    color: #a7adb1;
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.agent-roster-footer i {
+    width: 26px;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: inset 14px 0 0 rgba(255, 255, 255, 0.62);
+}
+
+.lab-stage-panel {
+    position: relative;
+    overflow: hidden;
+}
+
+.lab-world {
+    min-height: 0;
+    aspect-ratio: 978 / 760;
+    background: #0a0b0c;
+}
+
+.lab-world::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.18) 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 17%, transparent 82%, rgba(0, 0, 0, 0.28));
+}
+
+.lab-world-map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    user-select: none;
+}
+
+.station-grid,
+.agent-layer {
+    z-index: 6;
+}
+
+.station-room {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 1px dashed color-mix(in srgb, var(--station-color) 36%, transparent);
+    border-radius: 8px;
+    background: transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.station-room.is-active {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--station-color) 64%, transparent);
+    box-shadow:
+        inset 0 0 34px color-mix(in srgb, var(--station-color) 11%, transparent),
+        0 0 28px color-mix(in srgb, var(--station-color) 22%, transparent);
+}
+
+.station-room strong,
+.station-room small,
+.station-room::after {
+    display: none;
+}
+
+.world-agent-core {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+    font-size: 0;
+    background:
+        radial-gradient(circle, #ffffff 0 14%, transparent 16%),
+        color-mix(in srgb, var(--agent-color) 66%, #090a0b);
+    box-shadow:
+        0 0 0 5px color-mix(in srgb, var(--agent-color) 18%, transparent),
+        0 0 22px color-mix(in srgb, var(--agent-color) 52%, transparent);
+}
+
+.world-agent.is-active .world-agent-core {
+    width: 24px;
+    height: 24px;
+}
+
+.world-agent::before {
+    height: 1px;
+    border-top: 1px dashed color-mix(in srgb, var(--agent-color) 54%, transparent);
+    background: none;
+    opacity: 0.6;
+}
+
+.agent-label {
+    top: 22px;
+    border-color: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    background: rgba(3, 4, 5, 0.84);
+    font-size: 8px;
+}
+
+.agent-bubble {
+    bottom: 32px;
+    border-color: rgba(255, 255, 255, 0.14);
+    border-radius: 5px;
+    background: rgba(8, 9, 10, 0.9);
+    font-size: 11px;
+}
+
+.stage-footer {
+    position: absolute;
+    z-index: 12;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    padding: 9px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    background: rgba(5, 6, 7, 0.76);
+    backdrop-filter: blur(14px);
+}
+
+.stage-footer p {
+    margin-top: 7px;
+    font-size: 11px;
+}
+
+.mission-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: clamp(620px, calc(100vh - 270px), 760px);
+    overflow: auto;
+}
+
+.roster-panel {
+    min-height: clamp(620px, calc(100vh - 270px), 760px);
+    display: flex;
+    flex-direction: column;
+}
+
+.mission-copy {
+    margin: 0;
+    padding: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 5px;
+    color: #c7ccd0;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.command-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.mission-summary-grid {
+    display: grid;
+    gap: 7px;
+}
+
+.mission-summary-grid article {
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.mission-summary-grid article.is-alert {
+    border-color: rgba(255, 59, 48, 0.52);
+}
+
+.mission-summary-grid span {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--world-muted);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.mission-summary-grid strong {
+    display: block;
+    overflow: hidden;
+    color: #f3f5f6;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.control-button {
+    min-height: 36px;
+    border-radius: 4px;
+    font-size: 10px;
+}
+
+.hypothesis-list {
+    gap: 7px;
+}
+
+.hypothesis-card,
+.memory-item,
+.conversation-item,
+.queue-item,
+.selected-detail {
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.hypothesis-card {
+    padding: 10px;
+}
+
+.hypothesis-card p,
+.memory-item p,
+.conversation-item p,
+.queue-item p,
+.selected-detail p {
+    font-size: 11px;
+}
+
+.score-row {
+    grid-template-columns: 52px minmax(0, 1fr) 24px;
+    font-size: 10px;
+}
+
+.world-bottom {
+    grid-template-columns: minmax(280px, 0.7fr) minmax(470px, 1.3fr) minmax(260px, 0.75fr) minmax(260px, 0.75fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+@media (max-width: 1280px) {
+    .lab-meta-strip {
+        order: 3;
+        width: 100%;
+    }
+
+    .world-layout,
+    .world-bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .mission-panel {
+        max-height: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .world-header {
+        padding: 12px;
+    }
+
+    .world-logo {
+        width: 100%;
+    }
+
+    .lab-meta-strip {
+        overflow-x: auto;
+    }
+
+    .world-status {
+        justify-content: flex-start;
+    }
+
+    .lab-world {
+        aspect-ratio: 978 / 760;
+        min-height: 0;
+    }
+
+    .stage-footer {
+        position: static;
+        border-width: 1px 0 0;
+        border-radius: 0;
+    }
+
+    .agent-roster {
+        grid-template-columns: 1fr;
     }
 }

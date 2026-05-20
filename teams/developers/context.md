@@ -17,6 +17,7 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 ## Recent Completions
 
 - ✅ Research Lab rebuilt from scratch as a living AI research world with spatial stations, moving scientist agents, social conversations, memory stream, disputes, evidence gates, and experiment queue
+- ✅ Research Lab visual world upgraded to use Sergio's preferred generated premium lab map as the live stage asset, with code-native agent overlays and mission controls
 - ✅ Previous generated Research Lab visual assets and dashboard-style lab implementation removed
 - ✅ Legacy standalone Agent Command Center page retired; `/agents` now redirects to the dashboard while `/api/agents` remains for backend/dashboard tooling
 - ✅ Public FUSE Agent persona updated to be more playful, creator-led, and experimentation-focused while using dry, witty pushback for build/configuration/internal-system questions

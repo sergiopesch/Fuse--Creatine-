@@ -34,6 +34,13 @@
                 <span>FUSE</span>
                 <strong>Research Lab World</strong>
             </a>
+            <div class="lab-meta-strip" aria-label="Lab status">
+                <span>Day 47</span>
+                <span id="labClock">Tick 000</span>
+                <span>Batch 3</span>
+                <span>Phase pilot</span>
+                <span>Lab efficiency <strong id="leadScore">--</strong></span>
+            </div>
             <nav class="world-nav" aria-label="Research lab navigation">
                 <a href="/">Home</a>
                 <a href="/dashboard">Dashboard</a>
@@ -45,28 +52,6 @@
         </header>
 
         <main class="world-shell" id="world-main">
-            <section class="world-command" aria-label="Research mission controls">
-                <div class="mission-block">
-                    <h1>FUSE Research Lab World</h1>
-                    <p id="missionText">
-                        Find a manufacturable way to make creatine monohydrate dissolve quickly in
-                        hot coffee while keeping the coffee experience clean and maximising
-                        supplement absorption and performance.
-                    </p>
-                </div>
-                <div class="command-strip" aria-label="Simulation controls">
-                    <button class="control-button primary" id="advanceWorld" type="button">
-                        Advance world
-                    </button>
-                    <button class="control-button" id="toggleWorld" type="button">Pause</button>
-                    <button class="control-button" id="resetWorld" type="button">Reset</button>
-                    <div class="clock-readout">
-                        <span>Lab clock</span>
-                        <strong id="labClock">Tick 000</strong>
-                    </div>
-                </div>
-            </section>
-
             <section class="world-layout" aria-label="Living research lab">
                 <aside class="side-panel roster-panel" aria-label="Research agents">
                     <div class="panel-title">
@@ -74,27 +59,20 @@
                         <strong id="agentCount">0</strong>
                     </div>
                     <div class="agent-roster" id="agentRoster"></div>
+                    <div class="agent-roster-footer">
+                        <span>Show inactive</span>
+                        <i></i>
+                    </div>
                 </aside>
 
                 <section class="lab-stage-panel" aria-label="Top-down research lab world">
-                    <div class="stage-toolbar">
-                        <div>
-                            <span>Active experiment</span>
-                            <strong id="activeExperiment">Loading</strong>
-                        </div>
-                        <div>
-                            <span>Evidence gate</span>
-                            <strong id="evidenceGate">Hypothesis</strong>
-                        </div>
-                        <div>
-                            <span>Current dispute</span>
-                            <strong id="activeDispute">None</strong>
-                        </div>
-                    </div>
-
                     <div class="lab-world" id="labWorld">
-                        <div class="world-grid" aria-hidden="true"></div>
-                        <div class="sample-loop" aria-hidden="true"></div>
+                        <img
+                            class="lab-world-map"
+                            src="assets/lab/research-lab-world-map.png"
+                            alt=""
+                            aria-hidden="true"
+                        />
                         <div class="station-grid" id="stationGrid"></div>
                         <div class="agent-layer" id="agentLayer"></div>
                     </div>
@@ -113,7 +91,33 @@
                 <aside class="side-panel mission-panel" aria-label="Mission control">
                     <div class="panel-title">
                         <span>Mission control</span>
-                        <strong id="leadScore">--</strong>
+                        <strong id="missionStatus">Nominal</strong>
+                    </div>
+                    <p class="mission-copy" id="missionText">
+                        Find a manufacturable way to make creatine monohydrate dissolve quickly in
+                        hot coffee while keeping the coffee experience clean and maximising
+                        supplement absorption and performance.
+                    </p>
+                    <div class="command-strip" aria-label="Simulation controls">
+                        <button class="control-button primary" id="advanceWorld" type="button">
+                            Advance world
+                        </button>
+                        <button class="control-button" id="toggleWorld" type="button">Pause</button>
+                        <button class="control-button" id="resetWorld" type="button">Reset</button>
+                    </div>
+                    <div class="mission-summary-grid">
+                        <article>
+                            <span>Active experiment</span>
+                            <strong id="activeExperiment">Loading</strong>
+                        </article>
+                        <article>
+                            <span>Evidence gate</span>
+                            <strong id="evidenceGate">Hypothesis</strong>
+                        </article>
+                        <article class="is-alert">
+                            <span>Current dispute</span>
+                            <strong id="activeDispute">None</strong>
+                        </article>
                     </div>
                     <div class="hypothesis-list" id="hypothesisList"></div>
                 </aside>

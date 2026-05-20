@@ -6,6 +6,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-20 | Research Lab Generated World Art
+
+**Decision**: Replace the abstract grid lab stage with Sergio's preferred generated premium lab-world map and keep the controls, agents, hypotheses, memory, and conversation feeds code-native.
+
+**Rationale**: The grid-style world still felt like the old implementation. Sergio wants the new Research Lab World to match the generated control-room/lab image that made the concept feel alive.
+
+**Impact**: `/research-lab` now uses `assets/lab/research-lab-world-map.png` as the central stage, with moving scientist markers, live conversations, station highlights, mission controls, and evidence panels layered over and around the image. Station coordinates in `api/_lib/research-lab-state.js` were realigned to the generated map zones.
+
+---
+
 ## 2026-05-20 | Research Lab Reliability and Legacy Agents Page Retirement
 
 **Decision**: Harden `/api/research-lab` state loading and retire the legacy standalone `/agents` page.
