@@ -16,6 +16,7 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 
 ## Recent Completions
 
+- ✅ Homepage product showcase polished with a dedicated premium product-stage layout, high-fidelity product cutout, responsive headline treatment, and development-focus spec tiles
 - ✅ Research Lab rebuilt from scratch as a living AI research world with spatial stations, moving scientist agents, social conversations, memory stream, disputes, evidence gates, and experiment queue
 - ✅ Research Lab visual world simplified into an AI Town-style game view: generated lab map first, visible moving scientist agents, lightweight HUD controls, and live conversation overlay
 - ✅ Research Lab agent markers replaced with moving lab-coat scientist sprites so agents look like characters in the world rather than circles with initials

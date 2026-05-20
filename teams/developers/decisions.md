@@ -6,6 +6,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-20 | Product Showcase Visual Polish
+
+**Decision**: Rework the homepage product section into a stronger product-stage view using the high-fidelity product cutout, tighter headline composition, and development-focus spec tiles.
+
+**Rationale**: The previous product view leaned on the Three.js render in a large showcase context, where the material appeared too blank and visually weak. The dedicated rendered asset better communicates the physical product texture while preserving a premium dark FUSE layout.
+
+**Impact**: `index.html` now uses the static product cutout for the product showcase, keeps the interactive viewer in the hero, and adds compact product-focus metadata. `css/style.css` adds the new product-stage composition, responsive title treatment, and spec tile styling. `js/product-viewer.js` keeps a calmer material setup for the remaining interactive hero viewer.
+
+---
+
 ## 2026-05-20 | Research Lab Generated World Art
 
 **Decision**: Replace the abstract grid lab stage with Sergio's preferred generated premium lab-world map, then simplify the surface into an AI Town-style game view.
