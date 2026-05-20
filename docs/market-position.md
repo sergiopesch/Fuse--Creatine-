@@ -2,7 +2,7 @@
 
 ## Positioning Statement
 
-For coffee-drinking fitness enthusiasts who want creatine monohydrate without adding another daily step, FUSE is a pre-launch coffee-optimised creatine project designed to blend smoothly into a morning cup while preserving coffee taste and ritual.
+For coffee-drinking fitness enthusiasts who want creatine monohydrate without adding another daily step, FUSE is an experimentation-led coffee-optimised creatine research idea exploring how creatine could blend smoothly into a morning cup while preserving coffee taste and ritual.
 
 ## Competitive Landscape
 

@@ -53,7 +53,10 @@
             label: 'What makes FUSE different?',
             message: 'What makes FUSE different from regular creatine?',
         },
-        { label: 'What is being tested?', message: 'What is FUSE testing before launch?' },
+        {
+            label: 'What is being tested?',
+            message: 'What is FUSE testing during this idea validation?',
+        },
         {
             label: 'Why coffee?',
             message: 'Why is FUSE exploring creatine monohydrate for coffee drinkers?',
@@ -641,7 +644,7 @@
                     <div class="chat-email-success">
                         <span class="chat-email-success-icon">${icons.check}</span>
                         <h4>You're on the list!</h4>
-                        <p>We'll let you know when FUSE launches.</p>
+                        <p>We'll send research updates as the idea develops.</p>
                     </div>
                 `;
 

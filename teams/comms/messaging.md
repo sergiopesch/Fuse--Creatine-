@@ -6,7 +6,7 @@
 
 ## Elevator Pitch (30 seconds)
 
-"FUSE is a pre-launch product experimentation and research idea exploring a coffee-first creatine monohydrate format. We're testing whether a new supplement presentation can blend smoothly into hot coffee, preserve the taste of the cup, and make daily creatine easier for coffee drinkers to remember."
+"FUSE is a product experimentation and research idea exploring a coffee-first creatine monohydrate format. We're testing whether a new supplement presentation can blend smoothly into hot coffee, preserve the taste of the cup, and make daily creatine easier for coffee drinkers to remember."
 
 ## Message Matrix by Audience
 
@@ -70,12 +70,12 @@
 - "Micro-encapsulated" (when discussing technology)
 - "Creatine monohydrate" (specific form)
 - "Science-backed" or "peer-reviewed" (credibility)
-- "Pre-launch", "being developed", "designed to", and "in validation" for product-specific claims
+- "Being developed", "designed to", "currently being tested", and "in validation" for product-specific claims
 - "Product experimentation", "research idea", and "research updates" when describing the current public project status
 
 ### Never Use
 
-- "Early access", "founding member", or sales-led launch language while the site is framed as experimentation
+- Launch-stage, early-access, founding-member, or sales-led language while the site is framed as experimentation
 - "Miracle" or "magic" (hype language)
 - "Guaranteed results" (unsubstantiated)
 - Final claims like "zero taste impact", "<3 seconds", or "GMP certified" until Legal marks them approved

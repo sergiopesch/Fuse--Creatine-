@@ -2,7 +2,7 @@
 
 ## What Is FUSE?
 
-FUSE Creatine is a pre-launch coffee-optimised creatine monohydrate project. It is testing a micro-encapsulated format designed to blend smoothly into hot coffee while preserving the taste and ritual of the cup.
+FUSE Creatine is an experimentation-led coffee-optimised creatine monohydrate research idea. It is testing a micro-encapsulated format designed to blend smoothly into hot coffee while preserving the taste and ritual of the cup.
 
 ## The Problem
 
@@ -48,4 +48,4 @@ FUSE is testing micro-encapsulated creatine monohydrate so it can:
 
 ## Stage
 
-Pre-launch. Waitlist building. Formulation pending FTO analysis.
+Idea experimentation. Research updates active. Formulation pending FTO analysis.

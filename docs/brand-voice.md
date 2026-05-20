@@ -2,7 +2,7 @@
 
 ## Voice Overview
 
-FUSE speaks with the confidence of science and the warmth of your morning coffee. We're the knowledgeable friend sharing a pre-launch formulation journey — not the gym bro shouting about gains.
+FUSE speaks with the confidence of science and the warmth of your morning coffee. We're the knowledgeable friend sharing an experimentation-led formulation idea — not the gym bro shouting about gains.
 
 ## Voice Attributes
 
@@ -55,15 +55,15 @@ We're friendly without being unprofessional.
 
 ## Words We Use
 
-| Word           | Why                                        |
-| -------------- | ------------------------------------------ |
-| Optimised      | British spelling, premium feel             |
-| Science-backed | Credibility without jargon                 |
-| Effortless     | Ease of use is our core value              |
-| Precision      | Quality and accuracy                       |
-| Ritual         | Elevates "routine" to something meaningful |
-| Crafted        | Premium manufacturing feel                 |
-| Validation     | Honest pre-launch science posture          |
+| Word           | Why                                         |
+| -------------- | ------------------------------------------- |
+| Optimised      | British spelling, premium feel              |
+| Science-backed | Credibility without jargon                  |
+| Effortless     | Ease of use is our core value               |
+| Precision      | Quality and accuracy                        |
+| Ritual         | Elevates "routine" to something meaningful  |
+| Crafted        | Premium manufacturing feel                  |
+| Validation     | Honest experimentation and research posture |
 
 ## Words We Avoid
 
