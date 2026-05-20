@@ -205,13 +205,18 @@ body::before {
     font-size: 0.85rem;
     border: none;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition:
         transform 0.25s var(--ease-out-expo),
+        background 0.25s var(--ease-out-expo),
         box-shadow 0.25s var(--ease-out-expo);
 }
 
 .nav-cta:hover {
     transform: scale(1.03);
+    background: var(--fuse-red-light);
     box-shadow: 0 12px 28px rgba(255, 59, 48, 0.28);
 }
 
@@ -388,6 +393,38 @@ body::before {
 .hero-british-badge.is-experiment {
     background: rgba(255, 59, 48, 0.08);
     border-color: rgba(255, 59, 48, 0.22);
+}
+
+.status-icon {
+    position: relative;
+    width: 0.85rem;
+    height: 0.85rem;
+    flex: 0 0 0.85rem;
+    border-radius: 50%;
+    background: var(--fuse-red);
+    box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.12);
+}
+
+.status-icon-experiment::before,
+.status-icon-experiment::after {
+    content: '';
+    position: absolute;
+    background: var(--white);
+    border-radius: 999px;
+}
+
+.status-icon-experiment::before {
+    width: 0.38rem;
+    height: 0.1rem;
+    top: 0.28rem;
+    left: 0.235rem;
+}
+
+.status-icon-experiment::after {
+    width: 0.1rem;
+    height: 0.38rem;
+    top: 0.235rem;
+    left: 0.38rem;
 }
 
 .hero-british-badge .text {
