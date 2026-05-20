@@ -18,6 +18,7 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 
 - ✅ Research Lab rebuilt from scratch as a living AI research world with spatial stations, moving scientist agents, social conversations, memory stream, disputes, evidence gates, and experiment queue
 - ✅ Previous generated Research Lab visual assets and dashboard-style lab implementation removed
+- ✅ Legacy standalone Agent Command Center page retired; `/agents` now redirects to the dashboard while `/api/agents` remains for backend/dashboard tooling
 - ✅ Public FUSE Agent persona updated to be more playful, creator-led, and experimentation-focused while using dry, witty pushback for build/configuration/internal-system questions
 - ✅ Public chat endpoint upgraded to configurable Anthropic/OpenAI provider support with `gpt-5-mini` default for OpenAI POC
 - ✅ FUSE Agent prompt guardrails reframed the product as an experimentation-led research idea and tightened approved-claim language
@@ -27,7 +28,7 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 - ✅ Interactive Three.js product viewer added to homepage hero and product showcase
 - ✅ Full responsive redesign (v2.5.0)
 - ✅ Biometric authentication working
-- ✅ Agent Command Center functional
+- ✅ Agent orchestration API functional for dashboard and CLI-backed tooling
 - ✅ Removed duplicate code in API layer
 - ✅ Passkey authentication system added
 - ✅ CEO auth flow implemented
@@ -41,7 +42,7 @@ None currently.
 
 1. **HIGH**: Complete CLI tool core commands (status, queue, task)
 2. **HIGH**: Integrate queue with CEO Dashboard
-3. **MEDIUM**: Update agents.html for 9-team structure
+3. **MEDIUM**: Align dashboard queue controls with CLI-first team structure
 4. **LOW**: TypeScript migration consideration
 
 ## Technical Debt

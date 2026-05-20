@@ -1,6 +1,6 @@
-# FUSE Creatine - Coffee-Optimised Creatine + AI Agent Command Center
+# FUSE Creatine - Coffee-Optimised Creatine + Research Lab World
 
-Britain's first coffee-optimised creatine with Instant Fusion Technology, powered by an AI-driven corporate agent orchestration system.
+Britain's first coffee-optimised creatine with Instant Fusion Technology, powered by a living AI research lab and CEO orchestration system.
 
 > **Note:** FUSE Creatine is currently a concept/idea stage product. Statistics shown on the site (e.g. potential cities) represent aspirational targets, not real metrics. No pricing has been finalised.
 
@@ -8,7 +8,7 @@ Britain's first coffee-optimised creatine with Instant Fusion Technology, powere
 
 FUSE Creatine is a dual-purpose platform:
 1. **Product Website** - Marketing site for FUSE Creatine supplement concept
-2. **AI Agent Command Center** - Corporate simulation with orchestratable AI agent teams
+2. **Research Lab World** - Scientist-agent simulation for formulation hypotheses, evidence gates, and experiment queues
 
 ## Architecture
 
@@ -28,7 +28,7 @@ FUSE Creatine is a dual-purpose platform:
 fuse-creatine/
 ├── index.html              # Marketing landing page
 ├── dashboard.html          # Company Dashboard (biometric-protected)
-├── agents.html             # Agent Command Center
+├── research-lab.html       # Living scientist-agent lab world
 ├── admin.html              # Admin analytics portal
 ├── privacy.html            # Privacy policy
 ├── terms.html              # Terms and conditions
@@ -41,7 +41,8 @@ fuse-creatine/
 │   │   ├── circuit-breaker.js  # Resilience patterns
 │   │   ├── world-controller.js # Agent state management
 │   │   └── crypto.js           # Encryption utilities
-│   ├── agents.js               # Agent management API
+│   ├── agents.js               # Agent management API for dashboard/CEO tooling
+│   ├── orchestrator.js         # Consolidated API router
 │   ├── orchestrate.js          # Team orchestration API (Claude)
 │   ├── chat.js                 # FUSE Agent chat API
 │   ├── signup.js               # Waitlist signup API
@@ -52,7 +53,7 @@ fuse-creatine/
 │   └── biometric-register.js     # WebAuthn registration
 ├── js/
 │   ├── main.js             # Marketing page animations
-│   ├── agents.js           # Agent Command Center UI
+│   ├── research-lab.js     # Research Lab World UI
 │   ├── dashboard.js        # Company Dashboard UI
 │   ├── admin.js            # Admin portal UI
 │   ├── chat.js             # Chat widget
@@ -60,7 +61,7 @@ fuse-creatine/
 │   └── consent-manager.js  # Cookie/consent management
 ├── css/
 │   ├── style.css           # Marketing page styles
-│   ├── agents.css          # Agent Command Center styles
+│   ├── research-lab.css    # Research Lab World styles
 │   ├── dashboard.css       # Dashboard styles
 │   ├── admin.css           # Admin styles
 │   ├── biometric-gate.css  # Biometric auth UI styles
@@ -81,21 +82,23 @@ fuse-creatine/
     └── favicon.svg         # Brand favicon
 ```
 
-## AI Agent Command Center
+## Research Lab World
 
-### Corporate Structure
+The previous standalone Agent Command Center page has been retired. The live agent-facing experience is now `/research-lab`, where scientist agents move through a simulated lab, run formulation experiments, debate evidence, and keep public claims behind review gates.
 
-The platform simulates a corporate workforce with 7 specialized AI agent teams:
+### Research Agent Structure
 
-| Team | Badge | Agents | Focus |
-|------|-------|--------|-------|
-| **Developer** | DEV | Architect, Coder, QA Engineer | Platform development |
-| **Design** | DSN | UX Lead, Visual Designer, Motion Designer | User experience |
-| **Communications** | COM | Content Strategist, Copywriter, Social Manager | Brand voice |
-| **Legal** | LGL | Compliance Officer, Contract Analyst, IP Counsel | Compliance |
-| **Marketing** | MKT | Growth Lead, Brand Strategist, Analytics Expert | Growth |
-| **Go-to-Market** | GTM | Launch Coordinator, Partnership Manager, Market Researcher | Launch |
-| **Sales** | SLS | Sales Director, Account Executive, SDR Lead, Solutions Consultant, Customer Success | Revenue |
+The lab world currently simulates 7 specialized research agents:
+
+| Agent | Focus |
+|-------|-------|
+| **Dr. Mira Solvay** | Encapsulation and wetting route design |
+| **Dr. Theo Roast** | Coffee matrix chemistry and cup quality |
+| **Dr. Ava Palate** | Sensory quality, grit, bitterness, and mouthfeel |
+| **Dr. Max Flux** | Creatine evidence and performance boundaries |
+| **Dr. Nina Claims** | Regulatory and claim control |
+| **Jules Batch** | Pilot manufacturing and dose uniformity |
+| **Pipette** | Sample movement, timestamps, and audit trail |
 
 ### Orchestration Modes
 
@@ -109,13 +112,12 @@ Teams operate in one of three modes:
 
 **Important**: All teams default to **Manual/Paused** state. You must explicitly start orchestration.
 
-### Starting Team Orchestration
+### Using The Research Lab
 
-1. Navigate to `/agents` (Agent Command Center)
-2. Select a team from the sidebar
-3. Click "Start Orchestration" to begin
-4. Monitor activities in the Live Feed
-5. Approve/reject decisions in the Decision Queue
+1. Navigate to `/research-lab`
+2. Watch the active experiment, agent movement, conversations, disputes, and memory stream
+3. Use "Advance world" to progress the next simulated experiment
+4. Keep all findings internal until wet-lab and legal review upgrade the evidence level
 
 ### API Endpoints
 

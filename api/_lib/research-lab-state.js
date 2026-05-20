@@ -1,9 +1,13 @@
 const { Redis } = require('@upstash/redis');
 
-const STATE_KEY = 'research-world:state:v1';
+const STATE_KEY = 'research-world:state:v2';
 const MAX_MEMORIES = 72;
 const MAX_CONVERSATIONS = 24;
 const MAX_DISPUTES = 12;
+const MISSION =
+    'Find a manufacturable way to make creatine monohydrate dissolve quickly in hot coffee while keeping the coffee experience clean and maximising supplement absorption and performance.';
+const GUARDRAIL =
+    'Agent findings are internal hypotheses until wet-lab and legal review upgrade the evidence level.';
 
 const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -419,10 +423,8 @@ function createInitialState() {
         version: 2,
         mode: 'living research world',
         labClock: 0,
-        mission:
-            'Find a legally defensible, manufacturable way to make creatine monohydrate disappear into hot coffee fast without changing taste or texture.',
-        guardrail:
-            'Agent findings are internal hypotheses until wet-lab and legal review upgrade the evidence level.',
+        mission: MISSION,
+        guardrail: GUARDRAIL,
         stations,
         agents,
         hypotheses: hypotheses.map(item => ({ ...item, scores: { ...item.scores } })),
@@ -536,27 +538,92 @@ function applyExperimentEffect(hypothesis, experiment, labClock) {
     return updated;
 }
 
+function parseStoredState(stored) {
+    if (!stored) return null;
+    if (typeof stored !== 'string') return stored;
+
+    try {
+        return JSON.parse(stored);
+    } catch (error) {
+        console.warn('[Research Lab World] Ignoring unreadable stored state:', error.message);
+        return null;
+    }
+}
+
+function normalizeState(candidate) {
+    const base = createInitialState();
+    if (!candidate || typeof candidate !== 'object') return base;
+
+    const next = {
+        ...base,
+        ...candidate,
+        version: base.version,
+        mode: base.mode,
+        mission: MISSION,
+        guardrail: GUARDRAIL,
+        stations,
+        claimBoundaries,
+        agents:
+            Array.isArray(candidate.agents) && candidate.agents.length > 0
+                ? candidate.agents
+                : base.agents,
+        hypotheses:
+            Array.isArray(candidate.hypotheses) && candidate.hypotheses.length > 0
+                ? candidate.hypotheses
+                : base.hypotheses,
+        conversations: Array.isArray(candidate.conversations)
+            ? candidate.conversations.slice(0, MAX_CONVERSATIONS)
+            : base.conversations,
+        memories: Array.isArray(candidate.memories)
+            ? candidate.memories.slice(0, MAX_MEMORIES)
+            : base.memories,
+        disputes: Array.isArray(candidate.disputes)
+            ? candidate.disputes.slice(0, MAX_DISPUTES)
+            : base.disputes,
+        experimentQueue: Array.isArray(candidate.experimentQueue)
+            ? candidate.experimentQueue
+            : base.experimentQueue,
+        currentExperiment: candidate.currentExperiment || base.currentExperiment,
+    };
+
+    if (!next.agents.length || !next.hypotheses.length || !next.currentExperiment) {
+        return base;
+    }
+
+    return next;
+}
+
 async function getState() {
     if (redis) {
-        const stored = await redis.get(STATE_KEY);
-        if (stored) {
-            memoryState = stored;
-            return stored;
+        try {
+            const parsed = parseStoredState(await redis.get(STATE_KEY));
+            if (parsed) {
+                const stored = normalizeState(parsed);
+                memoryState = stored;
+                return stored;
+            }
+        } catch (error) {
+            console.warn('[Research Lab World] Redis read failed:', error.message);
         }
     }
     if (!memoryState) {
         memoryState = createInitialState();
         await saveState(memoryState);
     }
+    memoryState = normalizeState(memoryState);
     return memoryState;
 }
 
 async function saveState(state) {
-    memoryState = state;
+    memoryState = normalizeState(state);
     if (redis) {
-        await redis.set(STATE_KEY, state);
+        try {
+            await redis.set(STATE_KEY, memoryState);
+        } catch (error) {
+            console.warn('[Research Lab World] Redis write failed:', error.message);
+        }
     }
-    return state;
+    return memoryState;
 }
 
 async function resetState() {
@@ -565,7 +632,7 @@ async function resetState() {
 }
 
 async function advanceLabState(source = 'world-loop') {
-    const previous = await getState();
+    const previous = normalizeState(await getState());
     const labClock = Number(previous.labClock || 0) + 1;
     const timestamp = nowIso();
     const currentExperiment = createExperiment(labClock);

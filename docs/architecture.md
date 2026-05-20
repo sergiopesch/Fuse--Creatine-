@@ -15,7 +15,7 @@ Claude (Orchestration Layer)
   ↓
 queue/ (Task Management)
   ↓
-Web UI (View Layer — dashboard.html, agents.html)
+Web UI (View Layer — dashboard.html, research-lab.html)
 ```
 
 ## Design Principles
@@ -69,7 +69,6 @@ Vercel Serverless Functions:
 
 - `index.html` — Marketing landing page
 - `dashboard.html` — Company dashboard (biometric-protected)
-- `agents.html` — Agent Command Center
 - `research-lab.html` — Living research lab world with moving scientist agents, social conversations, formulation hypotheses, disputes, evidence gates, memory stream, and experiment queue
 - `admin.html` — Admin analytics
 

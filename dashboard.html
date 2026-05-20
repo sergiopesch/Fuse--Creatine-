@@ -313,7 +313,7 @@
             </div>
             <div class="header-right">
                 <nav class="header-nav" aria-label="Global navigation">
-                    <a class="header-nav-link" href="agents.html">Agents</a>
+                    <a class="header-nav-link" href="/research-lab">Research Lab</a>
                     <a class="header-nav-link" href="admin.html">Admin</a>
                     <a class="header-nav-link" href="index.html">Home</a>
                 </nav>
@@ -438,7 +438,7 @@
                         Control Centers
                     </h2>
                     <div class="nav-cards-grid">
-                        <a href="/agents" class="nav-card command-center">
+                        <a href="/research-lab" class="nav-card command-center">
                             <div class="nav-card-icon">
                                 <svg viewBox="0 0 24 24" fill="currentColor">
                                     <path
@@ -447,15 +447,14 @@
                                 </svg>
                             </div>
                             <div class="nav-card-content">
-                                <h3>Agent Command Center</h3>
+                                <h3>Research Lab World</h3>
                                 <p>
-                                    Orchestrate teams, manage tasks, and monitor agent
-                                    communications
+                                    Watch scientist agents test coffee-compatible formulation routes
                                 </p>
                             </div>
                             <div class="nav-card-stats">
                                 <span class="live-indicator"></span>
-                                <span>23 agents online</span>
+                                <span>7 scientist agents active</span>
                             </div>
                             <span class="nav-card-arrow">
                                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -776,21 +775,21 @@
                             API Configuration
                         </h3>
                         <div class="api-providers">
-                            <a href="/agents#configTab" class="api-provider">
+                            <a href="/dashboard" class="api-provider">
                                 <div class="provider-info">
                                     <span class="provider-icon anthropic"></span>
                                     <span class="provider-name">Anthropic</span>
                                 </div>
                                 <span class="provider-status" id="anthropicApiStatus">Not Set</span>
                             </a>
-                            <a href="/agents#configTab" class="api-provider">
+                            <a href="/dashboard" class="api-provider">
                                 <div class="provider-info">
                                     <span class="provider-icon openai"></span>
                                     <span class="provider-name">OpenAI</span>
                                 </div>
                                 <span class="provider-status" id="openaiApiStatus">Not Set</span>
                             </a>
-                            <a href="/agents#configTab" class="api-provider">
+                            <a href="/dashboard" class="api-provider">
                                 <div class="provider-info">
                                     <span class="provider-icon gemini"></span>
                                     <span class="provider-name">Gemini</span>
@@ -798,7 +797,7 @@
                                 <span class="provider-status" id="geminiApiStatus">Not Set</span>
                             </a>
                         </div>
-                        <a href="/agents#configTab" class="btn-link">Configure APIs</a>
+                        <a href="/dashboard" class="btn-link">Configure APIs</a>
                     </div>
 
                     <!-- Recent Activity -->
@@ -812,7 +811,7 @@
                             Recent Activity
                         </h3>
                         <div class="activity-list" id="recentActivity">
-                            <a href="/agents?team=sales" class="activity-item">
+                            <a href="/dashboard#teamsContainer" class="activity-item">
                                 <div class="activity-dot sales"></div>
                                 <div class="activity-content">
                                     <span class="activity-text"
@@ -821,7 +820,7 @@
                                     <span class="activity-time">2 min ago</span>
                                 </div>
                             </a>
-                            <a href="/agents?team=developer" class="activity-item">
+                            <a href="/dashboard#teamsContainer" class="activity-item">
                                 <div class="activity-dot dev"></div>
                                 <div class="activity-content">
                                     <span class="activity-text"
@@ -830,7 +829,7 @@
                                     <span class="activity-time">5 min ago</span>
                                 </div>
                             </a>
-                            <a href="/agents?team=marketing" class="activity-item">
+                            <a href="/dashboard#teamsContainer" class="activity-item">
                                 <div class="activity-dot marketing"></div>
                                 <div class="activity-content">
                                     <span class="activity-text"
@@ -839,7 +838,7 @@
                                     <span class="activity-time">12 min ago</span>
                                 </div>
                             </a>
-                            <a href="/agents?team=communications" class="activity-item">
+                            <a href="/dashboard#teamsContainer" class="activity-item">
                                 <div class="activity-dot comms"></div>
                                 <div class="activity-content">
                                     <span class="activity-text"
@@ -849,7 +848,7 @@
                                 </div>
                             </a>
                         </div>
-                        <a href="/agents" class="btn-link">View All Activity</a>
+                        <a href="/dashboard#recentActivity" class="btn-link">View All Activity</a>
                     </div>
 
                     <!-- System Health -->
@@ -892,7 +891,7 @@
                 </svg>
             </button>
             <div class="fab-menu" id="fabMenu">
-                <a href="/agents#taskModal" class="fab-action" title="New Task">
+                <a href="/dashboard#teamsContainer" class="fab-action" title="New Task">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
@@ -900,7 +899,7 @@
                     </svg>
                     <span>New Task</span>
                 </a>
-                <a href="/agents#broadcastModal" class="fab-action" title="Broadcast">
+                <a href="/dashboard#teamsContainer" class="fab-action" title="Broadcast">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M7.58 4.08L6.15 2.65C3.75 4.48 2.17 7.3 2.03 10.5h2c.15-2.65 1.51-4.97 3.55-6.42zm12.39 6.42h2c-.15-3.2-1.73-6.02-4.12-7.85l-1.42 1.43c2.02 1.45 3.39 3.77 3.54 6.42zM18 11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2v-5zm-6 11c.14 0 .27-.01.4-.04.65-.14 1.18-.58 1.44-1.18.1-.24.15-.5.15-.78h-4c.01 1.1.9 2 2.01 2z"

@@ -6,6 +6,16 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-20 | Research Lab Reliability and Legacy Agents Page Retirement
+
+**Decision**: Harden `/api/research-lab` state loading and retire the legacy standalone `/agents` page.
+
+**Rationale**: The live lab world showed `WORLD PAUSED: API ERROR` when the state endpoint returned 500. Sergio also wants the new scientist-agent lab world to be the primary agent experience, not the previous command-center page.
+
+**Impact**: The research lab now uses a fresh Redis state key, normalizes stored state, and falls back to in-memory state if Redis reads or writes fail. The mission copy is clearer and centered on manufacturable hot-coffee dissolution, coffee experience, supplement absorption, and performance. `agents.html`, `css/agents.css`, and `js/agents.js` were removed; `/agents` and `/agents.html` redirect to `/dashboard`; visible nav now points to `/research-lab`.
+
+---
+
 ## 2026-05-20 | Research Lab World Rebuild
 
 **Decision**: Remove the previous Research Lab page, generated lab assets, and dashboard-style simulation attempt, then rebuild `/research-lab` as a code-native living research lab world.
@@ -50,7 +60,7 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 **Rationale**: The lab experience needs more product/design work before it should be discoverable by public visitors.
 
-**Impact**: `index.html`, `dashboard.html`, and `agents.html` no longer link to the lab; `research-lab.html` is marked `noindex, nofollow`; `sitemap.xml` omits the lab; `robots.txt` disallows lab paths.
+**Impact**: `index.html`, `dashboard.html`, and the then-active legacy agents page no longer linked to the lab; `research-lab.html` was marked `noindex, nofollow`; `sitemap.xml` omitted the lab; `robots.txt` disallowed lab paths.
 
 ---
 

@@ -1886,7 +1886,7 @@
             const agentId = modal.dataset.agentId;
             const teamId = modal.dataset.teamId;
             if (agentId && teamId) {
-                window.location.href = `/agents?team=${teamId}&agent=${agentId}`;
+                window.location.href = '/dashboard#teamsContainer';
             }
         });
 
@@ -1894,7 +1894,7 @@
             const agentId = modal.dataset.agentId;
             if (agentId) {
                 closeModal();
-                window.location.href = `/agents#taskModal&agent=${agentId}`;
+                window.location.href = '/dashboard#teamsContainer';
             }
         });
 
@@ -2191,7 +2191,7 @@
         const teamId = section?.dataset.team;
 
         if (teamId) {
-            window.location.href = `/agents?team=${teamId}`;
+            window.location.href = '/dashboard#teamsContainer';
         }
     }
 
@@ -2268,7 +2268,7 @@
             card.addEventListener('click', () => {
                 switch (index) {
                     case 0: // Total Agents
-                        window.location.href = '/agents';
+                        window.location.href = '/dashboard#teamsContainer';
                         break;
                     case 1: // Active Now
                         if (elements.statusFilter) {
@@ -2277,7 +2277,7 @@
                         }
                         break;
                     case 2: // Pending Tasks
-                        window.location.href = '/agents#tasksTab';
+                        window.location.href = '/dashboard#teamsContainer';
                         break;
                     case 3: // Teams
                         showToast('info', 'Teams', '7 teams currently operational');

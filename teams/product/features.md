@@ -48,8 +48,8 @@
 
 **Status**: ✅ Live, being enhanced with queue integration.
 
-### Feature: Agent Command Center
+### Feature: Research Lab World
 
-**Description**: Interface for viewing and managing team activities.
+**Description**: Living scientist-agent lab for formulation hypotheses, social research interactions, evidence gates, and experiment queues.
 
-**Status**: ✅ Live, being updated for 9-team structure.
+**Status**: ✅ Live. Legacy standalone Agent Command Center page retired.

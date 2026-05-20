@@ -111,8 +111,13 @@
     },
     {
       "source": "/agents.html",
-      "destination": "/agents",
-      "permanent": true
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/agents",
+      "destination": "/dashboard",
+      "permanent": false
     },
     {
       "source": "/research-lab.html",
