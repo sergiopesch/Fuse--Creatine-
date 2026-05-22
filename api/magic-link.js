@@ -11,7 +11,6 @@
  */
 
 const crypto = require('crypto');
-const { Redis } = require('@upstash/redis');
 const {
     ALLOWED_ORIGINS,
     createSecuredHandler,
@@ -19,6 +18,7 @@ const {
     getCorsOrigin,
     getRequestHost,
 } = require('./_lib/security');
+const { createRedisClient } = require('./_lib/redis-client');
 
 // ============================================================================
 // CONFIGURATION
@@ -37,10 +37,7 @@ const CONFIG = {
 };
 
 // Initialize Redis (required for magic links to work)
-const redis =
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-        ? Redis.fromEnv()
-        : null;
+const redis = createRedisClient();
 
 if (!redis) {
     console.warn('[MagicLink] Redis not configured — magic links will not work without Redis.');
@@ -256,7 +253,7 @@ const magicLinkHandler = async (req, res, { clientIp, validatedBody }) => {
     // ── SEND ────────────────────────────────────────────────────────────
     if (action === 'send') {
         if (!redis) {
-            return res.status(503).json({ success: false, error: 'Magic links require Redis. Please configure UPSTASH_REDIS_REST_URL.' });
+            return res.status(503).json({ success: false, error: 'Magic links require Redis. Please configure Upstash Redis REST env vars.' });
         }
 
         const token = generateToken();

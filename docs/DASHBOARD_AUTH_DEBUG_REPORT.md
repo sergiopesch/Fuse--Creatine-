@@ -96,8 +96,8 @@ The system implements a **three-layer security model**:
 |----------|---------|---------|
 | `WEBAUTHN_RP_ID` | Relying Party ID for WebAuthn | Auto-detected from request hostname |
 | `WEBAUTHN_ORIGINS` | Allowed origins for WebAuthn | Auto-detected from request |
-| `UPSTASH_REDIS_REST_URL` | Rate limiting & lockout tracking | Rate limiting disabled |
-| `UPSTASH_REDIS_REST_TOKEN` | Redis authentication | Rate limiting disabled |
+| `UPSTASH_REDIS_KV_REST_API_URL` | Rate limiting & lockout tracking | Rate limiting disabled |
+| `UPSTASH_REDIS_KV_REST_API_TOKEN` | Redis authentication | Rate limiting disabled |
 
 ### How to Check
 
@@ -380,7 +380,7 @@ function getExpectedRpIds(req) {
 - [ ] **Environment Variables**: Verify in Vercel Dashboard > Settings > Environment Variables
   - [ ] `ENCRYPTION_KEY` is set (32+ characters)
   - [ ] `BLOB_READ_WRITE_TOKEN` is set
-  - [ ] Optional: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+  - [ ] Optional: `UPSTASH_REDIS_KV_REST_API_URL` and `UPSTASH_REDIS_KV_REST_API_TOKEN`
 - [ ] **Blob Storage**: Check Vercel Blob for credential files
   - Path: `biometric-credentials/owner-credential.json`
 - [ ] **CORS Origins**: Verify domain is in allowed list (`/api/_lib/security.js:48-55`)

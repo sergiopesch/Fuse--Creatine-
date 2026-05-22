@@ -1,18 +1,28 @@
-const { Redis } = require('@upstash/redis');
+const { createRedisClient } = require('./redis-client');
+const { generateDailyDiscovery, generateWeeklyReview } = require('./research-lab-brain');
 
-const STATE_KEY = 'research-world:state:v2';
+const STATE_KEY = 'research-world:state:v3';
 const MAX_MEMORIES = 72;
 const MAX_CONVERSATIONS = 24;
 const MAX_DISPUTES = 12;
+const MAX_BATCH_RESULTS = 36;
+const MAX_REFLECTIONS = 24;
+const REFLECTION_IMPORTANCE_THRESHOLD = 185;
+const DAILY_DISCOVERY_TICKS = 3;
 const MISSION =
-    'Find a manufacturable way to make creatine monohydrate dissolve quickly in hot coffee while keeping the coffee experience clean and maximising supplement absorption and performance.';
+    'Find a manufacturable way to make creatine monohydrate dissolve quickly in hot coffee while keeping the coffee experience clean, dose-accurate, and evidence-gated.';
 const GUARDRAIL =
     'Agent findings are internal hypotheses until wet-lab and legal review upgrade the evidence level.';
+const DEFAULT_LAB_CONTROLS = {
+    dailyEnabled: true,
+    weeklyEnabled: true,
+    modelSynthesisEnabled: true,
+    dailyModel: 'gpt-5-mini',
+    weeklyModel: 'gpt-5.5',
+    weeklyReasoning: 'high',
+};
 
-const redis =
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-        ? Redis.fromEnv()
-        : null;
+const redis = createRedisClient();
 
 let memoryState = null;
 
@@ -97,6 +107,11 @@ const agentBlueprints = [
         stationId: 'encapsulation',
         color: '#ff3b30',
         intent: 'Design carrier structures that wet quickly without clumping.',
+        scratch: {
+            specialty: 'porous food-grade matrices',
+            riskBias: 'rejects brittle IP routes and over-compressed particles',
+            directive: 'make monohydrate wet fast before it can clump',
+        },
     },
     {
         id: 'theo',
@@ -105,6 +120,11 @@ const agentBlueprints = [
         stationId: 'coffee',
         color: '#c58b59',
         intent: 'Protect espresso aroma, crema, acidity, and heat stability.',
+        scratch: {
+            specialty: 'hot coffee matrix compatibility',
+            riskBias: 'rejects anything that damages crema, aroma, or acidity',
+            directive: 'test disappearance in black coffee, espresso, and milk coffee',
+        },
     },
     {
         id: 'ava',
@@ -113,6 +133,11 @@ const agentBlueprints = [
         stationId: 'sensory',
         color: '#f5b56b',
         intent: 'Reject grit, chalk, bitterness, and tongue coating.',
+        scratch: {
+            specialty: 'mouthfeel and aftertaste screening',
+            riskBias: 'treats trace grit as a product failure until panel data says otherwise',
+            directive: 'separate clean experience from unsupported zero-grit language',
+        },
     },
     {
         id: 'max',
@@ -121,6 +146,11 @@ const agentBlueprints = [
         stationId: 'evidence',
         color: '#44d7b6',
         intent: 'Separate proven creatine evidence from delivery hypotheses.',
+        scratch: {
+            specialty: 'creatine evidence boundaries',
+            riskBias: 'blocks absorption superiority claims without direct comparative data',
+            directive: 'keep monohydrate dose integrity central to every experiment',
+        },
     },
     {
         id: 'nina',
@@ -129,6 +159,11 @@ const agentBlueprints = [
         stationId: 'claims',
         color: '#8fb8ff',
         intent: 'Block any product claim that outruns evidence.',
+        scratch: {
+            specialty: 'UK/EU supplement claims control',
+            riskBias: 'downgrades any claim not supported by standardized evidence',
+            directive: 'keep all discovery outputs internal until Legal upgrades them',
+        },
     },
     {
         id: 'jules',
@@ -137,6 +172,11 @@ const agentBlueprints = [
         stationId: 'pilot',
         color: '#b890ff',
         intent: 'Turn promising bench ideas into doseable, stable pilot batches.',
+        scratch: {
+            specialty: 'pilot-scale powder handling',
+            riskBias: 'rejects beautiful bench samples that cannot survive packing',
+            directive: 'prefer low-compression, dose-uniform, moisture-tolerant routes',
+        },
     },
     {
         id: 'pipette',
@@ -145,6 +185,11 @@ const agentBlueprints = [
         stationId: 'central-rail',
         color: '#d7ed69',
         intent: 'Move samples, timestamp evidence, and keep the audit trail clean.',
+        scratch: {
+            specialty: 'sample logistics and audit trails',
+            riskBias: 'treats missing metadata as a failed experiment',
+            directive: 'capture who did what, with which batch, and why it matters',
+        },
     },
 ];
 
@@ -337,12 +382,53 @@ const claimBoundaries = [
     'FTO review controls any encapsulation route before formulation investment.',
 ];
 
+const baseLabObjects = [
+    {
+        id: 'chamber-01',
+        type: 'BiosynthesisChamber',
+        stationId: 'pilot',
+        status: 'idle',
+        temperatureC: 22,
+        pressurePsi: 14.7,
+        stirRateRpm: 0,
+        fluidTurbidity: 0,
+        validActions: ['initialize_batch', 'set_temperature', 'set_rpm', 'discharge_chamber'],
+    },
+    {
+        id: 'analysis-console-01',
+        type: 'AnalysisConsole',
+        stationId: 'evidence',
+        status: 'ready',
+        screenText: 'Awaiting batch telemetry.',
+        validActions: ['query_analysis', 'print_lab_report', 'calibrate_sensors'],
+    },
+    {
+        id: 'dispenser-matrix-a',
+        type: 'IngredientDispenser',
+        stationId: 'encapsulation',
+        status: 'available',
+        material: 'porous hydrophilic carrier matrix',
+        remainingCapacityG: 2500,
+        purityGrade: 'food_supplement_candidate',
+        validActions: ['dispense_material'],
+    },
+    {
+        id: 'coffee-bar-01',
+        type: 'CoffeeMatrixBar',
+        stationId: 'coffee',
+        status: 'ready',
+        matrix: 'black coffee',
+        validActions: ['pull_espresso', 'prepare_black_coffee', 'prepare_milk_coffee'],
+    },
+];
+
 function nowIso() {
     return new Date().toISOString();
 }
 
 function average(scores) {
     const values = Object.values(scores);
+    if (!values.length) return 0;
     return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
@@ -368,7 +454,254 @@ function pairKey(firstId, secondId) {
     return [firstId, secondId].sort().join(':');
 }
 
-function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) {
+function getAgentBlueprint(agentId) {
+    return agentBlueprints.find(agent => agent.id === agentId) || agentBlueprints[0];
+}
+
+function tokenize(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, ' ')
+        .split(/\s+/)
+        .filter(token => token.length > 2);
+}
+
+function keywordRelevance(memory, query) {
+    const queryTokens = tokenize(query);
+    if (!queryTokens.length) return 0;
+
+    const memoryTokens = new Set(
+        tokenize(
+            [
+                memory.summary,
+                memory.type,
+                memory.evidenceLevel,
+                memory.hypothesisId,
+                JSON.stringify(memory.metadata || {}),
+            ].join(' ')
+        )
+    );
+    const matches = queryTokens.filter(token => memoryTokens.has(token)).length;
+    return matches / queryTokens.length;
+}
+
+function normalizeScoredItems(items, key) {
+    if (!items.length) return {};
+    const values = items.map(item => item[key]);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    return items.reduce((scores, item) => {
+        scores[item.id] = max === min ? 0.5 : (item[key] - min) / (max - min);
+        return scores;
+    }, {});
+}
+
+function retrieveMemories(memories, query, labClock, agentId = null, count = 4) {
+    const candidates = (memories || [])
+        .filter(memory => !agentId || memory.agentId === agentId || memory.type === 'reflection')
+        .map(memory => {
+            const createdTick = Number(memory.createdTick || 0);
+            const recency = Math.pow(0.91, Math.max(0, labClock - createdTick));
+            const importance = Number(memory.importance || 0);
+            const relevance = keywordRelevance(memory, query);
+            return {
+                ...memory,
+                _recency: recency,
+                _importance: importance,
+                _relevance: relevance,
+            };
+        });
+
+    if (!candidates.length) return [];
+
+    const recency = normalizeScoredItems(candidates, '_recency');
+    const importance = normalizeScoredItems(candidates, '_importance');
+    const relevance = normalizeScoredItems(candidates, '_relevance');
+
+    return candidates
+        .map(memory => ({
+            ...memory,
+            retrievalScore: Number(
+                (
+                    (recency[memory.id] || 0) * 0.25 +
+                    (importance[memory.id] || 0) * 0.35 +
+                    (relevance[memory.id] || 0) * 0.4
+                ).toFixed(3)
+            ),
+        }))
+        .sort((a, b) => b.retrievalScore - a.retrievalScore)
+        .slice(0, count)
+        .map(({ _recency, _importance, _relevance, ...memory }) => memory);
+}
+
+function buildAgentQuery(agent, experiment) {
+    return [
+        agent.role,
+        agent.scratch?.specialty,
+        experiment.title,
+        experiment.hypothesisId,
+        experiment.dispute,
+        experiment.metric,
+    ].join(' ');
+}
+
+function buildProtocol(template, labClock) {
+    const variation = labClock % 5;
+    const heatTarget = template.stationId === 'coffee' ? 82 : template.metric === 'heat' ? 88 : 58;
+    const compression = template.hypothesisId === 'FUSE-POR-01' ? 22 + variation * 3 : 38 + variation * 4;
+    const wettingAidPct = template.hypothesisId === 'FUSE-WET-02' ? 0.12 + variation * 0.03 : 0;
+    const effervescentPct = template.hypothesisId === 'FUSE-EFF-03' ? 0.35 + variation * 0.05 : 0;
+
+    return {
+        batchId: `B-${String(400 + labClock).padStart(3, '0')}`,
+        temperatureC: clamp(heatTarget + ((labClock % 3) - 1) * 4, 35, 92),
+        stirRateRpm: clamp(420 + variation * 110 + (template.metric === 'dissolve' ? 160 : 0), 280, 1200),
+        carrierRatioPct: clamp(8 + variation * 2 + (template.hypothesisId === 'FUSE-POR-01' ? 4 : 0), 4, 24),
+        compressionKpa: compression,
+        wettingAidPct: Number(wettingAidPct.toFixed(2)),
+        effervescentPct: Number(effervescentPct.toFixed(2)),
+        coffeeMatrix: template.stationId === 'sensory' ? 'latte' : 'black coffee',
+        creatineDoseG: 3,
+    };
+}
+
+function simulateBatch(template, protocol, labClock) {
+    const porosityBonus = Math.max(0, 32 - protocol.compressionKpa) * 0.09;
+    const wettingBonus = protocol.wettingAidPct * 18 + protocol.effervescentPct * 10;
+    const heatPenalty = Math.max(0, protocol.temperatureC - 82) * 0.08;
+    const agitationBonus = Math.min(8, protocol.stirRateRpm / 180);
+    const gritScore = clamp(44 - porosityBonus * 6 - wettingBonus + heatPenalty * 5 + (labClock % 4), 3, 92);
+    const dissolutionSeconds = Number(
+        Math.max(1.8, 9.4 - porosityBonus - wettingBonus * 0.14 - agitationBonus * 0.28).toFixed(1)
+    );
+    const tasteCleanliness = clamp(
+        78 - protocol.wettingAidPct * 42 - protocol.effervescentPct * 34 - heatPenalty * 2,
+        20,
+        96
+    );
+    const doseUniformity = clamp(91 - Math.abs(protocol.carrierRatioPct - 14) * 1.5, 48, 98);
+    const bioavailabilityIndex = clamp(
+        82 + (100 - gritScore) * 0.08 + doseUniformity * 0.04 - protocol.effervescentPct * 8,
+        68,
+        96
+    );
+
+    return {
+        batchId: protocol.batchId,
+        hypothesisId: template.hypothesisId,
+        status: gritScore > 58 ? 'needs reformulation' : 'candidate signal',
+        metrics: {
+            dissolutionSeconds,
+            gritScore,
+            tasteCleanliness,
+            doseUniformity,
+            bioavailabilityIndex,
+            yieldG: clamp(410 + (labClock % 7) * 8 - protocol.carrierRatioPct, 330, 470),
+            purityPct: clamp(98 - heatPenalty - protocol.effervescentPct * 3, 88, 99),
+        },
+        protocol,
+        completedAt: nowIso(),
+    };
+}
+
+function buildLabObjects(experiment, batchResult) {
+    return baseLabObjects.map(object => {
+        if (object.id === 'chamber-01') {
+            return {
+                ...object,
+                status: 'processing',
+                currentBatchId: batchResult.batchId,
+                temperatureC: batchResult.protocol.temperatureC,
+                pressurePsi: Number((14.7 + batchResult.protocol.temperatureC / 24).toFixed(1)),
+                stirRateRpm: batchResult.protocol.stirRateRpm,
+                fluidTurbidity: batchResult.metrics.gritScore,
+            };
+        }
+        if (object.id === 'analysis-console-01') {
+            return {
+                ...object,
+                status: 'reporting',
+                lastReportedMetrics: batchResult.metrics,
+                screenText: `${batchResult.batchId}: ${batchResult.metrics.dissolutionSeconds}s dissolve, grit ${batchResult.metrics.gritScore}/100, status ${batchResult.status}.`,
+            };
+        }
+        if (object.id === 'coffee-bar-01') {
+            return {
+                ...object,
+                status: experiment.stationId === 'coffee' ? 'active' : 'ready',
+                matrix: batchResult.protocol.coffeeMatrix,
+            };
+        }
+        return object;
+    });
+}
+
+function buildPlan(agent, experiment, hypothesis, retrievedMemories, labClock) {
+    const memoryIds = retrievedMemories.map(memory => memory.id);
+    return {
+        id: `plan-${labClock}-${agent.id}`,
+        generatedBy: agent.id,
+        rootDirective: agent.scratch?.directive || agent.intent,
+        retrievedMemoryIds: memoryIds,
+        steps: [
+            {
+                level: 1,
+                label: `Advance ${hypothesis.id} without exceeding evidence boundaries`,
+                status: 'active',
+            },
+            {
+                level: 2,
+                label: `Run ${experiment.title.toLowerCase()} against ${hypothesis.name}`,
+                status: 'active',
+            },
+            {
+                level: 3,
+                label: `Query ${memoryIds.length || 'no'} relevant memory nodes before changing parameters`,
+                status: memoryIds.length ? 'complete' : 'watching',
+            },
+            {
+                level: 4,
+                label: `MoveTo(${experiment.stationId}) -> Interact(${experiment.metric}_screen)`,
+                status: 'queued',
+            },
+        ],
+    };
+}
+
+function buildReflectionMemory(agent, retrievedMemories, experiment, labClock, timestamp) {
+    const importanceTotal = retrievedMemories.reduce(
+        (sum, memory) => sum + Number(memory.importance || 0),
+        0
+    );
+    if (importanceTotal < REFLECTION_IMPORTANCE_THRESHOLD || labClock % 2 !== 0) {
+        return null;
+    }
+
+    const strongest = retrievedMemories[0];
+    const insight = strongest
+        ? `${agent.name} is abstracting from ${strongest.id}: ${experiment.metric} progress only matters if claims, sensory quality, and dose integrity remain aligned.`
+        : `${agent.name} is forming a new research hypothesis from the current experiment.`;
+
+    return {
+        id: `ref-${labClock}-${agent.id}`,
+        timestamp,
+        createdTick: labClock,
+        lastRetrievedTick: labClock,
+        type: 'reflection',
+        agentId: agent.id,
+        hypothesisId: experiment.hypothesisId,
+        evidenceLevel: 'Internal reflection',
+        importance: clamp(72 + retrievedMemories.length * 4),
+        summary: insight,
+        metadata: {
+            sourceMemoryIds: retrievedMemories.map(memory => memory.id),
+            triggerImportance: importanceTotal,
+            anchor: experiment.title,
+        },
+    };
+}
+
+function createAgents(labClock = 0, currentExperiment = experimentTemplates[0], memories = []) {
     return agentBlueprints.map((agent, index) => {
         const seed = agentSeed(agent.id);
         const active =
@@ -388,9 +721,17 @@ function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) 
         const walkDuration = 920 + (seed % 9) * 170;
         const stepDuration = 620 + (seed % 6) * 120;
         const travelDuration = 1800 + (seed % 8) * 260;
+        const retrievedMemories = retrieveMemories(
+            memories,
+            buildAgentQuery(agent, currentExperiment),
+            labClock,
+            agent.id,
+            3
+        );
 
         return {
             ...agent,
+            scratch: { ...(agent.scratch || {}) },
             x: clamp(home.x + (target.x - home.x) * pull + drift, 4, 96),
             y: clamp(
                 home.y +
@@ -401,7 +742,18 @@ function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) 
             ),
             targetStationId,
             intent: active ? currentExperiment.title : agent.intent,
-            reflection: buildAgentReflection(agent, currentExperiment, active),
+            reflection: buildAgentReflection(agent, currentExperiment, active, retrievedMemories),
+            retrievedMemories: retrievedMemories.map(memory => ({
+                id: memory.id,
+                type: memory.type,
+                summary: memory.summary,
+                retrievalScore: memory.retrievalScore,
+                importance: memory.importance,
+            })),
+            activePlan:
+                currentExperiment.plan?.generatedBy === agent.id
+                    ? currentExperiment.plan
+                    : null,
             motion: {
                 cadence,
                 phase: Number(phase.toFixed(2)),
@@ -425,49 +777,84 @@ function createAgents(labClock = 0, currentExperiment = experimentTemplates[0]) 
     });
 }
 
-function buildAgentReflection(agent, experiment, active) {
+function buildAgentReflection(agent, experiment, active, retrievedMemories = []) {
+    const topMemory = retrievedMemories[0];
     if (active) {
-        return `${agent.name} is working the ${experiment.title.toLowerCase()} while checking that the conclusion stays inside its evidence level.`;
+        const memoryClause = topMemory
+            ? ` Retrieved ${topMemory.id} (${topMemory.retrievalScore}) before acting.`
+            : ' No strong prior memory was retrieved, so this becomes a baseline run.';
+        return `${agent.name} is working the ${experiment.title.toLowerCase()} while checking that the conclusion stays inside its evidence level.${memoryClause}`;
     }
     return `${agent.name} is watching for conflicts between formulation progress, sensory quality, manufacturability, and claims control.`;
 }
 
 function createExperiment(labClock) {
     const template = experimentTemplates[labClock % experimentTemplates.length];
+    const protocol = buildProtocol(template, labClock);
+    const batchResult = simulateBatch(template, protocol, labClock);
     return {
         id: `EXP-${String(labClock).padStart(3, '0')}`,
         ...template,
         progress: 22 + ((labClock * 17) % 74),
         startedAt: nowIso(),
+        protocol,
+        batchResult,
+        plan: null,
     };
 }
 
 function createInitialState() {
     const currentExperiment = createExperiment(0);
-    const agents = createAgents(0, currentExperiment);
     const timestamp = nowIso();
+    const leadAgent = getAgentBlueprint(currentExperiment.leadAgentId);
+    const bootMemory = {
+        id: 'mem-boot',
+        timestamp,
+        createdTick: 0,
+        lastRetrievedTick: 0,
+        type: 'observation',
+        agentId: 'pipette',
+        evidenceLevel: 'Internal simulation',
+        importance: 72,
+        summary:
+            'The lab world booted with legal claim boundaries, formulation hypotheses, station roles, and genagents-style memory retrieval loaded.',
+        metadata: {
+            claimBoundaries,
+            stationCount: stations.length,
+            agentCount: agentBlueprints.length,
+        },
+    };
+    const retrieved = retrieveMemories(
+        [bootMemory],
+        buildAgentQuery(leadAgent, currentExperiment),
+        0,
+        leadAgent.id,
+        3
+    );
+    currentExperiment.plan = buildPlan(
+        leadAgent,
+        currentExperiment,
+        hypotheses[0],
+        retrieved,
+        0
+    );
+    const agents = createAgents(0, currentExperiment, [bootMemory]);
     return {
-        version: 2,
+        version: 3,
         mode: 'living research world',
         labClock: 0,
+        labDay: 47,
         mission: MISSION,
         guardrail: GUARDRAIL,
         stations,
+        labObjects: buildLabObjects(currentExperiment, currentExperiment.batchResult),
         agents,
         hypotheses: hypotheses.map(item => ({ ...item, scores: { ...item.scores } })),
         currentExperiment,
         conversations: [buildConversation(currentExperiment, timestamp, 0)],
-        memories: [
-            {
-                id: 'mem-boot',
-                timestamp,
-                agentId: 'pipette',
-                evidenceLevel: 'Internal simulation',
-                importance: 72,
-                summary:
-                    'The lab world booted with legal claim boundaries, formulation hypotheses, and station roles loaded.',
-            },
-        ],
+        memories: [bootMemory],
+        reflections: [],
+        batchResults: [currentExperiment.batchResult],
         disputes: [
             {
                 id: 'dispute-boot',
@@ -479,6 +866,17 @@ function createInitialState() {
         ],
         experimentQueue: buildExperimentQueue(0),
         claimBoundaries,
+        dailyDiscovery: {
+            status: 'waiting',
+            lastRunDate: null,
+            headline: 'Daily autonomous discovery has not run yet.',
+        },
+        weeklyReview: {
+            status: 'waiting',
+            lastRunDate: null,
+            headline: 'Weekly GPT-5.5 development review has not run yet.',
+        },
+        labControls: { ...DEFAULT_LAB_CONTROLS },
         updatedAt: timestamp,
     };
 }
@@ -517,13 +915,44 @@ function buildMemory(experiment, hypothesis, labClock, timestamp) {
     return {
         id: `mem-${labClock}-${experiment.leadAgentId}`,
         timestamp,
+        createdTick: labClock,
+        lastRetrievedTick: labClock,
+        type: 'observation',
         agentId: experiment.leadAgentId,
         hypothesisId: experiment.hypothesisId,
         evidenceLevel: experiment.evidenceLevel,
         importance: clamp(
-            58 + labClock * 3 + (experiment.evidenceLevel.includes('control') ? 18 : 0)
+            58 +
+                labClock * 3 +
+                (experiment.evidenceLevel.includes('control') ? 18 : 0) +
+                (experiment.batchResult.metrics.gritScore > 55 ? 12 : 0)
         ),
-        summary: `${experiment.title} moved ${hypothesis.id} to ${average(hypothesis.scores)}/100 overall; dispute: ${experiment.dispute}`,
+        summary: `${experiment.title} produced ${experiment.batchResult.batchId}: ${experiment.batchResult.metrics.dissolutionSeconds}s dissolve, grit ${experiment.batchResult.metrics.gritScore}/100, ${hypothesis.id} now ${average(hypothesis.scores)}/100 overall.`,
+        metadata: {
+            batch: experiment.batchResult,
+            dispute: experiment.dispute,
+            scores: hypothesis.scores,
+        },
+    };
+}
+
+function buildActionMemory(experiment, labClock, timestamp) {
+    return {
+        id: `act-${labClock}-${experiment.leadAgentId}`,
+        timestamp,
+        createdTick: labClock,
+        lastRetrievedTick: labClock,
+        type: 'action',
+        agentId: experiment.leadAgentId,
+        hypothesisId: experiment.hypothesisId,
+        evidenceLevel: 'Internal operation',
+        importance: clamp(44 + experiment.progress / 2),
+        summary: `${getAgentBlueprint(experiment.leadAgentId).name} executed ${experiment.plan?.steps?.[3]?.label || experiment.title} using ${experiment.batchResult.batchId}.`,
+        metadata: {
+            objectIds: ['chamber-01', 'analysis-console-01'],
+            validActions: ['initialize_batch', 'set_temperature', 'set_rpm', 'query_analysis'],
+            planId: experiment.plan?.id,
+        },
     };
 }
 
@@ -537,15 +966,19 @@ function buildDispute(experiment, labClock, timestamp) {
     };
 }
 
-function buildExperimentQueue(labClock) {
+function buildExperimentQueue(labClock, rankedHypotheses = hypotheses) {
+    const ranking = [...rankedHypotheses].sort((a, b) => average(b.scores) - average(a.scores));
     return experimentTemplates.slice(0, 7).map((template, index) => {
         const shifted = experimentTemplates[(labClock + index + 1) % experimentTemplates.length];
+        const relatedHypothesis =
+            ranking.find(hypothesis => hypothesis.id === shifted.hypothesisId) || ranking[index % ranking.length];
         return {
             id: `queue-${labClock}-${index}`,
             title: shifted.title,
             owner: shifted.leadAgentId.toUpperCase(),
             reason: shifted.dispute,
             hypothesisId: shifted.hypothesisId,
+            priority: index === 0 ? 'next' : average(relatedHypothesis?.scores || {}) >= 82 ? 'candidate' : 'watch',
         };
     });
 }
@@ -577,6 +1010,42 @@ function parseStoredState(stored) {
     }
 }
 
+function normalizeBoolean(value, fallback) {
+    return typeof value === 'boolean' ? value : fallback;
+}
+
+function normalizeModel(value, fallback) {
+    const model = String(value || '').trim();
+    return /^[a-zA-Z0-9._-]+$/.test(model) ? model.slice(0, 80) : fallback;
+}
+
+function normalizeReasoning(value, fallback) {
+    const effort = String(value || '').trim();
+    return ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'].includes(effort)
+        ? effort
+        : fallback;
+}
+
+function normalizeLabControls(candidate = {}) {
+    return {
+        dailyEnabled: normalizeBoolean(candidate.dailyEnabled, DEFAULT_LAB_CONTROLS.dailyEnabled),
+        weeklyEnabled: normalizeBoolean(
+            candidate.weeklyEnabled,
+            DEFAULT_LAB_CONTROLS.weeklyEnabled
+        ),
+        modelSynthesisEnabled: normalizeBoolean(
+            candidate.modelSynthesisEnabled,
+            DEFAULT_LAB_CONTROLS.modelSynthesisEnabled
+        ),
+        dailyModel: normalizeModel(candidate.dailyModel, DEFAULT_LAB_CONTROLS.dailyModel),
+        weeklyModel: normalizeModel(candidate.weeklyModel, DEFAULT_LAB_CONTROLS.weeklyModel),
+        weeklyReasoning: normalizeReasoning(
+            candidate.weeklyReasoning,
+            DEFAULT_LAB_CONTROLS.weeklyReasoning
+        ),
+    };
+}
+
 function normalizeState(candidate) {
     const base = createInitialState();
     if (!candidate || typeof candidate !== 'object') return base;
@@ -589,6 +1058,9 @@ function normalizeState(candidate) {
         mission: MISSION,
         guardrail: GUARDRAIL,
         stations,
+        labObjects: Array.isArray(candidate.labObjects)
+            ? candidate.labObjects
+            : base.labObjects,
         claimBoundaries,
         agents:
             Array.isArray(candidate.agents) && candidate.agents.length > 0
@@ -604,6 +1076,12 @@ function normalizeState(candidate) {
         memories: Array.isArray(candidate.memories)
             ? candidate.memories.slice(0, MAX_MEMORIES)
             : base.memories,
+        reflections: Array.isArray(candidate.reflections)
+            ? candidate.reflections.slice(0, MAX_REFLECTIONS)
+            : base.reflections,
+        batchResults: Array.isArray(candidate.batchResults)
+            ? candidate.batchResults.slice(0, MAX_BATCH_RESULTS)
+            : base.batchResults,
         disputes: Array.isArray(candidate.disputes)
             ? candidate.disputes.slice(0, MAX_DISPUTES)
             : base.disputes,
@@ -611,7 +1089,39 @@ function normalizeState(candidate) {
             ? candidate.experimentQueue
             : base.experimentQueue,
         currentExperiment: candidate.currentExperiment || base.currentExperiment,
+        dailyDiscovery: candidate.dailyDiscovery || base.dailyDiscovery,
+        weeklyReview: candidate.weeklyReview || base.weeklyReview,
+        labControls: normalizeLabControls(candidate.labControls || base.labControls),
+        labDay: Number(candidate.labDay || base.labDay || 47),
     };
+
+    if (!next.currentExperiment.batchResult || !next.currentExperiment.protocol) {
+        next.currentExperiment = createExperiment(Number(next.labClock || 0));
+    }
+
+    if (!next.currentExperiment.plan) {
+        const leadAgent = getAgentBlueprint(next.currentExperiment.leadAgentId);
+        const activeHypothesis =
+            next.hypotheses.find(item => item.id === next.currentExperiment.hypothesisId) ||
+            next.hypotheses[0];
+        const retrieved = retrieveMemories(
+            next.memories,
+            buildAgentQuery(leadAgent, next.currentExperiment),
+            next.labClock,
+            leadAgent.id,
+            3
+        );
+        next.currentExperiment.plan = buildPlan(
+            leadAgent,
+            next.currentExperiment,
+            activeHypothesis,
+            retrieved,
+            next.labClock
+        );
+    }
+
+    next.labObjects = buildLabObjects(next.currentExperiment, next.currentExperiment.batchResult);
+    next.agents = createAgents(next.labClock, next.currentExperiment, next.memories);
 
     if (!next.agents.length || !next.hypotheses.length || !next.currentExperiment) {
         return base;
@@ -670,24 +1180,67 @@ async function advanceLabState(source = 'world-loop') {
     const activeHypothesis =
         hypothesesNext.find(item => item.id === currentExperiment.hypothesisId) ||
         hypothesesNext[0];
-    const agents = createAgents(labClock, currentExperiment);
-    const conversation = buildConversation(currentExperiment, timestamp, labClock);
+    const leadAgent = getAgentBlueprint(currentExperiment.leadAgentId);
+    const retrievedForPlan = retrieveMemories(
+        previous.memories,
+        buildAgentQuery(leadAgent, currentExperiment),
+        labClock,
+        leadAgent.id,
+        4
+    );
+    currentExperiment.plan = buildPlan(
+        leadAgent,
+        currentExperiment,
+        activeHypothesis,
+        retrievedForPlan,
+        labClock
+    );
     const memory = buildMemory(currentExperiment, activeHypothesis, labClock, timestamp);
+    const actionMemory = buildActionMemory(currentExperiment, labClock, timestamp);
+    const candidateMemories = [memory, actionMemory, ...(previous.memories || [])];
+    const reflection = buildReflectionMemory(
+        leadAgent,
+        retrieveMemories(
+            candidateMemories,
+            buildAgentQuery(leadAgent, currentExperiment),
+            labClock,
+            leadAgent.id,
+            5
+        ),
+        currentExperiment,
+        labClock,
+        timestamp
+    );
+    const newMemories = reflection
+        ? [reflection, memory, actionMemory, ...(previous.memories || [])].slice(0, MAX_MEMORIES)
+        : [memory, actionMemory, ...(previous.memories || [])].slice(0, MAX_MEMORIES);
+    const reflections = reflection
+        ? [reflection, ...(previous.reflections || [])].slice(0, MAX_REFLECTIONS)
+        : previous.reflections || [];
+    const agents = createAgents(labClock, currentExperiment, newMemories);
+    const conversation = buildConversation(currentExperiment, timestamp, labClock);
     const dispute = buildDispute(currentExperiment, labClock, timestamp);
 
     const state = {
         ...previous,
         labClock,
+        labDay: 47 + Math.floor(labClock / DAILY_DISCOVERY_TICKS),
         agents,
         hypotheses: hypothesesNext,
+        labObjects: buildLabObjects(currentExperiment, currentExperiment.batchResult),
         currentExperiment,
         conversations: [conversation, ...(previous.conversations || [])].slice(
             0,
             MAX_CONVERSATIONS
         ),
-        memories: [memory, ...(previous.memories || [])].slice(0, MAX_MEMORIES),
+        memories: newMemories,
+        reflections,
+        batchResults: [currentExperiment.batchResult, ...(previous.batchResults || [])].slice(
+            0,
+            MAX_BATCH_RESULTS
+        ),
         disputes: [dispute, ...(previous.disputes || [])].slice(0, MAX_DISPUTES),
-        experimentQueue: buildExperimentQueue(labClock),
+        experimentQueue: buildExperimentQueue(labClock, hypothesesNext),
         updatedAt: timestamp,
         lastSource: source,
     };
@@ -695,8 +1248,189 @@ async function advanceLabState(source = 'world-loop') {
     return saveState(state);
 }
 
+async function runDailyDiscovery(source = 'daily-cron', options = {}) {
+    const controls = normalizeLabControls((await getState()).labControls);
+    if (!options.force && !controls.dailyEnabled) {
+        const state = normalizeState(await getState());
+        return saveState({
+            ...state,
+            dailyDiscovery: {
+                ...state.dailyDiscovery,
+                status: 'disabled',
+                headline: 'Daily discovery is disabled from the admin backend.',
+                lastSkippedAt: nowIso(),
+            },
+            updatedAt: nowIso(),
+            lastSource: source,
+        });
+    }
+
+    const summaries = [];
+    let state = null;
+
+    for (let index = 0; index < DAILY_DISCOVERY_TICKS; index += 1) {
+        state = await advanceLabState(source);
+        summaries.push({
+            tick: state.labClock,
+            experiment: state.currentExperiment.title,
+            batchId: state.currentExperiment.batchResult.batchId,
+            status: state.currentExperiment.batchResult.status,
+            evidenceLevel: state.currentExperiment.evidenceLevel,
+        });
+    }
+
+    const brainDiscovery = await generateDailyDiscovery(state, summaries, controls);
+    const timestamp = nowIso();
+    const brainMemory = {
+        id: `daily-${state.labClock}-${Date.now()}`,
+        timestamp,
+        createdTick: state.labClock,
+        lastRetrievedTick: state.labClock,
+        type: 'reflection',
+        agentId: 'max',
+        evidenceLevel: 'Internal AI synthesis',
+        importance: brainDiscovery.status === 'model-backed' ? 92 : 74,
+        summary: brainDiscovery.topInsight,
+        metadata: {
+            provider: brainDiscovery.provider,
+            model: brainDiscovery.model,
+            headline: brainDiscovery.headline,
+            nextPhysicalTest: brainDiscovery.nextPhysicalTest,
+            risk: brainDiscovery.risk,
+            decisionNeeded: brainDiscovery.decisionNeeded,
+        },
+    };
+
+    const dailyDiscovery = {
+        status: brainDiscovery.status,
+        provider: brainDiscovery.provider,
+        model: brainDiscovery.model,
+        lastRunDate: new Date().toISOString().slice(0, 10),
+        lastRunAt: timestamp,
+        tickCount: DAILY_DISCOVERY_TICKS,
+        headline: brainDiscovery.headline,
+        topInsight: brainDiscovery.topInsight,
+        agentFindings: brainDiscovery.agentFindings,
+        nextPhysicalTest: brainDiscovery.nextPhysicalTest,
+        rankedActions: brainDiscovery.rankedActions,
+        risk: brainDiscovery.risk,
+        decisionNeeded: brainDiscovery.decisionNeeded,
+        reason: brainDiscovery.reason,
+        responseId: brainDiscovery.responseId,
+        experiments: summaries,
+    };
+
+    return saveState({
+        ...state,
+        dailyDiscovery,
+        memories: [brainMemory, ...(state.memories || [])].slice(0, MAX_MEMORIES),
+        reflections: [brainMemory, ...(state.reflections || [])].slice(0, MAX_REFLECTIONS),
+        updatedAt: timestamp,
+        lastSource: source,
+    });
+}
+
+async function runWeeklyReview(source = 'weekly-cron', options = {}) {
+    const state = normalizeState(await getState());
+    const controls = normalizeLabControls(state.labControls);
+    if (!options.force && !controls.weeklyEnabled) {
+        return saveState({
+            ...state,
+            weeklyReview: {
+                ...state.weeklyReview,
+                status: 'disabled',
+                headline: 'Weekly GPT-5.5 development review is disabled from the admin backend.',
+                lastSkippedAt: nowIso(),
+            },
+            updatedAt: nowIso(),
+            lastSource: source,
+        });
+    }
+
+    const weeklyReview = await generateWeeklyReview(state, controls);
+    const timestamp = nowIso();
+    const reviewMemory = {
+        id: `weekly-${state.labClock}-${Date.now()}`,
+        timestamp,
+        createdTick: state.labClock,
+        lastRetrievedTick: state.labClock,
+        type: 'reflection',
+        agentId: 'max',
+        evidenceLevel: 'Internal development review',
+        importance: weeklyReview.status === 'model-backed' ? 98 : 82,
+        summary: `${weeklyReview.developmentRecommendation?.toUpperCase() || 'REVIEW'}: ${weeklyReview.rationale}`,
+        metadata: {
+            provider: weeklyReview.provider,
+            model: weeklyReview.model,
+            reasoningEffort: weeklyReview.reasoningEffort,
+            headline: weeklyReview.headline,
+            readinessScore: weeklyReview.readinessScore,
+            confidence: weeklyReview.confidence,
+            requiredRealWorldTests: weeklyReview.requiredRealWorldTests,
+            nextSpendDecision: weeklyReview.nextSpendDecision,
+            sergioDecisionNeeded: weeklyReview.sergioDecisionNeeded,
+        },
+    };
+
+    const review = {
+        ...weeklyReview,
+        lastRunDate: new Date().toISOString().slice(0, 10),
+        lastRunAt: timestamp,
+    };
+
+    return saveState({
+        ...state,
+        weeklyReview: review,
+        memories: [reviewMemory, ...(state.memories || [])].slice(0, MAX_MEMORIES),
+        reflections: [reviewMemory, ...(state.reflections || [])].slice(0, MAX_REFLECTIONS),
+        updatedAt: timestamp,
+        lastSource: source,
+    });
+}
+
+async function updateLabControls(patch = {}) {
+    const state = normalizeState(await getState());
+    const labControls = normalizeLabControls({
+        ...state.labControls,
+        ...patch,
+    });
+    return saveState({
+        ...state,
+        labControls,
+        updatedAt: nowIso(),
+        lastSource: 'admin-controls',
+    });
+}
+
+async function getLabAdminState() {
+    const state = normalizeState(await getState());
+    return {
+        labClock: state.labClock,
+        labDay: state.labDay,
+        mode: state.mode,
+        updatedAt: state.updatedAt,
+        lastSource: state.lastSource,
+        controls: state.labControls,
+        currentExperiment: {
+            id: state.currentExperiment?.id,
+            title: state.currentExperiment?.title,
+            evidenceLevel: state.currentExperiment?.evidenceLevel,
+            batchId: state.currentExperiment?.batchResult?.batchId,
+        },
+        dailyDiscovery: state.dailyDiscovery,
+        weeklyReview: state.weeklyReview,
+        memoryCount: state.memories?.length || 0,
+        batchCount: state.batchResults?.length || 0,
+    };
+}
+
 module.exports = {
     getState,
     advanceLabState,
     resetState,
+    runDailyDiscovery,
+    runWeeklyReview,
+    updateLabControls,
+    getLabAdminState,
+    retrieveMemories,
 };

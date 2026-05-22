@@ -45,8 +45,8 @@ describe('security regressions', () => {
         process.env = {
             ...originalEnv,
             NODE_ENV: 'production',
-            UPSTASH_REDIS_REST_URL: 'https://redis.example',
-            UPSTASH_REDIS_REST_TOKEN: 'redis-token',
+            UPSTASH_REDIS_KV_REST_API_URL: 'https://redis.example',
+            UPSTASH_REDIS_KV_REST_API_TOKEN: 'redis-token',
             RESEND_API_KEY: 'resend-token',
             ENCRYPTION_KEY: 'x'.repeat(32),
         };

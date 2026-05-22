@@ -54,3 +54,5 @@ coverage/
 skills/
 !molt/skills/
 .vercel
+.env.local
+.env*

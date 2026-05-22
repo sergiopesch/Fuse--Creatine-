@@ -63,18 +63,41 @@
 
             <section class="card" id="loginCard">
                 <h2>Admin Access</h2>
-                <p class="muted">Enter the admin token to view analytics and signups.</p>
-                <form id="adminLogin" class="form">
-                    <label for="adminToken">Admin token</label>
+                <p class="muted">Use your admin passkey to view analytics, signups, and AI Lab controls.</p>
+                <div class="passkey-login">
+                    <button class="btn primary passkey-button" id="adminPasskeyLoginBtn" type="button">
+                        Sign in with Passkey
+                    </button>
+                    <span class="passkey-meta" id="adminPasskeyMeta">Checking passkey setup...</span>
+                </div>
+                <details class="passkey-setup" id="adminPasskeySetupPanel">
+                    <summary>Set up or recover admin passkey</summary>
+                    <p class="muted">
+                        Use the admin password once to register a passkey on this device or through your phone.
+                    </p>
+                    <form id="adminPasskeySetup" class="form">
+                    <label for="adminUsername">Username</label>
                     <input
-                        id="adminToken"
-                        name="adminToken"
+                        id="adminUsername"
+                        name="adminUsername"
+                        type="text"
+                        autocomplete="username"
+                        value="sergiopesch"
+                        required
+                    />
+                    <label for="adminPassword">Password</label>
+                    <input
+                        id="adminPassword"
+                        name="adminPassword"
                         type="password"
                         autocomplete="current-password"
                         required
                     />
-                    <button class="btn primary" type="submit">Access</button>
-                </form>
+                        <button class="btn ghost" id="adminPasskeySetupBtn" type="submit">
+                            Create admin passkey
+                        </button>
+                    </form>
+                </details>
                 <p class="status" id="loginStatus" role="alert" aria-live="polite"></p>
             </section>
 
@@ -107,6 +130,23 @@
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
                     Signups Data
+                </button>
+                <button class="tab" data-tab="lab" type="button">
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M10 2v7.31" />
+                        <path d="M14 9.3V2" />
+                        <path d="M8.5 2h7" />
+                        <path d="M14 9.3a6.5 6.5 0 1 1-4 0" />
+                        <path d="M7 16h10" />
+                    </svg>
+                    AI Lab Control
                 </button>
             </nav>
 
@@ -323,6 +363,99 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Research Lab Backend Controls -->
+            <section class="card hidden" id="labCard">
+                <div class="lab-admin-header">
+                    <div>
+                        <h2>Research Lab Backend Door</h2>
+                        <p class="muted">
+                            Toggle scheduled AI cycles or run a manual discovery pass.
+                        </p>
+                    </div>
+                    <span class="lab-admin-pill" id="labAdminStatus">Loading</span>
+                </div>
+
+                <div class="lab-control-grid">
+                    <article class="lab-control-panel">
+                        <h3>Automation</h3>
+                        <label class="switch-row">
+                            <span>
+                                Daily discovery
+                                <small>Runs the cheap daily lab cycle.</small>
+                            </span>
+                            <input id="labDailyEnabled" type="checkbox" />
+                        </label>
+                        <label class="switch-row">
+                            <span>
+                                Weekly GPT-5.5 review
+                                <small>Runs Monday development readiness review.</small>
+                            </span>
+                            <input id="labWeeklyEnabled" type="checkbox" />
+                        </label>
+                        <label class="switch-row">
+                            <span>
+                                OpenAI synthesis
+                                <small>Falls back to deterministic briefs when off.</small>
+                            </span>
+                            <input id="labModelEnabled" type="checkbox" />
+                        </label>
+                    </article>
+
+                    <article class="lab-control-panel">
+                        <h3>Models</h3>
+                        <label for="labDailyModel">Daily model</label>
+                        <input id="labDailyModel" type="text" autocomplete="off" />
+                        <label for="labWeeklyModel">Weekly model</label>
+                        <input id="labWeeklyModel" type="text" autocomplete="off" />
+                        <label for="labWeeklyReasoning">Weekly reasoning</label>
+                        <select id="labWeeklyReasoning">
+                            <option value="low">low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                            <option value="xhigh">xhigh</option>
+                        </select>
+                        <button class="btn primary" id="saveLabControlsBtn" type="button">
+                            Save controls
+                        </button>
+                    </article>
+
+                    <article class="lab-control-panel">
+                        <h3>Manual Runs</h3>
+                        <div class="lab-action-stack">
+                            <button class="btn ghost" id="runLabTickBtn" type="button">
+                                Run one world tick
+                            </button>
+                            <button class="btn ghost" id="runDailyLabBtn" type="button">
+                                Run daily cycle now
+                            </button>
+                            <button class="btn ghost" id="runWeeklyLabBtn" type="button">
+                                Run weekly GPT-5.5 review now
+                            </button>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="lab-review-grid">
+                    <article class="lab-review-card">
+                        <span>Current world</span>
+                        <strong id="labWorldSummary">--</strong>
+                        <p id="labExperimentSummary">--</p>
+                    </article>
+                    <article class="lab-review-card">
+                        <span>Daily discovery</span>
+                        <strong id="labDailySummary">--</strong>
+                        <p id="labDailyInsight">--</p>
+                    </article>
+                    <article class="lab-review-card">
+                        <span>Weekly review</span>
+                        <strong id="labWeeklySummary">--</strong>
+                        <p id="labWeeklyDecision">--</p>
+                    </article>
+                </div>
+
+                <p class="status" id="labAdminMessage" role="status" aria-live="polite"></p>
             </section>
 
             <!-- Signups Data Table -->

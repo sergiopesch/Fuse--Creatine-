@@ -26,6 +26,7 @@ const {
     getBudgetLimits,
     formatCurrency
 } = require('./_lib/cost-tracker');
+const { hasRedisConfig } = require('./_lib/redis-client');
 
 const {
     getTeams,
@@ -157,7 +158,7 @@ function buildHealthSection() {
             anthropicApi: !!trimmedKey,
             blobStorage: !!process.env.BLOB_READ_WRITE_TOKEN,
             encryption: !!process.env.ENCRYPTION_KEY,
-            redis: !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+            redis: hasRedisConfig()
         },
         environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development'
     };

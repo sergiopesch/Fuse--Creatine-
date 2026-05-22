@@ -198,6 +198,36 @@ body.admin-page {
     margin-top: 16px;
 }
 
+.passkey-login {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.passkey-button {
+    min-width: 210px;
+}
+
+.passkey-meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.passkey-setup {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.passkey-setup summary {
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
 label {
     font-size: 0.85rem;
     text-transform: uppercase;
@@ -205,7 +235,8 @@ label {
     color: var(--muted);
 }
 
-input {
+input,
+select {
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid #2d2d2d;
@@ -214,7 +245,8 @@ input {
     font-size: 1rem;
 }
 
-input:focus {
+input:focus,
+select:focus {
     outline: none;
     border-color: var(--accent);
 }
@@ -525,6 +557,145 @@ input:focus {
 
 .stat-subtext.negative {
     color: var(--accent);
+}
+
+/* Research Lab Admin */
+.lab-admin-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.lab-admin-header h2 {
+    margin: 0;
+}
+
+.lab-admin-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    background: #171717;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lab-admin-pill.is-on {
+    border-color: rgba(74, 222, 128, 0.35);
+    color: var(--success);
+    background: var(--success-soft);
+}
+
+.lab-control-grid,
+.lab-review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.lab-control-grid {
+    margin-bottom: 18px;
+}
+
+.lab-control-panel,
+.lab-review-card {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.lab-control-panel h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+}
+
+.switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.switch-row:last-child {
+    border-bottom: 0;
+}
+
+.switch-row span {
+    display: grid;
+    gap: 4px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.switch-row small {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+.switch-row input {
+    width: 42px;
+    height: 24px;
+    accent-color: var(--accent);
+    flex: 0 0 auto;
+}
+
+.lab-control-panel label:not(.switch-row) {
+    display: block;
+    margin: 12px 0 6px;
+}
+
+.lab-control-panel .btn.primary {
+    width: 100%;
+    margin-top: 14px;
+}
+
+.lab-action-stack {
+    display: grid;
+    gap: 10px;
+}
+
+.lab-action-stack .btn {
+    border-radius: 12px;
+    text-align: left;
+}
+
+.lab-review-card span {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.lab-review-card strong {
+    display: block;
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.lab-review-card p {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
 }
 
 /* Activity Heatmap */

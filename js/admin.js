@@ -3,8 +3,13 @@
 
     // DOM Elements - Login
     const loginCard = document.getElementById('loginCard');
-    const loginForm = document.getElementById('adminLogin');
-    const tokenInput = document.getElementById('adminToken');
+    const passkeyLoginBtn = document.getElementById('adminPasskeyLoginBtn');
+    const passkeyMeta = document.getElementById('adminPasskeyMeta');
+    const passkeySetupPanel = document.getElementById('adminPasskeySetupPanel');
+    const passkeySetupForm = document.getElementById('adminPasskeySetup');
+    const passkeySetupBtn = document.getElementById('adminPasskeySetupBtn');
+    const usernameInput = document.getElementById('adminUsername');
+    const passwordInput = document.getElementById('adminPassword');
     const loginStatus = document.getElementById('loginStatus');
 
     // DOM Elements - Navigation
@@ -12,6 +17,7 @@
     const tabs = document.querySelectorAll('.tab');
     const analyticsCard = document.getElementById('analyticsCard');
     const dataCard = document.getElementById('dataCard');
+    const labCard = document.getElementById('labCard');
 
     // DOM Elements - Data Table
     const dataStatus = document.getElementById('dataStatus');
@@ -55,7 +61,27 @@
     const hourlyHeatmap = document.getElementById('hourlyHeatmap');
     const chartRangeBtns = document.querySelectorAll('.chart-range-btn');
 
-    const TOKEN_KEY = 'fuse_admin_token';
+    // DOM Elements - Research Lab admin
+    const labAdminStatus = document.getElementById('labAdminStatus');
+    const labDailyEnabled = document.getElementById('labDailyEnabled');
+    const labWeeklyEnabled = document.getElementById('labWeeklyEnabled');
+    const labModelEnabled = document.getElementById('labModelEnabled');
+    const labDailyModel = document.getElementById('labDailyModel');
+    const labWeeklyModel = document.getElementById('labWeeklyModel');
+    const labWeeklyReasoning = document.getElementById('labWeeklyReasoning');
+    const saveLabControlsBtn = document.getElementById('saveLabControlsBtn');
+    const runLabTickBtn = document.getElementById('runLabTickBtn');
+    const runDailyLabBtn = document.getElementById('runDailyLabBtn');
+    const runWeeklyLabBtn = document.getElementById('runWeeklyLabBtn');
+    const labWorldSummary = document.getElementById('labWorldSummary');
+    const labExperimentSummary = document.getElementById('labExperimentSummary');
+    const labDailySummary = document.getElementById('labDailySummary');
+    const labDailyInsight = document.getElementById('labDailyInsight');
+    const labWeeklySummary = document.getElementById('labWeeklySummary');
+    const labWeeklyDecision = document.getElementById('labWeeklyDecision');
+    const labAdminMessage = document.getElementById('labAdminMessage');
+
+    const TOKEN_KEY = 'fuse_admin_session';
     const PAGE_LIMIT = 50;
     const MAX_LIMIT = 200;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -88,11 +114,15 @@
         rows: [],
         allRows: [],
         filteredRows: [],
+        lab: null,
+        labLoading: false,
         filterEmail: '',
         filterKeyword: '',
         filterFrom: '',
         filterTo: '',
         activeTab: 'analytics',
+        passkeySupported: Boolean(window.PublicKeyCredential && window.isSecureContext),
+        adminPasskeyRegistered: false,
     };
 
     // Utility Functions
@@ -100,6 +130,51 @@
         if (!element) return;
         element.textContent = message || '';
         element.classList.toggle('good', type === 'good');
+    };
+
+    const base64urlToBuffer = value => {
+        const padding = '='.repeat((4 - (value.length % 4)) % 4);
+        const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const binary = window.atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) {
+            bytes[index] = binary.charCodeAt(index);
+        }
+        return bytes.buffer;
+    };
+
+    const bufferToBase64url = buffer => {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        bytes.forEach(byte => {
+            binary += String.fromCharCode(byte);
+        });
+        return window
+            .btoa(binary)
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/g, '');
+    };
+
+    const postAdminPasskey = async body => {
+        const headers = { 'Content-Type': 'application/json' };
+        if (state.token) {
+            headers.Authorization = `Bearer ${state.token}`;
+        }
+
+        const response = await fetch('/api/admin-passkey', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+            cache: 'no-store',
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.success) {
+            const error = new Error(payload.error || 'Admin passkey request failed.');
+            error.setupRequired = Boolean(payload.setupRequired);
+            throw error;
+        }
+        return payload.data || {};
     };
 
     const parseDateInput = (value, endOfDay = false) => {
@@ -187,6 +262,10 @@
         });
         if (analyticsCard) analyticsCard.classList.toggle('hidden', tabName !== 'analytics');
         if (dataCard) dataCard.classList.toggle('hidden', tabName !== 'signups');
+        if (labCard) labCard.classList.toggle('hidden', tabName !== 'lab');
+        if (tabName === 'lab' && state.token) {
+            loadLabAdminState();
+        }
     };
 
     // Analytics Functions
@@ -740,6 +819,20 @@
         if (interestFilter) interestFilter.disabled = !enabled;
         if (fromDateInput) fromDateInput.disabled = !enabled;
         if (toDateInput) toDateInput.disabled = !enabled;
+        [
+            labDailyEnabled,
+            labWeeklyEnabled,
+            labModelEnabled,
+            labDailyModel,
+            labWeeklyModel,
+            labWeeklyReasoning,
+            saveLabControlsBtn,
+            runLabTickBtn,
+            runDailyLabBtn,
+            runWeeklyLabBtn,
+        ].forEach(element => {
+            if (element) element.disabled = !enabled || state.labLoading;
+        });
     };
 
     const updateUtilityButtons = () => {
@@ -763,14 +856,59 @@
         if (clearLocalFiltersBtn) clearLocalFiltersBtn.disabled = !isLocalFiltered || state.loading;
     };
 
+    const updatePasskeyLoginUi = () => {
+        if (passkeyLoginBtn) {
+            passkeyLoginBtn.disabled = !state.passkeySupported || !state.adminPasskeyRegistered;
+        }
+
+        if (passkeySetupPanel) {
+            passkeySetupPanel.open = !state.adminPasskeyRegistered;
+        }
+
+        if (passkeySetupBtn) {
+            passkeySetupBtn.disabled = !state.passkeySupported;
+        }
+
+        if (!passkeyMeta) return;
+        if (!state.passkeySupported) {
+            passkeyMeta.textContent = 'Passkeys require HTTPS or localhost and a supported browser.';
+        } else if (state.adminPasskeyRegistered) {
+            passkeyMeta.textContent = 'Passkey ready for sergiopesch.';
+        } else {
+            passkeyMeta.textContent = 'No admin passkey registered yet.';
+        }
+    };
+
+    const loadAdminPasskeyStatus = async () => {
+        updatePasskeyLoginUi();
+        try {
+            const response = await fetch('/api/admin-passkey', { cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error || 'Unable to check passkey setup.');
+            }
+            state.adminPasskeyRegistered = Boolean(payload.data?.registered);
+            if (usernameInput && payload.data?.username) {
+                usernameInput.value = payload.data.username;
+            }
+            updatePasskeyLoginUi();
+        } catch (error) {
+            if (passkeyMeta) {
+                passkeyMeta.textContent = error.message || 'Unable to check passkey setup.';
+            }
+        }
+    };
+
     const showLogin = message => {
         if (loginCard) loginCard.classList.remove('hidden');
         if (tabNav) tabNav.classList.add('hidden');
         if (analyticsCard) analyticsCard.classList.add('hidden');
         if (dataCard) dataCard.classList.add('hidden');
+        if (labCard) labCard.classList.add('hidden');
         if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
         toggleControls(false);
         updateUtilityButtons();
+        loadAdminPasskeyStatus();
         setStatus(loginStatus, message || '', '');
     };
 
@@ -779,13 +917,9 @@
         if (tabNav) tabNav.classList.remove('hidden');
 
         // Show the active tab
-        if (state.activeTab === 'analytics') {
-            if (analyticsCard) analyticsCard.classList.remove('hidden');
-            if (dataCard) dataCard.classList.add('hidden');
-        } else {
-            if (analyticsCard) analyticsCard.classList.add('hidden');
-            if (dataCard) dataCard.classList.remove('hidden');
-        }
+        if (analyticsCard) analyticsCard.classList.toggle('hidden', state.activeTab !== 'analytics');
+        if (dataCard) dataCard.classList.toggle('hidden', state.activeTab !== 'signups');
+        if (labCard) labCard.classList.toggle('hidden', state.activeTab !== 'lab');
 
         toggleControls(true);
         updateFilterControls();
@@ -904,7 +1038,7 @@
 
             if (response.status === 401) {
                 clearToken();
-                showLogin('Access denied. Please check your admin token.');
+                showLogin('Access denied. Please sign in again with your passkey.');
                 return;
             }
 
@@ -942,23 +1076,302 @@
         }
     };
 
-    const handleLogin = async event => {
-        event.preventDefault();
-        const token = tokenInput ? tokenInput.value.trim() : '';
-        if (!token) {
-            setStatus(loginStatus, 'Enter the admin token to continue.');
-            return;
+    const setLabLoading = isLoading => {
+        state.labLoading = isLoading;
+        toggleControls(Boolean(state.token));
+    };
+
+    const labRequest = async body => {
+        const options = {
+            headers: {
+                Authorization: `Bearer ${state.token}`,
+            },
+            cache: 'no-store',
+        };
+
+        if (body) {
+            options.method = 'POST';
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
         }
 
+        const response = await fetch('/api/research-lab-admin', options);
+        const payload = await response.json().catch(() => ({}));
+
+        if (response.status === 401) {
+            clearToken();
+            showLogin('Access denied. Please sign in again with your passkey.');
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.error || 'Unable to control research lab.');
+        }
+
+        return payload.data;
+    };
+
+    const formatLabDate = value => {
+        if (!value) return 'Never';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('en-GB');
+    };
+
+    const renderLabAdmin = data => {
+        state.lab = data;
+        const controls = data?.controls || {};
+        if (labDailyEnabled) labDailyEnabled.checked = Boolean(controls.dailyEnabled);
+        if (labWeeklyEnabled) labWeeklyEnabled.checked = Boolean(controls.weeklyEnabled);
+        if (labModelEnabled) labModelEnabled.checked = Boolean(controls.modelSynthesisEnabled);
+        if (labDailyModel) labDailyModel.value = controls.dailyModel || 'gpt-5-mini';
+        if (labWeeklyModel) labWeeklyModel.value = controls.weeklyModel || 'gpt-5.5';
+        if (labWeeklyReasoning) labWeeklyReasoning.value = controls.weeklyReasoning || 'high';
+
+        if (labAdminStatus) {
+            labAdminStatus.textContent = controls.modelSynthesisEnabled
+                ? 'OpenAI enabled'
+                : 'Deterministic fallback';
+            labAdminStatus.classList.toggle('is-on', Boolean(controls.modelSynthesisEnabled));
+        }
+
+        if (labWorldSummary) {
+            labWorldSummary.textContent = `Day ${data.labDay || '--'} · Tick ${data.labClock || 0}`;
+        }
+        if (labExperimentSummary) {
+            const experiment = data.currentExperiment || {};
+            labExperimentSummary.textContent = `${experiment.title || 'No active experiment'} · ${experiment.batchId || '--'}`;
+        }
+
+        if (labDailySummary) {
+            const daily = data.dailyDiscovery || {};
+            labDailySummary.textContent = `${daily.status || 'waiting'} · ${formatLabDate(daily.lastRunAt || daily.lastRunDate)}`;
+        }
+        if (labDailyInsight) {
+            labDailyInsight.textContent = data.dailyDiscovery?.topInsight || data.dailyDiscovery?.headline || '--';
+        }
+
+        if (labWeeklySummary) {
+            const weekly = data.weeklyReview || {};
+            const recommendation = weekly.developmentRecommendation || weekly.status || 'waiting';
+            const score = weekly.readinessScore ?? '--';
+            labWeeklySummary.textContent = `${recommendation} · score ${score}`;
+        }
+        if (labWeeklyDecision) {
+            labWeeklyDecision.textContent =
+                data.weeklyReview?.sergioDecisionNeeded || data.weeklyReview?.headline || '--';
+        }
+    };
+
+    const loadLabAdminState = async () => {
+        if (!state.token || state.labLoading) return;
+        setLabLoading(true);
+        setStatus(labAdminMessage, 'Loading lab controls...', '');
+        try {
+            const data = await labRequest();
+            renderLabAdmin(data);
+            setStatus(labAdminMessage, 'Lab controls loaded.', 'good');
+        } catch (error) {
+            if (error.message !== 'Unauthorized') {
+                setStatus(labAdminMessage, error.message || 'Unable to load lab controls.');
+            }
+        } finally {
+            setLabLoading(false);
+        }
+    };
+
+    const saveLabControls = async () => {
+        setLabLoading(true);
+        setStatus(labAdminMessage, 'Saving lab controls...', '');
+        try {
+            const data = await labRequest({
+                action: 'update_controls',
+                controls: {
+                    dailyEnabled: Boolean(labDailyEnabled?.checked),
+                    weeklyEnabled: Boolean(labWeeklyEnabled?.checked),
+                    modelSynthesisEnabled: Boolean(labModelEnabled?.checked),
+                    dailyModel: labDailyModel?.value || 'gpt-5-mini',
+                    weeklyModel: labWeeklyModel?.value || 'gpt-5.5',
+                    weeklyReasoning: labWeeklyReasoning?.value || 'high',
+                },
+            });
+            renderLabAdmin(data);
+            setStatus(labAdminMessage, 'Lab controls saved.', 'good');
+        } catch (error) {
+            if (error.message !== 'Unauthorized') {
+                setStatus(labAdminMessage, error.message || 'Unable to save lab controls.');
+            }
+        } finally {
+            setLabLoading(false);
+        }
+    };
+
+    const runLabAction = async (action, message) => {
+        setLabLoading(true);
+        setStatus(labAdminMessage, message, '');
+        try {
+            const data = await labRequest({ action });
+            renderLabAdmin(data);
+            setStatus(labAdminMessage, 'Lab action completed.', 'good');
+        } catch (error) {
+            if (error.message !== 'Unauthorized') {
+                setStatus(labAdminMessage, error.message || 'Lab action failed.');
+            }
+        } finally {
+            setLabLoading(false);
+        }
+    };
+
+    const completeAdminSignIn = async token => {
         setToken(token);
+        if (passwordInput) passwordInput.value = '';
         showData();
         setStatus(loginStatus, '');
         await fetchSignups({ reset: true });
+        if (state.activeTab === 'lab') {
+            await loadLabAdminState();
+        }
+    };
+
+    const handlePasskeyLogin = async () => {
+        if (!state.passkeySupported) {
+            setStatus(loginStatus, 'Passkeys require HTTPS or localhost and a supported browser.');
+            return;
+        }
+
+        setStatus(loginStatus, 'Waiting for your passkey...', '');
+        if (passkeyLoginBtn) passkeyLoginBtn.disabled = true;
+
+        try {
+            const start = await postAdminPasskey({ action: 'auth-start' });
+            const publicKey = {
+                challenge: base64urlToBuffer(start.challenge),
+                rpId: start.rpId,
+                userVerification: start.userVerification || 'required',
+                timeout: 60000,
+            };
+
+            if (Array.isArray(start.allowCredentials) && start.allowCredentials.length) {
+                publicKey.allowCredentials = start.allowCredentials.map(credential => ({
+                    id: base64urlToBuffer(credential.id),
+                    type: credential.type || 'public-key',
+                    transports: credential.transports || ['internal', 'hybrid'],
+                }));
+            }
+
+            const assertion = await navigator.credentials.get({ publicKey });
+            const result = await postAdminPasskey({
+                action: 'auth-complete',
+                sessionId: start.sessionId,
+                credentialId: bufferToBase64url(assertion.rawId),
+                rawId: bufferToBase64url(assertion.rawId),
+                type: assertion.type,
+                authenticatorData: bufferToBase64url(assertion.response.authenticatorData),
+                clientDataJSON: bufferToBase64url(assertion.response.clientDataJSON),
+                signature: bufferToBase64url(assertion.response.signature),
+                userHandle: assertion.response.userHandle
+                    ? bufferToBase64url(assertion.response.userHandle)
+                    : undefined,
+            });
+
+            await completeAdminSignIn(result.token);
+        } catch (error) {
+            clearToken();
+            if (error.name === 'NotAllowedError') {
+                setStatus(loginStatus, 'Passkey sign-in was cancelled.');
+            } else {
+                setStatus(loginStatus, error.message || 'Unable to sign in with passkey.');
+            }
+            await loadAdminPasskeyStatus();
+        }
+    };
+
+    const handlePasskeySetup = async event => {
+        event.preventDefault();
+        const username = usernameInput ? usernameInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value : '';
+        if (!username || !password) {
+            setStatus(loginStatus, 'Enter your admin username and password to set up a passkey.');
+            return;
+        }
+
+        if (!state.passkeySupported) {
+            setStatus(loginStatus, 'Passkeys require HTTPS or localhost and a supported browser.');
+            return;
+        }
+
+        setStatus(loginStatus, 'Creating your admin passkey...', '');
+        if (passkeySetupBtn) passkeySetupBtn.disabled = true;
+
+        try {
+            const start = await postAdminPasskey({
+                action: 'register-start',
+                username,
+                password,
+            });
+
+            const credential = await navigator.credentials.create({
+                publicKey: {
+                    challenge: base64urlToBuffer(start.challenge),
+                    rp: start.rp,
+                    user: {
+                        id: new TextEncoder().encode(start.user.id),
+                        name: start.user.name,
+                        displayName: start.user.displayName,
+                    },
+                    pubKeyCredParams: [
+                        { alg: -7, type: 'public-key' },
+                        { alg: -257, type: 'public-key' },
+                    ],
+                    authenticatorSelection: {
+                        residentKey: 'preferred',
+                        userVerification: 'required',
+                    },
+                    timeout: 60000,
+                    attestation: 'none',
+                    excludeCredentials: (start.excludeCredentials || []).map(item => ({
+                        id: base64urlToBuffer(item.id),
+                        type: item.type || 'public-key',
+                        transports: item.transports || ['internal', 'hybrid'],
+                    })),
+                },
+            });
+
+            const completeData = {
+                action: 'register-complete',
+                sessionId: start.sessionId,
+                credentialId: bufferToBase64url(credential.rawId),
+                rawId: bufferToBase64url(credential.rawId),
+                type: credential.type,
+                clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                attestationObject: bufferToBase64url(credential.response.attestationObject),
+                authenticatorAttachment: credential.authenticatorAttachment,
+            };
+
+            if (credential.response.getTransports) {
+                completeData.transports = credential.response.getTransports();
+            }
+
+            const result = await postAdminPasskey(completeData);
+            state.adminPasskeyRegistered = true;
+            updatePasskeyLoginUi();
+            await completeAdminSignIn(result.token);
+        } catch (error) {
+            clearToken();
+            if (error.name === 'NotAllowedError') {
+                setStatus(loginStatus, 'Passkey setup was cancelled.');
+            } else if (error.name === 'InvalidStateError') {
+                setStatus(loginStatus, 'This passkey is already registered.');
+            } else {
+                setStatus(loginStatus, error.message || 'Unable to create admin passkey.');
+            }
+        } finally {
+            if (passkeySetupBtn) passkeySetupBtn.disabled = !state.passkeySupported;
+        }
     };
 
     const handleSignOut = () => {
         clearToken();
-        if (tokenInput) tokenInput.value = '';
+        if (passwordInput) passwordInput.value = '';
         if (emailFilter) emailFilter.value = '';
         if (interestFilter) interestFilter.value = '';
         if (fromDateInput) fromDateInput.value = '';
@@ -968,8 +1381,10 @@
         state.filterFrom = '';
         state.filterTo = '';
         state.allRows = [];
+        state.lab = null;
         resetTable();
         setStatus(dataStatus, '');
+        setStatus(labAdminMessage, '');
 
         // Destroy charts
         if (trendChart) {
@@ -1106,8 +1521,12 @@
     };
 
     // Event Listeners
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+    if (passkeyLoginBtn) {
+        passkeyLoginBtn.addEventListener('click', handlePasskeyLogin);
+    }
+
+    if (passkeySetupForm) {
+        passkeySetupForm.addEventListener('submit', handlePasskeySetup);
     }
 
     if (loadMoreBtn) {
@@ -1116,7 +1535,11 @@
 
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async () => {
-            await fetchSignups({ reset: true });
+            if (state.activeTab === 'lab') {
+                await loadLabAdminState();
+            } else {
+                await fetchSignups({ reset: true });
+            }
         });
     }
 
@@ -1176,6 +1599,28 @@
         exportCsvBtn.addEventListener('click', exportCsv);
     }
 
+    if (saveLabControlsBtn) {
+        saveLabControlsBtn.addEventListener('click', saveLabControls);
+    }
+
+    if (runLabTickBtn) {
+        runLabTickBtn.addEventListener('click', () =>
+            runLabAction('run_tick', 'Running one lab world tick...')
+        );
+    }
+
+    if (runDailyLabBtn) {
+        runDailyLabBtn.addEventListener('click', () =>
+            runLabAction('run_daily', 'Running daily discovery cycle now...')
+        );
+    }
+
+    if (runWeeklyLabBtn) {
+        runWeeklyLabBtn.addEventListener('click', () =>
+            runLabAction('run_weekly', 'Running weekly GPT-5.5 readiness review now...')
+        );
+    }
+
     // Tab navigation
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -1203,6 +1648,9 @@
         setToken(storedToken);
         showData();
         fetchSignups({ reset: true });
+        if (state.activeTab === 'lab') {
+            loadLabAdminState();
+        }
     } else {
         showLogin();
     }

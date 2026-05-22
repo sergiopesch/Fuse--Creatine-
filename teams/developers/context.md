@@ -1,12 +1,12 @@
 # Developers Team — Current Context
 
-**Last Updated**: 2026-05-20
+**Last Updated**: 2026-05-22
 **Team Code**: DEV
 **Orchestration Mode**: manual
 
 ## Current State
 
-Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports configurable providers and is set up for an OpenAI mini proof of concept via `FUSE_CHAT_PROVIDER=openai`, `FUSE_CHAT_MODEL=gpt-5-mini`, and `OPENAI_API_KEY`. Agent orchestration system functional but being refactored to CLI-first architecture. CEO Dashboard needs queue integration.
+Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports configurable providers and is set up for an OpenAI mini proof of concept via `FUSE_CHAT_PROVIDER=openai`, `FUSE_CHAT_MODEL=gpt-5-mini`, and `OPENAI_API_KEY`. Research Lab daily discovery now uses the OpenAI Responses API when `OPENAI_API_KEY` is configured, with `FUSE_LAB_AI_MODEL` defaulting to `gpt-5-mini`; browser ticks remain deterministic to control cost. Weekly Research Lab development review uses `FUSE_LAB_WEEKLY_MODEL=gpt-5.5` with high reasoning by default. Admin console login is passkey-first through `/api/admin-passkey`; the password hash is only for passkey setup/recovery. Agent orchestration system functional but being refactored to CLI-first architecture. CEO Dashboard needs queue integration.
 
 ## Active Work
 
@@ -16,6 +16,12 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 
 ## Recent Completions
 
+- ✅ Research Lab upgraded with genagents-inspired cognition: per-agent scratch identity, memory retrieval scored by recency/importance/relevance, structured action/observation/reflection memories, hierarchical experiment plans, lab object affordances, simulated batch telemetry, visible cognition panels, and a daily Vercel cron discovery endpoint
+- ✅ Research Lab daily discovery connected to an optional OpenAI model-backed synthesis pass that produces a structured internal brief, per-agent findings, next physical test, ranked actions, risk, and Sergio decision request with deterministic fallback
+- ✅ Weekly Research Lab GPT-5.5 development readiness review added for continue/pause/pivot/kill guidance, readiness scoring, required real-world tests, risk review, and next spend decision
+- ✅ Admin backend door added for Research Lab controls: toggle daily/weekly automation, toggle OpenAI synthesis, configure lab models/reasoning, and manually run tick/daily/weekly cycles through the token-protected admin console
+- ✅ Admin login changed to WebAuthn passkey-first access for `sergiopesch`, with password hash used only for passkey setup/recovery, signed admin sessions for APIs, and legacy `ADMIN_TOKEN` fallback for direct API scripts
+- ✅ Research Lab character system extended with distinct game-style SVG sprites for all seven lab researchers/agents, rendering each character in both the world map and roster
 - ✅ Homepage product showcase polished with a dedicated premium product-stage layout, high-fidelity product cutout, responsive headline treatment, and development-focus spec tiles
 - ✅ Research Lab rebuilt from scratch as a living AI research world with spatial stations, moving scientist agents, social conversations, memory stream, disputes, evidence gates, and experiment queue
 - ✅ Research Lab visual world simplified into an AI Town-style game view: generated lab map first, visible moving scientist agents, lightweight HUD controls, and live conversation overlay

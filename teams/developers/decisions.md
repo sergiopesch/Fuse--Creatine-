@@ -6,6 +6,66 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-22 | Research Lab Generative Agent Runtime
+
+**Decision**: Port StanfordHCI `genagents` concepts into the existing FUSE Research Lab World using the current Node/Vercel stack.
+
+**Rationale**: Sergio wants the lab to become a real daily discovery system rather than a mock view. The Stanford repo's useful production concepts are scratch identity, memory stream, retrieval, reflection, and interaction; a full Python/FastAPI/Godot rewrite would not match the current lightweight deployment path.
+
+**Impact**: `api/_lib/research-lab-state.js` now gives each lab scientist a scratch identity, memory retrieval scored by recency/importance/relevance, structured action/observation/reflection memories, hierarchical experiment plans, lab object affordances, and simulated batch telemetry. `/research-lab` exposes a visible cognition area with selected-agent memory retrieval and plans. `api/research-lab-daily.js` and `vercel.json` add a protected daily cron that advances three autonomous discovery ticks and stores a daily digest. New focused Jest coverage validates initialization, batch telemetry, retrieval, and daily discovery.
+
+---
+
+## 2026-05-22 | Research Lab OpenAI Daily Brain
+
+**Decision**: Add an optional OpenAI Responses API synthesis pass to the Research Lab daily cron while keeping browser ticks deterministic.
+
+**Rationale**: The lab needs to create useful daily research value without runaway cost. A model call on every browser auto-tick would be wasteful, but one daily structured synthesis can turn simulated memories, batches, hypotheses, and disputes into an actionable R&D brief.
+
+**Impact**: `api/_lib/research-lab-brain.js` calls OpenAI when `OPENAI_API_KEY` is configured and `FUSE_LAB_AI_ENABLED` is not `false`, using `FUSE_LAB_AI_MODEL` or `gpt-5-mini` by default. The daily brief includes headline, top insight, per-agent findings, next physical test, ranked actions, risk, and Sergio decision needed, then writes that output back as an internal reflection memory. The lab UI now surfaces the daily AI synthesis panel. If OpenAI fails or is disabled, the daily run writes a deterministic fallback so discovery never stops.
+
+---
+
+## 2026-05-22 | Research Lab Weekly GPT-5.5 Review
+
+**Decision**: Add a weekly GPT-5.5 Development Readiness Review alongside the daily mini-model synthesis.
+
+**Rationale**: The daily model call should stay cheap and operational, while the weekly call should answer Sergio's strategic question: whether FUSE should continue, pause, pivot, or kill the current development direction before spending on real prototypes, supplier work, IP review, or manufacturing.
+
+**Impact**: `api/research-lab-weekly.js` exposes a protected weekly cron endpoint scheduled for Mondays at 08:00 UTC. `api/_lib/research-lab-brain.js` now defaults the weekly model to `gpt-5.5` with high reasoning and returns a strict readiness schema: recommendation, confidence, readiness score, evidence for/against, required real-world tests, legal/manufacturing risks, next spend decision, and Sergio decision needed. The lab UI shows the weekly review panel, and the weekly output is saved back into the memory stream as an internal development review.
+
+---
+
+## 2026-05-22 | Research Lab Admin Backend Door
+
+**Decision**: Add a token-protected admin control plane for Research Lab cycles.
+
+**Rationale**: Sergio needs operational control over AI spend and cadence without redeploying environment variables. Scheduled jobs should be pausable, and manual lab cycles should be available for ad hoc reviews.
+
+**Impact**: `api/research-lab-admin.js` exposes `ADMIN_TOKEN`-protected controls for reading lab status, updating daily/weekly/model toggles, running one world tick, running daily discovery, and running the weekly GPT-5.5 review manually. `admin.html`, `js/admin.js`, and `css/admin.css` add an AI Lab Control tab with automation switches, model fields, manual run buttons, and status cards. `api/_lib/research-lab-state.js` persists lab controls in the research lab state and scheduled cron handlers respect disabled daily/weekly flags while manual admin runs force execution.
+
+---
+
+## 2026-05-22 | Admin Username Password Login
+
+**Decision**: Replace the admin page's raw token entry with username/password login using `ADMIN_USERNAME=sergiopesch`.
+
+**Rationale**: The admin token should stay as a backend/API fallback, not be the primary credential pasted into the browser. A username/password exchange lets the site issue a short-lived signed session while keeping the password hash and session secret in Vercel environment variables.
+
+**Impact**: `api/admin-login.js` verifies `ADMIN_USERNAME` and `ADMIN_PASSWORD_HASH`, then returns an eight-hour signed admin session. `api/_lib/admin-auth.js` centralizes scrypt password verification, session signing, and admin request authentication. `admin.html` and `js/admin.js` now use username/password login. `api/admin-signups.js` and `api/research-lab-admin.js` accept signed sessions while retaining `ADMIN_TOKEN` as a direct API fallback. `scripts/generate-admin-password-hash.js` generates the Vercel `ADMIN_PASSWORD_HASH` value.
+
+---
+
+## 2026-05-22 | Admin Passkey Login
+
+**Decision**: Replace browser password login with WebAuthn passkey login for `sergiopesch`.
+
+**Rationale**: Passkeys give Sergio a smoother iPhone Face ID / QR-code-capable login while keeping private biometric verification inside the device ecosystem. The site only receives a signed WebAuthn assertion and then issues the same short-lived admin session used by protected admin APIs.
+
+**Impact**: `api/admin-passkey.js` now handles admin passkey status, setup challenge, setup verification, sign-in challenge, and sign-in verification. `api/_lib/admin-passkey-store.js` stores admin passkey credentials and one-time WebAuthn challenges using Upstash Redis with local memory fallback. `admin.html`, `js/admin.js`, and `css/admin.css` make the admin page passkey-first and keep the admin password only for setup/recovery. `/api/admin-login` no longer issues password sessions. `ADMIN_TOKEN` remains as a direct API fallback for scripts and emergencies.
+
+---
+
 ## 2026-05-20 | Product Showcase Visual Polish
 
 **Decision**: Rework the homepage product section into a stronger product-stage view using the high-fidelity product cutout, tighter headline composition, and development-focus spec tiles.

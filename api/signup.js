@@ -1,8 +1,8 @@
 const { put } = require('@vercel/blob');
 const crypto = require('crypto');
-const { Redis } = require('@upstash/redis');
 const { encrypt } = require('./_lib/crypto');
 const { createSecuredHandler } = require('./_lib/security');
+const { createRedisClient } = require('./_lib/redis-client');
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
@@ -15,10 +15,7 @@ const RATE_LIMIT_IP_MAX = 8;
 const RATE_LIMIT_EMAIL_MAX = 4;
 
 // Initialize Redis client if configuration is available
-const redis =
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-        ? Redis.fromEnv()
-        : null;
+const redis = createRedisClient();
 
 /**
  * Checks rate limit for a given key using a fixed window counter algorithm in Redis.

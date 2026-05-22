@@ -916,7 +916,7 @@ body.research-world-page {
 .game-stage {
     min-height: calc(100vh - 84px);
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
     gap: 10px;
     padding: 10px;
     overflow: hidden;
@@ -927,7 +927,7 @@ body.research-world-page {
 
 .game-hud {
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) minmax(150px, 0.28fr) minmax(250px, auto);
+    grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(130px, 0.22fr)) minmax(250px, auto);
     gap: 8px;
     align-items: stretch;
     z-index: 10;
@@ -1698,7 +1698,7 @@ body.research-world-page {
     min-height: calc(100vh - 84px);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
     gap: 10px;
     padding: 10px;
     overflow: hidden;
@@ -1706,7 +1706,7 @@ body.research-world-page {
 
 .research-world-page .game-hud {
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) minmax(150px, 0.28fr) minmax(250px, auto);
+    grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(130px, 0.22fr)) minmax(250px, auto);
     gap: 8px;
     min-width: 0;
 }
@@ -1774,6 +1774,200 @@ body.research-world-page {
     grid-template-columns: minmax(280px, 0.92fr) minmax(360px, 1.08fr);
     gap: 8px;
     min-width: 0;
+}
+
+.research-world-page .cognition-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(220px, 1fr));
+    gap: 8px;
+    min-width: 0;
+}
+
+.research-world-page .cognition-grid .lower-panel {
+    min-width: 0;
+    max-height: 240px;
+    overflow: auto;
+    padding: 10px;
+}
+
+.research-world-page .cognition-panel,
+.research-world-page .daily-panel,
+.research-world-page .weekly-panel {
+    grid-column: span 2;
+}
+
+.research-world-page .cognition-station,
+.research-world-page .agent-scratch,
+.research-world-page .cognition-block {
+    margin-top: 9px;
+    padding-top: 9px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.research-world-page .cognition-station span,
+.research-world-page .agent-scratch span,
+.research-world-page .cognition-block > span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--world-muted);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.research-world-page .cognition-station strong {
+    color: #f2f4f5;
+    font-size: 12px;
+}
+
+.research-world-page .agent-scratch p {
+    margin: 0;
+}
+
+.research-world-page .cognition-block ul {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.research-world-page .cognition-block li {
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.research-world-page .cognition-block li span {
+    color: color-mix(in srgb, var(--agent-color) 70%, #ffffff);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.research-world-page .cognition-block li strong {
+    display: inline-block;
+    margin-left: 6px;
+    color: #f5f5f2;
+    font-size: 9px;
+    text-transform: uppercase;
+}
+
+.research-world-page .cognition-block li p {
+    margin-top: 6px;
+}
+
+.research-world-page .daily-discovery-card {
+    display: grid;
+    gap: 9px;
+}
+
+.research-world-page .daily-discovery-card > strong,
+.research-world-page .daily-test strong {
+    white-space: normal;
+}
+
+.research-world-page .daily-test {
+    padding: 9px;
+    border: 1px solid rgba(68, 215, 182, 0.2);
+    border-radius: 5px;
+    background: rgba(68, 215, 182, 0.045);
+}
+
+.research-world-page .daily-test span,
+.research-world-page .daily-discovery-card li span {
+    color: var(--world-cyan);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.research-world-page .daily-discovery-card ul {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.research-world-page .daily-discovery-card li {
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.research-world-page .daily-discovery-card p,
+.research-world-page .daily-test p {
+    margin: 0;
+}
+
+.research-world-page .weekly-review-card {
+    display: grid;
+    gap: 9px;
+}
+
+.research-world-page .weekly-review-card > strong {
+    white-space: normal;
+}
+
+.research-world-page .weekly-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.research-world-page .weekly-score span,
+.research-world-page .weekly-decision span,
+.research-world-page .weekly-review-card li span {
+    color: var(--world-red);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.research-world-page .weekly-score strong {
+    color: #ffffff;
+    font:
+        800 22px/1 'JetBrains Mono',
+        monospace;
+}
+
+.research-world-page .weekly-decision {
+    padding: 9px;
+    border: 1px solid rgba(255, 59, 48, 0.22);
+    border-radius: 5px;
+    background: rgba(255, 59, 48, 0.045);
+}
+
+.research-world-page .weekly-review-card ul {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.research-world-page .weekly-review-card li {
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.research-world-page .weekly-review-card p,
+.research-world-page .weekly-decision p {
+    margin: 0;
 }
 
 .research-world-page .game-overlay-row .side-panel,
@@ -1865,6 +2059,7 @@ body.research-world-page {
 
     .research-world-page .game-hud,
     .research-world-page .game-overlay-row,
+    .research-world-page .cognition-grid,
     .research-world-page .game-footer {
         grid-template-columns: 1fr;
     }
@@ -1903,6 +2098,15 @@ body.research-world-page {
         display: block;
     }
 
+    .research-world-page .cognition-grid {
+        display: block;
+    }
+
+    .research-world-page .cognition-grid .lower-panel {
+        max-height: none;
+        margin-top: 8px;
+    }
+
     .research-world-page .game-overlay-row .conversation-panel {
         margin-top: 8px;
     }
@@ -1929,8 +2133,8 @@ body.research-world-page {
 
 .research-world-page .world-agent-core,
 .research-world-page .game-stage .world-agent-core {
-    width: 38px;
-    height: 58px;
+    width: 46px;
+    height: 66px;
     transform-origin: 50% 88%;
     filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.56))
         drop-shadow(0 0 10px color-mix(in srgb, var(--agent-color) 36%, transparent));
@@ -1938,8 +2142,8 @@ body.research-world-page {
 
 .research-world-page .world-agent.is-active .world-agent-core,
 .research-world-page .game-stage .world-agent.is-active .world-agent-core {
-    width: 44px;
-    height: 64px;
+    width: 52px;
+    height: 74px;
 }
 
 .lab-character {
@@ -1948,6 +2152,14 @@ body.research-world-page {
     width: 100%;
     height: 100%;
     color: var(--agent-color);
+    --char-skin: #c99b78;
+    --char-hair: #171a1c;
+    --char-coat: #f4f1e9;
+    --char-sleeve: #ece8dd;
+    --char-trousers: #15191d;
+    --char-shoes: #101214;
+    --char-accent: var(--agent-color);
+    --char-glasses: #d6f5ff;
 }
 
 .lab-character-shadow {
@@ -1959,6 +2171,46 @@ body.research-world-page {
     border-radius: 999px;
     background: rgba(0, 0, 0, 0.42);
     filter: blur(1px);
+}
+
+.lab-character-sprite {
+    display: grid;
+    place-items: end center;
+}
+
+.lab-character-sprite .lab-character-shadow {
+    left: 9%;
+    right: 9%;
+    bottom: -2%;
+    height: 11%;
+    opacity: 0.82;
+}
+
+.lab-character-image {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 122%;
+    max-width: none;
+    height: 114%;
+    object-fit: contain;
+    object-position: center bottom;
+    pointer-events: none;
+    user-select: none;
+}
+
+.agent-avatar .lab-character-image {
+    width: 132%;
+    height: 122%;
+}
+
+.research-world-page .game-stage .world-agent .lab-character-sprite {
+    transform-origin: 50% 88%;
+}
+
+.research-world-page .game-stage .world-agent .lab-character-sprite .lab-character-image {
+    animation: character-sprite-stride var(--step-duration, 720ms) steps(2) infinite;
+    animation-delay: var(--step-delay, 0ms);
 }
 
 .lab-character-head {
@@ -1973,7 +2225,7 @@ body.research-world-page {
     border-radius: 50% 50% 46% 46%;
     background:
         radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.42), transparent 18%),
-        #c99b78;
+        var(--char-skin);
 }
 
 .lab-character-hair {
@@ -1985,7 +2237,83 @@ body.research-world-page {
     height: 18%;
     transform: translateX(-50%);
     border-radius: 50% 50% 30% 30%;
-    background: #171a1c;
+    background: var(--char-hair);
+}
+
+.character-hair-bob .lab-character-hair {
+    top: 1%;
+    width: 45%;
+    height: 27%;
+    border-radius: 50% 50% 42% 42%;
+    box-shadow:
+        -0.22em 0.3em 0 var(--char-hair),
+        0.22em 0.3em 0 var(--char-hair);
+}
+
+.lab-character-face {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    top: 14%;
+    width: 19%;
+    height: 4%;
+    transform: translateX(-50%);
+}
+
+.lab-character-face::before,
+.lab-character-face::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(24, 18, 16, 0.82);
+}
+
+.lab-character-face::before {
+    left: 0;
+}
+
+.lab-character-face::after {
+    right: 0;
+}
+
+.lab-character-glasses {
+    display: none;
+    position: absolute;
+    z-index: 6;
+    left: 50%;
+    top: 12%;
+    width: 29%;
+    height: 9%;
+    transform: translateX(-50%);
+    border-top: 2px solid color-mix(in srgb, var(--char-glasses) 72%, #ffffff);
+}
+
+.lab-character-glasses::before,
+.lab-character-glasses::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 38%;
+    height: 100%;
+    border: 1px solid color-mix(in srgb, var(--char-glasses) 72%, #ffffff);
+    border-radius: 40%;
+    background: rgba(188, 239, 255, 0.2);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.lab-character-glasses::before {
+    left: 0;
+}
+
+.lab-character-glasses::after {
+    right: 0;
+}
+
+.character-accessory-goggles-vial .lab-character-glasses {
+    display: block;
 }
 
 .lab-character-body {
@@ -2000,7 +2328,11 @@ body.research-world-page {
     border-radius: 18% 18% 12% 12%;
     background:
         linear-gradient(90deg, transparent 47%, rgba(13, 16, 18, 0.65) 48% 52%, transparent 53%),
-        linear-gradient(135deg, #f4f1e9 0 45%, #d9d5ca 46% 100%);
+        linear-gradient(
+            135deg,
+            var(--char-coat) 0 45%,
+            color-mix(in srgb, var(--char-coat) 76%, #8d918f) 46% 100%
+        );
     box-shadow:
         inset 0 0 0 1px rgba(255, 255, 255, 0.2),
         inset 0 -10px 12px rgba(0, 0, 0, 0.12);
@@ -2014,7 +2346,7 @@ body.research-world-page {
     height: 45%;
     transform: translateX(-50%);
     clip-path: polygon(50% 100%, 0 0, 100% 0);
-    background: color-mix(in srgb, var(--agent-color) 72%, #101214);
+    background: color-mix(in srgb, var(--char-accent) 72%, #101214);
     opacity: 0.86;
 }
 
@@ -2025,8 +2357,17 @@ body.research-world-page {
     width: 12%;
     height: 10%;
     border-radius: 999px;
-    background: var(--agent-color);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--agent-color) 65%, transparent);
+    background: var(--char-accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--char-accent) 65%, transparent);
+}
+
+.character-detail-capsule .lab-character-badge {
+    width: 18%;
+    height: 8%;
+    border-radius: 999px;
+    background:
+        linear-gradient(90deg, var(--char-accent) 0 47%, #ffffff 48% 52%, #f8f0e8 53% 100%);
+    transform: rotate(-18deg);
 }
 
 .lab-character-arm {
@@ -2036,7 +2377,7 @@ body.research-world-page {
     width: 13%;
     height: 33%;
     border-radius: 999px;
-    background: #ece8dd;
+    background: var(--char-sleeve);
     transform-origin: 50% 8%;
 }
 
@@ -2057,7 +2398,7 @@ body.research-world-page {
     width: 14%;
     height: 24%;
     border-radius: 0 0 999px 999px;
-    background: #15191d;
+    background: var(--char-trousers);
 }
 
 .lab-character-leg.left {
@@ -2068,22 +2409,48 @@ body.research-world-page {
     right: 35%;
 }
 
-.world-agent:nth-child(2n) .lab-character-head {
-    background:
-        radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.38), transparent 18%),
-        #b88767;
+.lab-character-leg::after {
+    content: '';
+    position: absolute;
+    left: -5%;
+    right: -22%;
+    bottom: -9%;
+    height: 18%;
+    border-radius: 999px;
+    background: var(--char-shoes);
 }
 
-.world-agent:nth-child(3n) .lab-character-head,
-.agent-card:nth-child(3n) .lab-character-head {
+.lab-character-tool {
+    display: none;
+    position: absolute;
+    z-index: 6;
+    right: 4%;
+    top: 52%;
+    width: 13%;
+    height: 22%;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 2px 2px 5px 5px;
     background:
-        radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 18%),
-        #8b5f49;
+        linear-gradient(180deg, transparent 0 24%, color-mix(in srgb, var(--char-accent) 58%, #ffffff) 25% 100%);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--char-accent) 48%, transparent);
 }
 
-.world-agent:nth-child(4n) .lab-character-hair,
-.agent-card:nth-child(4n) .lab-character-hair {
-    background: #3a2a23;
+.character-accessory-goggles-vial .lab-character-tool {
+    display: block;
+}
+
+.world-agent:nth-child(2n) .lab-character {
+    --char-skin: #b88767;
+}
+
+.world-agent:nth-child(3n) .lab-character,
+.agent-card:nth-child(3n) .lab-character {
+    --char-skin: #8b5f49;
+}
+
+.world-agent:nth-child(4n) .lab-character,
+.agent-card:nth-child(4n) .lab-character {
+    --char-hair: #3a2a23;
 }
 
 .research-world-page .game-stage .world-agent {
@@ -2209,6 +2576,16 @@ body.research-world-page {
     }
 }
 
+@keyframes character-sprite-stride {
+    0%,
+    100% {
+        transform: translateY(0) rotate(-1deg);
+    }
+    50% {
+        transform: translateY(-2px) rotate(1deg);
+    }
+}
+
 @keyframes interaction-pulse {
     0%,
     100% {
@@ -2224,13 +2601,13 @@ body.research-world-page {
 @media (max-width: 760px) {
     .research-world-page .world-agent-core,
     .research-world-page .game-stage .world-agent-core {
-        width: 28px;
-        height: 42px;
+        width: 34px;
+        height: 49px;
     }
 
     .research-world-page .world-agent.is-active .world-agent-core,
     .research-world-page .game-stage .world-agent.is-active .world-agent-core {
-        width: 32px;
-        height: 48px;
+        width: 38px;
+        height: 55px;
     }
 }

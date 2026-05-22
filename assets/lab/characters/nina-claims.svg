@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 144" role="img" aria-labelledby="title desc">
+    <title id="title">Dr. Nina Claims</title>
+    <desc id="desc">A 3/4-view game sprite of Dr. Nina Claims, a regulatory scientist with blue glasses and a claims tablet.</desc>
+    <defs>
+        <linearGradient id="skin" x1="35" y1="27" x2="73" y2="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d39a78"/><stop offset="0.62" stop-color="#a7654e"/><stop offset="1" stop-color="#704032"/></linearGradient>
+        <linearGradient id="hair" x1="24" y1="14" x2="84" y2="82" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#172238"/><stop offset="0.55" stop-color="#0d1324"/><stop offset="1" stop-color="#05070d"/></linearGradient>
+        <linearGradient id="coat" x1="29" y1="68" x2="84" y2="123" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f5f8ff"/><stop offset="0.54" stop-color="#dce5f2"/><stop offset="1" stop-color="#b8c4d5"/></linearGradient>
+        <linearGradient id="accent" x1="33" y1="49" x2="92" y2="113" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c7ddff"/><stop offset="0.5" stop-color="#8fb8ff"/><stop offset="1" stop-color="#315a9f"/></linearGradient>
+        <filter id="sprite-shadow" x="-25%" y="-16%" width="150%" height="135%"><feDropShadow dx="0" dy="6" stdDeviation="3.8" flood-color="#000" flood-opacity="0.45"/></filter>
+    </defs>
+    <ellipse cx="56" cy="132" rx="31" ry="8" fill="#000" opacity="0.34"/>
+    <g filter="url(#sprite-shadow)" stroke="#11161b" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M28 76c-7 10-9 25-6 41 1 5 5 8 10 7s8-5 7-10c-2-10-1-21 5-30z" fill="#dce5f2" stroke-width="4"/>
+        <path d="M74 76c12 7 20 20 23 39 1 5-2 9-7 10s-9-2-10-7c-2-12-7-21-16-27z" fill="#dce5f2" stroke-width="4"/>
+        <path d="M32 68c7-8 16-12 28-12 13 0 24 5 31 14l-6 51c-6 8-15 12-28 12-12 0-22-4-29-12z" fill="url(#coat)" stroke-width="4"/>
+        <path d="M38 70l17 21-11 39c-7-1-12-4-16-9z" fill="#fbfdff" opacity="0.96"/>
+        <path d="M83 70L62 92l13 38c5-2 9-5 11-9z" fill="#c9d4e4" opacity="0.95"/>
+        <path d="M57 62l4 70" fill="none" stroke-width="4" opacity="0.88"/>
+        <path d="M47 72l13 22 16-22" fill="none" stroke="url(#accent)" stroke-width="6"/>
+        <path d="M70 92h22v28H70z" fill="#132033" stroke-width="3"/>
+        <path d="M75 99h12M75 106h8" stroke="#8fb8ff" stroke-width="2.5"/>
+        <path d="M84 112l5 5 10-13" fill="none" stroke="#8fb8ff" stroke-width="3"/>
+        <path d="M39 118h14v15c0 5-4 8-10 8s-9-3-9-8z" fill="#182132" stroke-width="4"/>
+        <path d="M61 117h15v15c0 6-4 9-10 9s-10-3-10-9z" fill="#182132" stroke-width="4"/>
+        <path d="M31 135c7-5 17-5 24-1v6H27c0-2 1-4 4-5z" fill="#0c0f13" stroke-width="3"/>
+        <path d="M56 134c8-4 18-4 25 1 3 1 4 3 4 5H56z" fill="#0c0f13" stroke-width="3"/>
+        <path d="M25 39c2-18 16-30 34-30 23 0 39 16 38 39-1 22-16 37-37 37-20 0-35-17-35-46z" fill="url(#hair)" stroke-width="4"/>
+        <path d="M29 47c0-21 13-35 32-35 20 0 34 15 34 36 0 23-14 38-34 38S29 70 29 47z" fill="url(#skin)" stroke-width="4"/>
+        <path d="M28 43c3-22 18-35 39-35 19 0 31 12 32 33-18 2-34-2-48-13-4 8-12 13-23 15z" fill="url(#hair)" stroke-width="4"/>
+        <path d="M27 42c-5 11-5 27 2 36-10-4-14-21-9-32 2-4 4-5 7-4z" fill="url(#hair)" stroke-width="4"/>
+        <path d="M38 50h17c5 0 8 3 8 8v5c0 5-3 8-8 8H39c-5 0-8-3-8-8v-5c0-5 3-8 7-8z" fill="#12191f" stroke="url(#accent)" stroke-width="4"/>
+        <path d="M66 50h15c5 0 8 3 8 8v5c0 5-3 8-8 8H66c-5 0-8-3-8-8v-5c0-5 3-8 8-8z" fill="#12191f" stroke="url(#accent)" stroke-width="4"/>
+        <path d="M59 60h4" stroke="#8fb8ff" stroke-width="4"/>
+        <path d="M39 55h11M68 55h9" stroke="#d8e7ff" stroke-width="3" opacity="0.84"/>
+        <path d="M51 77c7 4 15 4 22-1" fill="none" stroke="#4d251e" stroke-width="3"/>
+        <path d="M35 80c-4 9-5 22-1 36" fill="none" stroke="#fbfdff" stroke-width="4" opacity="0.72"/>
+    </g>
+</svg>

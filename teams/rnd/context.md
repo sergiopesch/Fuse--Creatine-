@@ -11,6 +11,9 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 ## Active Work
 
 - [ ] Treat FUSE Research Lab World outputs as internal hypotheses until wet-lab evidence and Legal review upgrade them
+- [ ] Review the OpenAI-backed daily Research Lab discovery brief before promoting any candidate route to physical prototype work
+- [ ] Use the weekly GPT-5.5 readiness review to decide continue/pause/pivot/kill before prototype spend
+- [ ] Use Admin Console AI Lab Control to pause automation or manually rerun daily/weekly reviews when R&D needs an ad hoc decision pass
 - [ ] Await FTO analysis results from Legal
 - [ ] Evaluate alternative encapsulation methods
 - [ ] Prototype hot-water dissolution routes for compact creatine format
@@ -19,6 +22,10 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 
 ## Recent Completions
 
+- ✅ Research Lab now records daily agent discoveries as structured internal R&D hypotheses with batch telemetry, memory retrieval, reflections, and evidence gates
+- ✅ Daily Research Lab synthesis now proposes next physical tests, ranked R&D/legal actions, risks, and Sergio decision points while keeping outputs internal
+- ✅ Weekly GPT-5.5 development readiness review now scores whether FUSE should continue, pause, pivot, or kill the current formulation direction before spend
+- ✅ Research Lab reviews can now be manually triggered from the admin backend door without waiting for scheduled cron
 - ✅ Instant-dissolving creatine chemistry research memo completed (`research/science/instant-dissolving-creatine.md`)
 - ✅ FUSE Research Lab World rebuilt as an internal living-agent simulation for formulation hypotheses, disputes, evidence gates, and next experiments
 - ✅ Scientific feasibility assessment complete

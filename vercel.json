@@ -188,9 +188,23 @@
     }
   ],
   "functions": {
+    "api/research-lab-weekly.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
     "api/**/*.js": {
       "maxDuration": 15,
       "memory": 1024
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/research-lab-daily",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/research-lab-weekly",
+      "schedule": "0 8 * * 1"
+    }
+  ]
 }

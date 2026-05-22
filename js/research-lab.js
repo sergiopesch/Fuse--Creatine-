@@ -44,6 +44,61 @@
         ['pipette', 'Pipette', 'Lab Assistant Agent', 'central-rail', '#d7ed69', 51, 50],
     ];
 
+    const defaultCharacterProfile = {
+        skin: '#c99b78',
+        hair: '#171a1c',
+        coat: '#f4f1e9',
+        sleeve: '#ece8dd',
+        trousers: '#15191d',
+        shoes: '#101214',
+        accent: null,
+        glasses: '#d6f5ff',
+        hairStyle: 'cap',
+        accessory: 'none',
+        detail: 'badge',
+    };
+
+    const characterProfiles = {
+        mira: {
+            asset: 'assets/lab/characters/mira-solvay.svg',
+            skin: '#b8795d',
+            hair: '#191416',
+            coat: '#f7f2e9',
+            sleeve: '#efe8db',
+            trousers: '#252b31',
+            shoes: '#101214',
+            accent: '#ff3b30',
+            glasses: '#bcefff',
+            hairStyle: 'bob',
+            accessory: 'goggles-vial',
+            detail: 'capsule',
+        },
+        theo: {
+            asset: 'assets/lab/characters/theo-roast.svg',
+            accent: '#c58b59',
+        },
+        ava: {
+            asset: 'assets/lab/characters/ava-palate.svg',
+            accent: '#f5b56b',
+        },
+        max: {
+            asset: 'assets/lab/characters/max-flux.svg',
+            accent: '#44d7b6',
+        },
+        nina: {
+            asset: 'assets/lab/characters/nina-claims.svg',
+            accent: '#8fb8ff',
+        },
+        jules: {
+            asset: 'assets/lab/characters/jules-batch.svg',
+            accent: '#b890ff',
+        },
+        pipette: {
+            asset: 'assets/lab/characters/pipette.svg',
+            accent: '#d7ed69',
+        },
+    };
+
     const state = {
         data: null,
         selectedAgentId: 'mira',
@@ -64,13 +119,69 @@
         return div.innerHTML;
     }
 
+    function safeToken(value, fallback) {
+        const token = String(value || '');
+        return /^[a-z0-9-]+$/i.test(token) ? token : fallback;
+    }
+
+    function safeHex(value, fallback) {
+        const color = String(value || '');
+        return /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(color) ? color : fallback;
+    }
+
+    function safeCharacterAsset(value) {
+        const asset = String(value || '');
+        return /^assets\/lab\/characters\/[a-z0-9-]+\.svg$/i.test(asset) ? asset : '';
+    }
+
+    function resolveCharacterProfile(agent) {
+        const custom = characterProfiles[agent.id] || {};
+        const profile = {
+            ...defaultCharacterProfile,
+            ...custom,
+            ...(agent.character || {}),
+        };
+        profile.accent = profile.accent || agent.color || defaultCharacterProfile.accent;
+        return profile;
+    }
+
+    function characterStyle(profile) {
+        return [
+            ['--char-skin', safeHex(profile.skin, defaultCharacterProfile.skin)],
+            ['--char-hair', safeHex(profile.hair, defaultCharacterProfile.hair)],
+            ['--char-coat', safeHex(profile.coat, defaultCharacterProfile.coat)],
+            ['--char-sleeve', safeHex(profile.sleeve, defaultCharacterProfile.sleeve)],
+            ['--char-trousers', safeHex(profile.trousers, defaultCharacterProfile.trousers)],
+            ['--char-shoes', safeHex(profile.shoes, defaultCharacterProfile.shoes)],
+            ['--char-accent', safeHex(profile.accent, '#ff3b30')],
+            ['--char-glasses', safeHex(profile.glasses, defaultCharacterProfile.glasses)],
+        ]
+            .map(([name, value]) => `${name}: ${value}`)
+            .join('; ');
+    }
+
     function labCharacterMarkup(agent, variant = 'world') {
         const safeName = escapeHtml(agent.name);
+        const profile = resolveCharacterProfile(agent);
+        const hairStyle = safeToken(profile.hairStyle, defaultCharacterProfile.hairStyle);
+        const accessory = safeToken(profile.accessory, defaultCharacterProfile.accessory);
+        const detail = safeToken(profile.detail, defaultCharacterProfile.detail);
+        const asset = safeCharacterAsset(profile.asset);
+        if (asset) {
+            return `
+                <span class="lab-character lab-character-${variant} lab-character-sprite" style="${characterStyle(profile)}" aria-label="${safeName}">
+                    <span class="lab-character-shadow"></span>
+                    <img class="lab-character-image" src="${asset}" alt="" decoding="async" draggable="false" />
+                </span>
+            `;
+        }
         return `
-            <span class="lab-character lab-character-${variant}" aria-label="${safeName}">
+            <span class="lab-character lab-character-${variant} character-hair-${hairStyle} character-accessory-${accessory} character-detail-${detail}" style="${characterStyle(profile)}" aria-label="${safeName}">
                 <span class="lab-character-shadow"></span>
                 <span class="lab-character-head"></span>
                 <span class="lab-character-hair"></span>
+                <span class="lab-character-face"></span>
+                <span class="lab-character-glasses"></span>
                 <span class="lab-character-body">
                     <span class="lab-character-lapel"></span>
                     <span class="lab-character-badge"></span>
@@ -79,6 +190,7 @@
                 <span class="lab-character-arm right"></span>
                 <span class="lab-character-leg left"></span>
                 <span class="lab-character-leg right"></span>
+                <span class="lab-character-tool"></span>
             </span>
         `;
     }
@@ -146,11 +258,13 @@
             version: 2,
             mode: 'living research world',
             labClock: 0,
+            labDay: 47,
             mission:
-                'Find a manufacturable way to make creatine monohydrate dissolve quickly in hot coffee while keeping the coffee experience clean and maximising supplement absorption and performance.',
+                'Find a manufacturable way to make creatine monohydrate dissolve quickly in hot coffee while keeping the coffee experience clean, dose-accurate, and evidence-gated.',
             guardrail:
                 'Agent findings are internal hypotheses until wet-lab and legal review upgrade the evidence level.',
             stations: bootstrapStations,
+            labObjects: [],
             agents,
             hypotheses: [
                 {
@@ -177,6 +291,8 @@
                 },
             ],
             memories: [],
+            reflections: [],
+            batchResults: [],
             disputes: [
                 {
                     id: 'bootstrap-dispute',
@@ -187,6 +303,16 @@
                 },
             ],
             experimentQueue: [],
+            dailyDiscovery: {
+                status: 'waiting',
+                headline: 'Daily autonomous discovery has not run yet.',
+                provider: 'deterministic',
+                topInsight: 'Waiting for the first daily AI synthesis.',
+            },
+            weeklyReview: {
+                status: 'waiting',
+                headline: 'Weekly GPT-5.5 development review has not run yet.',
+            },
         };
     }
 
@@ -476,13 +602,47 @@
                 `;
             })
             .join('');
+        const planSteps = (agent.activePlan?.steps || [])
+            .map(step => {
+                return `
+                    <li>
+                        <span>L${escapeHtml(step.level)}</span>
+                        <strong>${escapeHtml(step.status)}</strong>
+                        <p>${escapeHtml(step.label)}</p>
+                    </li>
+                `;
+            })
+            .join('');
+        const retrieved = (agent.retrievedMemories || [])
+            .map(memory => {
+                return `
+                    <li>
+                        <span>${escapeHtml(memory.type || 'memory')} ${escapeHtml(memory.retrievalScore || 0)}</span>
+                        <p>${escapeHtml(memory.summary)}</p>
+                    </li>
+                `;
+            })
+            .join('');
+        const scratch = agent.scratch || {};
 
         els.selectedAgentDetail.innerHTML = `
             <article class="selected-detail" style="--agent-color: ${escapeHtml(agent.color)}">
                 <strong>${escapeHtml(agent.role)}</strong>
                 <p>${escapeHtml(agent.intent)}</p>
                 <p>${escapeHtml(agent.reflection)}</p>
+                <div class="agent-scratch">
+                    <span>${escapeHtml(scratch.specialty || 'Research specialty')}</span>
+                    <p>${escapeHtml(scratch.directive || 'Working from current lab objective.')}</p>
+                </div>
                 <div class="need-grid">${needs}</div>
+                <div class="cognition-block">
+                    <span>Retrieved memories</span>
+                    <ul>${retrieved || '<li><p>No relevant memories retrieved yet.</p></li>'}</ul>
+                </div>
+                <div class="cognition-block">
+                    <span>Current plan</span>
+                    <ul>${planSteps || '<li><p>No active plan assigned.</p></li>'}</ul>
+                </div>
             </article>
         `;
     }
@@ -530,6 +690,7 @@
                         <article class="memory-item">
                             <div class="memory-meta">
                                 <span>${escapeHtml(formatTime(memory.timestamp))}</span>
+                                <span>${escapeHtml(memory.type || 'memory')}</span>
                                 <span>${escapeHtml(memory.evidenceLevel)}</span>
                                 <span>importance ${escapeHtml(memory.importance)}</span>
                             </div>
@@ -555,12 +716,81 @@
                                 <strong>${escapeHtml(item.title)}</strong>
                                 <p>${escapeHtml(item.reason)}</p>
                             </div>
-                            <em>${escapeHtml(item.owner)}</em>
+                            <em>${escapeHtml(item.priority || item.owner)}</em>
                         </article>
                     `;
                   })
                   .join('')
             : '<p class="is-empty">No queued experiments.</p>';
+    }
+
+    function renderDailyDiscovery() {
+        const discovery = state.data.dailyDiscovery || {};
+        els.dailyProvider.textContent = discovery.model || discovery.provider || 'Deterministic';
+
+        const findings = (discovery.agentFindings || [])
+            .slice(0, 4)
+            .map(item => {
+                const agent = getAgent(item.agentId);
+                return `
+                    <li>
+                        <span>${escapeHtml(agent?.name || item.agentId)} · ${escapeHtml(item.confidence || 'watch')}</span>
+                        <p>${escapeHtml(item.finding)}</p>
+                    </li>
+                `;
+            })
+            .join('');
+        const nextTest = discovery.nextPhysicalTest;
+
+        els.dailyDiscoveryDetail.innerHTML = `
+            <article class="daily-discovery-card">
+                <strong>${escapeHtml(discovery.headline || 'Daily discovery has not run yet.')}</strong>
+                <p>${escapeHtml(discovery.topInsight || 'The lab is waiting for the next daily synthesis run.')}</p>
+                ${
+                    nextTest
+                        ? `<div class="daily-test">
+                            <span>Next physical test</span>
+                            <strong>${escapeHtml(nextTest.title)}</strong>
+                            <p>${escapeHtml(nextTest.successCriteria)}</p>
+                        </div>`
+                        : ''
+                }
+                <ul>${findings || '<li><p>No model-backed findings recorded yet.</p></li>'}</ul>
+            </article>
+        `;
+    }
+
+    function renderWeeklyReview() {
+        const review = state.data.weeklyReview || {};
+        els.weeklyProvider.textContent = review.model || review.provider || 'Waiting';
+
+        const tests = (review.requiredRealWorldTests || [])
+            .slice(0, 3)
+            .map(test => {
+                return `
+                    <li>
+                        <span>${escapeHtml(test.title)}</span>
+                        <p>${escapeHtml(test.passCriteria)}</p>
+                    </li>
+                `;
+            })
+            .join('');
+
+        els.weeklyReviewDetail.innerHTML = `
+            <article class="weekly-review-card">
+                <div class="weekly-score">
+                    <span>${escapeHtml(review.developmentRecommendation || 'waiting')}</span>
+                    <strong>${escapeHtml(review.readinessScore ?? '--')}</strong>
+                </div>
+                <strong>${escapeHtml(review.headline || 'Weekly development review has not run yet.')}</strong>
+                <p>${escapeHtml(review.rationale || 'The lab is waiting for its first weekly GPT-5.5 readiness review.')}</p>
+                <div class="weekly-decision">
+                    <span>Sergio decision</span>
+                    <p>${escapeHtml(review.sergioDecisionNeeded || 'No decision queued yet.')}</p>
+                </div>
+                <ul>${tests || '<li><p>No required physical tests recorded yet.</p></li>'}</ul>
+            </article>
+        `;
     }
 
     function renderTopline() {
@@ -570,10 +800,13 @@
         const dispute = state.data.disputes?.[0];
 
         els.worldMode.textContent = state.isRunning ? state.data.mode : 'Paused';
+        els.labDay.textContent = `Day ${escapeHtml(state.data.labDay || 47)}`;
         els.labClock.textContent = formatClock(state.data.labClock);
         els.missionText.textContent = state.data.mission;
         els.activeExperiment.textContent = current.title || 'Loading';
         els.evidenceGate.textContent = current.evidenceLevel || 'Hypothesis';
+        els.dailyRun.textContent = state.data.dailyDiscovery?.lastRunDate || 'Waiting';
+        els.weeklyRun.textContent = state.data.weeklyReview?.lastRunDate || 'Waiting';
         els.activeDispute.textContent = dispute ? dispute.title : 'None';
         els.guardrailText.textContent = state.data.guardrail;
         els.experimentProgress.style.setProperty(
@@ -596,6 +829,8 @@
         renderConversations();
         renderMemories();
         renderQueue();
+        renderDailyDiscovery();
+        renderWeeklyReview();
     }
 
     function cacheElements() {
@@ -605,7 +840,9 @@
             'advanceWorld',
             'toggleWorld',
             'resetWorld',
+            'labDay',
             'labClock',
+            'dailyRun',
             'agentCount',
             'agentRoster',
             'activeExperiment',
@@ -626,6 +863,11 @@
             'memoryFeed',
             'queueCount',
             'experimentQueue',
+            'dailyProvider',
+            'dailyDiscoveryDetail',
+            'weeklyRun',
+            'weeklyProvider',
+            'weeklyReviewDetail',
         ].forEach(id => {
             els[id] = $(id);
         });

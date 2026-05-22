@@ -1,27 +1,12 @@
 const { list } = require('@vercel/blob');
 const crypto = require('crypto');
 const { decrypt } = require('./_lib/crypto');
+const { authenticateAdminRequest } = require('./_lib/admin-auth');
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 const MAX_EMAIL_LENGTH = 254;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function getHeaderValue(value) {
-    if (Array.isArray(value)) return value[0] || '';
-    if (typeof value === 'string') return value;
-    return '';
-}
-
-function getAuthToken(req) {
-    const authHeader = getHeaderValue(req.headers.authorization);
-    if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-        return authHeader.slice(7).trim();
-    }
-
-    const altHeader = getHeaderValue(req.headers['x-admin-token']);
-    return altHeader.trim();
-}
 
 function normalizeString(value) {
     if (typeof value !== 'string') return '';
@@ -38,14 +23,6 @@ function isValidEmail(email) {
 
 function hashEmail(email) {
     return crypto.createHash('sha256').update(email).digest('hex').slice(0, 16);
-}
-
-function tokensMatch(provided, expected) {
-    if (!provided || !expected) return false;
-    const providedBuffer = Buffer.from(provided);
-    const expectedBuffer = Buffer.from(expected);
-    if (providedBuffer.length !== expectedBuffer.length) return false;
-    return crypto.timingSafeEqual(providedBuffer, expectedBuffer);
 }
 
 async function fetchSignup(blob) {
@@ -120,14 +97,11 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const adminToken = process.env.ADMIN_TOKEN;
-    if (!adminToken) {
-        return res.status(500).json({ error: 'Admin access is not configured' });
-    }
-
-    const providedToken = getAuthToken(req);
-    if (!tokensMatch(providedToken, adminToken)) {
-        return res.status(401).json({ error: 'Unauthorized' });
+    const auth = authenticateAdminRequest(req);
+    if (!auth.authenticated) {
+        return res.status(auth.error.includes('configured') ? 500 : 401).json({
+            error: auth.error || 'Unauthorized',
+        });
     }
 
     const limitParam = parseInt(req.query && req.query.limit ? req.query.limit : '', 10);

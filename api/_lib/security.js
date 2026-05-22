@@ -7,7 +7,7 @@
  */
 
 const crypto = require('crypto');
-const { Redis } = require('@upstash/redis');
+const { createRedisClient } = require('./redis-client');
 
 // ============================================================================
 // CONFIGURATION
@@ -34,10 +34,7 @@ const CONFIG = {
 // REDIS & IN-MEMORY STORES
 // ============================================================================
 
-const redis =
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-        ? Redis.fromEnv()
-        : null;
+const redis = createRedisClient();
 
 const auditLog = [];
 

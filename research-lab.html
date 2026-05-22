@@ -24,8 +24,8 @@
             rel="stylesheet"
         />
         <link rel="stylesheet" href="css/style.css" />
-        <link rel="stylesheet" href="css/research-lab.css?v=lab-ux-20260520" />
-        <script defer src="js/research-lab.js?v=lab-ux-20260520"></script>
+        <link rel="stylesheet" href="css/research-lab.css?v=lab-characters-cast-20260522" />
+        <script defer src="js/research-lab.js?v=lab-characters-cast-20260522"></script>
     </head>
     <body class="research-world-page">
         <a href="#world-main" class="skip-link">Skip to main content</a>
@@ -36,7 +36,7 @@
                 <strong>Research Lab World</strong>
             </a>
             <div class="lab-meta-strip" aria-label="Lab status">
-                <span>Day 47</span>
+                <span id="labDay">Day 47</span>
                 <span id="labClock">Tick 000</span>
                 <span>Batch 3</span>
                 <span>Phase pilot</span>
@@ -70,6 +70,14 @@
                     <div class="game-status-card compact">
                         <span>Evidence gate</span>
                         <strong id="evidenceGate">Hypothesis</strong>
+                    </div>
+                    <div class="game-status-card compact">
+                        <span>Daily discovery</span>
+                        <strong id="dailyRun">Waiting</strong>
+                    </div>
+                    <div class="game-status-card compact">
+                        <span>Weekly review</span>
+                        <strong id="weeklyRun">Waiting</strong>
                     </div>
                     <div class="command-strip game-controls" aria-label="Simulation controls">
                         <button class="control-button primary" id="advanceWorld" type="button">
@@ -111,6 +119,60 @@
                     </section>
                 </div>
 
+                <div class="cognition-grid" aria-label="Agent cognition and lab notebook">
+                    <section class="lower-panel cognition-panel" aria-label="Selected agent cognition">
+                        <div class="panel-title">
+                            <span>Agent cognition</span>
+                            <strong id="selectedAgentName">Selected agent</strong>
+                        </div>
+                        <div class="cognition-station">
+                            <span>Station</span>
+                            <strong id="selectedAgentStation">--</strong>
+                        </div>
+                        <div id="selectedAgentDetail"></div>
+                    </section>
+
+                    <section class="lower-panel" aria-label="Hypothesis scoreboard">
+                        <div class="panel-title">
+                            <span>Hypotheses</span>
+                            <strong id="missionStatus">Nominal</strong>
+                        </div>
+                        <div class="hypothesis-list" id="hypothesisList"></div>
+                    </section>
+
+                    <section class="lower-panel" aria-label="Memory stream">
+                        <div class="panel-title">
+                            <span>Memory stream</span>
+                            <strong id="memoryCount">0</strong>
+                        </div>
+                        <div class="memory-feed" id="memoryFeed"></div>
+                    </section>
+
+                    <section class="lower-panel" aria-label="Experiment queue">
+                        <div class="panel-title">
+                            <span>Next experiments</span>
+                            <strong id="queueCount">0</strong>
+                        </div>
+                        <div class="experiment-queue" id="experimentQueue"></div>
+                    </section>
+
+                    <section class="lower-panel daily-panel" aria-label="Daily AI discovery">
+                        <div class="panel-title">
+                            <span>Daily AI synthesis</span>
+                            <strong id="dailyProvider">Deterministic</strong>
+                        </div>
+                        <div id="dailyDiscoveryDetail"></div>
+                    </section>
+
+                    <section class="lower-panel weekly-panel" aria-label="Weekly development review">
+                        <div class="panel-title">
+                            <span>Weekly GPT-5.5 review</span>
+                            <strong id="weeklyProvider">Waiting</strong>
+                        </div>
+                        <div id="weeklyReviewDetail"></div>
+                    </section>
+                </div>
+
                 <div class="game-footer">
                     <div class="experiment-progress" aria-label="Experiment progress">
                         <span id="experimentProgress"></span>
@@ -123,18 +185,6 @@
                         <span>Current dispute</span>
                         <strong id="activeDispute">None</strong>
                     </p>
-                </div>
-
-                <div class="offscreen-world-data" aria-hidden="true">
-                    <strong id="missionStatus">Nominal</strong>
-                    <div class="hypothesis-list" id="hypothesisList"></div>
-                    <span id="selectedAgentName">Selected agent</span>
-                    <strong id="selectedAgentStation">--</strong>
-                    <div id="selectedAgentDetail"></div>
-                    <strong id="memoryCount">0</strong>
-                    <div class="memory-feed" id="memoryFeed"></div>
-                    <strong id="queueCount">0</strong>
-                    <div class="experiment-queue" id="experimentQueue"></div>
                 </div>
             </section>
         </main>
