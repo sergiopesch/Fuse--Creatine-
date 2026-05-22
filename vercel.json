@@ -159,6 +159,30 @@
       "destination": "/api/costs"
     },
     {
+      "source": "/api/admin-login",
+      "destination": "/api/admin?__fuseRoute=login"
+    },
+    {
+      "source": "/api/admin-passkey",
+      "destination": "/api/admin?__fuseRoute=passkey"
+    },
+    {
+      "source": "/api/admin-signups",
+      "destination": "/api/admin?__fuseRoute=signups"
+    },
+    {
+      "source": "/api/research-lab-admin",
+      "destination": "/api/admin?__fuseRoute=lab-admin"
+    },
+    {
+      "source": "/api/research-lab-daily",
+      "destination": "/api/admin?__fuseRoute=lab-daily"
+    },
+    {
+      "source": "/api/research-lab-weekly",
+      "destination": "/api/admin?__fuseRoute=lab-weekly"
+    },
+    {
       "source": "/api/research-lab",
       "destination": "/api/orchestrator?__fuseRoute=research-lab"
     },
@@ -188,7 +212,7 @@
     }
   ],
   "functions": {
-    "api/research-lab-weekly.js": {
+    "api/admin.js": {
       "maxDuration": 60,
       "memory": 1024
     },

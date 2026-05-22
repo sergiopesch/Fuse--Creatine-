@@ -1,6 +1,7 @@
 module.exports = {
     testEnvironment: 'node',
     testMatch: ['**/__tests__/**/*.js', '**/*.test.js'],
+    modulePathIgnorePatterns: ['<rootDir>/.vercel/'],
     collectCoverageFrom: [
         'api/**/*.js',
         '!api/**/*.test.js',
