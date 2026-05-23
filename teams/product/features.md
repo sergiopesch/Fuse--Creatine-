@@ -53,3 +53,27 @@
 **Description**: Living scientist-agent lab for formulation hypotheses, social research interactions, evidence gates, and experiment queues.
 
 **Status**: ✅ Live. Legacy standalone Agent Command Center page retired.
+
+### Feature: Daily Formulation Discovery Board
+
+**Description**: One daily synthesis call ranks the current formulation route and updates a four-card board for dissolution speed, taste neutrality, manufacturing path, and Legal/IP safety.
+
+**Technical Requirement**: Daily output must remain internal, evidence-gated, and tied to next physical test, scorecard movement, and Sergio decision needed.
+
+**Status**: ✅ Live in Research Lab World.
+
+### Feature: Progress-Governed Daily Lab Loop
+
+**Description**: The lab advances every day through deterministic ticks, then assesses progress signs before deciding whether to spend a model-backed synthesis call.
+
+**Technical Requirement**: Progress signs include route score movement, new batch telemetry, blocked evidence gates, Sergio decision signals, and next-test clarity. If signals stay below threshold, the lab records progress without model spend.
+
+**Status**: ✅ Live in Research Lab World.
+
+### Feature: Discovery Replay Simulation
+
+**Description**: Research Lab World replays the latest internal finding as station beacons and scientist-agent beats so Sergio can see how the route moved through formulation, coffee, sensory, evidence, manufacturing, and claims review.
+
+**Technical Requirement**: Replay must clearly label outputs as internal simulation hypotheses until wet-lab and Legal review upgrades them.
+
+**Status**: ✅ Live in Research Lab World.

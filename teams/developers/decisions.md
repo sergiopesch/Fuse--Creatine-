@@ -6,6 +6,26 @@ Each decision follows: **Date | Decision | Rationale | Impact**
 
 ---
 
+## 2026-05-23 | Research Lab Formulation Discovery Board
+
+**Decision**: Extend the daily Research Lab discovery loop with a formulation board and visual replay layer.
+
+**Rationale**: Sergio wants one daily model-backed call to advance formulation progress while the world visualizes the finding through moving characters. The daily call now has to produce formulation-route ranking, four scorecards, and replay beats; deterministic state enrichment keeps the UI useful even when OpenAI is disabled.
+
+**Impact**: `api/_lib/research-lab-brain.js` now requests `leadingRoute`, `scorecard`, and `simulationReplay` from the daily schema. `api/_lib/research-lab-state.js` derives `formulationBoard` and `discoveryReplay` from hypotheses, batch telemetry, daily synthesis, and evidence gates. `/research-lab` renders scorecards for dissolution speed, taste neutrality, manufacturing path, Legal/IP safety, next physical test, evidence gates, a discovery replay panel, and animated station beacons.
+
+---
+
+## 2026-05-23 | Progress-Governed Daily Lab Consumption
+
+**Decision**: Add a progress assessment layer before the daily model-backed synthesis.
+
+**Rationale**: The lab should show daily movement without spending model credits blindly. Deterministic ticks always advance the world and record evidence signals; the model synthesis is recommended only when score movement, batch telemetry, blocked gates, next-test clarity, or Sergio decision signals cross the configured threshold.
+
+**Impact**: `runDailyDiscovery` now records `progressAssessment`, `modelCallUsed`, and `modelCallSkippedReason`. `labControls` now includes `progressDrivenSynthesis` and `progressSignalThreshold`. `/research-lab` surfaces the progress policy inside the daily synthesis panel so Sergio can see why model spend was used or gated.
+
+---
+
 ## 2026-05-22 | Research Lab Generative Agent Runtime
 
 **Decision**: Port StanfordHCI `genagents` concepts into the existing FUSE Research Lab World using the current Node/Vercel stack.

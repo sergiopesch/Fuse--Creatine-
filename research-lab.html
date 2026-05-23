@@ -24,8 +24,8 @@
             rel="stylesheet"
         />
         <link rel="stylesheet" href="css/style.css" />
-        <link rel="stylesheet" href="css/research-lab.css?v=lab-characters-cast-20260522" />
-        <script defer src="js/research-lab.js?v=lab-characters-cast-20260522"></script>
+        <link rel="stylesheet" href="css/research-lab.css?v=formulation-board-20260523" />
+        <script defer src="js/research-lab.js?v=formulation-board-20260523"></script>
     </head>
     <body class="research-world-page">
         <a href="#world-main" class="skip-link">Skip to main content</a>
@@ -117,9 +117,25 @@
                         </div>
                         <div class="conversation-feed" id="conversationFeed"></div>
                     </section>
+
+                    <section class="lower-panel replay-panel" aria-label="Discovery replay">
+                        <div class="panel-title">
+                            <span>Discovery replay</span>
+                            <strong id="replayCount">0 beats</strong>
+                        </div>
+                        <div id="discoveryReplayDetail"></div>
+                    </section>
                 </div>
 
                 <div class="cognition-grid" aria-label="Agent cognition and lab notebook">
+                    <section class="lower-panel formulation-board-panel" aria-label="Formulation discovery board">
+                        <div class="panel-title">
+                            <span>Formulation board</span>
+                            <strong id="formulationBoardState">Waiting</strong>
+                        </div>
+                        <div id="formulationBoardDetail"></div>
+                    </section>
+
                     <section class="lower-panel cognition-panel" aria-label="Selected agent cognition">
                         <div class="panel-title">
                             <span>Agent cognition</span>

@@ -1,6 +1,6 @@
 # R&D Team — Current Context
 
-**Last Updated**: 2026-05-20
+**Last Updated**: 2026-05-23
 **Team Code**: R&D
 **Orchestration Mode**: manual
 
@@ -14,6 +14,9 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 - [ ] Review the OpenAI-backed daily Research Lab discovery brief before promoting any candidate route to physical prototype work
 - [ ] Use the weekly GPT-5.5 readiness review to decide continue/pause/pivot/kill before prototype spend
 - [ ] Use Admin Console AI Lab Control to pause automation or manually rerun daily/weekly reviews when R&D needs an ad hoc decision pass
+- [ ] Review the new Research Lab formulation discovery board daily: dissolution speed, taste neutrality, manufacturing path, and Legal/IP safety
+- [ ] Review daily progress signals to confirm whether model-backed synthesis was used or gated
+- [ ] Treat the discovery replay as an explanation layer for the latest finding, not as wet-lab proof
 - [ ] Await FTO analysis results from Legal
 - [ ] Evaluate alternative encapsulation methods
 - [ ] Prototype hot-water dissolution routes for compact creatine format
@@ -23,6 +26,8 @@ Scientific feasibility validated. Creatine stability in hot coffee confirmed (<5
 ## Recent Completions
 
 - ✅ Research Lab now records daily agent discoveries as structured internal R&D hypotheses with batch telemetry, memory retrieval, reflections, and evidence gates
+- ✅ Research Lab daily synthesis now updates a four-card formulation discovery board and simulation replay path for the latest internal finding
+- ✅ Research Lab daily loop now records progress signals every day and gates model spend by configured threshold
 - ✅ Daily Research Lab synthesis now proposes next physical tests, ranked R&D/legal actions, risks, and Sergio decision points while keeping outputs internal
 - ✅ Weekly GPT-5.5 development readiness review now scores whether FUSE should continue, pause, pivot, or kill the current formulation direction before spend
 - ✅ Research Lab reviews can now be manually triggered from the admin backend door without waiting for scheduled cron

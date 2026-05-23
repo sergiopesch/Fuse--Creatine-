@@ -15,6 +15,7 @@ Rules:
 - Stay inside UK/EU supplement claim boundaries. Creatine evidence may be discussed internally, but delivery-system claims need validation.
 - Prefer manufacturable, low-IP-risk, dose-accurate monohydrate routes unless the data strongly suggests otherwise.
 - Generate concrete value for Sergio: what changed, what to test physically next, what risk needs review, and what decision is needed.
+- Act as a daily formulation discovery director: rank the current route, update the four formulation scorecards, and describe how the lab-world simulation should replay the finding.
 - Return only valid JSON matching the requested schema.`;
 
 function getModel(overrideModel = '') {
@@ -101,6 +102,8 @@ function compactStateForBrain(state, summaries) {
             hypothesisId: dispute.hypothesisId,
             status: dispute.status,
         })),
+        formulationBoard: state.formulationBoard,
+        progressAssessment: state.progressAssessment,
         dailyTicks: summaries,
         claimBoundaries: state.claimBoundaries,
     };
@@ -118,6 +121,9 @@ function discoverySchema() {
             'rankedActions',
             'risk',
             'decisionNeeded',
+            'leadingRoute',
+            'scorecard',
+            'simulationReplay',
         ],
         properties: {
             headline: { type: 'string' },
@@ -174,6 +180,89 @@ function discoverySchema() {
             },
             risk: { type: 'string' },
             decisionNeeded: { type: 'string' },
+            leadingRoute: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['hypothesisId', 'routeName', 'reasonForMovement', 'evidenceGap'],
+                properties: {
+                    hypothesisId: {
+                        type: 'string',
+                        enum: ['FUSE-POR-01', 'FUSE-WET-02', 'FUSE-EFF-03', 'FUSE-CYC-04'],
+                    },
+                    routeName: { type: 'string' },
+                    reasonForMovement: { type: 'string' },
+                    evidenceGap: { type: 'string' },
+                },
+            },
+            scorecard: {
+                type: 'array',
+                minItems: 4,
+                maxItems: 4,
+                items: {
+                    type: 'object',
+                    additionalProperties: false,
+                    required: ['key', 'label', 'score', 'status', 'rationale'],
+                    properties: {
+                        key: {
+                            type: 'string',
+                            enum: [
+                                'dissolutionSpeed',
+                                'tasteNeutrality',
+                                'manufacturingPath',
+                                'legalIpSafety',
+                            ],
+                        },
+                        label: { type: 'string' },
+                        score: {
+                            type: 'integer',
+                            minimum: 0,
+                            maximum: 100,
+                        },
+                        status: {
+                            type: 'string',
+                            enum: ['candidate', 'test next', 'watch', 'blocked'],
+                        },
+                        rationale: { type: 'string' },
+                    },
+                },
+            },
+            simulationReplay: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['title', 'beats'],
+                properties: {
+                    title: { type: 'string' },
+                    beats: {
+                        type: 'array',
+                        minItems: 3,
+                        maxItems: 5,
+                        items: {
+                            type: 'object',
+                            additionalProperties: false,
+                            required: ['stationId', 'agentId', 'action'],
+                            properties: {
+                                stationId: {
+                                    type: 'string',
+                                    enum: [
+                                        'central-rail',
+                                        'encapsulation',
+                                        'coffee',
+                                        'claims',
+                                        'evidence',
+                                        'sensory',
+                                        'pilot',
+                                    ],
+                                },
+                                agentId: {
+                                    type: 'string',
+                                    enum: ['mira', 'theo', 'ava', 'max', 'nina', 'jules', 'pipette'],
+                                },
+                                action: { type: 'string' },
+                            },
+                        },
+                    },
+                },
+            },
         },
     };
 }
@@ -304,6 +393,63 @@ function fallbackDiscovery(state, summaries, reason = 'OpenAI lab brain unavaila
         risk: 'The simulation can over-rank speed without accounting for real sensory grit and IP constraints.',
         decisionNeeded:
             'Sergio should decide whether the next physical prototype focuses on porous monohydrate only or includes a wetting-aid comparison arm.',
+        leadingRoute: {
+            hypothesisId: leading?.id || 'FUSE-POR-01',
+            routeName: leading?.name || 'Porous Monohydrate Agglomerate',
+            reasonForMovement:
+                'The route preserves monohydrate dose integrity while keeping the engineering problem focused on wetting and breakup.',
+            evidenceGap: 'Needs FTO clearance plus hot-water, coffee, sensory, and HPLC confirmation.',
+        },
+        scorecard: [
+            {
+                key: 'dissolutionSpeed',
+                label: 'Dissolution speed',
+                score: 70,
+                status: 'test next',
+                rationale: 'Simulation favours low-compression porous wetting, but no standardized bench result exists.',
+            },
+            {
+                key: 'tasteNeutrality',
+                label: 'Taste neutrality',
+                score: 66,
+                status: 'watch',
+                rationale: 'Coffee compatibility is plausible, but grit and aftertaste must be separated in sensory work.',
+            },
+            {
+                key: 'manufacturingPath',
+                label: 'Manufacturing path',
+                score: 72,
+                status: 'candidate',
+                rationale: 'A simple sachet-compatible agglomerate is more pilotable than complex encapsulation.',
+            },
+            {
+                key: 'legalIpSafety',
+                label: 'Legal/IP safety',
+                score: 45,
+                status: 'blocked',
+                rationale: 'FTO still controls any formulation investment or public technology language.',
+            },
+        ],
+        simulationReplay: {
+            title: 'Porous route review replay',
+            beats: [
+                {
+                    stationId: 'encapsulation',
+                    agentId: 'mira',
+                    action: 'Tune low-compression carrier structure around monohydrate wetting.',
+                },
+                {
+                    stationId: 'coffee',
+                    agentId: 'theo',
+                    action: 'Replay the disappearance run against black coffee conditions.',
+                },
+                {
+                    stationId: 'claims',
+                    agentId: 'nina',
+                    action: 'Keep <3s and zero-grit language behind evidence gates.',
+                },
+            ],
+        },
     };
 }
 

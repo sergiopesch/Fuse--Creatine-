@@ -313,6 +313,76 @@
                 status: 'waiting',
                 headline: 'Weekly GPT-5.5 development review has not run yet.',
             },
+            progressAssessment: {
+                status: 'deterministic-progress',
+                progressScore: 0,
+                threshold: 8,
+                modelCallRecommended: false,
+                reason: 'Waiting for the first daily progress assessment.',
+                signals: [],
+            },
+            formulationBoard: {
+                status: 'evidence-gated',
+                leadingRoute: {
+                    hypothesisId: 'FUSE-POR-01',
+                    routeName: 'Porous Monohydrate Agglomerate',
+                    reasonForMovement: 'Bootstrap route while the API state loads.',
+                    evidenceGap: 'Awaiting daily synthesis, FTO clearance, and wet-lab testing.',
+                },
+                scorecard: [
+                    {
+                        key: 'dissolutionSpeed',
+                        label: 'Dissolution speed',
+                        target: '<3s in hot coffee',
+                        score: 70,
+                        status: 'test next',
+                        rationale: 'Waiting for the latest lab telemetry.',
+                    },
+                    {
+                        key: 'tasteNeutrality',
+                        label: 'Taste neutrality',
+                        target: 'No detectable change',
+                        score: 66,
+                        status: 'watch',
+                        rationale: 'Waiting for the sensory route to load.',
+                    },
+                    {
+                        key: 'manufacturingPath',
+                        label: 'Manufacturing path',
+                        target: 'Doseable sachet route',
+                        score: 72,
+                        status: 'candidate',
+                        rationale: 'Simple agglomerate route remains the bootstrap candidate.',
+                    },
+                    {
+                        key: 'legalIpSafety',
+                        label: 'Legal/IP safety',
+                        target: 'FTO cleared',
+                        score: 45,
+                        status: 'blocked',
+                        rationale: 'FTO is the hard gate before investment.',
+                    },
+                ],
+                gates: [],
+            },
+            discoveryReplay: {
+                title: 'Current formulation finding replay',
+                subtitle: 'The world will replay the latest internal finding after the API state loads.',
+                activeBeatIndex: 0,
+                evidenceLevel: 'Internal simulation',
+                beats: [
+                    {
+                        order: 1,
+                        stationId: 'coffee',
+                        stationName: 'Coffee Matrix Bar',
+                        agentId: 'theo',
+                        agentName: 'Dr. Theo Roast',
+                        action: 'Check the disappearance run against coffee conditions.',
+                        x: 53.5,
+                        y: 17,
+                    },
+                ],
+            },
         };
     }
 
@@ -334,6 +404,18 @@
         return Math.round(
             values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length
         );
+    }
+
+    function statusClass(value) {
+        return safeToken(String(value || 'watch').toLowerCase().replace(/\s+/g, '-'), 'watch');
+    }
+
+    function modelPolicyLabel(discovery, progress) {
+        if (discovery.modelCallUsed) return 'model used';
+        if (discovery.status === 'deterministic-progress') return 'model gated';
+        if (discovery.status === 'fallback') return 'fallback';
+        if (progress.modelCallRecommended) return 'model recommended';
+        return 'model gated';
     }
 
     function setBusy(isBusy) {
@@ -512,7 +594,31 @@
             })
             .join('');
 
-        els.agentLayer.innerHTML = `${renderInteractionLink(activeConversation)}${renderedAgents}`;
+        els.agentLayer.innerHTML = `${renderReplayBeacons()}${renderInteractionLink(activeConversation)}${renderedAgents}`;
+    }
+
+    function renderReplayBeacons() {
+        const replay = state.data.discoveryReplay || {};
+        const beats = replay.beats || [];
+        const activeIndex = clamp(replay.activeBeatIndex, 0, Math.max(0, beats.length - 1));
+
+        return beats
+            .map((beat, index) => {
+                const station = getStation(beat.stationId);
+                const x = clamp(beat.x || (station ? station.x + station.w / 2 : 50), 4, 96);
+                const y = clamp(beat.y || (station ? station.y + station.h / 2 : 50), 4, 96);
+                const active = index === activeIndex;
+                return `
+                    <div
+                        class="replay-beacon${active ? ' is-active' : ''}"
+                        style="--x: ${x}; --y: ${y}; --replay-delay: ${index * 160}ms"
+                        aria-hidden="true"
+                    >
+                        <span>${index + 1}</span>
+                    </div>
+                `;
+            })
+            .join('');
     }
 
     function renderInteractionLink(conversation) {
@@ -724,10 +830,110 @@
             : '<p class="is-empty">No queued experiments.</p>';
     }
 
+    function renderFormulationBoard() {
+        const board = state.data.formulationBoard || {};
+        const route = board.leadingRoute || {};
+        const scorecard = board.scorecard || [];
+        const gates = board.gates || [];
+        const nextTest = board.nextPhysicalTest;
+
+        els.formulationBoardState.textContent = board.status || 'Waiting';
+
+        const scoreRows = scorecard
+            .map(row => {
+                const score = clamp(row.score, 0, 100);
+                return `
+                    <article class="formulation-score-card is-${statusClass(row.status)}">
+                        <div class="formulation-score-head">
+                            <span>${escapeHtml(row.status || 'watch')}</span>
+                            <strong>${score}</strong>
+                        </div>
+                        <h3>${escapeHtml(row.label)}</h3>
+                        <em>${escapeHtml(row.target || '')}</em>
+                        <div class="formulation-score-track"><i style="--score: ${score}%"></i></div>
+                        <p>${escapeHtml(row.rationale)}</p>
+                    </article>
+                `;
+            })
+            .join('');
+
+        const gateRows = gates
+            .slice(0, 4)
+            .map(gate => {
+                return `
+                    <li class="is-${statusClass(gate.status)}">
+                        <span>${escapeHtml(gate.status)}</span>
+                        <strong>${escapeHtml(gate.label)}</strong>
+                    </li>
+                `;
+            })
+            .join('');
+
+        els.formulationBoardDetail.innerHTML = `
+            <article class="formulation-route">
+                <span>${escapeHtml(route.hypothesisId || 'FUSE-POR-01')}</span>
+                <strong>${escapeHtml(route.routeName || 'Porous Monohydrate Agglomerate')}</strong>
+                <p>${escapeHtml(route.reasonForMovement || 'Waiting for the next daily synthesis.')}</p>
+                <p class="evidence-gap">${escapeHtml(route.evidenceGap || 'Evidence gap not recorded yet.')}</p>
+            </article>
+            <div class="formulation-score-grid">${scoreRows}</div>
+            ${
+                nextTest
+                    ? `<article class="board-next-test">
+                        <span>Next physical test</span>
+                        <strong>${escapeHtml(nextTest.title)}</strong>
+                        <p>${escapeHtml(nextTest.successCriteria || nextTest.protocol || '')}</p>
+                    </article>`
+                    : ''
+            }
+            <ul class="evidence-gate-list">${gateRows}</ul>
+        `;
+    }
+
+    function renderDiscoveryReplay() {
+        const replay = state.data.discoveryReplay || {};
+        const beats = replay.beats || [];
+        const activeIndex = clamp(replay.activeBeatIndex, 0, Math.max(0, beats.length - 1));
+        els.replayCount.textContent = `${beats.length} beats`;
+
+        const beatRows = beats
+            .map((beat, index) => {
+                return `
+                    <li class="${index === activeIndex ? 'is-active' : ''}">
+                        <span>${String(index + 1).padStart(2, '0')} · ${escapeHtml(beat.stationName || beat.stationId)}</span>
+                        <strong>${escapeHtml(beat.agentName || beat.agentId)}</strong>
+                        <p>${escapeHtml(beat.action)}</p>
+                    </li>
+                `;
+            })
+            .join('');
+
+        els.discoveryReplayDetail.innerHTML = `
+            <article class="discovery-replay-card">
+                <span>${escapeHtml(replay.evidenceLevel || 'Internal simulation')}</span>
+                <strong>${escapeHtml(replay.title || 'Current formulation finding replay')}</strong>
+                <p>${escapeHtml(replay.subtitle || 'Waiting for the next daily synthesis replay.')}</p>
+                <ol>${beatRows || '<li><p>No replay beats recorded yet.</p></li>'}</ol>
+            </article>
+        `;
+    }
+
     function renderDailyDiscovery() {
         const discovery = state.data.dailyDiscovery || {};
+        const progress = discovery.progressAssessment || state.data.progressAssessment || {};
         els.dailyProvider.textContent = discovery.model || discovery.provider || 'Deterministic';
 
+        const signals = (progress.signals || [])
+            .slice(0, 4)
+            .map(signal => {
+                return `
+                    <li>
+                        <span>${escapeHtml(signal.label || signal.key)} · ${escapeHtml(signal.status || 'watch')}</span>
+                        <p>${escapeHtml(signal.detail)}</p>
+                    </li>
+                `;
+            })
+            .join('');
         const findings = (discovery.agentFindings || [])
             .slice(0, 4)
             .map(item => {
@@ -755,6 +961,12 @@
                         </div>`
                         : ''
                 }
+                <div class="progress-policy">
+                    <span>Progress policy</span>
+                    <strong>${escapeHtml(progress.progressScore ?? '--')}/${escapeHtml(progress.threshold ?? '--')} · ${escapeHtml(modelPolicyLabel(discovery, progress))}</strong>
+                    <p>${escapeHtml(progress.reason || discovery.modelCallSkippedReason || 'Progress policy has not assessed this run yet.')}</p>
+                    <ul>${signals || '<li><p>No progress signals recorded yet.</p></li>'}</ul>
+                </div>
                 <ul>${findings || '<li><p>No model-backed findings recorded yet.</p></li>'}</ul>
             </article>
         `;
@@ -829,6 +1041,8 @@
         renderConversations();
         renderMemories();
         renderQueue();
+        renderFormulationBoard();
+        renderDiscoveryReplay();
         renderDailyDiscovery();
         renderWeeklyReview();
     }
@@ -859,10 +1073,14 @@
             'selectedAgentDetail',
             'conversationCount',
             'conversationFeed',
+            'replayCount',
+            'discoveryReplayDetail',
             'memoryCount',
             'memoryFeed',
             'queueCount',
             'experimentQueue',
+            'formulationBoardState',
+            'formulationBoardDetail',
             'dailyProvider',
             'dailyDiscoveryDetail',
             'weeklyRun',

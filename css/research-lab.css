@@ -1771,7 +1771,7 @@ body.research-world-page {
 
 .research-world-page .game-overlay-row {
     display: grid;
-    grid-template-columns: minmax(280px, 0.92fr) minmax(360px, 1.08fr);
+    grid-template-columns: minmax(250px, 0.75fr) minmax(340px, 0.95fr) minmax(340px, 1fr);
     gap: 8px;
     min-width: 0;
 }
@@ -1791,9 +1791,14 @@ body.research-world-page {
 }
 
 .research-world-page .cognition-panel,
+.research-world-page .formulation-board-panel,
 .research-world-page .daily-panel,
 .research-world-page .weekly-panel {
     grid-column: span 2;
+}
+
+.research-world-page .formulation-board-panel {
+    grid-column: span 3;
 }
 
 .research-world-page .cognition-station,
@@ -1867,12 +1872,216 @@ body.research-world-page {
     gap: 9px;
 }
 
+.research-world-page .formulation-route,
+.research-world-page .board-next-test,
+.research-world-page .discovery-replay-card {
+    display: grid;
+    gap: 8px;
+}
+
+.research-world-page .formulation-route {
+    padding: 10px;
+    border: 1px solid rgba(255, 59, 48, 0.24);
+    border-radius: 5px;
+    background: rgba(255, 59, 48, 0.045);
+}
+
+.research-world-page .formulation-route span,
+.research-world-page .board-next-test span,
+.research-world-page .discovery-replay-card > span,
+.research-world-page .formulation-score-head span,
+.research-world-page .evidence-gate-list span {
+    color: var(--world-cyan);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.research-world-page .formulation-route strong,
+.research-world-page .board-next-test strong,
+.research-world-page .discovery-replay-card > strong {
+    color: #f4f6f7;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: normal;
+}
+
+.research-world-page .formulation-route p,
+.research-world-page .board-next-test p,
+.research-world-page .discovery-replay-card p {
+    margin: 0;
+    color: #bdc3c7;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.research-world-page .formulation-route .evidence-gap {
+    color: #ffd0cc;
+}
+
+.research-world-page .formulation-score-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.research-world-page .formulation-score-card {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.research-world-page .formulation-score-card.is-candidate {
+    border-color: rgba(52, 199, 89, 0.32);
+}
+
+.research-world-page .formulation-score-card.is-test-next {
+    border-color: rgba(68, 215, 182, 0.3);
+}
+
+.research-world-page .formulation-score-card.is-watch {
+    border-color: rgba(255, 149, 0, 0.32);
+}
+
+.research-world-page .formulation-score-card.is-blocked {
+    border-color: rgba(255, 59, 48, 0.42);
+}
+
+.research-world-page .formulation-score-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.research-world-page .formulation-score-head strong {
+    color: #ffffff;
+    font:
+        800 19px/1 'JetBrains Mono',
+        monospace;
+}
+
+.research-world-page .formulation-score-card h3 {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: #f5f6f6;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.research-world-page .formulation-score-card em {
+    color: #9fa6aa;
+    font:
+        normal 700 9px/1.2 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.research-world-page .formulation-score-card p {
+    margin: 0;
+    color: #b8bec3;
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.research-world-page .formulation-score-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.research-world-page .formulation-score-track i {
+    display: block;
+    width: var(--score, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--world-red), var(--world-cyan));
+}
+
+.research-world-page .board-next-test {
+    margin-top: 8px;
+    padding: 9px;
+    border: 1px solid rgba(68, 215, 182, 0.2);
+    border-radius: 5px;
+    background: rgba(68, 215, 182, 0.045);
+}
+
+.research-world-page .evidence-gate-list,
+.research-world-page .discovery-replay-card ol {
+    display: grid;
+    gap: 7px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.research-world-page .evidence-gate-list {
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+}
+
+.research-world-page .evidence-gate-list li,
+.research-world-page .discovery-replay-card li {
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.research-world-page .evidence-gate-list li.is-blocked {
+    border-color: rgba(255, 59, 48, 0.38);
+}
+
+.research-world-page .evidence-gate-list strong,
+.research-world-page .discovery-replay-card li strong {
+    display: block;
+    margin-top: 5px;
+    overflow: hidden;
+    color: #f4f6f7;
+    font-size: 11px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.research-world-page .replay-panel {
+    min-width: 0;
+}
+
+.research-world-page .discovery-replay-card li.is-active {
+    border-color: rgba(255, 59, 48, 0.5);
+    background: rgba(255, 59, 48, 0.06);
+}
+
+.research-world-page .discovery-replay-card li span {
+    color: var(--world-lime);
+    font:
+        700 9px/1 'JetBrains Mono',
+        monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.research-world-page .discovery-replay-card li p {
+    margin-top: 6px;
+}
+
 .research-world-page .daily-discovery-card > strong,
 .research-world-page .daily-test strong {
     white-space: normal;
 }
 
-.research-world-page .daily-test {
+.research-world-page .daily-test,
+.research-world-page .progress-policy {
     padding: 9px;
     border: 1px solid rgba(68, 215, 182, 0.2);
     border-radius: 5px;
@@ -1880,6 +2089,7 @@ body.research-world-page {
 }
 
 .research-world-page .daily-test span,
+.research-world-page .progress-policy span,
 .research-world-page .daily-discovery-card li span {
     color: var(--world-cyan);
     font:
@@ -1905,8 +2115,20 @@ body.research-world-page {
 }
 
 .research-world-page .daily-discovery-card p,
-.research-world-page .daily-test p {
+.research-world-page .daily-test p,
+.research-world-page .progress-policy p {
     margin: 0;
+}
+
+.research-world-page .progress-policy {
+    border-color: rgba(215, 237, 105, 0.2);
+    background: rgba(215, 237, 105, 0.04);
+}
+
+.research-world-page .progress-policy > strong {
+    color: #f4f6f7;
+    font-size: 12px;
+    line-height: 1.25;
 }
 
 .research-world-page .weekly-review-card {
@@ -2074,6 +2296,18 @@ body.research-world-page {
         min-width: 0;
     }
 
+    .research-world-page .formulation-board-panel,
+    .research-world-page .cognition-panel,
+    .research-world-page .daily-panel,
+    .research-world-page .weekly-panel {
+        grid-column: span 1;
+    }
+
+    .research-world-page .formulation-score-grid,
+    .research-world-page .evidence-gate-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .research-world-page .game-dispute {
         text-align: left;
     }
@@ -2105,6 +2339,11 @@ body.research-world-page {
     .research-world-page .cognition-grid .lower-panel {
         max-height: none;
         margin-top: 8px;
+    }
+
+    .research-world-page .formulation-score-grid,
+    .research-world-page .evidence-gate-list {
+        grid-template-columns: 1fr;
     }
 
     .research-world-page .game-overlay-row .conversation-panel {
@@ -2478,6 +2717,43 @@ body.research-world-page {
     pointer-events: none;
 }
 
+.research-world-page .game-stage .replay-beacon {
+    position: absolute;
+    left: calc(var(--x) * 1%);
+    top: calc(var(--y) * 1%);
+    z-index: 17;
+    width: 34px;
+    height: 34px;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgba(215, 237, 105, 0.48);
+    border-radius: 999px;
+    background: rgba(5, 7, 8, 0.72);
+    box-shadow: 0 0 24px rgba(215, 237, 105, 0.24);
+    animation: replay-beacon-idle 2200ms ease-in-out infinite;
+    animation-delay: var(--replay-delay, 0ms);
+    pointer-events: none;
+}
+
+.research-world-page .game-stage .replay-beacon span {
+    position: absolute;
+    inset: 6px;
+    display: grid;
+    place-items: center;
+    border-radius: inherit;
+    background: rgba(215, 237, 105, 0.16);
+    color: #f9ffd0;
+    font:
+        800 10px/1 'JetBrains Mono',
+        monospace;
+}
+
+.research-world-page .game-stage .replay-beacon.is-active {
+    border-color: rgba(255, 59, 48, 0.72);
+    box-shadow:
+        0 0 0 7px rgba(255, 59, 48, 0.1),
+        0 0 30px rgba(255, 59, 48, 0.42);
+}
+
 .research-world-page .game-stage .interaction-line {
     position: absolute;
     left: calc(var(--x1) * 1%);
@@ -2595,6 +2871,18 @@ body.research-world-page {
     45% {
         opacity: 0.82;
         transform: translate(-50%, -50%) scale(1.12);
+    }
+}
+
+@keyframes replay-beacon-idle {
+    0%,
+    100% {
+        opacity: 0.68;
+        transform: translate(-50%, -50%) scale(0.94);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.08);
     }
 }
 

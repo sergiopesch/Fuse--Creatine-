@@ -32,6 +32,44 @@ describe('research lab generative agent state', () => {
                 directive: expect.any(String),
             })
         );
+        expect(state.formulationBoard).toEqual(
+            expect.objectContaining({
+                status: 'evidence-gated',
+                leadingRoute: expect.objectContaining({
+                    hypothesisId: expect.any(String),
+                    routeName: expect.any(String),
+                }),
+                scorecard: expect.arrayContaining([
+                    expect.objectContaining({
+                        key: 'dissolutionSpeed',
+                        score: expect.any(Number),
+                    }),
+                    expect.objectContaining({
+                        key: 'legalIpSafety',
+                        status: 'blocked',
+                    }),
+                ]),
+            })
+        );
+        expect(state.discoveryReplay).toEqual(
+            expect.objectContaining({
+                evidenceLevel: 'Internal simulation',
+                beats: expect.arrayContaining([
+                    expect.objectContaining({
+                        stationId: expect.any(String),
+                        agentId: expect.any(String),
+                        action: expect.any(String),
+                    }),
+                ]),
+            })
+        );
+        expect(state.progressAssessment).toEqual(
+            expect.objectContaining({
+                progressScore: expect.any(Number),
+                modelCallRecommended: expect.any(Boolean),
+                signals: expect.any(Array),
+            })
+        );
     });
 
     test('advanceLabState writes action and observation memories with batch telemetry', async () => {
@@ -85,6 +123,28 @@ describe('research lab generative agent state', () => {
                 status: expect.stringMatching(/fallback|model-backed/),
                 tickCount: 3,
                 topInsight: expect.any(String),
+                leadingRoute: expect.objectContaining({
+                    hypothesisId: expect.any(String),
+                }),
+                scorecard: expect.arrayContaining([
+                    expect.objectContaining({
+                        key: 'dissolutionSpeed',
+                    }),
+                ]),
+                simulationReplay: expect.objectContaining({
+                    beats: expect.any(Array),
+                }),
+                progressAssessment: expect.objectContaining({
+                    progressScore: expect.any(Number),
+                    threshold: expect.any(Number),
+                    signals: expect.arrayContaining([
+                        expect.objectContaining({
+                            key: expect.any(String),
+                            detail: expect.any(String),
+                        }),
+                    ]),
+                }),
+                modelCallUsed: expect.any(Boolean),
                 nextPhysicalTest: expect.objectContaining({
                     title: expect.any(String),
                     successCriteria: expect.any(String),
@@ -100,9 +160,15 @@ describe('research lab generative agent state', () => {
         expect(state.memories[0]).toEqual(
             expect.objectContaining({
                 type: 'reflection',
-                evidenceLevel: 'Internal AI synthesis',
+                evidenceLevel: expect.stringMatching(/Internal AI synthesis|Internal deterministic progress/),
             })
         );
+        expect(state.formulationBoard.nextPhysicalTest).toEqual(
+            expect.objectContaining({
+                title: expect.any(String),
+            })
+        );
+        expect(state.discoveryReplay.beats.length).toBeGreaterThanOrEqual(3);
     });
 
     test('weekly review records development readiness guidance', async () => {
@@ -131,11 +197,36 @@ describe('research lab generative agent state', () => {
         );
     });
 
+    test('daily discovery records progress without model spend below threshold', async () => {
+        await updateLabControls({
+            modelSynthesisEnabled: true,
+            progressDrivenSynthesis: true,
+            progressSignalThreshold: 40,
+        });
+
+        const state = await runDailyDiscovery('unit-test-progress-gated');
+
+        expect(state.dailyDiscovery).toEqual(
+            expect.objectContaining({
+                status: 'deterministic-progress',
+                modelCallUsed: false,
+                modelCallSkippedReason: expect.any(String),
+                progressAssessment: expect.objectContaining({
+                    modelCallRecommended: false,
+                    threshold: 40,
+                    signals: expect.any(Array),
+                }),
+            })
+        );
+    });
+
     test('lab controls can disable scheduled cycles while manual force still runs', async () => {
         let state = await updateLabControls({
             dailyEnabled: false,
             weeklyEnabled: false,
             modelSynthesisEnabled: false,
+            progressDrivenSynthesis: true,
+            progressSignalThreshold: 8,
             weeklyModel: 'gpt-5.5',
         });
 
@@ -144,6 +235,8 @@ describe('research lab generative agent state', () => {
                 dailyEnabled: false,
                 weeklyEnabled: false,
                 modelSynthesisEnabled: false,
+                progressDrivenSynthesis: true,
+                progressSignalThreshold: 8,
                 weeklyModel: 'gpt-5.5',
             })
         );

@@ -1,5 +1,9 @@
 const { createRedisClient } = require('./redis-client');
-const { generateDailyDiscovery, generateWeeklyReview } = require('./research-lab-brain');
+const {
+    generateDailyDiscovery,
+    generateWeeklyReview,
+    fallbackDiscovery,
+} = require('./research-lab-brain');
 
 const STATE_KEY = 'research-world:state:v3';
 const MAX_MEMORIES = 72;
@@ -17,6 +21,8 @@ const DEFAULT_LAB_CONTROLS = {
     dailyEnabled: true,
     weeklyEnabled: true,
     modelSynthesisEnabled: true,
+    progressDrivenSynthesis: true,
+    progressSignalThreshold: 8,
     dailyModel: 'gpt-5-mini',
     weeklyModel: 'gpt-5.5',
     weeklyReasoning: 'high',
@@ -436,6 +442,344 @@ function clamp(value, min = 0, max = 100) {
     return Math.max(min, Math.min(max, Math.round(Number(value) || 0)));
 }
 
+function findLeadingHypothesis(items = []) {
+    return [...items].sort((a, b) => average(b.scores || {}) - average(a.scores || {}))[0] || null;
+}
+
+function scoreFromDissolutionSeconds(seconds) {
+    const value = Number(seconds);
+    if (!Number.isFinite(value) || value <= 0) return 58;
+    if (value <= 3) return clamp(94 - (value - 1.8) * 4, 82, 96);
+    return clamp(82 - (value - 3) * 12, 18, 82);
+}
+
+function statusFromScore(score, blocked = false) {
+    if (blocked) return 'blocked';
+    if (score >= 82) return 'candidate';
+    if (score >= 66) return 'test next';
+    return 'watch';
+}
+
+function mergeDailyScorecard(computed, dailyDiscovery = {}) {
+    const modelRows = Array.isArray(dailyDiscovery.scorecard) ? dailyDiscovery.scorecard : [];
+    if (!modelRows.length) return computed;
+
+    return computed.map(row => {
+        const modelRow = modelRows.find(item => item.key === row.key);
+        if (!modelRow) return row;
+        const blocked = row.status === 'blocked';
+        return {
+            ...row,
+            score: blocked ? Math.min(row.score, clamp(modelRow.score, 0, 100)) : clamp(modelRow.score, 0, 100),
+            status: blocked ? 'blocked' : modelRow.status || row.status,
+            rationale: modelRow.rationale || row.rationale,
+        };
+    });
+}
+
+function buildFormulationBoard(state) {
+    const leading = findLeadingHypothesis(state.hypotheses || []);
+    const batch = state.currentExperiment?.batchResult || state.batchResults?.[0] || {};
+    const metrics = batch.metrics || {};
+    const scores = leading?.scores || {};
+    const dissolutionScore = clamp(
+        Math.round(((scores.dissolve || 58) + scoreFromDissolutionSeconds(metrics.dissolutionSeconds)) / 2)
+    );
+    const tasteScore = clamp(
+        Math.round(
+            ((scores.taste || 58) +
+                (scores.mouthfeel || 58) +
+                (metrics.tasteCleanliness || 58) +
+                (100 - (metrics.gritScore || 42))) /
+                4
+        )
+    );
+    const manufacturingScore = clamp(
+        Math.round(((scores.make || 58) + (scores.dose || 58) + (metrics.doseUniformity || 58)) / 3)
+    );
+    const legalScore = clamp(Math.min(scores.claims || 48, 54));
+    const dailyDiscovery = state.dailyDiscovery || {};
+    const leadingRoute = dailyDiscovery.leadingRoute || {
+        hypothesisId: leading?.id || 'FUSE-POR-01',
+        routeName: leading?.name || 'Porous Monohydrate Agglomerate',
+        reasonForMovement:
+            'Highest internal score while preserving monohydrate dose integrity and a simple physical reconstitution path.',
+        evidenceGap: 'Needs FTO clearance, wet-lab dissolution evidence, sensory data, and HPLC retention.',
+    };
+    const computedScorecard = [
+        {
+            key: 'dissolutionSpeed',
+            label: 'Dissolution speed',
+            target: '<3s in 60-85C coffee',
+            score: dissolutionScore,
+            status: statusFromScore(dissolutionScore),
+            rationale: `${leadingRoute.hypothesisId} is being judged by simulated wetting plus latest batch disappearance telemetry.`,
+        },
+        {
+            key: 'tasteNeutrality',
+            label: 'Taste neutrality',
+            target: 'No detectable coffee change',
+            score: tasteScore,
+            status: statusFromScore(tasteScore),
+            rationale: 'Taste and mouthfeel stay separate from speed so a fast but gritty route cannot win the board.',
+        },
+        {
+            key: 'manufacturingPath',
+            label: 'Manufacturing path',
+            target: 'Doseable sachet route',
+            score: manufacturingScore,
+            status: statusFromScore(manufacturingScore),
+            rationale: 'The board favours low-compression, dose-uniform structures that can survive packing and moisture controls.',
+        },
+        {
+            key: 'legalIpSafety',
+            label: 'Legal/IP safety',
+            target: 'FTO cleared before spend',
+            score: legalScore,
+            status: 'blocked',
+            rationale: 'FTO remains the hard gate before major formulation investment or public technology claims.',
+        },
+    ];
+    const scorecard = mergeDailyScorecard(computedScorecard, dailyDiscovery);
+
+    return {
+        lastUpdatedAt: state.updatedAt || nowIso(),
+        status: scorecard.some(row => row.status === 'blocked') ? 'evidence-gated' : 'active',
+        cadence: {
+            dailyCall: 'One model-backed formulation synthesis after three deterministic lab ticks.',
+            weeklyReview: 'One high-reasoning continue/pause/pivot/kill review before meaningful spend.',
+        },
+        leadingRoute,
+        scorecard,
+        gates: [
+            {
+                key: 'fto',
+                label: 'FTO analysis',
+                status: 'blocked',
+                owner: 'Legal',
+                note: 'Critical blocker before formulation investment.',
+            },
+            {
+                key: 'dissolution',
+                label: 'Dissolution test',
+                status: 'pending',
+                owner: 'R&D',
+                note: 'Standardized <3s test across hot coffee conditions.',
+            },
+            {
+                key: 'sensory',
+                label: 'Taste panel',
+                status: 'pending',
+                owner: 'R&D',
+                note: 'Double-blind triangle test before zero-grit or taste-neutral language.',
+            },
+            {
+                key: 'hplc',
+                label: 'HPLC retention',
+                status: 'pending',
+                owner: 'R&D',
+                note: '>95% creatine retained at 15 minutes in hot coffee.',
+            },
+        ],
+        nextPhysicalTest: dailyDiscovery.nextPhysicalTest || {
+            title: 'Porous monohydrate hot-water dissolution screen',
+            protocol:
+                'Prepare low-compression monohydrate/carrier samples at three carrier ratios and test in hot water before coffee.',
+            successCriteria: 'Fast visible breakup, no persistent sediment, dose uniformity retained.',
+        },
+        decisionNeeded:
+            dailyDiscovery.decisionNeeded ||
+            'Decide whether the next physical prototype is porous monohydrate only or includes a wetting-aid comparison arm.',
+        latestBatch: batch.batchId
+            ? {
+                  batchId: batch.batchId,
+                  hypothesisId: batch.hypothesisId,
+                  status: batch.status,
+                  metrics,
+              }
+            : null,
+    };
+}
+
+function buildDiscoveryReplay(state) {
+    const dailyDiscovery = state.dailyDiscovery || {};
+    const currentExperiment = state.currentExperiment || {};
+    const fallbackBeats = [
+        {
+            stationId: currentExperiment.stationId || 'encapsulation',
+            agentId: currentExperiment.leadAgentId || 'mira',
+            action: currentExperiment.title || 'Run the current formulation experiment.',
+        },
+        {
+            stationId: 'evidence',
+            agentId: 'max',
+            action: 'Compare the signal against monohydrate dose integrity and batch telemetry.',
+        },
+        {
+            stationId: 'claims',
+            agentId: 'nina',
+            action: 'Keep public claims behind FTO, dissolution, sensory, and HPLC gates.',
+        },
+    ];
+    const sourceReplay = dailyDiscovery.simulationReplay || {};
+    const beats = (Array.isArray(sourceReplay.beats) && sourceReplay.beats.length
+        ? sourceReplay.beats
+        : fallbackBeats
+    )
+        .slice(0, 5)
+        .map((beat, index) => {
+            const station = stations.find(item => item.id === beat.stationId) || stations[0];
+            const agent = getAgentBlueprint(beat.agentId);
+            return {
+                ...beat,
+                order: index + 1,
+                stationName: station.name,
+                agentName: agent.name,
+                x: station.x + station.w / 2,
+                y: station.y + station.h / 2,
+            };
+        });
+
+    return {
+        title:
+            sourceReplay.title ||
+            dailyDiscovery.headline ||
+            'Current formulation finding replay',
+        subtitle:
+            dailyDiscovery.topInsight ||
+            'The world replays the latest internal finding as a station-by-station hypothesis path.',
+        activeBeatIndex: beats.length ? Number(state.labClock || 0) % beats.length : 0,
+        evidenceLevel: 'Internal simulation',
+        beats,
+    };
+}
+
+function hypothesisScoreMap(state) {
+    return (state.hypotheses || []).reduce((map, hypothesis) => {
+        map[hypothesis.id] = average(hypothesis.scores || {});
+        return map;
+    }, {});
+}
+
+function buildProgressAssessment(previousState = {}, nextState = {}, summaries = [], controls = {}) {
+    const previousScores = hypothesisScoreMap(previousState);
+    const nextScores = hypothesisScoreMap(nextState);
+    const movements = Object.entries(nextScores)
+        .map(([hypothesisId, score]) => {
+            const previous = previousScores[hypothesisId] ?? score;
+            return {
+                hypothesisId,
+                delta: score - previous,
+                score,
+            };
+        })
+        .filter(item => item.delta !== 0)
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    const latestBatch = nextState.currentExperiment?.batchResult || nextState.batchResults?.[0];
+    const latestDispute = nextState.disputes?.[0];
+    const board = nextState.formulationBoard || buildFormulationBoard(nextState);
+    const threshold = clamp(
+        controls.progressSignalThreshold || DEFAULT_LAB_CONTROLS.progressSignalThreshold,
+        1,
+        40
+    );
+    const absoluteMovement = movements.reduce((sum, item) => sum + Math.abs(item.delta), 0);
+    const signals = [];
+
+    if (absoluteMovement > 0) {
+        const strongest = movements[0];
+        signals.push({
+            key: 'score-movement',
+            label: 'Formulation score movement',
+            status: strongest.delta > 0 ? 'progress' : 'risk',
+            impact: clamp(absoluteMovement, 1, 30),
+            detail: `${strongest.hypothesisId} moved ${strongest.delta > 0 ? '+' : ''}${strongest.delta} points; total route movement ${absoluteMovement}.`,
+        });
+    }
+
+    if (latestBatch?.batchId) {
+        const seconds = latestBatch.metrics?.dissolutionSeconds;
+        const grit = latestBatch.metrics?.gritScore;
+        signals.push({
+            key: 'batch-telemetry',
+            label: 'New batch telemetry',
+            status: latestBatch.status === 'candidate signal' ? 'progress' : 'watch',
+            impact: latestBatch.status === 'candidate signal' ? 8 : 5,
+            detail: `${latestBatch.batchId}: ${seconds}s dissolve, grit ${grit}/100, ${latestBatch.status}.`,
+        });
+    }
+
+    if (latestDispute?.status === 'needs Sergio review') {
+        signals.push({
+            key: 'decision-needed',
+            label: 'Sergio decision signal',
+            status: 'decision',
+            impact: 10,
+            detail: latestDispute.title,
+        });
+    }
+
+    const blockedGate = (board.gates || []).find(gate => gate.status === 'blocked');
+    if (blockedGate) {
+        signals.push({
+            key: 'blocked-gate',
+            label: 'Blocked evidence gate',
+            status: 'blocked',
+            impact: 7,
+            detail: `${blockedGate.label} remains with ${blockedGate.owner}. ${blockedGate.note}`,
+        });
+    }
+
+    const nextTest = board.nextPhysicalTest;
+    if (nextTest?.title) {
+        signals.push({
+            key: 'next-test',
+            label: 'Next physical test clarity',
+            status: 'progress',
+            impact: 6,
+            detail: nextTest.title,
+        });
+    }
+
+    const progressScore = clamp(
+        signals.reduce((sum, signal) => sum + Number(signal.impact || 0), 0),
+        0,
+        100
+    );
+    const modelCallRecommended = progressScore >= threshold;
+
+    return {
+        status: modelCallRecommended ? 'synthesis-recommended' : 'deterministic-progress',
+        progressScore,
+        threshold,
+        modelCallRecommended,
+        reason: modelCallRecommended
+            ? 'Progress signals justify the daily model-backed formulation synthesis.'
+            : 'Progress was recorded, but signals are below the model-spend threshold.',
+        signals: signals.slice(0, 6),
+        movements,
+        tickCount: summaries.length,
+        assessedAt: nowIso(),
+    };
+}
+
+function enrichResearchState(state) {
+    const withBoard = {
+        ...state,
+        formulationBoard: buildFormulationBoard(state),
+    };
+    const withProgress = {
+        ...withBoard,
+        progressAssessment:
+            state.progressAssessment ||
+            buildProgressAssessment(withBoard, withBoard, [], withBoard.labControls || {}),
+    };
+    return {
+        ...withProgress,
+        discoveryReplay: buildDiscoveryReplay(withProgress),
+    };
+}
+
 function stationCenter(stationId) {
     const station = stations.find(item => item.id === stationId) || stations[0];
     return {
@@ -839,7 +1183,7 @@ function createInitialState() {
         0
     );
     const agents = createAgents(0, currentExperiment, [bootMemory]);
-    return {
+    const state = {
         version: 3,
         mode: 'living research world',
         labClock: 0,
@@ -879,6 +1223,7 @@ function createInitialState() {
         labControls: { ...DEFAULT_LAB_CONTROLS },
         updatedAt: timestamp,
     };
+    return enrichResearchState(state);
 }
 
 function buildConversation(experiment, timestamp, labClock) {
@@ -1037,6 +1382,15 @@ function normalizeLabControls(candidate = {}) {
             candidate.modelSynthesisEnabled,
             DEFAULT_LAB_CONTROLS.modelSynthesisEnabled
         ),
+        progressDrivenSynthesis: normalizeBoolean(
+            candidate.progressDrivenSynthesis,
+            DEFAULT_LAB_CONTROLS.progressDrivenSynthesis
+        ),
+        progressSignalThreshold: clamp(
+            candidate.progressSignalThreshold || DEFAULT_LAB_CONTROLS.progressSignalThreshold,
+            1,
+            40
+        ),
         dailyModel: normalizeModel(candidate.dailyModel, DEFAULT_LAB_CONTROLS.dailyModel),
         weeklyModel: normalizeModel(candidate.weeklyModel, DEFAULT_LAB_CONTROLS.weeklyModel),
         weeklyReasoning: normalizeReasoning(
@@ -1127,7 +1481,7 @@ function normalizeState(candidate) {
         return base;
     }
 
-    return next;
+    return enrichResearchState(next);
 }
 
 async function getState() {
@@ -1152,7 +1506,7 @@ async function getState() {
 }
 
 async function saveState(state) {
-    memoryState = normalizeState(state);
+    memoryState = normalizeState(enrichResearchState(state));
     if (redis) {
         try {
             await redis.set(STATE_KEY, memoryState);
@@ -1249,13 +1603,13 @@ async function advanceLabState(source = 'world-loop') {
 }
 
 async function runDailyDiscovery(source = 'daily-cron', options = {}) {
-    const controls = normalizeLabControls((await getState()).labControls);
+    const startingState = normalizeState(await getState());
+    const controls = normalizeLabControls(startingState.labControls);
     if (!options.force && !controls.dailyEnabled) {
-        const state = normalizeState(await getState());
         return saveState({
-            ...state,
+            ...startingState,
             dailyDiscovery: {
-                ...state.dailyDiscovery,
+                ...startingState.dailyDiscovery,
                 status: 'disabled',
                 headline: 'Daily discovery is disabled from the admin backend.',
                 lastSkippedAt: nowIso(),
@@ -1279,7 +1633,26 @@ async function runDailyDiscovery(source = 'daily-cron', options = {}) {
         });
     }
 
-    const brainDiscovery = await generateDailyDiscovery(state, summaries, controls);
+    const progressAssessment = buildProgressAssessment(startingState, state, summaries, controls);
+    state = {
+        ...state,
+        progressAssessment,
+    };
+
+    const shouldRunModel =
+        options.forceModel ||
+        !controls.progressDrivenSynthesis ||
+        progressAssessment.modelCallRecommended;
+    const brainDiscovery = shouldRunModel
+        ? await generateDailyDiscovery(state, summaries, controls)
+        : {
+              ...fallbackDiscovery(
+                  state,
+                  summaries,
+                  'Daily progress recorded without model spend because signals were below the configured threshold.'
+              ),
+              status: 'deterministic-progress',
+          };
     const timestamp = nowIso();
     const brainMemory = {
         id: `daily-${state.labClock}-${Date.now()}`,
@@ -1288,12 +1661,16 @@ async function runDailyDiscovery(source = 'daily-cron', options = {}) {
         lastRetrievedTick: state.labClock,
         type: 'reflection',
         agentId: 'max',
-        evidenceLevel: 'Internal AI synthesis',
-        importance: brainDiscovery.status === 'model-backed' ? 92 : 74,
+        evidenceLevel:
+            brainDiscovery.status === 'model-backed'
+                ? 'Internal AI synthesis'
+                : 'Internal deterministic progress',
+        importance: brainDiscovery.status === 'model-backed' ? 92 : 68,
         summary: brainDiscovery.topInsight,
         metadata: {
             provider: brainDiscovery.provider,
             model: brainDiscovery.model,
+            progressAssessment,
             headline: brainDiscovery.headline,
             nextPhysicalTest: brainDiscovery.nextPhysicalTest,
             risk: brainDiscovery.risk,
@@ -1315,14 +1692,21 @@ async function runDailyDiscovery(source = 'daily-cron', options = {}) {
         rankedActions: brainDiscovery.rankedActions,
         risk: brainDiscovery.risk,
         decisionNeeded: brainDiscovery.decisionNeeded,
+        leadingRoute: brainDiscovery.leadingRoute,
+        scorecard: brainDiscovery.scorecard,
+        simulationReplay: brainDiscovery.simulationReplay,
         reason: brainDiscovery.reason,
         responseId: brainDiscovery.responseId,
         experiments: summaries,
+        progressAssessment,
+        modelCallUsed: brainDiscovery.status === 'model-backed',
+        modelCallSkippedReason: shouldRunModel ? null : progressAssessment.reason,
     };
 
     return saveState({
         ...state,
         dailyDiscovery,
+        progressAssessment,
         memories: [brainMemory, ...(state.memories || [])].slice(0, MAX_MEMORIES),
         reflections: [brainMemory, ...(state.reflections || [])].slice(0, MAX_REFLECTIONS),
         updatedAt: timestamp,
