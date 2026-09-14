@@ -1,6 +1,6 @@
 # Developers Team — Current Context
 
-**Last Updated**: 2026-05-23
+**Last Updated**: 2026-09-14
 **Team Code**: DEV
 **Orchestration Mode**: manual
 
@@ -13,6 +13,10 @@ Website live at fuse-creatine.vercel.app. Public FUSE Agent chat now supports co
 - [ ] CLI tool (`fuse-ceo`) implementation
 - [ ] Queue system integration with web UI
 - [ ] Team context file structure setup (9 teams)
+
+## Dependency maintenance — 2026-09-14
+
+Patched WebAuthn and dependency parser/tooling vulnerabilities in both root and CLI lockfiles. Removed previously tracked generated `node_modules`; use `npm ci` at the repository root (the CLI is an npm workspace). Lint, all 46 Jest tests and CLI compilation passed locally. Production passkey use still requires deployment verification with the configured origin and user credential.
 
 ## Recent Completions
 
