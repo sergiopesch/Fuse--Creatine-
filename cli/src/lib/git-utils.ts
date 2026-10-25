@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { PROJECT_ROOT } from './constants';
 
 export function gitStatus(): string {
@@ -15,7 +15,7 @@ export function gitAdd(): void {
 
 export function gitCommit(message: string): string {
   try {
-    execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, {
+    execFileSync('git', ['commit', '-m', message], {
       cwd: PROJECT_ROOT,
       encoding: 'utf-8'
     });
